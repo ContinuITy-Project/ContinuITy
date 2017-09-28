@@ -21,3 +21,10 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 /.gradle/
+
+# eclipse artifacts
+.project
+.settings/org.eclipse.buildship.core.prefs
+*/.settings/org.eclipse.buildship.core.prefs
+.classpath
+*/.settings/org.eclipse.jdt.core.prefs
