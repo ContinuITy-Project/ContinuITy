@@ -17,11 +17,16 @@ import org.continuity.workload.dsl.annotation.RegExExtraction;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
 
 /**
+ * Utility for extracting the nested elements of {@link AnnotationElement}s.
+ *
  * @author Henning Schulz
  *
  */
 public enum NestedElementExtractor {
 
+	/**
+	 * For {@link SystemAnnotation}.
+	 */
 	SYSTEM_ANNOTATION(SystemAnnotation.class) {
 		@Override
 		protected Collection<AnnotationElement> extractNestedElements(AnnotationElement element) {
@@ -33,6 +38,9 @@ public enum NestedElementExtractor {
 		}
 	},
 
+	/**
+	 * For {@link InterfaceAnnotation}.
+	 */
 	INTERFACE_ANNOTATION(InterfaceAnnotation.class) {
 		@Override
 		protected Collection<AnnotationElement> extractNestedElements(AnnotationElement element) {
@@ -41,6 +49,9 @@ public enum NestedElementExtractor {
 		}
 	},
 
+	/**
+	 * For {@link ExtractedInput}.
+	 */
 	EXTRACTED_INPUT(ExtractedInput.class) {
 		@Override
 		protected Collection<AnnotationElement> extractNestedElements(AnnotationElement element) {
@@ -49,6 +60,9 @@ public enum NestedElementExtractor {
 		}
 	},
 
+	/**
+	 * For all other elements that do not have nested elements.
+	 */
 	EMPTY(ParameterAnnotation.class, DataInput.class, RegExExtraction.class) {
 		@Override
 		protected Collection<AnnotationElement> extractNestedElements(AnnotationElement element) {
@@ -75,6 +89,14 @@ public enum NestedElementExtractor {
 		this.types = types;
 	}
 
+	/**
+	 * Returns all nested elements of the passed one. With throw an {@link IllegalArgumentException}
+	 * if the class of the passed element does not match.
+	 *
+	 * @param element
+	 *            The element whose nested elements should be returned.
+	 * @return The nested elements of {@code element}.
+	 */
 	public Collection<AnnotationElement> getNestedElements(AnnotationElement element) {
 		boolean assignable = false;
 		for (Class<? extends AnnotationElement> type : types) {
@@ -93,6 +115,13 @@ public enum NestedElementExtractor {
 
 	protected abstract Collection<AnnotationElement> extractNestedElements(AnnotationElement element);
 
+	/**
+	 * Returns the extractor for the passed type.
+	 *
+	 * @param type
+	 *            The class of the {@link AnnotationElement} to be processed.
+	 * @return A NestedElementExtractor that is able to process the passed type.
+	 */
 	public static NestedElementExtractor forType(Class<? extends AnnotationElement> type) {
 		NestedElementExtractor extractor = extractorPerType.get(type);
 
