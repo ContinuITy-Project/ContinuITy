@@ -12,29 +12,9 @@ import java.util.List;
  * @author Henning Schulz
  *
  */
-public class ExtractedInput implements Input {
-
-	private String name;
+public class ExtractedInput extends AbstractAnnotationElement implements Input {
 
 	private List<RegExExtraction> extractions;
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setName(String name) {
-		this.name = name;
-	}
 
 	/**
 	 * Returns the RegEx extractions.
@@ -62,8 +42,8 @@ public class ExtractedInput implements Input {
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer(super.toString());
-		result.append(" (name: ");
-		result.append(name);
+		result.append(" (id: ");
+		result.append(getId());
 		result.append(')');
 		return result.toString();
 	}

@@ -2,6 +2,9 @@
  */
 package org.continuity.workload.dsl.annotation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.continuity.workload.dsl.system.ServiceInterface;
 
 /**
@@ -10,9 +13,11 @@ import org.continuity.workload.dsl.system.ServiceInterface;
  * @author Henning Schulz
  *
  */
-public class InterfaceAnnotation {
+public class InterfaceAnnotation extends AbstractAnnotationElement {
 
 	private ServiceInterface annotatedInterface;
+
+	private List<ParameterAnnotation> parameterAnnotations;
 
 	/**
 	 * Gets the annotated interface.
@@ -31,6 +36,39 @@ public class InterfaceAnnotation {
 	 */
 	public void setAnnotatedInterface(ServiceInterface annotatedInterface) {
 		this.annotatedInterface = annotatedInterface;
+	}
+
+	/**
+	 * Gets the parameter annotations.
+	 *
+	 * @return The parameter annotations.
+	 */
+	public List<ParameterAnnotation> getParameterAnnotations() {
+		if (parameterAnnotations == null) {
+			parameterAnnotations = new ArrayList<>();
+		}
+
+		return parameterAnnotations;
+	}
+
+	/**
+	 * Sets the parameter annotations.
+	 *
+	 * @param parameterAnnotations
+	 *            New value for the parameter annotations.
+	 */
+	public void setParameterAnnotations(List<ParameterAnnotation> parameterAnnotations) {
+		this.parameterAnnotations = parameterAnnotations;
+	}
+
+	/**
+	 * Adds a parameter annotation.
+	 *
+	 * @param annotation
+	 *            The annotation to be added.
+	 */
+	public void addParameterAnnotation(ParameterAnnotation annotation) {
+		getParameterAnnotations().add(annotation);
 	}
 
 }

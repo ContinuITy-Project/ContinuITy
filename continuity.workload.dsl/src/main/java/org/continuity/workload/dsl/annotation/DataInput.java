@@ -12,54 +12,9 @@ import java.util.List;
  * @author Henning Schulz
  *
  */
-public class DataInput implements Input {
-
-	private String name;
-
-	private List<String> data;
+public abstract class DataInput extends AbstractAnnotationElement implements Input {
 
 	private List<DataInput> associated;
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	/**
-	 * Returns the held data.
-	 *
-	 * @return The data.
-	 */
-	public List<String> getData() {
-		if (data == null) {
-			data = new ArrayList<>();
-		}
-
-		return this.data;
-	}
-
-	/**
-	 * Sets the data to be held.
-	 *
-	 * @param data
-	 *            The data.
-	 */
-	public void setData(List<String> data) {
-		this.data = data;
-	}
 
 	/**
 	 * Returns the associated inputs.
@@ -84,15 +39,4 @@ public class DataInput implements Input {
 		this.associated = associated;
 	}
 
-	@Override
-	public String toString() {
-		StringBuffer result = new StringBuffer(super.toString());
-		result.append(" (name: ");
-		result.append(name);
-		result.append(", data: ");
-		result.append(data);
-		result.append(')');
-		return result.toString();
-	}
-
-} // DataInput
+}

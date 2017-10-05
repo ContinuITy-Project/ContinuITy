@@ -10,7 +10,7 @@ import org.continuity.workload.dsl.system.Parameter;
  * @author Henning Schulz
  *
  */
-public class ParameterAnnotation {
+public class ParameterAnnotation extends AbstractAnnotationElement {
 
 	private Input input;
 

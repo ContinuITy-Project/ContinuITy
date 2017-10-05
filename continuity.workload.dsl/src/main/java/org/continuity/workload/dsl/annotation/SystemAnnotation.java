@@ -16,7 +16,7 @@ import java.util.List;
  * @author Henning Schulz
  *
  */
-public class SystemAnnotation {
+public class SystemAnnotation extends AbstractAnnotationElement {
 
 	private List<Input> inputs;
 

@@ -2,72 +2,21 @@
  */
 package org.continuity.workload.dsl.annotation;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Retrieves the input data from a CSV file. Several associated columns of one file can be specified
- * by creating two {@link CsvInput} and adding them to the {@link CsvInput#getAssociated()} of each
- * other.
+ * Retrieves the input data from a CSV file.
  *
  * @author Henning Schulz
  *
  */
-public class CsvInput implements Input {
+public class CsvInput extends DataInput {
 
 	private static final String DEFAULT_SEPARATOR = ";";
-
-	private String name;
-
-	private List<CsvInput> associated;
 
 	private String filename;
 
 	private int column;
 
 	private String separator = DEFAULT_SEPARATOR;
-
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	/**
-	 * Returns the associated inputs.
-	 *
-	 * @return The associated inputs.
-	 */
-	public List<CsvInput> getAssociated() {
-		if (associated == null) {
-			associated = new ArrayList<>();
-		}
-
-		return this.associated;
-	}
-
-	/**
-	 * Sets the associated inputs.
-	 *
-	 * @param associated
-	 *            The associated inputs.
-	 */
-	public void setAssociated(List<CsvInput> associated) {
-		this.associated = associated;
-	}
 
 	/**
 	 * Returns the filename of the CSV file.
@@ -129,8 +78,8 @@ public class CsvInput implements Input {
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer(super.toString());
-		result.append(" (name: ");
-		result.append(name);
+		result.append(" (id: ");
+		result.append(getId());
 		result.append(", filename: ");
 		result.append(filename);
 		result.append(", column: ");
