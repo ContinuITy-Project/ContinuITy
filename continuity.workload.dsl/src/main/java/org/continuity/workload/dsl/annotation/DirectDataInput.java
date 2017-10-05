@@ -3,6 +3,8 @@ package org.continuity.workload.dsl.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Directly holds the data.
  *
@@ -11,6 +13,7 @@ import java.util.List;
  */
 public class DirectDataInput extends DataInput {
 
+	@JsonProperty(value = "data")
 	private List<String> data;
 
 	/**

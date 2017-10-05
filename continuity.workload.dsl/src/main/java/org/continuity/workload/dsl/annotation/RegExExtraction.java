@@ -4,6 +4,13 @@ package org.continuity.workload.dsl.annotation;
 
 import org.continuity.workload.dsl.system.ServiceInterface;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 /**
  * Represents an extraction of a value specified by a regular expression from the response of an
  * interface. The regular expression can specify one ore several groups that are to be extracted.
@@ -22,14 +29,25 @@ public class RegExExtraction extends AbstractAnnotationElement {
 
 	private String pattern;
 
+	@JsonProperty(value = "extracted")
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
+	@JsonIdentityReference(alwaysAsId = true)
 	private ServiceInterface extracted;
 
+	@JsonProperty(value = "response-key")
+	@JsonInclude(value = Include.CUSTOM, valueFilter = ResponseKeyValueFilter.class)
 	private String responseKey = DEFAULT_RESPONSE_KEY;
 
+	@JsonProperty(value = "fallback")
+	@JsonInclude(value = Include.CUSTOM, valueFilter = FallbackValueFilter.class)
 	private String fallbackValue = DEFAULT_FALLBACK_VALUE;
 
+	@JsonProperty(value = "template")
+	@JsonInclude(value = Include.CUSTOM, valueFilter = TemplateValueFilter.class)
 	private String template = DEFAULT_TEMPLATE;
 
+	@JsonProperty(value = "match-number")
+	@JsonInclude(value = Include.CUSTOM, valueFilter = MatchNumberValueFilter.class)
 	private int matchNumber = DEFAULT_MATCH_NUMBER;
 
 	/**
@@ -87,7 +105,7 @@ public class RegExExtraction extends AbstractAnnotationElement {
 	 * @param key
 	 *            The key.
 	 */
-	public void setResponseKeyey(String responseKey) {
+	public void setResponseKey(String responseKey) {
 		this.responseKey = responseKey;
 	}
 
@@ -159,6 +177,54 @@ public class RegExExtraction extends AbstractAnnotationElement {
 		result.append(responseKey);
 		result.append(')');
 		return result.toString();
+	}
+
+	private static final class ResponseKeyValueFilter {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			return DEFAULT_RESPONSE_KEY.equals(obj);
+		}
+
+	}
+
+	private static final class FallbackValueFilter {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			return DEFAULT_FALLBACK_VALUE.equals(obj);
+		}
+
+	}
+
+	private static final class TemplateValueFilter {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			return DEFAULT_TEMPLATE.equals(obj);
+		}
+
+	}
+
+	private static final class MatchNumberValueFilter {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			return (obj != null) && obj.equals(DEFAULT_MATCH_NUMBER);
+		}
+
 	}
 
 }

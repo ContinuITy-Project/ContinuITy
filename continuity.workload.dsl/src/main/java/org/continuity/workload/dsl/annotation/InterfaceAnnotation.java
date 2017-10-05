@@ -7,6 +7,11 @@ import java.util.List;
 
 import org.continuity.workload.dsl.system.ServiceInterface;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 /**
  * Annotation of a {@link ServiceInterface}. Specifies the sources of the inputs.
  *
@@ -15,8 +20,12 @@ import org.continuity.workload.dsl.system.ServiceInterface;
  */
 public class InterfaceAnnotation extends AbstractAnnotationElement {
 
+	@JsonProperty(value = "interface")
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
+	@JsonIdentityReference(alwaysAsId = true)
 	private ServiceInterface annotatedInterface;
 
+	@JsonProperty(value = "parameters")
 	private List<ParameterAnnotation> parameterAnnotations;
 
 	/**

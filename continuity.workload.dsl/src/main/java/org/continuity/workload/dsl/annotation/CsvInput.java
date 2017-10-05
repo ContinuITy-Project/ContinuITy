@@ -2,6 +2,10 @@
  */
 package org.continuity.workload.dsl.annotation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Retrieves the input data from a CSV file.
  *
@@ -12,10 +16,14 @@ public class CsvInput extends DataInput {
 
 	private static final String DEFAULT_SEPARATOR = ";";
 
+	@JsonProperty(value = "file")
 	private String filename;
 
+	@JsonProperty(value = "column")
 	private int column;
 
+	@JsonProperty(value = "separator")
+	@JsonInclude(value = Include.CUSTOM, valueFilter = ValueFilter.class)
 	private String separator = DEFAULT_SEPARATOR;
 
 	/**
@@ -88,5 +96,17 @@ public class CsvInput extends DataInput {
 		result.append(separator);
 		result.append(')');
 		return result.toString();
+	}
+
+	private static class ValueFilter {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			return DEFAULT_SEPARATOR.equals(obj);
+		}
+
 	}
 }

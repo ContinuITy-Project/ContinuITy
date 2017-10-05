@@ -5,6 +5,8 @@ package org.continuity.workload.dsl.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Annotation of a {@link org.continuity.workload.dsl.system.TargetSystem} representation. Holds manual
  * changes that should be kept while changing the system itself. <br>
@@ -18,8 +20,10 @@ import java.util.List;
  */
 public class SystemAnnotation extends AbstractAnnotationElement {
 
+	@JsonProperty(value = "inputs")
 	private List<Input> inputs;
 
+	@JsonProperty(value = "interface-annotations")
 	private List<InterfaceAnnotation> interfaceAnnotations;
 
 	/**
@@ -28,6 +32,10 @@ public class SystemAnnotation extends AbstractAnnotationElement {
 	 * @return The inputs.
 	 */
 	public List<Input> getInputs() {
+		if (inputs == null) {
+			inputs = new ArrayList<>();
+		}
+
 		return this.inputs;
 	}
 

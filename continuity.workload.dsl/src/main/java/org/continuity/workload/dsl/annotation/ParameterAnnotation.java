@@ -4,6 +4,11 @@ package org.continuity.workload.dsl.annotation;
 
 import org.continuity.workload.dsl.system.Parameter;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 /**
  * Specifies the input for a specific parameter.
  *
@@ -12,8 +17,15 @@ import org.continuity.workload.dsl.system.Parameter;
  */
 public class ParameterAnnotation extends AbstractAnnotationElement {
 
+	@JsonProperty(value = "input")
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+	@JsonIdentityReference(alwaysAsId = true)
 	private Input input;
 
+	// TODO: Check if name attribute should be moved to Parameter
+	@JsonProperty(value = "parameter")
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
+	@JsonIdentityReference(alwaysAsId = true)
 	private Parameter annotatedParameter;
 
 	/**

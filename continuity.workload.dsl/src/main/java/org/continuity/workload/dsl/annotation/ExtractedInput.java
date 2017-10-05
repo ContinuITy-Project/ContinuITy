@@ -5,6 +5,8 @@ package org.continuity.workload.dsl.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Represents an input that is to be extracted from the responses of one or several interfaces via
  * regular expressions.
@@ -14,6 +16,7 @@ import java.util.List;
  */
 public class ExtractedInput extends AbstractAnnotationElement implements Input {
 
+	@JsonProperty(value = "extractions")
 	private List<RegExExtraction> extractions;
 
 	/**
