@@ -2,6 +2,8 @@
  */
 package org.continuity.workload.dsl.annotation;
 
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.system.Parameter;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
@@ -15,18 +17,15 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  * @author Henning Schulz
  *
  */
-public class ParameterAnnotation extends AbstractAnnotationElement {
+public class ParameterAnnotation extends AbstractContinuityModelElement {
 
 	@JsonProperty(value = "input")
 	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 	@JsonIdentityReference(alwaysAsId = true)
 	private Input input;
 
-	// TODO: Check if name attribute should be moved to Parameter
 	@JsonProperty(value = "parameter")
-	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
-	@JsonIdentityReference(alwaysAsId = true)
-	private Parameter annotatedParameter;
+	private WeakReference<Parameter> annotatedParameter;
 
 	/**
 	 * Gets the input.
@@ -52,7 +51,7 @@ public class ParameterAnnotation extends AbstractAnnotationElement {
 	 *
 	 * @return The annotated parameter.
 	 */
-	public Parameter getAnnotatedParameter() {
+	public WeakReference<Parameter> getAnnotatedParameter() {
 		return this.annotatedParameter;
 	}
 
@@ -62,7 +61,7 @@ public class ParameterAnnotation extends AbstractAnnotationElement {
 	 * @param annotatedParameter
 	 *            The annotated parameter.
 	 */
-	public void setAnnotatedParameter(Parameter annotatedParameter) {
+	public void setAnnotatedParameter(WeakReference<Parameter> annotatedParameter) {
 		this.annotatedParameter = annotatedParameter;
 	}
 

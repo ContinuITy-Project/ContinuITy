@@ -5,6 +5,8 @@ package org.continuity.workload.dsl.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -14,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
-public class ExtractedInput extends AbstractAnnotationElement implements Input {
+public class ExtractedInput extends AbstractContinuityModelElement implements Input {
 
 	@JsonProperty(value = "extractions")
 	private List<RegExExtraction> extractions;

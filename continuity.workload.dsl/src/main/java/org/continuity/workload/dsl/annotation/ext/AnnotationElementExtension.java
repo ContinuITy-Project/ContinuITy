@@ -3,9 +3,9 @@ package org.continuity.workload.dsl.annotation.ext;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.continuity.workload.dsl.annotation.AnnotationElement;
-import org.continuity.workload.dsl.annotation.SystemAnnotation;
-import org.continuity.workload.dsl.annotation.visitor.AnnotationVisitor;
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+import org.continuity.workload.dsl.ContinuityModelElement;
+import org.continuity.workload.dsl.WeakReference;
 
 /**
  * Generic extension of an element of an annotation. Elements are references by the id. The
@@ -14,53 +14,29 @@ import org.continuity.workload.dsl.annotation.visitor.AnnotationVisitor;
  * @author Henning Schulz
  *
  */
-public class AnnotationElementExtension {
+public class AnnotationElementExtension extends AbstractContinuityModelElement {
 
-	private String id;
-
-	private AnnotationElement element = null;
+	private WeakReference<? extends ContinuityModelElement> reference;
 
 	private Map<String, String> extensions;
 
-	private final AnnotationVisitor visitor = new AnnotationVisitor(this::checkAndSetElement);
-
-	public AnnotationElement resolveElement(SystemAnnotation annotation) {
-		if (element == null) {
-			visitor.visit(annotation);
-			if (element == null) {
-				throw new IllegalArgumentException("Annotation " + annotation + " did not contain any element with id " + id);
-			}
-		}
-
-		return element;
-	}
-
-	private boolean checkAndSetElement(AnnotationElement element) {
-		if ((id != null) && id.equals(element.getId())) {
-			this.element = element;
-			return false;
-		} else {
-			return true;
-		}
+	/**
+	 * Gets {@link #reference}.
+	 *
+	 * @return {@link #reference}
+	 */
+	public WeakReference<? extends ContinuityModelElement> getReference() {
+		return this.reference;
 	}
 
 	/**
-	 * Gets the id.
+	 * Sets {@link #reference}.
 	 *
-	 * @return The id.
+	 * @param reference
+	 *            New value for {@link #reference}
 	 */
-	public String getId() {
-		return this.id;
-	}
-
-	/**
-	 * Sets the id.
-	 *
-	 * @param id
-	 *            New value for the id.
-	 */
-	public void setId(String id) {
-		this.id = id;
+	public void setReference(WeakReference<? extends ContinuityModelElement> reference) {
+		this.reference = reference;
 	}
 
 	/**

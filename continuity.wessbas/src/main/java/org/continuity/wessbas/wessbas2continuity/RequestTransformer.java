@@ -72,7 +72,7 @@ public enum RequestTransformer {
 					param.setParameterType(HttpParameterType.REQ_PARAM);
 				}
 
-				param.setName(paramName);
+				param.setId(paramName);
 				interf.getParameters().add(param);
 			}
 

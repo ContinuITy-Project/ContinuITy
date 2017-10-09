@@ -3,6 +3,8 @@ package org.continuity.workload.dsl.annotation.ext;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+
 /**
  * Generic extension of an annotation.
  *
@@ -11,7 +13,7 @@ import java.util.Map;
  * @author Henning Schulz
  *
  */
-public class AnnotationExtension {
+public class AnnotationExtension extends AbstractContinuityModelElement {
 
 	private Map<String, AnnotationElementExtension> extensions;
 

@@ -2,14 +2,13 @@
  */
 package org.continuity.workload.dsl.annotation;
 
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.system.ServiceInterface;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 /**
  * Represents an extraction of a value specified by a regular expression from the response of an
@@ -20,7 +19,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  * @author Henning Schulz
  *
  */
-public class RegExExtraction extends AbstractAnnotationElement {
+public class RegExExtraction extends AbstractContinuityModelElement {
 
 	private static final String DEFAULT_RESPONSE_KEY = "<default>";
 	private static final String DEFAULT_FALLBACK_VALUE = "NOT FOUND";
@@ -30,9 +29,7 @@ public class RegExExtraction extends AbstractAnnotationElement {
 	private String pattern;
 
 	@JsonProperty(value = "extracted")
-	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
-	@JsonIdentityReference(alwaysAsId = true)
-	private ServiceInterface extracted;
+	private WeakReference<ServiceInterface> extracted;
 
 	@JsonProperty(value = "response-key")
 	@JsonInclude(value = Include.CUSTOM, valueFilter = ResponseKeyValueFilter.class)
@@ -74,7 +71,7 @@ public class RegExExtraction extends AbstractAnnotationElement {
 	 *
 	 * @return The extracted interface.
 	 */
-	public ServiceInterface getExtracted() {
+	public WeakReference<ServiceInterface> getExtracted() {
 		return this.extracted;
 	}
 
@@ -84,7 +81,7 @@ public class RegExExtraction extends AbstractAnnotationElement {
 	 * @param extracted
 	 *            The extracted interface.
 	 */
-	public void setExtracted(ServiceInterface extracted) {
+	public void setExtracted(WeakReference<ServiceInterface> extracted) {
 		this.extracted = extracted;
 	}
 

@@ -69,7 +69,7 @@ public class DslFromWessbasExtractor implements DslExtractor {
 	@Override
 	public TargetSystem extractSystemModel() {
 		TargetSystem system = new TargetSystem();
-		system.setName(systemName);
+		system.setId(systemName);
 
 		SessionLayerTransformer transformer = new SessionLayerTransformer(wessbasModel.getApplicationModel());
 		transformer.registerOnInterfaceFoundListener(system::addInterface);

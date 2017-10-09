@@ -94,7 +94,7 @@ public class WessbasToContinuityTranformationTest {
 		Assert.assertEquals("Expected the system to have 3 interfaces.", 3, system.getInterfaces().size());
 
 		for (ServiceInterface interf : system.getInterfaces()) {
-			switch (interf.getName()) {
+			switch (interf.getId()) {
 			case "Login":
 				Assert.assertEquals("Wrong method for Login!", "GET", ((HttpInterface) interf).getMethod());
 				break;
@@ -105,7 +105,7 @@ public class WessbasToContinuityTranformationTest {
 				Assert.assertEquals("Wrong method for Purchase!", "GET", ((HttpInterface) interf).getMethod());
 				break;
 			default:
-				Assert.fail("Found the unexpected interface " + interf.getName());
+				Assert.fail("Found the unexpected interface " + interf.getId());
 				break;
 			}
 		}

@@ -5,38 +5,17 @@ package org.continuity.workload.dsl.system;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+
 /**
  * Represents a system consisting of interfaces that can be called.
  *
  * @author Henning Schulz
  *
  */
-public class TargetSystem {
-
-	private static final String NAME_DEFAULT = "UNKNOWN";
-
-	private String name = NAME_DEFAULT;
+public class TargetSystem extends AbstractContinuityModelElement {
 
 	private List<ServiceInterface> interfaces;
-
-	/**
-	 * Returns the name of the represented system.
-	 *
-	 * @return The name of the represented system.
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * Sets the name of the represented system.
-	 *
-	 * @param name
-	 *            The name of the represented system.
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
 
 	/**
 	 * Returns the interface representations of the represented system.
@@ -67,8 +46,8 @@ public class TargetSystem {
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer(super.toString());
-		result.append(" (name: ");
-		result.append(name);
+		result.append(" (id: ");
+		result.append(getId());
 		result.append(')');
 		return result.toString();
 	}

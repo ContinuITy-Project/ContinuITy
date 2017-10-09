@@ -5,6 +5,8 @@ package org.continuity.workload.dsl.system;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+
 /**
  * Represents an HTTP interface. That is, requests to this interface can be made by calling
  * {@code domain:port/path} with the represented method, protocol, parameters and headers.
@@ -12,11 +14,9 @@ import java.util.List;
  * @author Henning Schulz
  *
  */
-public class HttpInterface implements ServiceInterface {
+public class HttpInterface extends AbstractContinuityModelElement implements ServiceInterface {
 
 	private static final String ENCODING_DEFAULT = "<no-encoding>";
-
-	private String name;
 
 	private String domain;
 
@@ -33,26 +33,6 @@ public class HttpInterface implements ServiceInterface {
 	private List<HttpParameter> parameters;
 
 	private List<String> headers;
-
-
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setName(String name) {
-		this.name = name;
-	}
 
 	/**
 	 * Returns the domain of the interface.
@@ -204,7 +184,7 @@ public class HttpInterface implements ServiceInterface {
 
 	/**
 	 * Sets the required headers of the interface.
-	 * 
+	 *
 	 * @param headers
 	 *            The required headers.
 	 */
@@ -215,8 +195,8 @@ public class HttpInterface implements ServiceInterface {
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer(super.toString());
-		result.append(" (name: ");
-		result.append(name);
+		result.append(" (id: ");
+		result.append(getId());
 		result.append(", domain: ");
 		result.append(domain);
 		result.append(", port: ");

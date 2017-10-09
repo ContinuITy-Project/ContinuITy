@@ -1,20 +1,20 @@
-package org.continuity.workload.dsl.annotation.visitor;
+package org.continuity.workload.dsl.visitor;
 
 import java.util.function.Predicate;
 
-import org.continuity.workload.dsl.annotation.AnnotationElement;
+import org.continuity.workload.dsl.ContinuityModelElement;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
 
 /**
  * A visitor that can be used to traverse {@link SystemAnnotation}s or nested
- * {@link AnnotationElement}s.
+ * {@link ContinuityModelElement}s.
  *
  * @author Henning Schulz
  *
  */
-public class AnnotationVisitor {
+public class ContinuityModelVisitor {
 
-	private final Predicate<AnnotationElement> operation;
+	private final Predicate<ContinuityModelElement> operation;
 
 	/**
 	 * Creates a new visitor. The operation is called on every single element in depth-first
@@ -24,7 +24,7 @@ public class AnnotationVisitor {
 	 *            The operation to be executed on the elements. It should return whether the nested
 	 *            elements should be visited, as well.
 	 */
-	public AnnotationVisitor(Predicate<AnnotationElement> operation) {
+	public ContinuityModelVisitor(Predicate<ContinuityModelElement> operation) {
 		this.operation = operation;
 	}
 
@@ -34,10 +34,10 @@ public class AnnotationVisitor {
 	 * @param element
 	 *            The element to be visited.
 	 */
-	public void visit(AnnotationElement element) {
+	public void visit(ContinuityModelElement element) {
 		if (operation.test(element)) {
 			NestedElementExtractor extractor = NestedElementExtractor.forType(element.getClass());
-			for (AnnotationElement nested : extractor.getNestedElements(element)) {
+			for (ContinuityModelElement nested : extractor.getNestedElements(element)) {
 				visit(nested);
 			}
 		}

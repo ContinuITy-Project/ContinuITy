@@ -1,7 +1,8 @@
-package continuity.workload.dsl;
+package continuity.workload.dsl.annotation;
 
 import java.io.IOException;
 
+import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.annotation.CsvInput;
 import org.continuity.workload.dsl.annotation.DirectDataInput;
 import org.continuity.workload.dsl.annotation.ExtractedInput;
@@ -32,10 +33,10 @@ public class AnnotationYamlTest {
 	public static void setupAnnotation() {
 		// System model
 		HttpInterface interf = new HttpInterface();
-		interf.setName("login");
+		interf.setId("login");
 
 		HttpParameter param = new HttpParameter();
-		param.setName("user");
+		param.setId("user");
 		param.setParameterType(HttpParameterType.REQ_PARAM);
 
 		interf.getParameters().add(param);
@@ -54,12 +55,13 @@ public class AnnotationYamlTest {
 
 		ExtractedInput extrInput = new ExtractedInput();
 		RegExExtraction extr = new RegExExtraction();
-		extr.setExtracted(interf);
+		extr.setExtracted(WeakReference.create(interf));
 		extr.setPattern("(.*)");
 		extrInput.getExtractions().add(extr);
 
 		UnknownDataInput unknownInput = new UnknownDataInput();
-		unknownInput.setId("UNKNOWN");
+		unknownInput.setId("UNK1");
+		unknownInput.setType("MyCustomDataInput");
 
 		// Annotation
 
@@ -68,12 +70,13 @@ public class AnnotationYamlTest {
 		annotation.getInputs().add(csvInput);
 		annotation.getInputs().add(extrInput);
 		annotation.getInputs().add(unknownInput);
+		annotation.setId("ANN");
 
 		InterfaceAnnotation interfaceAnn = new InterfaceAnnotation();
-		interfaceAnn.setAnnotatedInterface(interf);
+		interfaceAnn.setAnnotatedInterface(WeakReference.create(interf));
 
 		ParameterAnnotation paramAnn = new ParameterAnnotation();
-		paramAnn.setAnnotatedParameter(param);
+		paramAnn.setAnnotatedParameter(WeakReference.create(param));
 		paramAnn.setInput(input);
 
 		interfaceAnn.getParameterAnnotations().add(paramAnn);

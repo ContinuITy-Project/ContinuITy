@@ -1,4 +1,4 @@
-package org.continuity.workload.dsl.annotation;
+package org.continuity.workload.dsl;
 
 /**
  * An AnnotationElement optionally holds an id that can be used to reference it from outside.
@@ -6,7 +6,7 @@ package org.continuity.workload.dsl.annotation;
  * @author Henning Schulz
  *
  */
-public interface AnnotationElement {
+public interface ContinuityModelElement {
 
 	/**
 	 * Returns an id that identifies this element within the annotation.
@@ -14,6 +14,14 @@ public interface AnnotationElement {
 	 * @return The id.
 	 */
 	String getId();
+
+	/**
+	 * Sets the id that identifies this element within the annotation.
+	 *
+	 * @param id
+	 *            The new value for id.
+	 */
+	void setId(String id);
 
 	/**
 	 * Returns whether the element holds an id.

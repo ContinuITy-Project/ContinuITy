@@ -81,7 +81,7 @@ public class SessionLayerTransformer {
 		Request request = protocolState.getRequest();
 
 		ServiceInterface interf = RequestTransformer.get(request.getClass()).transform(request);
-		interf.setName(interfaceName);
+		interf.setId(interfaceName);
 
 		onInterfaceFound(interf);
 	}

@@ -5,12 +5,11 @@ package org.continuity.workload.dsl.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.system.ServiceInterface;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 /**
  * Annotation of a {@link ServiceInterface}. Specifies the sources of the inputs.
@@ -18,14 +17,12 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  * @author Henning Schulz
  *
  */
-public class InterfaceAnnotation extends AbstractAnnotationElement {
+public class InterfaceAnnotation extends AbstractContinuityModelElement {
 
 	@JsonProperty(value = "interface")
-	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
-	@JsonIdentityReference(alwaysAsId = true)
-	private ServiceInterface annotatedInterface;
+	private WeakReference<ServiceInterface> annotatedInterface;
 
-	@JsonProperty(value = "parameters")
+	@JsonProperty(value = "parameter-annotations")
 	private List<ParameterAnnotation> parameterAnnotations;
 
 	/**
@@ -33,7 +30,7 @@ public class InterfaceAnnotation extends AbstractAnnotationElement {
 	 *
 	 * @return The annotated interface.
 	 */
-	public ServiceInterface getAnnotatedInterface() {
+	public WeakReference<ServiceInterface> getAnnotatedInterface() {
 		return this.annotatedInterface;
 	}
 
@@ -43,7 +40,7 @@ public class InterfaceAnnotation extends AbstractAnnotationElement {
 	 * @param annotatedInterface
 	 *            The annotated interface.
 	 */
-	public void setAnnotatedInterface(ServiceInterface annotatedInterface) {
+	public void setAnnotatedInterface(WeakReference<ServiceInterface> annotatedInterface) {
 		this.annotatedInterface = annotatedInterface;
 	}
 
