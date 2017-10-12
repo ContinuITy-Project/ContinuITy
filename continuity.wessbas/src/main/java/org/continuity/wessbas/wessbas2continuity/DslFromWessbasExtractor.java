@@ -1,5 +1,6 @@
 package org.continuity.wessbas.wessbas2continuity;
 
+import org.continuity.workload.dsl.AnnotationExtractor;
 import org.continuity.workload.dsl.DslExtractor;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
 import org.continuity.workload.dsl.system.TargetSystem;
@@ -19,6 +20,10 @@ public class DslFromWessbasExtractor implements DslExtractor {
 	private WorkloadModel wessbasModel;
 
 	private String systemName = SYSTEM_UNKNOWN;
+
+	private TargetSystem extractedSystem;
+
+	private SystemAnnotation extractedAnnotation;
 
 	/**
 	 * Constructor. Requires calling {@link DslFromWessbasExtractor#init(WorkloadModel)
@@ -56,6 +61,9 @@ public class DslFromWessbasExtractor implements DslExtractor {
 	 *            The WESSBAS DSL instance to be transformed.
 	 */
 	public void init(WorkloadModel wessbasModel, String systemName) {
+		this.extractedSystem = null;
+		this.extractedAnnotation = null;
+
 		this.wessbasModel = wessbasModel;
 
 		if (systemName != null) {
@@ -68,14 +76,18 @@ public class DslFromWessbasExtractor implements DslExtractor {
 	 */
 	@Override
 	public TargetSystem extractSystemModel() {
-		TargetSystem system = new TargetSystem();
-		system.setId(systemName);
+		if (extractedSystem != null) {
+			return extractedSystem;
+		}
+
+		extractedSystem = new TargetSystem();
+		extractedSystem.setId(systemName);
 
 		SessionLayerTransformer transformer = new SessionLayerTransformer(wessbasModel.getApplicationModel());
-		transformer.registerOnInterfaceFoundListener(system::addInterface);
+		transformer.registerOnInterfaceFoundListener(extractedSystem::addInterface);
 		transformer.transform();
 
-		return system;
+		return extractedSystem;
 	}
 
 	/**
@@ -83,8 +95,16 @@ public class DslFromWessbasExtractor implements DslExtractor {
 	 */
 	@Override
 	public SystemAnnotation extractInitialAnnotation() {
-		// TODO Auto-generated method stub
-		return null;
+		if (extractedAnnotation != null) {
+			return extractedAnnotation;
+		}
+
+		if (extractedSystem == null) {
+			extractSystemModel();
+		}
+
+		extractedAnnotation = new AnnotationExtractor().extractAnnotation(extractedSystem);
+		return extractedAnnotation;
 	}
 
 }

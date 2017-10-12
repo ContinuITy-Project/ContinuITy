@@ -1,11 +1,10 @@
-package org.continuity.workload.dsl.annotation.yaml;
+package org.continuity.workload.dsl.yaml;
 
 import java.io.IOException;
 
 import org.continuity.workload.dsl.ContinuityModelElement;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.filter.TokenFilter;
 import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -100,22 +99,6 @@ public class ContinuityModelSerializer extends JsonSerializer<ContinuityModelEle
 				super.writeStringField(fieldName, value);
 			}
 		}
-
-	}
-
-	private static final class IdFilter extends TokenFilter {
-
-		// /**
-		// * {@inheritDoc}
-		// */
-		// @Override
-		// public TokenFilter includeProperty(String name) {
-		// if ("id".equals(name)) {
-		// return null;
-		// }
-		//
-		// return super.includeProperty(name);
-		// }
 
 	}
 

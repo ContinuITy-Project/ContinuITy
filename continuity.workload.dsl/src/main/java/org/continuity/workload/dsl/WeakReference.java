@@ -4,7 +4,7 @@ import org.continuity.workload.dsl.visitor.ContinuityModelVisitor;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 /**
@@ -19,11 +19,12 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 @JsonIdentityReference(alwaysAsId = true)
 public class WeakReference<T extends ContinuityModelElement> {
 
-	@JsonProperty(value = "id", required = true)
 	private final String id;
 
+	@JsonIgnore
 	private final Class<T> type;
 
+	@JsonIgnore
 	private T referred = null;
 
 	private final ContinuityModelVisitor visitor = new ContinuityModelVisitor(this::checkAndSetElement);
@@ -94,6 +95,14 @@ public class WeakReference<T extends ContinuityModelElement> {
 		} else {
 			return true;
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String toString() {
+		return "weak ref [" + id + "]";
 	}
 
 }

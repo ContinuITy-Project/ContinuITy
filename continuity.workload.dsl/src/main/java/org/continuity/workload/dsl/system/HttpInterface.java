@@ -14,7 +14,7 @@ import org.continuity.workload.dsl.AbstractContinuityModelElement;
  * @author Henning Schulz
  *
  */
-public class HttpInterface extends AbstractContinuityModelElement implements ServiceInterface {
+public class HttpInterface extends AbstractContinuityModelElement implements ServiceInterface<HttpParameter> {
 
 	private static final String ENCODING_DEFAULT = "<no-encoding>";
 
@@ -153,6 +153,7 @@ public class HttpInterface extends AbstractContinuityModelElement implements Ser
 	 *
 	 * @return The parameters.
 	 */
+	@Override
 	public List<HttpParameter> getParameters() {
 		if (parameters == null) {
 			parameters = new ArrayList<>();

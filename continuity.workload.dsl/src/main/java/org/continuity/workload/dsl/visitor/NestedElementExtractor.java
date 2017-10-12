@@ -16,8 +16,8 @@ import org.continuity.workload.dsl.annotation.ParameterAnnotation;
 import org.continuity.workload.dsl.annotation.RegExExtraction;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
-import org.continuity.workload.dsl.system.HttpInterface;
-import org.continuity.workload.dsl.system.HttpParameter;
+import org.continuity.workload.dsl.system.Parameter;
+import org.continuity.workload.dsl.system.ServiceInterface;
 import org.continuity.workload.dsl.system.TargetSystem;
 
 /**
@@ -31,16 +31,16 @@ public enum NestedElementExtractor {
 	TARGET_SYSTEM(TargetSystem.class) {
 		@Override
 		protected Collection<ContinuityModelElement> extractNestedElements(ContinuityModelElement element) {
-			// TODO Auto-generated method stub
-			return null;
+			TargetSystem system = (TargetSystem) element;
+			return new ArrayList<>(system.getInterfaces());
 		}
 	},
 
-	INTERFACE(HttpInterface.class) {
+	INTERFACE(ServiceInterface.class) {
 		@Override
 		protected Collection<ContinuityModelElement> extractNestedElements(ContinuityModelElement element) {
-			// TODO Auto-generated method stub
-			return null;
+			ServiceInterface<?> interf = (ServiceInterface<?>) element;
+			return new ArrayList<>(interf.getParameters());
 		}
 	},
 
@@ -83,7 +83,7 @@ public enum NestedElementExtractor {
 	/**
 	 * For all other elements that do not have nested elements.
 	 */
-	EMPTY(HttpParameter.class, ParameterAnnotation.class, DataInput.class, RegExExtraction.class) {
+	EMPTY(Parameter.class, ParameterAnnotation.class, DataInput.class, RegExExtraction.class) {
 		@Override
 		protected Collection<ContinuityModelElement> extractNestedElements(ContinuityModelElement element) {
 			return Collections.emptyList();
@@ -120,7 +120,7 @@ public enum NestedElementExtractor {
 	}
 
 	/**
-	 * Returns all nested elements of the passed one. With throw an {@link IllegalArgumentException}
+	 * Returns all nested elements of the passed one. Will throw an {@link IllegalArgumentException}
 	 * if the class of the passed element does not match.
 	 *
 	 * @param element
@@ -163,7 +163,7 @@ public enum NestedElementExtractor {
 			}
 		}
 
-		return null;
+		return extractor;
 	}
 
 }

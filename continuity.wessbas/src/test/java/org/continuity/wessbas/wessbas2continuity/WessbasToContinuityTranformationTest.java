@@ -3,6 +3,7 @@ package org.continuity.wessbas.wessbas2continuity;
 import java.io.IOException;
 
 import org.continuity.wessbas.utils.WessbasModelParser;
+import org.continuity.workload.dsl.annotation.SystemAnnotation;
 import org.continuity.workload.dsl.system.HttpInterface;
 import org.continuity.workload.dsl.system.ServiceInterface;
 import org.continuity.workload.dsl.system.TargetSystem;
@@ -93,7 +94,7 @@ public class WessbasToContinuityTranformationTest {
 
 		Assert.assertEquals("Expected the system to have 3 interfaces.", 3, system.getInterfaces().size());
 
-		for (ServiceInterface interf : system.getInterfaces()) {
+		for (ServiceInterface<?> interf : system.getInterfaces()) {
 			switch (interf.getId()) {
 			case "Login":
 				Assert.assertEquals("Wrong method for Login!", "GET", ((HttpInterface) interf).getMethod());
@@ -109,6 +110,9 @@ public class WessbasToContinuityTranformationTest {
 				break;
 			}
 		}
+
+		SystemAnnotation annotation = extractor.extractInitialAnnotation();
+		Assert.assertEquals("Extracted system and annotation should have the same number of interfaces!", system.getInterfaces().size(), annotation.getInterfaceAnnotations().size());
 	}
 
 	@Test

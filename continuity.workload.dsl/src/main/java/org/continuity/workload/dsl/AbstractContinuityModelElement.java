@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @JsonFilter("idFilter")
 public abstract class AbstractContinuityModelElement implements ContinuityModelElement {
+
 	private String id = null;
 
 	/**

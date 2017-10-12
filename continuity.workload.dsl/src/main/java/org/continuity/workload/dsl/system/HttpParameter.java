@@ -4,6 +4,8 @@ package org.continuity.workload.dsl.system;
 
 import org.continuity.workload.dsl.AbstractContinuityModelElement;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Represents a parameter of an {@link HttpInterface}.
  *
@@ -12,6 +14,7 @@ import org.continuity.workload.dsl.AbstractContinuityModelElement;
  */
 public class HttpParameter extends AbstractContinuityModelElement implements Parameter {
 
+	@JsonProperty("parameter-type")
 	private HttpParameterType parameterType = HttpParameterType.REQ_PARAM;
 
 	/**

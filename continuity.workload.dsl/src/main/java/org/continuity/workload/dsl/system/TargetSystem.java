@@ -15,14 +15,14 @@ import org.continuity.workload.dsl.AbstractContinuityModelElement;
  */
 public class TargetSystem extends AbstractContinuityModelElement {
 
-	private List<ServiceInterface> interfaces;
+	private List<ServiceInterface<?>> interfaces;
 
 	/**
 	 * Returns the interface representations of the represented system.
 	 *
 	 * @return the interface representations of the represented system
 	 */
-	public List<ServiceInterface> getInterfaces() {
+	public List<ServiceInterface<?>> getInterfaces() {
 		if (interfaces == null) {
 			interfaces = new ArrayList<>();
 		}
@@ -35,11 +35,11 @@ public class TargetSystem extends AbstractContinuityModelElement {
 	 * @param interfaces
 	 *            The interface representations of the represented system.
 	 */
-	public void setInterfaces(List<ServiceInterface> interfaces) {
+	public void setInterfaces(List<ServiceInterface<?>> interfaces) {
 		this.interfaces = interfaces;
 	}
 
-	public void addInterface(ServiceInterface sInterface) {
+	public void addInterface(ServiceInterface<?> sInterface) {
 		getInterfaces().add(sInterface);
 	}
 

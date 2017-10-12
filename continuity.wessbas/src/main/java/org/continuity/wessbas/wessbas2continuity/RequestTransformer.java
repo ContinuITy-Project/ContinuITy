@@ -29,7 +29,7 @@ public enum RequestTransformer {
 	HTTP(HTTPRequest.class) {
 
 		@Override
-		public ServiceInterface transform(Request request) {
+		public ServiceInterface<?> transform(Request request) {
 			HttpInterface interf = new HttpInterface();
 
 			for (Property property : request.getProperties()) {
@@ -111,7 +111,7 @@ public enum RequestTransformer {
 		}
 	}
 
-	public abstract ServiceInterface transform(Request request);
+	public abstract ServiceInterface<?> transform(Request request);
 
 	private RequestTransformer(Class<? extends Request> requestType) {
 		this.requestType = requestType;

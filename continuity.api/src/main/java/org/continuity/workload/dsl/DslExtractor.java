@@ -13,15 +13,15 @@ public interface DslExtractor {
 
 	/**
 	 * Transforms the workload model into a System model.
-	 * 
-	 * @return
+	 *
+	 * @return The transformed system model.
 	 */
 	TargetSystem extractSystemModel();
 
 	/**
-	 * Generates an initial annotation that can be changes by users.
+	 * Generates an initial annotation that can be changed by users.
 	 *
-	 * @return
+	 * @return The transformed annotation model.
 	 */
 	SystemAnnotation extractInitialAnnotation();
 

@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class InterfaceAnnotation extends AbstractContinuityModelElement {
 
 	@JsonProperty(value = "interface")
-	private WeakReference<ServiceInterface> annotatedInterface;
+	private WeakReference<ServiceInterface<?>> annotatedInterface;
 
 	@JsonProperty(value = "parameter-annotations")
 	private List<ParameterAnnotation> parameterAnnotations;
@@ -30,7 +30,7 @@ public class InterfaceAnnotation extends AbstractContinuityModelElement {
 	 *
 	 * @return The annotated interface.
 	 */
-	public WeakReference<ServiceInterface> getAnnotatedInterface() {
+	public WeakReference<ServiceInterface<?>> getAnnotatedInterface() {
 		return this.annotatedInterface;
 	}
 
@@ -40,7 +40,7 @@ public class InterfaceAnnotation extends AbstractContinuityModelElement {
 	 * @param annotatedInterface
 	 *            The annotated interface.
 	 */
-	public void setAnnotatedInterface(WeakReference<ServiceInterface> annotatedInterface) {
+	public void setAnnotatedInterface(WeakReference<ServiceInterface<?>> annotatedInterface) {
 		this.annotatedInterface = annotatedInterface;
 	}
 

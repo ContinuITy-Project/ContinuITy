@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
  */
 @JsonTypeInfo(use = Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({ @Type(value = DirectDataInput.class, name = "direct"), @Type(value = CsvInput.class, name = "csv"), @Type(value = ExtractedInput.class, name = "extracted"),
-		@Type(value = UnknownDataInput.class, name = "unknown") })
+	@Type(value = UnknownDataInput.class, name = "unknown") })
 public interface Input extends ContinuityModelElement {
 
 }

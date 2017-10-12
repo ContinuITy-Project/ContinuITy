@@ -27,7 +27,7 @@ public class SessionLayerTransformer {
 
 	private final ApplicationModel applicationModel;
 
-	private List<Consumer<ServiceInterface>> interfaceListeners;
+	private List<Consumer<ServiceInterface<?>>> interfaceListeners;
 
 	/**
 	 * Creates a new SessionLayerTransformer for the specified {@link ApplicationModel}.
@@ -45,7 +45,7 @@ public class SessionLayerTransformer {
 	 * @param listener
 	 *            The listener to be called.
 	 */
-	public void registerOnInterfaceFoundListener(Consumer<ServiceInterface> listener) {
+	public void registerOnInterfaceFoundListener(Consumer<ServiceInterface<?>> listener) {
 		if (interfaceListeners == null) {
 			interfaceListeners = new ArrayList<>();
 		}
@@ -53,7 +53,7 @@ public class SessionLayerTransformer {
 		interfaceListeners.add(listener);
 	}
 
-	private void onInterfaceFound(ServiceInterface sInterface) {
+	private void onInterfaceFound(ServiceInterface<?> sInterface) {
 		interfaceListeners.forEach(l -> l.accept(sInterface));
 	}
 
@@ -80,7 +80,7 @@ public class SessionLayerTransformer {
 		ProtocolState protocolState = state.getProtocolDetails().getProtocolStates().get(0);
 		Request request = protocolState.getRequest();
 
-		ServiceInterface interf = RequestTransformer.get(request.getClass()).transform(request);
+		ServiceInterface<?> interf = RequestTransformer.get(request.getClass()).transform(request);
 		interf.setId(interfaceName);
 
 		onInterfaceFound(interf);

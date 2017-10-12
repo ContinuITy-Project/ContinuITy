@@ -1,0 +1,3 @@
+dependencies {
+	compile project(':continuity.workload.dsl')
+}

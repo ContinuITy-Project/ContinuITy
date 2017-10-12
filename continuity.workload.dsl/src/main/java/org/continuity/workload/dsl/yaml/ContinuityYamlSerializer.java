@@ -1,20 +1,22 @@
-package org.continuity.workload.dsl.annotation.yaml;
+package org.continuity.workload.dsl.yaml;
 
 import java.io.File;
 import java.io.IOException;
 
 import org.continuity.workload.dsl.ContinuityModelElement;
-import org.continuity.workload.dsl.annotation.SystemAnnotation;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
@@ -28,17 +30,27 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
  * @author Henning Schulz
  *
  */
-public class AnnotationYamlSerializer {
+public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 
-	public SystemAnnotation readFromYaml(String yamlSource) throws JsonParseException, JsonMappingException, IOException {
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
-		return mapper.readValue(yamlSource, SystemAnnotation.class);
+	private final Class<T> type;
+
+	/**
+	 *
+	 */
+	public ContinuityYamlSerializer(Class<T> type) {
+		this.type = type;
 	}
 
-	public void writeToYaml(SystemAnnotation annotation, String yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
+	public T readFromYaml(String yamlSource) throws JsonParseException, JsonMappingException, IOException {
+		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
+		mapper.registerModule(new SimpleModule().setDeserializerModifier(new ContinuityDeserializerModifier()));
+		return mapper.readValue(new File(yamlSource), type);
+	}
+
+	public void writeToYaml(T model, String yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
 		mapper.registerModule(new SimpleModule().setSerializerModifier(new ContinuitySerializerModifier()));
-		mapper.writer(new SimpleFilterProvider().addFilter("idFilter", new IdFilter())).writeValue(new File(yamlFile), annotation);
+		mapper.writer(new SimpleFilterProvider().addFilter("idFilter", new IdFilter())).writeValue(new File(yamlFile), model);
 	}
 
 	private static class ContinuitySerializerModifier extends BeanSerializerModifier {
@@ -51,6 +63,23 @@ public class AnnotationYamlSerializer {
 			}
 
 			return serializer;
+		}
+
+	}
+
+	private static class ContinuityDeserializerModifier extends BeanDeserializerModifier {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@SuppressWarnings("unchecked")
+		@Override
+		public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
+			if (ContinuityModelElement.class.isAssignableFrom(beanDesc.getBeanClass())) {
+				return new ContinuityModelDeserializer((JsonDeserializer<Object>) deserializer);
+			}
+
+			return deserializer;
 		}
 
 	}
@@ -79,5 +108,4 @@ public class AnnotationYamlSerializer {
 			return true;
 		}
 	}
-
 }
