@@ -46,7 +46,28 @@ public class WeakReference<T extends ContinuityModelElement> {
 		if (referred == null) {
 			throw new IllegalArgumentException("Passed element is null!");
 		}
+
 		return new WeakReference<T>(referred.getId(), (Class<T>) referred.getClass());
+	}
+
+	/**
+	 * Creates a new WeakReference to the specified id with the specified type.
+	 *
+	 * @param type
+	 *            Type of the reference.
+	 * @param id
+	 *            Id where the reference points to.
+	 * @return A WeakReference.
+	 */
+	public static <T extends ContinuityModelElement> WeakReference<T> create(Class<T> type, String id) {
+		if (type == null) {
+			throw new IllegalArgumentException("Passed type is null!");
+		}
+		if (id == null) {
+			throw new IllegalArgumentException("Passed id is null!");
+		}
+
+		return new WeakReference<>(id, type);
 	}
 
 	/**
@@ -90,7 +111,7 @@ public class WeakReference<T extends ContinuityModelElement> {
 				this.referred = (T) referred;
 				return false;
 			} else {
-				throw new IllegalStateException("The reffered element is of type " + referred.getClass() + ". Expected " + type);
+				throw new IllegalStateException("The referred element is of type " + referred.getClass() + ". Expected " + type);
 			}
 		} else {
 			return true;
