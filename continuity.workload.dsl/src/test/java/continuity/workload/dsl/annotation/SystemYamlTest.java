@@ -21,7 +21,8 @@ public class SystemYamlTest {
 	public void test() throws JsonGenerationException, JsonMappingException, IOException {
 		ContinuityYamlSerializer<TargetSystem> serializer = new ContinuityYamlSerializer<>(TargetSystem.class);
 		serializer.writeToYaml(systemModel, "system-model.yml");
-		serializer.readFromYaml("system-model.yml");
+		TargetSystem read = serializer.readFromYaml("system-model.yml");
+		System.out.println(read);
 	}
 
 }
