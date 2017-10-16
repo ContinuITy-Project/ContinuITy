@@ -1,9 +1,12 @@
 package org.continuity.utils.enums;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -14,7 +17,7 @@ import java.util.function.Function;
  */
 public class EnumForClassHolder<E extends Enum<E>, S> {
 
-	private final Map<Class<? extends S>, E> enumForClass = new HashMap<>();
+	private final Map<Class<? extends S>, Set<E>> enumForClass = new HashMap<>();
 
 	private final E fallback;
 
@@ -38,7 +41,7 @@ public class EnumForClassHolder<E extends Enum<E>, S> {
 			}
 
 			for (Class<? extends S> clazz : classGetter.apply(constant)) {
-				enumForClass.put(clazz, constant);
+				addConstant(clazz, constant);
 			}
 		}
 	}
@@ -56,27 +59,54 @@ public class EnumForClassHolder<E extends Enum<E>, S> {
 	}
 
 	/**
-	 * Gets an enum constants for the specified type. If there is no constant, the fallback value
-	 * (of {@code null}) is returned.
+	 * Gets the enum constants for the specified type. If there is no constant, the fallback value
+	 * (or {@code null}) is returned.
+	 *
+	 * @param type
+	 *            The type for which the enum constants are to be returned.
+	 * @return The enum constants registered for the specified type.
+	 */
+	public Set<E> get(Class<? extends S> type) {
+		Set<E> result = new HashSet<>();
+
+		for (Entry<Class<? extends S>, Set<E>> entry : enumForClass.entrySet()) {
+			if (entry.getKey().isAssignableFrom(type)) {
+				result.addAll(entry.getValue());
+			}
+		}
+
+		if (!result.isEmpty()) {
+			return result;
+		} else {
+			return Collections.singleton(fallback);
+		}
+	}
+
+	/**
+	 * Gets a single random enum constant for the specified type. If there is no constant, the
+	 * fallback value (or {@code null}) is returned.
 	 *
 	 * @param type
 	 *            The type for which the enum constant is to be returned.
-	 * @return The enum constant registered for the specified type.
+	 * @return One enum constant registered for the specified type.
 	 */
-	public E get(Class<? extends S> type) {
-		E constant = enumForClass.get(type);
-
-		if (constant == null) {
-			for (Entry<Class<? extends S>, E> entry : enumForClass.entrySet()) {
-				if (entry.getKey().isAssignableFrom(type)) {
-					return entry.getValue();
-				}
-			}
-
-			return fallback;
-		} else {
+	public E getOne(Class<? extends S> type) {
+		for (E constant : get(type)) {
 			return constant;
 		}
+
+		return fallback;
+	}
+
+	private void addConstant(Class<? extends S> clazz, E constant) {
+		Set<E> list = enumForClass.get(clazz);
+
+		if (list == null) {
+			list = new HashSet<>();
+			enumForClass.put(clazz, list);
+		}
+
+		list.add(constant);
 	}
 
 }

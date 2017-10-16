@@ -78,7 +78,7 @@ public class SystemToAnnotationTransformer {
 		public abstract void handleElement(ContinuityModelElement element, SystemAnnotation annotation);
 
 		public static ElementHandler get(Class<? extends ContinuityModelElement> elementType) {
-			return holder.get(elementType);
+			return holder.getOne(elementType);
 		}
 	}
 

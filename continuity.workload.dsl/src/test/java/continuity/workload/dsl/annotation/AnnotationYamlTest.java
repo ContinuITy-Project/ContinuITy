@@ -26,7 +26,7 @@ public class AnnotationYamlTest {
 	@Test
 	public void test() throws JsonGenerationException, JsonMappingException, IOException {
 		ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
-		// serializer.writeToYaml(annotation, "annotation.yml");
+		serializer.writeToYaml(annotation, "annotation.yml");
 		SystemAnnotation read = serializer.readFromYaml("annotation.yml");
 		System.out.println(read);
 	}

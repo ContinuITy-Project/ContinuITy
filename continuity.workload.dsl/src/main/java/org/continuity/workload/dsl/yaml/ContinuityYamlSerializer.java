@@ -47,7 +47,9 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 		mapper.registerModule(new SimpleModule().setDeserializerModifier(new ContinuityDeserializerModifier()));
 
 		mapper.registerModule(new SimpleModule().addDeserializer(WeakReference.class, new WeakReferenceDeserializer()));
-		return mapper.readValue(new File(yamlSource), type);
+		T read = mapper.readValue(new File(yamlSource), type);
+		ModelValidator.fixAll(read);
+		return read;
 	}
 
 	public void writeToYaml(T model, String yamlFile) throws JsonGenerationException, JsonMappingException, IOException {

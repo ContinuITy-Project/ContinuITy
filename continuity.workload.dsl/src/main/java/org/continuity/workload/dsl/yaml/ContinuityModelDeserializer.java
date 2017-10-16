@@ -3,10 +3,12 @@ package org.continuity.workload.dsl.yaml;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.continuity.workload.dsl.ContinuityModelElement;
+import org.continuity.workload.dsl.annotation.Input;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.JsonParserDelegate;
@@ -25,6 +27,8 @@ public class ContinuityModelDeserializer extends JsonDeserializer<ContinuityMode
 
 	private final JsonDeserializer<Object> defaultDeserializer;
 
+	private final Map<Object, Object> typeIds = new HashMap<>();
+
 	/**
 	 *
 	 */
@@ -37,16 +41,8 @@ public class ContinuityModelDeserializer extends JsonDeserializer<ContinuityMode
 	 */
 	@Override
 	public ContinuityModelElement deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-		IdHandlingGeneratorDelegate delegate = new IdHandlingGeneratorDelegate(p);
+		TypeHandlingGeneratorDelegate delegate = new TypeHandlingGeneratorDelegate(p, this);
 		ContinuityModelElement deserialized = (ContinuityModelElement) defaultDeserializer.deserialize(delegate, ctxt);
-
-		for (Entry<String, String> entry : delegate.getExtractedFields().entrySet()) {
-			WeakReferenceResolver resolver = WeakReferenceResolver.get(deserialized.getClass());
-
-			if (resolver.isWeakReference(entry.getKey())) {
-				resolver.resolveWeakReference(entry.getKey(), entry.getValue(), deserialized);
-			}
-		}
 
 		return deserialized;
 	}
@@ -75,31 +71,29 @@ public class ContinuityModelDeserializer extends JsonDeserializer<ContinuityMode
 		}
 	}
 
-	private static class IdHandlingGeneratorDelegate extends JsonParserDelegate {
+	private static class TypeHandlingGeneratorDelegate extends JsonParserDelegate {
 
-		private final Map<String, String> extractedFields = new HashMap<>();
+		private static final Class<?>[] superTypes = { Input.class };
 
-		public IdHandlingGeneratorDelegate(JsonParser d) {
+		private final ContinuityModelDeserializer deser;
+
+		public TypeHandlingGeneratorDelegate(JsonParser d, ContinuityModelDeserializer deser) {
 			super(d);
+			this.deser = deser;
 		}
 
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
-		public String getText() throws IOException {
-			String text = super.getText();
-			extractedFields.put(getCurrentName(), text);
-			return text;
-		}
+		public Object getObjectId() throws IOException {
+			Object id = super.getObjectId();
 
-		/**
-		 * Gets {@link #extractedFields}.
-		 *
-		 * @return {@link #extractedFields}
-		 */
-		public Map<String, String> getExtractedFields() {
-			return this.extractedFields;
+			if (id != null) {
+				deser.typeIds.put(id, getTypeIdOfObject(super.getCurrentValue()));
+			}
+
+			return id;
 		}
 
 		/**
@@ -107,8 +101,39 @@ public class ContinuityModelDeserializer extends JsonDeserializer<ContinuityMode
 		 */
 		@Override
 		public Object getTypeId() throws IOException {
-			System.out.println(getCurrentName() + ": " + (getCurrentValue() == null ? "null" : getCurrentValue().getClass()));
-			return super.getTypeId();
+			Object id = super.getTypeId();
+
+			if (id != null) {
+				return id;
+			} else {
+				Object refId = super.getText();
+
+				if (refId != null) {
+					return deser.typeIds.get(refId);
+				}
+			}
+
+			return null;
+		}
+
+		private Object getTypeIdOfObject(Object object) {
+			if (object == null) {
+				return null;
+			}
+
+			for (Class<?> clazz : superTypes) {
+				JsonSubTypes types = clazz.getAnnotation(JsonSubTypes.class);
+
+				if (types != null) {
+					for (Type type : types.value()) {
+						if (type.value().equals(object.getClass())) {
+							return type.name();
+						}
+					}
+				}
+			}
+
+			return null;
 		}
 
 	}
