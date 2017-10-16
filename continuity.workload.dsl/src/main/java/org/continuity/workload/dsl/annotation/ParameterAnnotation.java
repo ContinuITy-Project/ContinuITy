@@ -2,7 +2,14 @@
  */
 package org.continuity.workload.dsl.annotation;
 
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.system.Parameter;
+
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 /**
  * Specifies the input for a specific parameter.
@@ -10,11 +17,15 @@ import org.continuity.workload.dsl.system.Parameter;
  * @author Henning Schulz
  *
  */
-public class ParameterAnnotation {
+public class ParameterAnnotation extends AbstractContinuityModelElement {
 
+	@JsonProperty(value = "input")
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+	@JsonIdentityReference(alwaysAsId = true)
 	private Input input;
 
-	private Parameter annotatedParameter;
+	@JsonProperty(value = "parameter")
+	private WeakReference<Parameter> annotatedParameter;
 
 	/**
 	 * Gets the input.
@@ -40,7 +51,7 @@ public class ParameterAnnotation {
 	 *
 	 * @return The annotated parameter.
 	 */
-	public Parameter getAnnotatedParameter() {
+	public WeakReference<Parameter> getAnnotatedParameter() {
 		return this.annotatedParameter;
 	}
 
@@ -50,7 +61,7 @@ public class ParameterAnnotation {
 	 * @param annotatedParameter
 	 *            The annotated parameter.
 	 */
-	public void setAnnotatedParameter(Parameter annotatedParameter) {
+	public void setAnnotatedParameter(WeakReference<Parameter> annotatedParameter) {
 		this.annotatedParameter = annotatedParameter;
 	}
 

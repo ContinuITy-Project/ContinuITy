@@ -2,72 +2,29 @@
  */
 package org.continuity.workload.dsl.annotation;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Retrieves the input data from a CSV file. Several associated columns of one file can be specified
- * by creating two {@link CsvInput} and adding them to the {@link CsvInput#getAssociated()} of each
- * other.
+ * Retrieves the input data from a CSV file.
  *
  * @author Henning Schulz
  *
  */
-public class CsvInput implements Input {
+public class CsvInput extends DataInput {
 
 	private static final String DEFAULT_SEPARATOR = ";";
 
-	private String name;
-
-	private List<CsvInput> associated;
-
+	@JsonProperty(value = "file")
 	private String filename;
 
+	@JsonProperty(value = "column")
 	private int column;
 
+	@JsonProperty(value = "separator")
+	@JsonInclude(value = Include.CUSTOM, valueFilter = ValueFilter.class)
 	private String separator = DEFAULT_SEPARATOR;
-
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	/**
-	 * Returns the associated inputs.
-	 *
-	 * @return The associated inputs.
-	 */
-	public List<CsvInput> getAssociated() {
-		if (associated == null) {
-			associated = new ArrayList<>();
-		}
-
-		return this.associated;
-	}
-
-	/**
-	 * Sets the associated inputs.
-	 *
-	 * @param associated
-	 *            The associated inputs.
-	 */
-	public void setAssociated(List<CsvInput> associated) {
-		this.associated = associated;
-	}
 
 	/**
 	 * Returns the filename of the CSV file.
@@ -129,8 +86,8 @@ public class CsvInput implements Input {
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer(super.toString());
-		result.append(" (name: ");
-		result.append(name);
+		result.append(" (id: ");
+		result.append(getId());
 		result.append(", filename: ");
 		result.append(filename);
 		result.append(", column: ");
@@ -139,5 +96,17 @@ public class CsvInput implements Input {
 		result.append(separator);
 		result.append(')');
 		return result.toString();
+	}
+
+	private static class ValueFilter {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			return DEFAULT_SEPARATOR.equals(obj);
+		}
+
 	}
 }

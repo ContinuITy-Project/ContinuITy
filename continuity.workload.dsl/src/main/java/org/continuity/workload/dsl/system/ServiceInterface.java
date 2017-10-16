@@ -2,27 +2,31 @@
  */
 package org.continuity.workload.dsl.system;
 
+import java.util.List;
+
+import org.continuity.workload.dsl.ContinuityModelElement;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+
 /**
  * Representation of an interface of a system that can be called.
  *
  * @author Henning Schulz
  *
  */
-public interface ServiceInterface {
+@JsonTypeInfo(use = Id.NAME, include = As.PROPERTY)
+@JsonSubTypes({ @Type(value = HttpInterface.class, name = "http") })
+public interface ServiceInterface<P extends Parameter> extends ContinuityModelElement {
 
 	/**
-	 * Returns the name of the represented interface.
+	 * Returns representations of the parameters of the interface.
 	 *
-	 * @return The name of the represented interface.
+	 * @return The parameters.
 	 */
-	String getName();
-
-	/**
-	 * Sets the name of the represented interface.
-	 *
-	 * @param value
-	 *            The name of the represented interface.
-	 */
-	void setName(String value);
+	public List<P> getParameters();
 
 }

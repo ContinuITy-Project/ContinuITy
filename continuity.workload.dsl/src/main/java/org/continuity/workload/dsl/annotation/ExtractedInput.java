@@ -5,6 +5,10 @@ package org.continuity.workload.dsl.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.continuity.workload.dsl.AbstractContinuityModelElement;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Represents an input that is to be extracted from the responses of one or several interfaces via
  * regular expressions.
@@ -12,29 +16,10 @@ import java.util.List;
  * @author Henning Schulz
  *
  */
-public class ExtractedInput implements Input {
+public class ExtractedInput extends AbstractContinuityModelElement implements Input {
 
-	private String name;
-
+	@JsonProperty(value = "extractions")
 	private List<RegExExtraction> extractions;
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	/**
-	 *
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setName(String name) {
-		this.name = name;
-	}
 
 	/**
 	 * Returns the RegEx extractions.
@@ -62,8 +47,8 @@ public class ExtractedInput implements Input {
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer(super.toString());
-		result.append(" (name: ");
-		result.append(name);
+		result.append(" (id: ");
+		result.append(getId());
 		result.append(')');
 		return result.toString();
 	}
