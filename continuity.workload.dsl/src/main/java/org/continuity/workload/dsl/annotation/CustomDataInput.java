@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
-public class UnknownDataInput extends DataInput {
+public class CustomDataInput extends DataInput {
 
 	@JsonProperty(value = "type", required = true)
 	private String type;

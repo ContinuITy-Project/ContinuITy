@@ -9,7 +9,7 @@ import org.continuity.workload.dsl.annotation.InterfaceAnnotation;
 import org.continuity.workload.dsl.annotation.ParameterAnnotation;
 import org.continuity.workload.dsl.annotation.RegExExtraction;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
-import org.continuity.workload.dsl.annotation.UnknownDataInput;
+import org.continuity.workload.dsl.annotation.CustomDataInput;
 import org.continuity.workload.dsl.annotation.ext.AnnotationElementExtension;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
 import org.continuity.workload.dsl.system.HttpInterface;
@@ -66,7 +66,7 @@ public enum ContinuityModelTestInstance {
 			extr.setPattern("(.*)");
 			extrInput.getExtractions().add(extr);
 
-			UnknownDataInput unknownInput = new UnknownDataInput();
+			CustomDataInput unknownInput = new CustomDataInput();
 			unknownInput.setId("UNK1");
 			unknownInput.setType("MyCustomDataInput");
 
