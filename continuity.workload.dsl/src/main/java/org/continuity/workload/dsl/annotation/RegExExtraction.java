@@ -28,8 +28,8 @@ public class RegExExtraction extends AbstractContinuityModelElement {
 
 	private String pattern;
 
-	@JsonProperty(value = "extracted")
-	private WeakReference<ServiceInterface<?>> extracted;
+	@JsonProperty(value = "from")
+	private WeakReference<ServiceInterface<?>> from;
 
 	@JsonProperty(value = "response-key")
 	@JsonInclude(value = Include.CUSTOM, valueFilter = ResponseKeyValueFilter.class)
@@ -71,8 +71,8 @@ public class RegExExtraction extends AbstractContinuityModelElement {
 	 *
 	 * @return The extracted interface.
 	 */
-	public WeakReference<ServiceInterface<?>> getExtracted() {
-		return this.extracted;
+	public WeakReference<ServiceInterface<?>> getFrom() {
+		return this.from;
 	}
 
 	/**
@@ -81,8 +81,8 @@ public class RegExExtraction extends AbstractContinuityModelElement {
 	 * @param extracted
 	 *            The extracted interface.
 	 */
-	public void setExtracted(WeakReference<ServiceInterface<?>> extracted) {
-		this.extracted = extracted;
+	public void setFrom(WeakReference<ServiceInterface<?>> from) {
+		this.from = from;
 	}
 
 	/**

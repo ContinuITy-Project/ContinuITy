@@ -47,8 +47,8 @@ public enum ModelValidator {
 				WeakReference<Parameter> ref = ((ParameterAnnotation) element).getAnnotatedParameter();
 				((ParameterAnnotation) element).setAnnotatedParameter(WeakReference.create(Parameter.class, ref.getId()));
 			} else if (element instanceof RegExExtraction) {
-				WeakReference<ServiceInterface<?>> ref = ((RegExExtraction) element).getExtracted();
-				((RegExExtraction) element).setExtracted(WeakReference.create(serviceInterfaceClass, ref.getId()));
+				WeakReference<ServiceInterface<?>> ref = ((RegExExtraction) element).getFrom();
+				((RegExExtraction) element).setFrom(WeakReference.create(serviceInterfaceClass, ref.getId()));
 			}
 		}
 	},

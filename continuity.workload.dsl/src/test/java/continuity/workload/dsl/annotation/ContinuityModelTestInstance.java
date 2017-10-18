@@ -62,7 +62,7 @@ public enum ContinuityModelTestInstance {
 
 			ExtractedInput extrInput = new ExtractedInput();
 			RegExExtraction extr = new RegExExtraction();
-			extr.setExtracted(WeakReference.create(interf));
+			extr.setFrom(WeakReference.create(interf));
 			extr.setPattern("(.*)");
 			extrInput.getExtractions().add(extr);
 
