@@ -482,6 +482,7 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="65">    
+    <bendpoint x="1562" y="106"/>    
     <end type="SOURCE" refId="14" navigable="false">      
       <attribute id="66" name="inputs"/>      
       <multiplicity id="67" minimum="0" maximum="2147483647"/>    
@@ -500,7 +501,7 @@
   </association>  
   <association id="71">    
     <end type="SOURCE" refId="17" navigable="false">      
-      <attribute id="72" name="extensions"/>      
+      <attribute id="72" name="elements"/>      
       <multiplicity id="73" minimum="0" maximum="2147483647"/>    
     </end>    
     <end type="TARGET" refId="18" navigable="true"/>    

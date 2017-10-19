@@ -10,7 +10,7 @@ import org.continuity.workload.dsl.annotation.ParameterAnnotation;
 import org.continuity.workload.dsl.annotation.RegExExtraction;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
 import org.continuity.workload.dsl.annotation.CustomDataInput;
-import org.continuity.workload.dsl.annotation.ext.AnnotationElementExtension;
+import org.continuity.workload.dsl.annotation.ext.AnnotationExtensionElement;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
 import org.continuity.workload.dsl.system.HttpInterface;
 import org.continuity.workload.dsl.system.HttpParameter;
@@ -95,8 +95,8 @@ public enum ContinuityModelTestInstance {
 		@Override
 		protected AnnotationExtension setupAnnotationExtension(TargetSystem system, SystemAnnotation annotation) {
 			AnnotationExtension extension = new AnnotationExtension();
-			AnnotationElementExtension ext = new AnnotationElementExtension();
-			extension.addExtension(ext);
+			AnnotationExtensionElement ext = new AnnotationExtensionElement();
+			extension.addElement(ext);
 
 			Input unknownInput = annotation.getInputs().get(3);
 			ext.setReference(WeakReference.create(unknownInput));
