@@ -2,7 +2,6 @@
  */
 package org.continuity.workload.dsl.annotation;
 
-import org.continuity.workload.dsl.AbstractContinuityModelElement;
 import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.system.Parameter;
 
@@ -17,7 +16,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  * @author Henning Schulz
  *
  */
-public class ParameterAnnotation extends AbstractContinuityModelElement {
+public class ParameterAnnotation extends OverrideableAnnotation<Parameter> {
 
 	@JsonProperty(value = "input")
 	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")

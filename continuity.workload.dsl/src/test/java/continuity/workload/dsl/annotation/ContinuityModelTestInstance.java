@@ -2,16 +2,18 @@ package continuity.workload.dsl.annotation;
 
 import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.annotation.CsvInput;
+import org.continuity.workload.dsl.annotation.CustomDataInput;
 import org.continuity.workload.dsl.annotation.DirectDataInput;
 import org.continuity.workload.dsl.annotation.ExtractedInput;
 import org.continuity.workload.dsl.annotation.Input;
 import org.continuity.workload.dsl.annotation.InterfaceAnnotation;
 import org.continuity.workload.dsl.annotation.ParameterAnnotation;
+import org.continuity.workload.dsl.annotation.PropertyOverride;
+import org.continuity.workload.dsl.annotation.PropertyOverrideKey;
 import org.continuity.workload.dsl.annotation.RegExExtraction;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
-import org.continuity.workload.dsl.annotation.CustomDataInput;
-import org.continuity.workload.dsl.annotation.ext.AnnotationExtensionElement;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
+import org.continuity.workload.dsl.annotation.ext.AnnotationExtensionElement;
 import org.continuity.workload.dsl.system.HttpInterface;
 import org.continuity.workload.dsl.system.HttpParameter;
 import org.continuity.workload.dsl.system.HttpParameterType;
@@ -30,6 +32,7 @@ public enum ContinuityModelTestInstance {
 			TargetSystem system = new TargetSystem();
 
 			HttpInterface interf = new HttpInterface();
+			interf.setDomain("mydomain");
 			interf.setId("login");
 
 			HttpParameter param = new HttpParameter();
@@ -81,6 +84,10 @@ public enum ContinuityModelTestInstance {
 
 			InterfaceAnnotation interfaceAnn = new InterfaceAnnotation();
 			interfaceAnn.setAnnotatedInterface(WeakReference.create(interf));
+			PropertyOverride<HttpInterface> ov = new PropertyOverride<>();
+			ov.setKey(PropertyOverrideKey.HttpInterface.DOMAIN);
+			ov.setValue("localhost");
+			interfaceAnn.addOverride(ov);
 
 			ParameterAnnotation paramAnn = new ParameterAnnotation();
 			paramAnn.setAnnotatedParameter(WeakReference.create(interf.getParameters().get(0)));
