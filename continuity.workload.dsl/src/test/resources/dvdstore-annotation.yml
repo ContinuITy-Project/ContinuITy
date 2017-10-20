@@ -1,0 +1,35 @@
+---
+inputs: []
+overrides: 
+- HttpInterface.domain: 192.168.99.100
+interface-annotations:
+- overrides: []
+  interface: ApplicationPerformanceSettingsGET
+  parameter-annotations: []
+- overrides: []
+  interface: CartGET
+  parameter-annotations: []
+- overrides: []
+  interface: CartPOST
+  parameter-annotations: []
+- overrides: []
+  interface: DVDGET
+  parameter-annotations: []
+- overrides: []
+  interface: HomeGET
+  parameter-annotations: []
+- overrides: []
+  interface: INITIAL
+  parameter-annotations: []
+- overrides: []
+  interface: LatestOrdersGET
+  parameter-annotations: []
+- overrides: []
+  interface: LatestOrdersPOST
+  parameter-annotations: []
+- overrides: []
+  interface: ShopGET
+  parameter-annotations: []
+- overrides: []
+  interface: ShopPOST
+  parameter-annotations: []

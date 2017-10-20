@@ -1,0 +1,136 @@
+---
+&dvdstore interfaces:
+- !<http>
+  &ApplicationPerformanceSettingsGET domain: localhost
+  port: 8080
+  path: /dvdstore/performancesettings
+  method: GET
+  encoding: <no-encoding>
+  protocol: http
+  parameters:
+  - parameter-type: REQ_PARAM
+    name: actionMethod
+  - parameter-type: REQ_PARAM
+    name: conversationId
+  headers: []
+- !<http>
+  &CartGET domain: localhost
+  port: 8080
+  path: /dvdstore/checkout
+  method: GET
+  encoding: <no-encoding>
+  protocol: http
+  parameters:
+  - parameter-type: REQ_PARAM
+    name: conversationId
+  headers: []
+- !<http>
+  &CartPOST domain: localhost
+  port: 8080
+  path: /dvdstore/checkout
+  method: POST
+  encoding: <no-encoding>
+  protocol: http
+  parameters:
+  - parameter-type: REQ_PARAM
+    name: cartdetails%3ACartDetailsForm%3ACartItemsTable%3A0%3AQuantityValueText
+  - parameter-type: REQ_PARAM
+    name: cartdetails%3ACartDetailsForm%3AResetCartButton
+  - parameter-type: REQ_PARAM
+    name: javax.faces.ViewState
+  - parameter-type: REQ_PARAM
+    name: cartdetails%3ACartDetailsForm
+  headers: []
+- !<http>
+  &DVDGET domain: localhost
+  port: 8080
+  path: /dvdstore/dvd/195
+  method: GET
+  encoding: <no-encoding>
+  protocol: http
+  parameters:
+  - parameter-type: REQ_PARAM
+    name: actionMethod
+  - parameter-type: REQ_PARAM
+    name: conversationId
+  headers: []
+- !<http>
+  &HomeGET domain: localhost
+  port: 8080
+  path: /dvdstore/home
+  method: GET
+  encoding: <no-encoding>
+  protocol: http
+  parameters: []
+  headers: []
+- !<http>
+  &INITIAL domain:
+  port: 0
+  path:
+  method:
+  encoding:
+  protocol:
+  parameters: []
+  headers: []
+- !<http>
+  &LatestOrdersGET domain: localhost
+  port: 8080
+  path: /dvdstore/latestorders
+  method: GET
+  encoding: <no-encoding>
+  protocol: http
+  parameters: []
+  headers: []
+- !<http>
+  &LatestOrdersPOST domain: localhost
+  port: 8080
+  path: /dvdstore/latestorders
+  method: POST
+  encoding: <no-encoding>
+  protocol: http
+  parameters:
+  - parameter-type: REQ_PARAM
+    name: LoginForm%3APassword
+  - parameter-type: REQ_PARAM
+    name: LogoutForm%3ALogout
+  - parameter-type: REQ_PARAM
+    name: LoginForm%3ALogin
+  - parameter-type: REQ_PARAM
+    name: javax.faces.ViewState
+  - parameter-type: REQ_PARAM
+    name: LoginForm
+  - parameter-type: REQ_PARAM
+    name: LoginForm%3AUsername
+  - parameter-type: REQ_PARAM
+    name: LogoutForm
+  headers: []
+- !<http>
+  &ShopGET domain: localhost
+  port: 8080
+  path: /dvdstore/browse
+  method: GET
+  encoding: <no-encoding>
+  protocol: http
+  parameters:
+  - parameter-type: REQ_PARAM
+    name: conversationId
+  headers: []
+- !<http>
+  &ShopPOST domain: localhost
+  port: 8080
+  path: /dvdstore/browse
+  method: POST
+  encoding: <no-encoding>
+  protocol: http
+  parameters:
+  - parameter-type: REQ_PARAM
+    name: SearchForm%3ASearch
+  - parameter-type: REQ_PARAM
+    name: SearchForm%3APageSize
+  - parameter-type: REQ_PARAM
+    name: javax.faces.ViewState
+  - parameter-type: REQ_PARAM
+    name: SearchForm
+  - parameter-type: REQ_PARAM
+    name: SearchForm%3AQuery
+  headers: []

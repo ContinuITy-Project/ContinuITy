@@ -2,6 +2,7 @@ package org.continuity.workload.dsl.yaml;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 import org.continuity.workload.dsl.ContinuityModelElement;
 import org.continuity.workload.dsl.WeakReference;
@@ -54,11 +55,19 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 		return read;
 	}
 
+	public T readFromYaml(URL yamlSource) throws JsonParseException, JsonMappingException, IOException {
+		return readFromYaml(yamlSource.getPath());
+	}
+
 	public void writeToYaml(T model, String yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
 		mapper.registerModule(new SimpleModule().setSerializerModifier(new ContinuitySerializerModifier()));
 		mapper.registerModule(new SimpleModule().addSerializer(getPropertyOverrideClass(), new PropertyOverrideSerializer()));
 		mapper.writer(new SimpleFilterProvider().addFilter("idFilter", new IdFilter())).writeValue(new File(yamlFile), model);
+	}
+
+	public void writeToYaml(T model, URL yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
+		writeToYaml(model, yamlFile.getPath());
 	}
 
 	@SuppressWarnings("unchecked")

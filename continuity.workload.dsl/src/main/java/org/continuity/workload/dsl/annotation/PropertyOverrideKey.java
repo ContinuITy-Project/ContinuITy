@@ -3,6 +3,8 @@ package org.continuity.workload.dsl.annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.continuity.workload.dsl.ContinuityModelElement;
+
 /**
  * Holds key enums for {@link PropertyOverride}s.
  *
@@ -16,13 +18,13 @@ public class PropertyOverrideKey {
 	}
 
 	/**
-	 * Converts a key to a printable string, e.g. {@code HTTPInterface.domain}.
+	 * Converts a key to a printable string, e.g. {@code HttpInterface.domain}.
 	 *
 	 * @param key
 	 *            The key to be printed.
 	 * @return A formatted string.
 	 */
-	public static String toPrintableString(Any<?> key) {
+	public static String toPrintableString(Any key) {
 		return key.getClass().getSimpleName() + "." + formatName(key.name(), "-", false);
 	}
 
@@ -33,7 +35,7 @@ public class PropertyOverrideKey {
 	 *            The string to be parsed.
 	 * @return The parsed key.
 	 */
-	public static Any<?> fromPrintableString(String string) {
+	public static Any fromPrintableString(String string) {
 		String[] typeAndConstant = string.split("\\.");
 		String className = PropertyOverrideKey.class.getName() + "$" + typeAndConstant[0];
 		Class<?> clazz = null;
@@ -50,7 +52,7 @@ public class PropertyOverrideKey {
 
 		for (Object constant : clazz.getEnumConstants()) {
 			if (constant.toString().equals(string)) {
-				return (Any<?>) constant;
+				return (Any) constant;
 			}
 		}
 
@@ -65,7 +67,7 @@ public class PropertyOverrideKey {
 	 * @param <T>
 	 *            The type of element holding the overridden value.
 	 */
-	public static interface Any<T> {
+	public static interface Any {
 
 		/**
 		 * Gets the value for the represented key from an instance of T.
@@ -74,7 +76,7 @@ public class PropertyOverrideKey {
 		 *            The instance object.
 		 * @return The value of the instance for the key.
 		 */
-		default String getFromInstance(T instance) {
+		default String getFromInstance(ContinuityModelElement instance) {
 			Object result = null;
 
 			try {
@@ -99,7 +101,7 @@ public class PropertyOverrideKey {
 		 * @param value
 		 *            The value to be set.
 		 */
-		default void setToInstance(T instance, String value) {
+		default void setToInstance(ContinuityModelElement instance, String value) {
 			try {
 				Method setter = instance.getClass().getMethod("set" + formatName(name(), "", true), String.class);
 				setter.invoke(instance, value);
@@ -112,13 +114,19 @@ public class PropertyOverrideKey {
 
 	}
 
+	public static interface InterfaceLevel extends Any {
+	}
+
+	public static interface ParameterLevel extends InterfaceLevel {
+	}
+
 	/**
 	 * Keys of {@link org.continuity.workload.dsl.system.HttpInterface HttpInterface}s.
 	 *
 	 * @author Henning Schulz
 	 *
 	 */
-	public static enum HttpInterface implements Any<org.continuity.workload.dsl.system.HttpInterface> {
+	public static enum HttpInterface implements InterfaceLevel {
 
 		DOMAIN, PORT, ENCODING, PROTOCOL;
 
@@ -138,7 +146,7 @@ public class PropertyOverrideKey {
 	 * @author Henning Schulz
 	 *
 	 */
-	public static enum HttpParameter implements Any<org.continuity.workload.dsl.system.HttpParameter> {
+	public static enum HttpParameter implements ParameterLevel {
 
 		TYPE;
 

@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.continuity.workload.dsl.annotation.PropertyOverride;
 import org.continuity.workload.dsl.annotation.PropertyOverrideKey;
-import org.continuity.workload.dsl.annotation.PropertyOverrideKey.Any;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -34,9 +33,9 @@ public class PropertyOverrideDeserializer extends JsonDeserializer<PropertyOverr
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> PropertyOverride<T> createOverride(String key, String value) {
+	private <T extends PropertyOverrideKey.Any> PropertyOverride<T> createOverride(String key, String value) {
 		PropertyOverride<T> override = new PropertyOverride<>();
-		override.setKey((Any<T>) PropertyOverrideKey.fromPrintableString(key));
+		override.setKey((T) PropertyOverrideKey.fromPrintableString(key));
 		override.setValue(value);
 		return override;
 	}

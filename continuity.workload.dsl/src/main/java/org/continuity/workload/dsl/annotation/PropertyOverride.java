@@ -10,9 +10,9 @@ package org.continuity.workload.dsl.annotation;
  *
  * @see PropertyOverrideKey
  */
-public class PropertyOverride<T> {
+public class PropertyOverride<T extends PropertyOverrideKey.Any> {
 
-	private PropertyOverrideKey.Any<T> key;
+	private T key;
 
 	private String value;
 
@@ -23,7 +23,7 @@ public class PropertyOverride<T> {
 	 *
 	 * @return The key.
 	 */
-	public PropertyOverrideKey.Any<T> getKey() {
+	public T getKey() {
 		return this.key;
 	}
 
@@ -35,7 +35,7 @@ public class PropertyOverride<T> {
 	 * @param key
 	 *            New key.
 	 */
-	public void setKey(PropertyOverrideKey.Any<T> key) {
+	public void setKey(T key) {
 		this.key = key;
 	}
 
@@ -56,6 +56,14 @@ public class PropertyOverride<T> {
 	 */
 	public void setValue(String value) {
 		this.value = value;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String toString() {
+		return String.valueOf(key) + ": " + value;
 	}
 
 }

@@ -4,6 +4,8 @@ package org.continuity.workload.dsl.system;
 
 import org.continuity.workload.dsl.AbstractContinuityModelElement;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -16,6 +18,10 @@ public class HttpParameter extends AbstractContinuityModelElement implements Par
 
 	@JsonProperty("parameter-type")
 	private HttpParameterType parameterType = HttpParameterType.REQ_PARAM;
+
+	@JsonProperty(value = "name", required = false)
+	@JsonInclude(Include.NON_NULL)
+	private String name;
 
 	/**
 	 * Returns the type of the parameter.
@@ -34,6 +40,25 @@ public class HttpParameter extends AbstractContinuityModelElement implements Par
 	 */
 	public void setParameterType(HttpParameterType parameterType) {
 		this.parameterType = parameterType;
+	}
+
+	/**
+	 * Gets the name of the parameter. Can be {@code null}.
+	 * 
+	 * @return The name.
+	 */
+	public String getName() {
+		return this.name;
+	}
+
+	/**
+	 * Sets the name of the parameter.
+	 * 
+	 * @param name
+	 *            New name.
+	 */
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	@Override

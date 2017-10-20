@@ -13,16 +13,16 @@ import org.continuity.workload.dsl.AbstractContinuityModelElement;
  * @param <A>
  *            Annotated type.
  */
-public class OverrideableAnnotation<A> extends AbstractContinuityModelElement {
+public class OverrideableAnnotation<T extends PropertyOverrideKey.Any> extends AbstractContinuityModelElement {
 
-	private List<PropertyOverride<? extends A>> overrides;
+	private List<PropertyOverride<T>> overrides;
 
 	/**
 	 * Gets the overrides.
 	 *
 	 * @return The overrides.
 	 */
-	public List<PropertyOverride<? extends A>> getOverrides() {
+	public List<PropertyOverride<T>> getOverrides() {
 		if (overrides == null) {
 			overrides = new ArrayList<>();
 		}
@@ -36,7 +36,7 @@ public class OverrideableAnnotation<A> extends AbstractContinuityModelElement {
 	 * @param overrides
 	 *            The overrides.
 	 */
-	public void setOverrides(List<PropertyOverride<? extends A>> overrides) {
+	public void setOverrides(List<PropertyOverride<T>> overrides) {
 		this.overrides = overrides;
 	}
 
@@ -46,7 +46,7 @@ public class OverrideableAnnotation<A> extends AbstractContinuityModelElement {
 	 * @param override
 	 *            The override to be added.
 	 */
-	public void addOverride(PropertyOverride<? extends A> override) {
+	public void addOverride(PropertyOverride<T> override) {
 		getOverrides().add(override);
 	}
 

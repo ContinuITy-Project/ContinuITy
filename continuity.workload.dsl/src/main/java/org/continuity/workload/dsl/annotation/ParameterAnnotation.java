@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  * @author Henning Schulz
  *
  */
-public class ParameterAnnotation extends OverrideableAnnotation<Parameter> {
+public class ParameterAnnotation extends OverrideableAnnotation<PropertyOverrideKey.ParameterLevel> {
 
 	@JsonProperty(value = "input")
 	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")

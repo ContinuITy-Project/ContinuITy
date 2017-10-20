@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
-public class InterfaceAnnotation extends OverrideableAnnotation<ServiceInterface<?>> {
+public class InterfaceAnnotation extends OverrideableAnnotation<PropertyOverrideKey.InterfaceLevel> {
 
 	@JsonProperty(value = "interface")
 	private WeakReference<ServiceInterface<?>> annotatedInterface;

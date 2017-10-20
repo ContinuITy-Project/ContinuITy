@@ -1,5 +1,7 @@
 package continuity.workload.dsl.annotation;
 
+import java.io.IOException;
+
 import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.annotation.CsvInput;
 import org.continuity.workload.dsl.annotation.CustomDataInput;
@@ -18,6 +20,7 @@ import org.continuity.workload.dsl.system.HttpInterface;
 import org.continuity.workload.dsl.system.HttpParameter;
 import org.continuity.workload.dsl.system.HttpParameterType;
 import org.continuity.workload.dsl.system.TargetSystem;
+import org.continuity.workload.dsl.yaml.ContinuityYamlSerializer;
 
 /**
  * @author Henning Schulz
@@ -84,7 +87,7 @@ public enum ContinuityModelTestInstance {
 
 			InterfaceAnnotation interfaceAnn = new InterfaceAnnotation();
 			interfaceAnn.setAnnotatedInterface(WeakReference.create(interf));
-			PropertyOverride<HttpInterface> ov = new PropertyOverride<>();
+			PropertyOverride<PropertyOverrideKey.InterfaceLevel> ov = new PropertyOverride<>();
 			ov.setKey(PropertyOverrideKey.HttpInterface.DOMAIN);
 			ov.setValue("localhost");
 			interfaceAnn.addOverride(ov);
@@ -113,6 +116,36 @@ public enum ContinuityModelTestInstance {
 			return extension;
 		}
 
+	},
+
+	DVDSTORE_PARSED {
+		@Override
+		protected TargetSystem setupSystemModel() {
+			ContinuityYamlSerializer<TargetSystem> serializer = new ContinuityYamlSerializer<>(TargetSystem.class);
+
+			try {
+				return serializer.readFromYaml(getClass().getResource("/dvdstore-systemmodel.yml"));
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		@Override
+		protected SystemAnnotation setupAnnotation(TargetSystem system) {
+			ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
+			try {
+				return serializer.readFromYaml(getClass().getResource("/dvdstore-annotation.yml"));
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		@Override
+		protected AnnotationExtension setupAnnotationExtension(TargetSystem system, SystemAnnotation annotation) {
+			return null;
+		}
 	};
 
 	private final TargetSystem systemModel;

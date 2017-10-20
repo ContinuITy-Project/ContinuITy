@@ -35,7 +35,7 @@ public class ContinuityModelVisitor {
 	 *            The element to be visited.
 	 */
 	public void visit(ContinuityModelElement element) {
-		if (operation.test(element)) {
+		if ((element != null) && operation.test(element)) {
 			NestedElementExtractor extractor = NestedElementExtractor.forType(element.getClass());
 			for (ContinuityModelElement nested : extractor.getNestedElements(element)) {
 				visit(nested);

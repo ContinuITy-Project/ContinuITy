@@ -5,8 +5,6 @@ package org.continuity.workload.dsl.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.continuity.workload.dsl.AbstractContinuityModelElement;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -20,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
-public class SystemAnnotation extends AbstractContinuityModelElement {
+public class SystemAnnotation extends OverrideableAnnotation<PropertyOverrideKey.Any> {
 
 	@JsonProperty(value = "inputs")
 	private List<Input> inputs;
