@@ -128,7 +128,7 @@
   - parameter-type: REQ_PARAM
     name: SearchForm%3APageSize
   - parameter-type: REQ_PARAM
-    name: javax.faces.ViewState
+    &ShopPOSTViewState name: javax.faces.ViewState
   - parameter-type: REQ_PARAM
     name: SearchForm
   - parameter-type: REQ_PARAM

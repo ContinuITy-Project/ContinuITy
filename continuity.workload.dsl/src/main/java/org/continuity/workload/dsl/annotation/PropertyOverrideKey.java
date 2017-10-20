@@ -111,7 +111,6 @@ public class PropertyOverrideKey {
 		}
 
 		String name();
-
 	}
 
 	public static interface InterfaceLevel extends Any {
@@ -148,7 +147,7 @@ public class PropertyOverrideKey {
 	 */
 	public static enum HttpParameter implements ParameterLevel {
 
-		TYPE;
+		TYPE, ENCODED;
 
 		/**
 		 * {@inheritDoc}

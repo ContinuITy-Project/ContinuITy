@@ -1,5 +1,9 @@
 ---
-inputs: []
+inputs:
+- !<extracted>
+  &ShopViewStateInput extractions:
+  - pattern: id="javax.faces.ViewState" value="(.*)"
+    from: ShopGET
 overrides: 
 - HttpInterface.domain: 192.168.99.100
 interface-annotations:
@@ -32,4 +36,7 @@ interface-annotations:
   parameter-annotations: []
 - overrides: []
   interface: ShopPOST
-  parameter-annotations: []
+  parameter-annotations:
+  - overrides: []
+    input: *ShopViewStateInput
+    parameter: ShopPOSTViewState

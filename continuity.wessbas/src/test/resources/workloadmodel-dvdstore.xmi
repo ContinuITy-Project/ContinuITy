@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="ASCII"?>
+<m4jdsl:WorkloadModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m4jdsl="http://m4jdsl/1.0" xsi:schemaLocation="http://m4jdsl/1.0 m4jdsl.ecore">
+  <workloadIntensity xsi:type="m4jdsl:ConstantWorkloadIntensity" formula="800" numberOfSessions="800"/>
+  <applicationModel>
+    <sessionLayerEFSM initialState="ASId7_INITIAL">
+      <applicationStates eId="ASId2_ApplicationPerformanceSettingsGET">
+        <service name="ApplicationPerformanceSettingsGET"/>
+        <protocolDetails initialState="PS2">
+          <protocolStates eId="PS2">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R1 (ApplicationPerformanceSettingsGET)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/performancesettings"/>
+              <properties key="HTTPSampler.method" value="GET"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+              <parameters name="actionMethod" value="performancesettings.xhtml%3Aperformancesettings.changeSlowLatestOrders%28%29;"/>
+              <parameters name="conversationId" value="7;8;"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS1" action=""/>
+          </protocolStates>
+          <exitState eId="PS1"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId2_ApplicationPerformanceSettingsGET"/>
+        <outgoingTransitions targetState="ASId11_HomeGET"/>
+      </applicationStates>
+      <applicationStates eId="ASId5_CartGET">
+        <service name="CartGET"/>
+        <protocolDetails initialState="PS8">
+          <protocolStates eId="PS8">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R4 (CartGET)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/checkout"/>
+              <properties key="HTTPSampler.method" value="GET"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+              <parameters name="conversationId" value="6;"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS7" action=""/>
+          </protocolStates>
+          <exitState eId="PS7"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId8_CartPOST"/>
+        <outgoingTransitions targetState="ASId11_HomeGET"/>
+      </applicationStates>
+      <applicationStates eId="ASId8_CartPOST">
+        <service name="CartPOST"/>
+        <protocolDetails initialState="PS14">
+          <protocolStates eId="PS14">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R7 (CartPOST)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/checkout"/>
+              <properties key="HTTPSampler.method" value="POST"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+              <parameters name="cartdetails%3ACartDetailsForm%3ACartItemsTable%3A0%3AQuantityValueText" value="1;"/>
+              <parameters name="cartdetails%3ACartDetailsForm%3AResetCartButton" value="Empty+Cart;"/>
+              <parameters name="javax.faces.ViewState" value="H4sIAAAAAAAAAN09a2wcx3nD04sSKYmUbD0sS149qufpeI%2B9vTtSL4qkJDqkpIi0E9tw6b27IXn2cveyO0ceozpIAtVFbSRNkKRAWwcJkPxq4j8J0Bb9kcTojwAR0qICiqL9FRQJigJtURQtkvZH05nZ1%2Bzu7N7t3slSS8Crvb2d7%2BZ7P%2Bab8Xf%2FBWxr6WD%2Fa3NvyutyRpHVlcyd6puwhia%2B9Jef%2FMaIcU5JAdBuAgAqhg4KNW0tY7TUzLJcg0ZGbjaVRk1GDU3NLCAZwXlZlVegPrvWVE4t6hDe1urwP5b%2F%2FAcfZG%2F%2BcJjA2TgLyJ9Afq1tQcEwm5oKVZR5afblBty4p2kIv2t8CnwGpDaKdMA5TV%2FJvFnVDCNjQHkt02oww1bRmpK5hS9zDfUtsPWWtgaTj15Y1Zr26MtxRw%2FPYSIY6I5eh7phQxEplDNhKN%2BW1xrqypSmIrmhQh1se3OpUZfswRU8dGucKQzOb3p%2FPj4JpmQd2aOn...;"/>
+              <parameters name="cartdetails%3ACartDetailsForm" value="cartdetails%3ACartDetailsForm;"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS13" action=""/>
+          </protocolStates>
+          <exitState eId="PS13"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId2_ApplicationPerformanceSettingsGET"/>
+      </applicationStates>
+      <applicationStates eId="ASId3_DVDGET">
+        <service name="DVDGET"/>
+        <protocolDetails initialState="PS4">
+          <protocolStates eId="PS4">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R2 (DVDGET)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/dvd/195"/>
+              <properties key="HTTPSampler.method" value="GET"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+              <parameters name="actionMethod" value="dvd.xhtml%3Asearch.addToCart;"/>
+              <parameters name="conversationId" value="2;5;6;"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS3" action=""/>
+          </protocolStates>
+          <exitState eId="PS3"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId9_ShopGET"/>
+        <outgoingTransitions targetState="ASId3_DVDGET"/>
+        <outgoingTransitions targetState="ASId5_CartGET"/>
+        <outgoingTransitions targetState="ASId4_LatestOrdersGET"/>
+      </applicationStates>
+      <applicationStates eId="ASId11_HomeGET">
+        <service name="HomeGET"/>
+        <protocolDetails initialState="PS20">
+          <protocolStates eId="PS20">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R10 (HomeGET)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/home"/>
+              <properties key="HTTPSampler.method" value="GET"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS19" action=""/>
+          </protocolStates>
+          <exitState eId="PS19"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId9_ShopGET"/>
+      </applicationStates>
+      <applicationStates eId="ASId7_INITIAL">
+        <service name="INITIAL"/>
+        <protocolDetails initialState="PS12">
+          <protocolStates eId="PS12">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R6 (INITIAL)">
+              <properties key="HTTPSampler.domain" value=""/>
+              <properties key="HTTPSampler.port" value="0"/>
+              <properties key="HTTPSampler.path" value=""/>
+              <properties key="HTTPSampler.method" value=""/>
+              <properties key="HTTPSampler.encoding" value=""/>
+              <properties key="HTTPSampler.protocol" value=""/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS11" action=""/>
+          </protocolStates>
+          <exitState eId="PS11"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId9_ShopGET"/>
+      </applicationStates>
+      <applicationStates eId="ASId4_LatestOrdersGET">
+        <service name="LatestOrdersGET"/>
+        <protocolDetails initialState="PS6">
+          <protocolStates eId="PS6">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R3 (LatestOrdersGET)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/latestorders"/>
+              <properties key="HTTPSampler.method" value="GET"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS5" action=""/>
+          </protocolStates>
+          <exitState eId="PS5"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId5_CartGET"/>
+        <outgoingTransitions targetState="ASId10_LatestOrdersPOST"/>
+      </applicationStates>
+      <applicationStates eId="ASId10_LatestOrdersPOST">
+        <service name="LatestOrdersPOST"/>
+        <protocolDetails initialState="PS18">
+          <protocolStates eId="PS18">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R9 (LatestOrdersPOST)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/latestorders"/>
+              <properties key="HTTPSampler.method" value="POST"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+              <parameters name="LoginForm%3APassword" value="password;"/>
+              <parameters name="LogoutForm%3ALogout" value="Logout;"/>
+              <parameters name="LoginForm%3ALogin" value="Login;"/>
+              <parameters name="javax.faces.ViewState" value="H4sIAAAAAAAAAM1bDXQb1ZV%2BUuxYduz4L4mdHzsiTuL8yLIlS7LsEPBvYrG2E2IHiE0xY2lsTSLNKDNPlowP2ZAtoYVzQrtkOdtACklplwUSuklDe9jdAgdKWLJAS9qlZbckp9suoUspCwmhC4fsu2800ow8ki3F24POyXi%2BmXfve%2Ffn3XfffZOn%2FoBywyIqH%2BrZyYwz1gDDj1m3jOxkvXjDN16%2F5ZESaW3AiFA0hBCqkkTU6BWCVinMW0cZLytZmVAowHkZzAm8tR8zmO1leGaMFT3BUGDlgMiyfYKPvTj67I%2BPNWx%2BrhD4RNYg%2BJmht2iMC%2BEZEniWx9btnps4NrJNEDBpK%2B1Ge5Ax4qQEawVxzLpzRJAkq8QyQWuYU5H5cTBg7SaXHo7fhXK6hSCbPXW%2FXwgp1BszpS7sIUqQ8BbRx4qSwsVBudSmErmPCXL8WIfAY4bjWRHl7hzmfC6FuJmQ5mQyBFPvhLb7zFXQwYhYoe7MlLp8...;H4sIAAAAAAAAAM1bDXQb1ZV%2BVuxYduz4L4mdHzsiTuL8yLIlS7LsEPBvErGyE2IHgk0xY2lsTSLNKDNPlowPachC2IVzQnfJcraBFJKyWwoktElDe%2BguPwdKKCnQknZp2ZbktOwSupSykBC6cMi%2B%2B0Yjzcgj2VK8e9A5Gc838%2B597%2F68%2B%2B67b%2FLkn1BeWEQVg54dzBhjCTD8qGXz8A7Wi9d94%2FXtD5dKqwMGhKIhhFC1JKImrxC0SGHeMsJ4WcnChEIBzstgTuAtfZjBbA%2FDM6Os6A6GAsv7RZbtFXzshZFnnj3auPG5IuATWYXgZ4LeojEuhGdI4FkeW7a5b%2BDYyFZBwKSttAvtRoaIgxKsFsRRy45hQZIsEssELWFORebHwYBlE7l4OH4nyt0kBNnsqfv8QkihXp8pdZGHKEHCm0UfK0oKFzvlUpdK5F4myPGjnQKPGY5nRZS3Y4jzORXiFkKam8kQjD3j2u4zV0EnI2KFuitT6oot...;"/>
+              <parameters name="LoginForm" value="LoginForm;"/>
+              <parameters name="LoginForm%3AUsername" value="user1;"/>
+              <parameters name="LogoutForm" value="LogoutForm;"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS17" action=""/>
+          </protocolStates>
+          <exitState eId="PS17"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId10_LatestOrdersPOST"/>
+      </applicationStates>
+      <applicationStates eId="ASId9_ShopGET">
+        <service name="ShopGET"/>
+        <protocolDetails initialState="PS16">
+          <protocolStates eId="PS16">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R8 (ShopGET)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/browse"/>
+              <properties key="HTTPSampler.method" value="GET"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+              <parameters name="conversationId" value="6;10;"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS15" action=""/>
+          </protocolStates>
+          <exitState eId="PS15"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId3_DVDGET"/>
+        <outgoingTransitions targetState="ASId6_ShopPOST"/>
+      </applicationStates>
+      <applicationStates eId="ASId6_ShopPOST">
+        <service name="ShopPOST"/>
+        <protocolDetails initialState="PS10">
+          <protocolStates eId="PS10">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R5 (ShopPOST)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/browse"/>
+              <properties key="HTTPSampler.method" value="POST"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+              <parameters name="SearchForm%3ASearch" value="Search;"/>
+              <parameters name="SearchForm%3APageSize" value="15;"/>
+              <parameters name="javax.faces.ViewState" value="H4sIAAAAAAAAAN1da2wcx30fnkSJ1MMiJVmWrEdOoixL8ulu927vRVmWKJKSmJISLdJOJCGV926X5Ml3u%2BvdOfEYwYbzIWnhFGkCxwUKOEiA9EuB%2BEsDFEWLtgnawkCCtLCBoI9PQVEgfaPoA0laoO3M7GtmX7e7d1LQEvBq727nvzO%2F%2F3P%2B85%2Fxt%2F4JjHZ1cODe4gPxoZhvi8p6%2FlbjgdyEF7%2F8p5%2F%2B%2BoRxrp0BoKcBAC4bOig11U7e6Cr5NbEpG3lR09qtpghbqpJfgSKUl0RFXJf1hY7WPr2qy%2FJNVZL%2Ffe13%2F%2BAD7vof7sF0Ns8C%2FJfFb%2BtZVBBNTVVkBeZfWXi1JW%2FeVlWInjXeAG%2BBzGaZNDin6uv5Bw3VMPKGLHby3RbVbAN22vkb6LLYUl4H22%2BoHTl965UNVbNbX0raes8iAsGAt3RJ1g2bikCoPB825Jtip6Wsz6oKFFuKrIPRB%2FdbUsVuXEdNtyfpwtjSFvv65BDMijq0...;H4sIAAAAAAAAAN1ca2wcx30fnkSJ1MMiJVmWrEdPoixL8unu9m7vRVkPiqQkpqTEirRjy0jlvdslefZxd7M7pyMjOHA%2BpIFrwE0bt0ABBw3QfuiH%2BEsKFEVQtA5SNECCtK6BokU%2FBUWBIEFbFEWLuPnQdmb2NbM7u7e7d1LQEtBq727nvzO%2F%2F3P%2B85%2F55r%2BA0a4BDr22%2BIb0UMp3JHU9f7f5htKCl7%2F6V6%2F83oR5oZMBYEsHAFwzDVBuaZt5s6vm16SWYuYlXe%2B0WxJsa2p%2BBUpQWZJUaV0xFjb1ztlVQ1HuaLLyH2vf%2FrMPi7f%2BfB%2Bm0zsP8F8Wv23LpoJo6pqqqDD%2F0sLLbaV3T9Mgetb8PPgiyPQqpMEFzVjPv9HUTDNvKtJmvtummm3AzU7%2BNrosttU3wc7b2qaSvvXKhqY7ra8kbb1vEYFgwruGrBimQ0UkVJ4PG%2FIdabOtrs9qKpTaqmKA0TcetOWq07iBmu5M0oWxpW329ckh...;"/>
+              <parameters name="SearchForm" value="SearchForm;"/>
+              <parameters name="SearchForm%3AQuery" value="Syriana;Madagascar;"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS9" action=""/>
+          </protocolStates>
+          <exitState eId="PS9"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="$"/>
+        <outgoingTransitions targetState="ASId4_LatestOrdersGET"/>
+        <outgoingTransitions targetState="ASId6_ShopPOST"/>
+      </applicationStates>
+      <exitState eId="$"/>
+      <guardActionParameterList/>
+    </sessionLayerEFSM>
+  </applicationModel>
+  <behaviorMix>
+    <relativeFrequencies behaviorModel="//@behaviorModels.2"/>
+    <relativeFrequencies behaviorModel="//@behaviorModels.1" value="0.5"/>
+    <relativeFrequencies behaviorModel="//@behaviorModels.0" value="0.5"/>
+  </behaviorMix>
+  <behaviorModels name="gen_behavior_model0" filename="examples/inspectit/output/gen_behavior_model0.csv" initialState="MSId7_INITIAL">
+    <markovStates eId="MSId2_ApplicationPerformanceSettingsGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.0/@service">
+      <outgoingTransitions targetState="MSId2_ApplicationPerformanceSettingsGET" probability="0.6667">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1175.0" deviation="269.0"/>
+      </outgoingTransitions>
+      <outgoingTransitions targetState="MSId6_HomeGET" probability="0.3333">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1241.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId3_CartGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.1/@service">
+      <outgoingTransitions targetState="MSId4_CartPOST" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="2067.0"/>
+      </outgoingTransitions>
+      <outgoingTransitions targetState="MSId6_HomeGET" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="2157.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId4_CartPOST" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.2/@service">
+      <outgoingTransitions targetState="MSId2_ApplicationPerformanceSettingsGET" probability="1.0">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1123.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId5_DVDGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.3/@service">
+      <outgoingTransitions targetState="MSId10_ShopGET" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1318.0" deviation="336.0"/>
+      </outgoingTransitions>
+      <outgoingTransitions targetState="MSId5_DVDGET" probability="0.25">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1154.0"/>
+      </outgoingTransitions>
+      <outgoingTransitions targetState="MSId3_CartGET" probability="0.25">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1247.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId6_HomeGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.4/@service">
+      <outgoingTransitions targetState="MSId10_ShopGET" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="2244.0"/>
+      </outgoingTransitions>
+      <outgoingTransitions targetState="MSId1" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId7_INITIAL" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.5/@service">
+      <outgoingTransitions targetState="MSId10_ShopGET" probability="1.0">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId8_LatestOrdersGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.6/@service">
+      <outgoingTransitions targetState="MSId3_CartGET" probability="1.0">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="2095.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId9_LatestOrdersPOST" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.7/@service"/>
+    <markovStates eId="MSId10_ShopGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.8/@service">
+      <outgoingTransitions targetState="MSId5_DVDGET" probability="0.75">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1022.0" deviation="248.0"/>
+      </outgoingTransitions>
+      <outgoingTransitions targetState="MSId11_ShopPOST" probability="0.25">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="4931.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId11_ShopPOST" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.9/@service">
+      <outgoingTransitions targetState="MSId8_LatestOrdersGET" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1277.0"/>
+      </outgoingTransitions>
+      <outgoingTransitions targetState="MSId11_ShopPOST" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="5527.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <exitState eId="MSId1"/>
+  </behaviorModels>
+  <behaviorModels name="gen_behavior_model1" filename="examples/inspectit/output/gen_behavior_model1.csv" initialState="MSId18_INITIAL">
+    <markovStates eId="MSId13_ApplicationPerformanceSettingsGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.0/@service"/>
+    <markovStates eId="MSId14_CartGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.1/@service"/>
+    <markovStates eId="MSId15_CartPOST" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.2/@service"/>
+    <markovStates eId="MSId16_DVDGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.3/@service">
+      <outgoingTransitions targetState="MSId19_LatestOrdersGET" probability="1.0">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="40055.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId17_HomeGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.4/@service"/>
+    <markovStates eId="MSId18_INITIAL" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.5/@service">
+      <outgoingTransitions targetState="MSId21_ShopGET" probability="1.0">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId19_LatestOrdersGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.6/@service">
+      <outgoingTransitions targetState="MSId20_LatestOrdersPOST" probability="1.0">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1601.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId20_LatestOrdersPOST" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.7/@service">
+      <outgoingTransitions targetState="MSId20_LatestOrdersPOST" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="4145.0"/>
+      </outgoingTransitions>
+      <outgoingTransitions targetState="MSId12" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId21_ShopGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.8/@service">
+      <outgoingTransitions targetState="MSId16_DVDGET" probability="1.0">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1295.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId22_ShopPOST" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.9/@service"/>
+    <exitState eId="MSId12"/>
+  </behaviorModels>
+  <behaviorModels name="gen_behavior_model2" filename="examples/inspectit/output/gen_behavior_model2.csv" initialState="MSId29_INITIAL">
+    <markovStates eId="MSId24_ApplicationPerformanceSettingsGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.0/@service"/>
+    <markovStates eId="MSId25_CartGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.1/@service"/>
+    <markovStates eId="MSId26_CartPOST" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.2/@service"/>
+    <markovStates eId="MSId27_DVDGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.3/@service"/>
+    <markovStates eId="MSId28_HomeGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.4/@service"/>
+    <markovStates eId="MSId29_INITIAL" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.5/@service"/>
+    <markovStates eId="MSId30_LatestOrdersGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.6/@service"/>
+    <markovStates eId="MSId31_LatestOrdersPOST" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.7/@service"/>
+    <markovStates eId="MSId32_ShopGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.8/@service"/>
+    <markovStates eId="MSId33_ShopPOST" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.9/@service"/>
+    <exitState eId="MSId23"/>
+  </behaviorModels>
+</m4jdsl:WorkloadModel>
