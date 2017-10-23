@@ -110,6 +110,21 @@ public class PropertyOverrideKey {
 			}
 		}
 
+		/**
+		 * Returns whether this key constant is relevant for the passed scope. E.g., <br>
+		 * {@link HttpInterface#DOMAIN}{@code .isInScope(}{@link Any}{@code .class) == true}, but
+		 * <br>
+		 * {@link HttpInterface#DOMAIN}{@code .isInScope(}{@link HttpParameter}{@code .class) == false}.
+		 *
+		 * @param scope
+		 *            The scope to test.
+		 * @return {@code true}, if the constant is of a subtype of the scope or {@code false},
+		 *         otherwise.
+		 */
+		default boolean isInScope(Class<? extends Any> scope) {
+			return scope.isAssignableFrom(getClass());
+		}
+
 		String name();
 	}
 
@@ -127,7 +142,7 @@ public class PropertyOverrideKey {
 	 */
 	public static enum HttpInterface implements InterfaceLevel {
 
-		DOMAIN, PORT, ENCODING, PROTOCOL;
+		DOMAIN, PORT, ENCODING, PROTOCOL, HEADER;
 
 		/**
 		 * {@inheritDoc}

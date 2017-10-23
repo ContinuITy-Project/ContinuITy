@@ -53,6 +53,7 @@ public class SystemToAnnotationTransformer {
 				for (Parameter param : interf.getParameters()) {
 					ParameterAnnotation paramAnn = new ParameterAnnotation();
 					paramAnn.setAnnotatedParameter(WeakReference.create(param));
+					ann.addParameterAnnotation(paramAnn);
 				}
 
 				annotation.getInterfaceAnnotations().add(ann);

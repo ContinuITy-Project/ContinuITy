@@ -73,7 +73,7 @@ public class WessbasToJmeterConverter implements WorkloadConverter<WorkloadModel
 			throw new RuntimeException("Error during JMeter Test Plan generation!", e);
 		}
 
-		JMeterAnnotator annotator = new JMeterAnnotator(testPlan, system, generator.getTestPlanElementFactory());
+		JMeterAnnotator annotator = new JMeterAnnotator(testPlan, system);
 		annotator.addAnnotations(annotation);
 		generator.writeToFile(testPlan, outputPath + "/testplan.jmx");
 		return testPlan;

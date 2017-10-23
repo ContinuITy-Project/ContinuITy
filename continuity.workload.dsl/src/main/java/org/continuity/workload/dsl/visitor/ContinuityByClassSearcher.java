@@ -1,6 +1,6 @@
 package org.continuity.workload.dsl.visitor;
 
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 
 import org.continuity.workload.dsl.ContinuityModelElement;
 
@@ -16,7 +16,7 @@ public class ContinuityByClassSearcher<T extends ContinuityModelElement> {
 
 	private final Class<T> type;
 
-	private final Predicate<T> operation;
+	private final Consumer<T> operation;
 
 	private final ContinuityModelVisitor visitor = new ContinuityModelVisitor(this::onElementFound);
 
@@ -30,7 +30,7 @@ public class ContinuityByClassSearcher<T extends ContinuityModelElement> {
 	 *            The operation to be executed on the elements. It should return whether the nested
 	 *            elements should be visited, as well.
 	 */
-	public ContinuityByClassSearcher(Class<T> type, Predicate<T> operation) {
+	public ContinuityByClassSearcher(Class<T> type, Consumer<T> operation) {
 		this.operation = operation;
 		this.type = type;
 	}
@@ -48,7 +48,7 @@ public class ContinuityByClassSearcher<T extends ContinuityModelElement> {
 	@SuppressWarnings("unchecked")
 	private boolean onElementFound(ContinuityModelElement element) {
 		if (type.isAssignableFrom(element.getClass())) {
-			operation.test((T) element);
+			operation.accept((T) element);
 		}
 
 		return true;

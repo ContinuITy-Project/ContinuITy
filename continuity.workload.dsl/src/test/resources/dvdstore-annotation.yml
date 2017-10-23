@@ -37,6 +37,7 @@ interface-annotations:
 - overrides: []
   interface: ShopPOST
   parameter-annotations:
-  - overrides: []
+  - overrides:
+    - HttpParameter.encoded: true
     input: *ShopViewStateInput
     parameter: ShopPOSTViewState
