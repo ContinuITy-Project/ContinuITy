@@ -50,6 +50,16 @@ public class SystemAnnotation extends OverrideableAnnotation<PropertyOverrideKey
 	}
 
 	/**
+	 * Adds an input.
+	 *
+	 * @param input
+	 *            The input to be added.
+	 */
+	public void addInput(Input input) {
+		getInputs().add(input);
+	}
+
+	/**
 	 * Returns the interface annotations.
 	 *
 	 * @return {@link #interfaceAnnotations}

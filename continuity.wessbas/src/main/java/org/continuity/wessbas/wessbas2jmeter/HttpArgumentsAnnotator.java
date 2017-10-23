@@ -90,7 +90,13 @@ public class HttpArgumentsAnnotator {
 		if (input instanceof ExtractedInput) {
 			arg.setValue("${" + input.getId() + "}");
 		} else if (input instanceof DirectDataInput) {
-			arg.setValue("${__GetRandomString(${" + input.getId() + "},;)}");
+			DirectDataInput dataInput = (DirectDataInput) input;
+
+			if (dataInput.getData().size() > 1) {
+				arg.setValue("${__GetRandomString(${" + input.getId() + "},;)}");
+			} else if (dataInput.getData().size() == 1) {
+				arg.setValue(dataInput.getData().get(0));
+			}
 		} else {
 			throw new RuntimeException("Input " + input.getClass().getSimpleName() + " is not yet implemented for JMeter!");
 		}

@@ -8,9 +8,9 @@
   encoding: <no-encoding>
   protocol: http
   parameters:
-  - parameter-type: REQ_PARAM
+  - &ApplicationPerformanceSettingsGET_actionMethod parameter-type: REQ_PARAM
     name: actionMethod
-  - parameter-type: REQ_PARAM
+  - &ApplicationPerformanceSettingsGET_conversationId parameter-type: REQ_PARAM
     name: conversationId
   headers: []
 - !<http>
@@ -21,7 +21,7 @@
   encoding: <no-encoding>
   protocol: http
   parameters:
-  - parameter-type: REQ_PARAM
+  - &CartGET_conversationId parameter-type: REQ_PARAM
     name: conversationId
   headers: []
 - !<http>
@@ -32,13 +32,13 @@
   encoding: <no-encoding>
   protocol: http
   parameters:
-  - parameter-type: REQ_PARAM
+  - &CartPOST_c_C_C_QuantityValueText parameter-type: REQ_PARAM
     name: cartdetails%3ACartDetailsForm%3ACartItemsTable%3A0%3AQuantityValueText
-  - parameter-type: REQ_PARAM
+  - &CartPOST_c_C_ResetCartButton parameter-type: REQ_PARAM
     name: cartdetails%3ACartDetailsForm%3AResetCartButton
-  - parameter-type: REQ_PARAM
+  - &CartPOST_j_f_ViewState parameter-type: REQ_PARAM
     name: javax.faces.ViewState
-  - parameter-type: REQ_PARAM
+  - &CartPOST_c_CartDetailsForm parameter-type: REQ_PARAM
     name: cartdetails%3ACartDetailsForm
   headers: []
 - !<http>
@@ -49,9 +49,9 @@
   encoding: <no-encoding>
   protocol: http
   parameters:
-  - parameter-type: REQ_PARAM
+  - &DVDGET_actionMethod parameter-type: REQ_PARAM
     name: actionMethod
-  - parameter-type: REQ_PARAM
+  - &DVDGET_conversationId parameter-type: REQ_PARAM
     name: conversationId
   headers: []
 - !<http>
@@ -61,15 +61,6 @@
   method: GET
   encoding: <no-encoding>
   protocol: http
-  parameters: []
-  headers: []
-- !<http>
-  &INITIAL domain:
-  port: 0
-  path:
-  method:
-  encoding:
-  protocol:
   parameters: []
   headers: []
 - !<http>
@@ -89,19 +80,19 @@
   encoding: <no-encoding>
   protocol: http
   parameters:
-  - parameter-type: REQ_PARAM
+  - &LatestOrdersPOST_L_Password parameter-type: REQ_PARAM
     name: LoginForm%3APassword
-  - parameter-type: REQ_PARAM
+  - &LatestOrdersPOST_L_Logout parameter-type: REQ_PARAM
     name: LogoutForm%3ALogout
-  - parameter-type: REQ_PARAM
+  - &LatestOrdersPOST_L_Login parameter-type: REQ_PARAM
     name: LoginForm%3ALogin
-  - parameter-type: REQ_PARAM
+  - &LatestOrdersPOST_j_f_ViewState parameter-type: REQ_PARAM
     name: javax.faces.ViewState
-  - parameter-type: REQ_PARAM
+  - &LatestOrdersPOST_LoginForm parameter-type: REQ_PARAM
     name: LoginForm
-  - parameter-type: REQ_PARAM
+  - &LatestOrdersPOST_L_Username parameter-type: REQ_PARAM
     name: LoginForm%3AUsername
-  - parameter-type: REQ_PARAM
+  - &LatestOrdersPOST_LogoutForm parameter-type: REQ_PARAM
     name: LogoutForm
   headers: []
 - !<http>
@@ -112,7 +103,7 @@
   encoding: <no-encoding>
   protocol: http
   parameters:
-  - parameter-type: REQ_PARAM
+  - &ShopGET_conversationId parameter-type: REQ_PARAM
     name: conversationId
   headers: []
 - !<http>
@@ -123,14 +114,14 @@
   encoding: <no-encoding>
   protocol: http
   parameters:
-  - parameter-type: REQ_PARAM
+  - &ShopPOST_S_Search parameter-type: REQ_PARAM
     name: SearchForm%3ASearch
-  - parameter-type: REQ_PARAM
+  - &ShopPOST_S_PageSize parameter-type: REQ_PARAM
     name: SearchForm%3APageSize
-  - &ShopPOSTViewState parameter-type: REQ_PARAM
+  - &ShopPOST_j_f_ViewState parameter-type: REQ_PARAM
     name: javax.faces.ViewState
-  - parameter-type: REQ_PARAM
+  - &ShopPOST_SearchForm parameter-type: REQ_PARAM
     name: SearchForm
-  - parameter-type: REQ_PARAM
+  - &ShopPOST_S_Query parameter-type: REQ_PARAM
     name: SearchForm%3AQuery
   headers: []

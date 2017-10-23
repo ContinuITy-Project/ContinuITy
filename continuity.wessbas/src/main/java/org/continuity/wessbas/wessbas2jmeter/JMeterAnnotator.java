@@ -20,7 +20,7 @@ public class JMeterAnnotator {
 	}
 
 	public void addAnnotations(SystemAnnotation annotation) {
-		// TODO: Input data
+		new UserDefinedVarsAnnotator(system, annotation).annotateVariables(testPlan);
 		new HttpSamplersAnnotator(system, annotation).annotateSamplers(testPlan);
 	}
 
