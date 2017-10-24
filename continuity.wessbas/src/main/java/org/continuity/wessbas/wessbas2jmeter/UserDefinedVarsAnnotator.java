@@ -7,7 +7,6 @@ import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
 import org.continuity.workload.dsl.annotation.DirectDataInput;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
-import org.continuity.workload.dsl.system.TargetSystem;
 
 /**
  * @author Henning Schulz
@@ -15,12 +14,9 @@ import org.continuity.workload.dsl.system.TargetSystem;
  */
 public class UserDefinedVarsAnnotator {
 
-	private final TargetSystem system;
-
 	private final SystemAnnotation systemAnnotation;
 
-	public UserDefinedVarsAnnotator(TargetSystem system, SystemAnnotation systemAnnotation) {
-		this.system = system;
+	public UserDefinedVarsAnnotator(SystemAnnotation systemAnnotation) {
 		this.systemAnnotation = systemAnnotation;
 	}
 
@@ -39,8 +35,6 @@ public class UserDefinedVarsAnnotator {
 			args.getArguments().clear();
 			addDirectDataInputs(args);
 		}
-
-		System.out.println();
 	}
 
 	private void addDirectDataInputs(final Arguments args) {

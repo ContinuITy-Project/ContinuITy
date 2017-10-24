@@ -1,5 +1,7 @@
 package org.continuity.wessbas.wessbas2jmeter;
 
+import java.io.IOException;
+
 import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.workload.driver.AnnotationNotSupportedException;
 import org.continuity.workload.driver.WorkloadConverter;
@@ -14,7 +16,6 @@ import net.sf.markov4jmeter.testplangenerator.transformation.SimpleTestPlanTrans
 import net.sf.markov4jmeter.testplangenerator.transformation.TransformationException;
 import net.sf.markov4jmeter.testplangenerator.transformation.filters.AbstractFilter;
 import net.sf.markov4jmeter.testplangenerator.transformation.filters.HeaderDefaultsFilter;
-import net.sf.markov4jmeter.testplangenerator.util.CSVHandler;
 
 /**
  * @author Henning Schulz
@@ -62,7 +63,8 @@ public class WessbasToJmeterConverter implements WorkloadConverter<WorkloadModel
 	public ListedHashTree convertToWorkload(WorkloadModel workloadModel, TargetSystem system, SystemAnnotation annotation) {
 		fixBehaviorModelFilenames(workloadModel);
 
-		SimpleTestPlanTransformer testPlanTransformer = new SimpleTestPlanTransformer(new CSVHandler(), outputPath);
+		CSVBufferingHandler csvHandler = new CSVBufferingHandler();
+		SimpleTestPlanTransformer testPlanTransformer = new SimpleTestPlanTransformer(csvHandler, outputPath);
 		AbstractFilter[] filters = { new HeaderDefaultsFilter() };
 
 		ListedHashTree testPlan;
@@ -76,6 +78,12 @@ public class WessbasToJmeterConverter implements WorkloadConverter<WorkloadModel
 		JMeterAnnotator annotator = new JMeterAnnotator(testPlan, system);
 		annotator.addAnnotations(annotation);
 		generator.writeToFile(testPlan, outputPath + "/testplan.jmx");
+		try {
+			csvHandler.writeToDisk(outputPath);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
 		return testPlan;
 	}
 

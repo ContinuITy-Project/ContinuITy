@@ -65,7 +65,7 @@ public class WessbasToContinuityTranformationTest {
 		DslFromWessbasExtractor extractor = new DslFromWessbasExtractor(parsedWessbasModel, "specj");
 		TargetSystem system = extractor.extractSystemModel();
 
-		Assert.assertEquals("Expected the system to have 14 interfaces.", 14, system.getInterfaces().size());
+		Assert.assertEquals("Expected the system to have 13 interfaces.", 13, system.getInterfaces().size());
 	}
 
 }

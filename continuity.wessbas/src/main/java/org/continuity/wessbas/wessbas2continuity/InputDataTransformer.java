@@ -35,7 +35,9 @@ public class InputDataTransformer {
 				if (param.getName().equals(wParam.getName())) {
 					DirectDataInput input = new DirectDataInput();
 					input.setId("Input_" + param.getId());
-					input.setData(Arrays.asList(wParam.getValue().split(";")));
+					if (wParam.getValue() != null) {
+						input.setData(Arrays.asList(wParam.getValue().split(";")));
+					}
 					inputList.add(new Pair<>(input, param));
 				}
 			}
