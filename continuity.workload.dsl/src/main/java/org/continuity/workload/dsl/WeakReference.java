@@ -29,7 +29,7 @@ public class WeakReference<T extends ContinuityModelElement> {
 
 	private final ContinuityModelVisitor visitor = new ContinuityModelVisitor(this::checkAndSetElement);
 
-	public WeakReference(String id, Class<T> type) {
+	private WeakReference(String id, Class<T> type) {
 		this.id = id;
 		this.type = type;
 	}
@@ -71,6 +71,22 @@ public class WeakReference<T extends ContinuityModelElement> {
 	}
 
 	/**
+	 * Creates a new WeakReference to the specified id without having a type. Consequently,
+	 * resolving will not check the type.
+	 *
+	 * @param id
+	 *            Id where the reference points to.
+	 * @return A WeakReference.
+	 */
+	public static <T extends ContinuityModelElement> WeakReference<T> createUntyped(String id) {
+		if (id == null) {
+			throw new IllegalArgumentException("Passed id is null!");
+		}
+
+		return new WeakReference<>(id, null);
+	}
+
+	/**
 	 * Gets the id of the referred element.
 	 *
 	 * @return The referred id.
@@ -107,7 +123,7 @@ public class WeakReference<T extends ContinuityModelElement> {
 	@SuppressWarnings("unchecked")
 	private boolean checkAndSetElement(ContinuityModelElement referred) {
 		if ((id != null) && id.equals(referred.getId())) {
-			if (type.isAssignableFrom(referred.getClass())) {
+			if ((type == null) || type.isAssignableFrom(referred.getClass())) {
 				this.referred = (T) referred;
 				return false;
 			} else {

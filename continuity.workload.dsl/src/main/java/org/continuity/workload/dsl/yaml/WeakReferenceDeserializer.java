@@ -38,7 +38,7 @@ public class WeakReferenceDeserializer extends StdDeserializer<WeakReference<?>>
 	@Override
 	public WeakReference<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 		String deserialized = StringDeserializer.instance.deserialize(p, ctxt);
-		return new WeakReference<>(deserialized, null);
+		return WeakReference.createUntyped(deserialized);
 	}
 
 }
