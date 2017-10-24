@@ -7,6 +7,7 @@ import org.continuity.workload.dsl.AbstractContinuityModelElement;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Represents a parameter of an {@link HttpInterface}.
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "name", "parameter-type" })
 public class HttpParameter extends AbstractContinuityModelElement implements Parameter {
 
 	@JsonProperty("parameter-type")
@@ -44,7 +46,7 @@ public class HttpParameter extends AbstractContinuityModelElement implements Par
 
 	/**
 	 * Gets the name of the parameter. Can be {@code null}.
-	 * 
+	 *
 	 * @return The name.
 	 */
 	public String getName() {
@@ -53,7 +55,7 @@ public class HttpParameter extends AbstractContinuityModelElement implements Par
 
 	/**
 	 * Sets the name of the parameter.
-	 * 
+	 *
 	 * @param name
 	 *            New name.
 	 */

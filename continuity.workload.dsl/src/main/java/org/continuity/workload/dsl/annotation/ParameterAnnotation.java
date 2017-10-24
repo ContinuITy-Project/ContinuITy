@@ -8,6 +8,7 @@ import org.continuity.workload.dsl.system.Parameter;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 /**
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "parameter", "input", "overrides" })
 public class ParameterAnnotation extends OverrideableAnnotation<PropertyOverrideKey.ParameterLevel> {
 
 	@JsonProperty(value = "input")

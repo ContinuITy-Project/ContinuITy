@@ -9,6 +9,7 @@ import org.continuity.workload.dsl.system.ServiceInterface;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Represents an extraction of a value specified by a regular expression from the response of an
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "from", "pattern", "response-key", "template", "match-number", "fallback" })
 public class RegExExtraction extends AbstractContinuityModelElement {
 
 	private static final String DEFAULT_RESPONSE_KEY = "<default>";
@@ -26,6 +28,7 @@ public class RegExExtraction extends AbstractContinuityModelElement {
 	private static final String DEFAULT_TEMPLATE = "(1)";
 	private static final int DEFAULT_MATCH_NUMBER = 1;
 
+	@JsonProperty(value = "pattern")
 	private String pattern;
 
 	@JsonProperty(value = "from")

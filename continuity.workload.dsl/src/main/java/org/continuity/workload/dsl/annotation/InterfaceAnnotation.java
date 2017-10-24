@@ -9,6 +9,7 @@ import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.system.ServiceInterface;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Annotation of a {@link ServiceInterface}. Specifies the sources of the inputs.
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "interface", "overrides", "parameter-annotations" })
 public class InterfaceAnnotation extends OverrideableAnnotation<PropertyOverrideKey.InterfaceLevel> {
 
 	@JsonProperty(value = "interface")

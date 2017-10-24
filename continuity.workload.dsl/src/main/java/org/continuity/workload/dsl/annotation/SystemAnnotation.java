@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Annotation of a {@link org.continuity.workload.dsl.system.TargetSystem} representation. Holds manual
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "overrides", "inputs", "interface-annotations" })
 public class SystemAnnotation extends OverrideableAnnotation<PropertyOverrideKey.Any> {
 
 	@JsonProperty(value = "inputs")
