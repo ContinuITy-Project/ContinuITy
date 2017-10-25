@@ -1,4 +1,4 @@
-package continuity.workload.dsl.annotation;
+package org.continuity.workload.dsl.test;
 
 import java.io.IOException;
 

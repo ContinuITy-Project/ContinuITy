@@ -4,9 +4,8 @@ import org.continuity.wessbas.WessbasDslInstance;
 import org.continuity.workload.driver.AnnotationNotSupportedException;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtensionElement;
+import org.continuity.workload.dsl.test.ContinuityModelTestInstance;
 import org.junit.Test;
-
-import continuity.workload.dsl.annotation.ContinuityModelTestInstance;
 
 /**
  * @author Henning Schulz

@@ -3,6 +3,7 @@ package continuity.workload.dsl.annotation;
 import java.io.IOException;
 
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
+import org.continuity.workload.dsl.test.ContinuityModelTestInstance;
 import org.continuity.workload.dsl.yaml.ContinuityYamlSerializer;
 import org.junit.BeforeClass;
 import org.junit.Test;
