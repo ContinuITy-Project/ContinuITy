@@ -1,9 +1,17 @@
 package org.continuity.wessbas.wessbas2continuity;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.math3.util.Pair;
 import org.continuity.workload.dsl.AnnotationExtractor;
 import org.continuity.workload.dsl.DslExtractor;
+import org.continuity.workload.dsl.annotation.Input;
+import org.continuity.workload.dsl.annotation.ParameterAnnotation;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
+import org.continuity.workload.dsl.system.Parameter;
 import org.continuity.workload.dsl.system.TargetSystem;
+import org.continuity.workload.dsl.visitor.ContinuityByClassSearcher;
 
 import m4jdsl.WorkloadModel;
 
@@ -24,6 +32,8 @@ public class DslFromWessbasExtractor implements DslExtractor {
 	private TargetSystem extractedSystem;
 
 	private SystemAnnotation extractedAnnotation;
+
+	private List<Pair<Input, Parameter>> extractedInputs;
 
 	/**
 	 * Constructor. Requires calling {@link DslFromWessbasExtractor#init(WorkloadModel)
@@ -82,12 +92,35 @@ public class DslFromWessbasExtractor implements DslExtractor {
 
 		extractedSystem = new TargetSystem();
 		extractedSystem.setId(systemName);
+		extractedInputs = new ArrayList<>();
 
 		SessionLayerTransformer transformer = new SessionLayerTransformer(wessbasModel.getApplicationModel());
 		transformer.registerOnInterfaceFoundListener(extractedSystem::addInterface);
+		transformer.registerOnInputFoundListener(extractedInputs::add);
 		transformer.transform();
 
+		extractedAnnotation = new AnnotationExtractor().extractAnnotation(extractedSystem);
+		extractedInputs.forEach(pair -> handleInput(pair.getFirst(), pair.getSecond()));
+
 		return extractedSystem;
+	}
+
+	private void handleInput(Input input, Parameter parameter) {
+		ParameterAnnotationHolder targetHolder = new ParameterAnnotationHolder();
+		ContinuityByClassSearcher<ParameterAnnotation> searcher = new ContinuityByClassSearcher<>(ParameterAnnotation.class, a -> checkParamAnnotation(a, parameter, targetHolder));
+		searcher.visit(extractedAnnotation);
+
+		ParameterAnnotation ann = targetHolder.annotation;
+		ann.setInput(input);
+		extractedAnnotation.addInput(input);
+	}
+
+	private boolean checkParamAnnotation(ParameterAnnotation ann, Parameter param, ParameterAnnotationHolder targetHolder) {
+		if (ann.getAnnotatedParameter().getId().equals(param.getId())) {
+			targetHolder.annotation = ann;
+		}
+
+		return false;
 	}
 
 	/**
@@ -103,8 +136,11 @@ public class DslFromWessbasExtractor implements DslExtractor {
 			extractSystemModel();
 		}
 
-		extractedAnnotation = new AnnotationExtractor().extractAnnotation(extractedSystem);
 		return extractedAnnotation;
+	}
+
+	private static class ParameterAnnotationHolder {
+		private ParameterAnnotation annotation;
 	}
 
 }

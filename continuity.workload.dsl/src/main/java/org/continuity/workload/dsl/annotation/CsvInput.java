@@ -5,6 +5,7 @@ package org.continuity.workload.dsl.annotation;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Retrieves the input data from a CSV file.
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "filename", "column", "separator", "associated" })
 public class CsvInput extends DataInput {
 
 	private static final String DEFAULT_SEPARATOR = ";";

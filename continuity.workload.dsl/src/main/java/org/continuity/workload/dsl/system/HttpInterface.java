@@ -7,6 +7,10 @@ import java.util.List;
 
 import org.continuity.workload.dsl.AbstractContinuityModelElement;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 /**
  * Represents an HTTP interface. That is, requests to this interface can be made by calling
  * {@code domain:port/path} with the represented method, protocol, parameters and headers.
@@ -14,9 +18,10 @@ import org.continuity.workload.dsl.AbstractContinuityModelElement;
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "domain", "port", "path", "method", "encoding", "headers", "parameters" })
 public class HttpInterface extends AbstractContinuityModelElement implements ServiceInterface<HttpParameter> {
 
-	private static final String ENCODING_DEFAULT = "<no-encoding>";
+	private static final String DEFAULT_ENCODING = "<no-encoding>";
 
 	private String domain;
 
@@ -26,12 +31,15 @@ public class HttpInterface extends AbstractContinuityModelElement implements Ser
 
 	private String method;
 
-	private String encoding = ENCODING_DEFAULT;
+	@JsonInclude(value = Include.CUSTOM, valueFilter = EncodingValueFilter.class)
+	private String encoding = DEFAULT_ENCODING;
 
 	private String protocol;
 
+	@JsonInclude(Include.NON_EMPTY)
 	private List<HttpParameter> parameters;
 
+	@JsonInclude(Include.NON_EMPTY)
 	private List<String> headers;
 
 	/**
@@ -216,4 +224,16 @@ public class HttpInterface extends AbstractContinuityModelElement implements Ser
 		return result.toString();
 	}
 
-} // HttpInterface
+	private static class EncodingValueFilter {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			return DEFAULT_ENCODING.equals(obj);
+		}
+
+	}
+
+}

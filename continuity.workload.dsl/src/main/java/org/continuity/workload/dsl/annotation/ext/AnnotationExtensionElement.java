@@ -14,7 +14,7 @@ import org.continuity.workload.dsl.WeakReference;
  * @author Henning Schulz
  *
  */
-public class AnnotationElementExtension extends AbstractContinuityModelElement {
+public class AnnotationExtensionElement extends AbstractContinuityModelElement {
 
 	private WeakReference<? extends ContinuityModelElement> reference;
 

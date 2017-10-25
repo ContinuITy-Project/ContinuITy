@@ -1,0 +1,175 @@
+---
+overrides:
+- HttpInterface.domain: 192.168.99.100
+inputs:
+- !<direct>
+  &Input_ApplicationPerformanceSettingsGET_actionMethod data:
+  - performancesettings.xhtml%3Aperformancesettings.changeSlowLatestOrders%28%29
+- !<direct>
+  &Input_ApplicationPerformanceSettingsGET_conversationId data:
+  - 7
+  - 8
+- !<direct>
+  &Input_CartGET_conversationId data:
+  - 6
+- !<direct>
+  &Input_CartPOST_c_C_C_QuantityValueText data:
+  - 1
+- !<direct>
+  &Input_CartPOST_c_C_ResetCartButton data:
+  - Empty+Cart
+- !<extracted>
+  &CartPOST_ViewStateExtractedInput extractions:
+  - pattern: id="javax.faces.ViewState" value="(.*)"
+    from: CartGET
+- !<direct>
+  &Input_CartPOST_c_CartDetailsForm data:
+  - cartdetails%3ACartDetailsForm
+- !<direct>
+  &Input_DVDGET_actionMethod data:
+  - dvd.xhtml%3Asearch.addToCart
+- !<direct>
+  &Input_DVDGET_conversationId data:
+  - 2
+  - 5
+  - 6
+- !<direct>
+  &Input_LatestOrdersPOST_L_Password data:
+  - password
+- !<direct>
+  &Input_LatestOrdersPOST_L_Logout data:
+  - Logout
+- !<direct>
+  &Input_LatestOrdersPOST_L_Login data:
+  - Login
+- !<extracted>
+  &LatestOrdersPOST_ViewStateExtractedInput extractions:
+  - pattern: id="javax.faces.ViewState" value="(.*)"
+    from: LatestOrdersGET
+- !<direct>
+  &Input_LatestOrdersPOST_LoginForm data:
+  - LoginForm
+- !<direct>
+  &Input_LatestOrdersPOST_L_Username data:
+  - user1
+- !<direct>
+  &Input_LatestOrdersPOST_LogoutForm data:
+  - LogoutForm
+- !<direct>
+  &Input_ShopGET_conversationId data:
+  - 6
+  - 10
+- !<direct>
+  &Input_ShopPOST_S_Search data:
+  - Search
+- !<direct>
+  &Input_ShopPOST_S_PageSize data:
+  - 15
+- !<direct>
+  &Input_ShopPOST_SearchForm data:
+  - SearchForm
+- !<direct>
+  &Input_ShopPOST_S_Query data:
+  - Syriana
+  - Madagascar
+- !<extracted>
+  &ShopPOST_ViewStateExtractedInput extractions:
+  - pattern: id="javax.faces.ViewState" value="(.*)"
+    from: ShopGET
+interface-annotations:
+- overrides: []
+  interface: ApplicationPerformanceSettingsGET
+  parameter-annotations:
+  - overrides: []
+    input: *Input_ApplicationPerformanceSettingsGET_actionMethod
+    parameter: ApplicationPerformanceSettingsGET_actionMethod
+  - overrides: []
+    input: *Input_ApplicationPerformanceSettingsGET_conversationId
+    parameter: ApplicationPerformanceSettingsGET_conversationId
+- overrides: []
+  interface: CartGET
+  parameter-annotations:
+  - overrides: []
+    input: *Input_CartGET_conversationId
+    parameter: CartGET_conversationId
+- overrides: []
+  interface: CartPOST
+  parameter-annotations:
+  - overrides: []
+    input: *Input_CartPOST_c_C_C_QuantityValueText
+    parameter: CartPOST_c_C_C_QuantityValueText
+  - overrides: []
+    input: *Input_CartPOST_c_C_ResetCartButton
+    parameter: CartPOST_c_C_ResetCartButton
+  - overrides:
+    - HttpParameter.encoded: true
+    input: *CartPOST_ViewStateExtractedInput
+    parameter: CartPOST_j_f_ViewState
+  - overrides: []
+    input: *Input_CartPOST_c_CartDetailsForm
+    parameter: CartPOST_c_CartDetailsForm
+- overrides: []
+  interface: DVDGET
+  parameter-annotations:
+  - overrides: []
+    input: *Input_DVDGET_actionMethod
+    parameter: DVDGET_actionMethod
+  - overrides: []
+    input: *Input_DVDGET_conversationId
+    parameter: DVDGET_conversationId
+- overrides: []
+  interface: HomeGET
+  parameter-annotations: []
+- overrides: []
+  interface: LatestOrdersGET
+  parameter-annotations: []
+- overrides: []
+  interface: LatestOrdersPOST
+  parameter-annotations:
+  - overrides: []
+    input: *Input_LatestOrdersPOST_L_Password
+    parameter: LatestOrdersPOST_L_Password
+  - overrides: []
+    input: *Input_LatestOrdersPOST_L_Logout
+    parameter: LatestOrdersPOST_L_Logout
+  - overrides: []
+    input: *Input_LatestOrdersPOST_L_Login
+    parameter: LatestOrdersPOST_L_Login
+  - overrides:
+    - HttpParameter.encoded: true
+    input: *LatestOrdersPOST_ViewStateExtractedInput
+    parameter: LatestOrdersPOST_j_f_ViewState
+  - overrides: []
+    input: *Input_LatestOrdersPOST_LoginForm
+    parameter: LatestOrdersPOST_LoginForm
+  - overrides: []
+    input: *Input_LatestOrdersPOST_L_Username
+    parameter: LatestOrdersPOST_L_Username
+  - overrides: []
+    input: *Input_LatestOrdersPOST_LogoutForm
+    parameter: LatestOrdersPOST_LogoutForm
+- overrides: []
+  interface: ShopGET
+  parameter-annotations:
+  - overrides: []
+    input: *Input_ShopGET_conversationId
+    parameter: ShopGET_conversationId
+- overrides: []
+  interface: ShopPOST
+  parameter-annotations:
+  - overrides: []
+    input: *Input_ShopPOST_S_Search
+    parameter: ShopPOST_S_Search
+  - overrides: []
+    input: *Input_ShopPOST_S_PageSize
+    parameter: ShopPOST_S_PageSize
+  - overrides:
+    - HttpParameter.encoded: true
+    input: *ShopPOST_ViewStateExtractedInput
+    parameter: ShopPOST_j_f_ViewState
+  - overrides: []
+    input: *Input_ShopPOST_SearchForm
+    parameter: ShopPOST_SearchForm
+  - overrides: []
+    input: *Input_ShopPOST_S_Query
+    parameter: ShopPOST_S_Query

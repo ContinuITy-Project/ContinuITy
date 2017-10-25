@@ -8,40 +8,46 @@ import org.continuity.workload.dsl.AbstractContinuityModelElement;
 /**
  * Generic extension of an annotation.
  *
- * @see AnnotationElementExtension
+ * @see AnnotationExtensionElement
  *
  * @author Henning Schulz
  *
  */
 public class AnnotationExtension extends AbstractContinuityModelElement {
 
-	private Map<String, AnnotationElementExtension> extensions;
+	private Map<String, AnnotationExtensionElement> elements;
 
 	/**
-	 * Gets the element extensions.
+	 * Gets the extension elements.
 	 *
-	 * @return The element extensions.
+	 * @return The extension elements.
 	 */
-	public Map<String, AnnotationElementExtension> getExtensions() {
-		if (extensions == null) {
-			extensions = new HashMap<>();
+	public Map<String, AnnotationExtensionElement> getElements() {
+		if (elements == null) {
+			elements = new HashMap<>();
 		}
 
-		return this.extensions;
+		return this.elements;
 	}
 
 	/**
-	 * Sets the element extensions.
+	 * Sets the extension elements.
 	 *
-	 * @param extensions
-	 *            New value for the element extensions.
+	 * @param elements
+	 *            New value for the extension elements.
 	 */
-	public void setExtensions(Map<String, AnnotationElementExtension> extensions) {
-		this.extensions = extensions;
+	public void setElements(Map<String, AnnotationExtensionElement> elements) {
+		this.elements = elements;
 	}
 
-	public void addExtension(AnnotationElementExtension extension) {
-		getExtensions().put(extension.getId(), extension);
+	/**
+	 * Adds a new extension element.
+	 *
+	 * @param element
+	 *            The extension element to be added.
+	 */
+	public void addElement(AnnotationExtensionElement element) {
+		getElements().put(element.getId(), element);
 	}
 
 }

@@ -95,7 +95,7 @@ public enum NestedElementExtractor {
 		@Override
 		protected Collection<ContinuityModelElement> extractNestedElements(ContinuityModelElement element) {
 			AnnotationExtension extension = (AnnotationExtension) element;
-			return new ArrayList<>(extension.getExtensions().values());
+			return new ArrayList<>(extension.getElements().values());
 		}
 
 	};

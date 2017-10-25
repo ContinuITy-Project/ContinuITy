@@ -5,9 +5,8 @@ package org.continuity.workload.dsl.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.continuity.workload.dsl.AbstractContinuityModelElement;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Annotation of a {@link org.continuity.workload.dsl.system.TargetSystem} representation. Holds manual
@@ -20,7 +19,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
-public class SystemAnnotation extends AbstractContinuityModelElement {
+@JsonPropertyOrder({ "overrides", "inputs", "interface-annotations" })
+public class SystemAnnotation extends OverrideableAnnotation<PropertyOverrideKey.Any> {
 
 	@JsonProperty(value = "inputs")
 	private List<Input> inputs;
@@ -49,6 +49,16 @@ public class SystemAnnotation extends AbstractContinuityModelElement {
 	 */
 	public void setInputs(List<Input> inputs) {
 		this.inputs = inputs;
+	}
+
+	/**
+	 * Adds an input.
+	 *
+	 * @param input
+	 *            The input to be added.
+	 */
+	public void addInput(Input input) {
+		getInputs().add(input);
 	}
 
 	/**

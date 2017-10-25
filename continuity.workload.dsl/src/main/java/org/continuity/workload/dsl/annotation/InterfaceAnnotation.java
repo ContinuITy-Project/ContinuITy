@@ -5,11 +5,11 @@ package org.continuity.workload.dsl.annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.continuity.workload.dsl.AbstractContinuityModelElement;
 import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.system.ServiceInterface;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Annotation of a {@link ServiceInterface}. Specifies the sources of the inputs.
@@ -17,7 +17,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
-public class InterfaceAnnotation extends AbstractContinuityModelElement {
+@JsonPropertyOrder({ "interface", "overrides", "parameter-annotations" })
+public class InterfaceAnnotation extends OverrideableAnnotation<PropertyOverrideKey.InterfaceLevel> {
 
 	@JsonProperty(value = "interface")
 	private WeakReference<ServiceInterface<?>> annotatedInterface;

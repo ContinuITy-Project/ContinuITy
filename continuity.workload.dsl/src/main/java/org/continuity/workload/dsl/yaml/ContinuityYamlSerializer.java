@@ -2,9 +2,11 @@ package org.continuity.workload.dsl.yaml;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 import org.continuity.workload.dsl.ContinuityModelElement;
 import org.continuity.workload.dsl.WeakReference;
+import org.continuity.workload.dsl.annotation.PropertyOverride;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -47,15 +49,31 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 		mapper.registerModule(new SimpleModule().setDeserializerModifier(new ContinuityDeserializerModifier()));
 
 		mapper.registerModule(new SimpleModule().addDeserializer(WeakReference.class, new WeakReferenceDeserializer()));
+		mapper.registerModule(new SimpleModule().addDeserializer(PropertyOverride.class, new PropertyOverrideDeserializer()));
 		T read = mapper.readValue(new File(yamlSource), type);
 		ModelValidator.fixAll(read);
 		return read;
 	}
 
+	public T readFromYaml(URL yamlSource) throws JsonParseException, JsonMappingException, IOException {
+		return readFromYaml(yamlSource.getPath());
+	}
+
 	public void writeToYaml(T model, String yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
 		mapper.registerModule(new SimpleModule().setSerializerModifier(new ContinuitySerializerModifier()));
+		mapper.registerModule(new SimpleModule().addSerializer(getPropertyOverrideClass(), new PropertyOverrideSerializer()));
 		mapper.writer(new SimpleFilterProvider().addFilter("idFilter", new IdFilter())).writeValue(new File(yamlFile), model);
+	}
+
+	public void writeToYaml(T model, URL yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
+		writeToYaml(model, yamlFile.getPath());
+	}
+
+	@SuppressWarnings("unchecked")
+	private Class<PropertyOverride<?>> getPropertyOverrideClass() {
+		Class<?> clazz = PropertyOverride.class;
+		return (Class<PropertyOverride<?>>) clazz;
 	}
 
 	private static class ContinuitySerializerModifier extends BeanSerializerModifier {

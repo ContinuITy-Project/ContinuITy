@@ -1,21 +1,26 @@
 package continuity.workload.dsl.annotation;
 
+import java.io.IOException;
+
 import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.annotation.CsvInput;
+import org.continuity.workload.dsl.annotation.CustomDataInput;
 import org.continuity.workload.dsl.annotation.DirectDataInput;
 import org.continuity.workload.dsl.annotation.ExtractedInput;
 import org.continuity.workload.dsl.annotation.Input;
 import org.continuity.workload.dsl.annotation.InterfaceAnnotation;
 import org.continuity.workload.dsl.annotation.ParameterAnnotation;
+import org.continuity.workload.dsl.annotation.PropertyOverride;
+import org.continuity.workload.dsl.annotation.PropertyOverrideKey;
 import org.continuity.workload.dsl.annotation.RegExExtraction;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
-import org.continuity.workload.dsl.annotation.CustomDataInput;
-import org.continuity.workload.dsl.annotation.ext.AnnotationElementExtension;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
+import org.continuity.workload.dsl.annotation.ext.AnnotationExtensionElement;
 import org.continuity.workload.dsl.system.HttpInterface;
 import org.continuity.workload.dsl.system.HttpParameter;
 import org.continuity.workload.dsl.system.HttpParameterType;
 import org.continuity.workload.dsl.system.TargetSystem;
+import org.continuity.workload.dsl.yaml.ContinuityYamlSerializer;
 
 /**
  * @author Henning Schulz
@@ -30,6 +35,7 @@ public enum ContinuityModelTestInstance {
 			TargetSystem system = new TargetSystem();
 
 			HttpInterface interf = new HttpInterface();
+			interf.setDomain("mydomain");
 			interf.setId("login");
 
 			HttpParameter param = new HttpParameter();
@@ -62,7 +68,7 @@ public enum ContinuityModelTestInstance {
 
 			ExtractedInput extrInput = new ExtractedInput();
 			RegExExtraction extr = new RegExExtraction();
-			extr.setExtracted(WeakReference.create(interf));
+			extr.setFrom(WeakReference.create(interf));
 			extr.setPattern("(.*)");
 			extrInput.getExtractions().add(extr);
 
@@ -81,6 +87,10 @@ public enum ContinuityModelTestInstance {
 
 			InterfaceAnnotation interfaceAnn = new InterfaceAnnotation();
 			interfaceAnn.setAnnotatedInterface(WeakReference.create(interf));
+			PropertyOverride<PropertyOverrideKey.InterfaceLevel> ov = new PropertyOverride<>();
+			ov.setKey(PropertyOverrideKey.HttpInterface.DOMAIN);
+			ov.setValue("localhost");
+			interfaceAnn.addOverride(ov);
 
 			ParameterAnnotation paramAnn = new ParameterAnnotation();
 			paramAnn.setAnnotatedParameter(WeakReference.create(interf.getParameters().get(0)));
@@ -95,8 +105,8 @@ public enum ContinuityModelTestInstance {
 		@Override
 		protected AnnotationExtension setupAnnotationExtension(TargetSystem system, SystemAnnotation annotation) {
 			AnnotationExtension extension = new AnnotationExtension();
-			AnnotationElementExtension ext = new AnnotationElementExtension();
-			extension.addExtension(ext);
+			AnnotationExtensionElement ext = new AnnotationExtensionElement();
+			extension.addElement(ext);
 
 			Input unknownInput = annotation.getInputs().get(3);
 			ext.setReference(WeakReference.create(unknownInput));
@@ -106,6 +116,36 @@ public enum ContinuityModelTestInstance {
 			return extension;
 		}
 
+	},
+
+	DVDSTORE_PARSED {
+		@Override
+		protected TargetSystem setupSystemModel() {
+			ContinuityYamlSerializer<TargetSystem> serializer = new ContinuityYamlSerializer<>(TargetSystem.class);
+
+			try {
+				return serializer.readFromYaml(getClass().getResource("/dvdstore-systemmodel.yml"));
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		@Override
+		protected SystemAnnotation setupAnnotation(TargetSystem system) {
+			ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
+			try {
+				return serializer.readFromYaml(getClass().getResource("/dvdstore-annotation.yml"));
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		@Override
+		protected AnnotationExtension setupAnnotationExtension(TargetSystem system, SystemAnnotation annotation) {
+			return null;
+		}
 	};
 
 	private final TargetSystem systemModel;
