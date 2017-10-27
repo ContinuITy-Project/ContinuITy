@@ -1,0 +1,28 @@
+buildscript {
+	repositories {
+		jcenter()
+		maven { url 'http://repo.spring.io/snapshot' }
+		maven { url 'http://repo.spring.io/milestone' }
+	}
+	dependencies {
+		classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.0.0.BUILD-SNAPSHOT'
+	}
+}
+
+
+subprojects {
+	apply plugin: 'java'
+	apply plugin: 'eclipse'
+
+	version = '0.1'
+	
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
+}
+
+
+File dependenciesFile = file("dependencies.gradle")
+
+allprojects {
+	apply from: file(dependenciesFile.absolutePath)
+}

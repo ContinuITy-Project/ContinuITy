@@ -1,6 +1,7 @@
 subprojects {
 	repositories {
 		mavenCentral()
+		jcenter()
 		maven {
 			name 'NEXUS-NT'
 			url 'http://repository.novatec-gmbh.de/content/repositories/3rd_party_libs/'
@@ -29,12 +30,16 @@ subprojects {
 			name 'JBoss Public'
 			url "https://repository.jboss.org/nexus/content/groups/public/"
 		}
+		maven {
+		    url 'http://repo.spring.io/snapshot'
+		}
+		maven {
+		    url 'http://repo.spring.io/milestone'
+		}
 	}
 	
 	dependencies {
-		compile 'org.slf4j:slf4j-api:1.7.21',
-
-		'org.apache.commons:commons-lang3:3.4',
+		compile 'org.apache.commons:commons-lang3:3.4',
 		'org.apache.commons:commons-math3:3.6.1',
 		'commons-pool:commons-pool:1.6',
 		
