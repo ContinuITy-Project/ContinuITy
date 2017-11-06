@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.math3.util.Pair;
-import org.continuity.workload.dsl.AnnotationExtractor;
-import org.continuity.workload.dsl.DslExtractor;
+import org.continuity.commons.workload.dsl.AnnotationExtractor;
 import org.continuity.workload.dsl.annotation.Input;
 import org.continuity.workload.dsl.annotation.ParameterAnnotation;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
@@ -21,7 +20,7 @@ import m4jdsl.WorkloadModel;
  * @author Henning Schulz
  *
  */
-public class DslFromWessbasExtractor implements DslExtractor {
+public class DslFromWessbasExtractor {
 
 	private static final String SYSTEM_UNKNOWN = "UNKNOWN";
 
@@ -82,9 +81,10 @@ public class DslFromWessbasExtractor implements DslExtractor {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Transforms the workload model into a System model.
+	 *
+	 * @return The transformed system model.
 	 */
-	@Override
 	public TargetSystem extractSystemModel() {
 		if (extractedSystem != null) {
 			return extractedSystem;
@@ -124,9 +124,10 @@ public class DslFromWessbasExtractor implements DslExtractor {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Generates an initial annotation that can be changed by users.
+	 *
+	 * @return The transformed annotation model.
 	 */
-	@Override
 	public SystemAnnotation extractInitialAnnotation() {
 		if (extractedAnnotation != null) {
 			return extractedAnnotation;

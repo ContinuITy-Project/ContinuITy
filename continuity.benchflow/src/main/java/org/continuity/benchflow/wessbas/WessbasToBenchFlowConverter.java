@@ -1,7 +1,6 @@
 package org.continuity.benchflow.wessbas;
 
-import org.continuity.workload.driver.AnnotationNotSupportedException;
-import org.continuity.workload.driver.WorkloadConverter;
+import org.continuity.commons.exceptions.AnnotationNotSupportedException;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
 import org.continuity.workload.dsl.system.TargetSystem;
@@ -13,21 +12,42 @@ import m4jdsl.WorkloadModel;
  * @author Henning Schulz
  *
  */
-public class WessbasToBenchFlowConverter implements WorkloadConverter<WorkloadModel, BenchFlowTest> {
+public class WessbasToBenchFlowConverter {
 
 	/**
-	 * {@inheritDoc}
+	 * Converts the passed workload model and annotations to an executable load test. The annotation
+	 * models are to be linked.
+	 *
+	 * @param workloadModel
+	 *            The workload model.
+	 * @param system
+	 *            The system representation.
+	 * @param annotation
+	 *            The system annotation.
+	 * @param extension
+	 *            An extension of the annotation. May cause an
+	 *            {@link AnnotationNotSupportedException}.
+	 * @return An executable load test corresponding to the load represented by the workload model.
+	 * @throws AnnotationNotSupportedException
+	 *             if the passed {@link AnnotationExtension} cannot be converted to the load test.
 	 */
-	@Override
 	public BenchFlowTest convertToWorkload(WorkloadModel workloadModel, TargetSystem system, SystemAnnotation annotation, AnnotationExtension extension) throws AnnotationNotSupportedException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Converts the passed workload model and annotations to an executable load test. The annotation
+	 * models are to be linked.
+	 *
+	 * @param workloadModel
+	 *            The workload model.
+	 * @param system
+	 *            The system representation.
+	 * @param annotation
+	 *            The system annotation.
+	 * @return An executable load test corresponding to the load represented by the workload model.
 	 */
-	@Override
 	public BenchFlowTest convertToWorkload(WorkloadModel workloadModel, TargetSystem system, SystemAnnotation annotation) {
 
 		return null;

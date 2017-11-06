@@ -1,4 +1,4 @@
-package org.continuity.workload.driver;
+package org.continuity.commons.exceptions;
 
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
 

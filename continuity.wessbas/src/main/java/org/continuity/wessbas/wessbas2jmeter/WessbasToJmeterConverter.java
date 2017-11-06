@@ -3,8 +3,7 @@ package org.continuity.wessbas.wessbas2jmeter;
 import java.io.IOException;
 
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.workload.driver.AnnotationNotSupportedException;
-import org.continuity.workload.driver.WorkloadConverter;
+import org.continuity.commons.exceptions.AnnotationNotSupportedException;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtensionElement;
@@ -21,7 +20,7 @@ import net.sf.markov4jmeter.testplangenerator.transformation.filters.HeaderDefau
  * @author Henning Schulz
  *
  */
-public class WessbasToJmeterConverter implements WorkloadConverter<WorkloadModel, ListedHashTree> {
+public class WessbasToJmeterConverter {
 
 	private final String outputPath;
 
@@ -37,9 +36,22 @@ public class WessbasToJmeterConverter implements WorkloadConverter<WorkloadModel
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Converts the passed workload model and annotations to an executable load test. The annotation
+	 * models are to be linked.
+	 *
+	 * @param workloadModel
+	 *            The workload model.
+	 * @param system
+	 *            The system representation.
+	 * @param annotation
+	 *            The system annotation.
+	 * @param extension
+	 *            An extension of the annotation. May cause an
+	 *            {@link AnnotationNotSupportedException}.
+	 * @return An executable load test corresponding to the load represented by the workload model.
+	 * @throws AnnotationNotSupportedException
+	 *             if the passed {@link AnnotationExtension} cannot be converted to the load test.
 	 */
-	@Override
 	public ListedHashTree convertToWorkload(WorkloadModel workloadModel, TargetSystem system, SystemAnnotation annotation, AnnotationExtension extension) throws AnnotationNotSupportedException {
 		if ((extension != null) && !extension.getElements().isEmpty()) {
 			StringBuilder builder = new StringBuilder();
@@ -57,9 +69,17 @@ public class WessbasToJmeterConverter implements WorkloadConverter<WorkloadModel
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Converts the passed workload model and annotations to an executable load test. The annotation
+	 * models are to be linked.
+	 *
+	 * @param workloadModel
+	 *            The workload model.
+	 * @param system
+	 *            The system representation.
+	 * @param annotation
+	 *            The system annotation.
+	 * @return An executable load test corresponding to the load represented by the workload model.
 	 */
-	@Override
 	public ListedHashTree convertToWorkload(WorkloadModel workloadModel, TargetSystem system, SystemAnnotation annotation) {
 		fixBehaviorModelFilenames(workloadModel);
 

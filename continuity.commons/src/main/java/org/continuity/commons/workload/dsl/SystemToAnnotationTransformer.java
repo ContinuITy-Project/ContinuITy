@@ -1,8 +1,10 @@
-package org.continuity.workload.dsl;
+package org.continuity.commons.workload.dsl;
 
 import java.util.Collections;
 
 import org.continuity.utils.enums.EnumForClassHolder;
+import org.continuity.workload.dsl.ContinuityModelElement;
+import org.continuity.workload.dsl.WeakReference;
 import org.continuity.workload.dsl.annotation.InterfaceAnnotation;
 import org.continuity.workload.dsl.annotation.ParameterAnnotation;
 import org.continuity.workload.dsl.annotation.SystemAnnotation;

@@ -3,8 +3,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencies {
-	compile project(':continuity.api')
-	compile project(':continuity.utils')
+	compile project(':continuity.commons')
 	
 	compile group: 'org.fortiss.pmwt.wex', name: 'wessbas.dsl', version: '1.0.0'
 	

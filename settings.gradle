@@ -1,9 +1,9 @@
 rootProject.name = "continuity.root" 
 include "continuity.workload.dsl"
-include "continuity.api"
 include "continuity.wessbas"
 include "continuity.benchflow"
-include "continuity.utils"
+include "continuity.commons"
+include "continuity.wessbas.model"
 
 /**
  * Sets the name of the project build file (and all of its sub-projects) to be "${project.name}.gradle" pattern.

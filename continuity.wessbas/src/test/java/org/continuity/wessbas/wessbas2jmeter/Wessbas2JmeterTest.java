@@ -1,7 +1,7 @@
 package org.continuity.wessbas.wessbas2jmeter;
 
+import org.continuity.commons.exceptions.AnnotationNotSupportedException;
 import org.continuity.wessbas.WessbasDslInstance;
-import org.continuity.workload.driver.AnnotationNotSupportedException;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
 import org.continuity.workload.dsl.annotation.ext.AnnotationExtensionElement;
 import org.continuity.workload.dsl.test.ContinuityModelTestInstance;

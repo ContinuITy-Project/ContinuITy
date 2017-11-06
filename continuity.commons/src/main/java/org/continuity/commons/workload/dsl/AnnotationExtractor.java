@@ -1,4 +1,4 @@
-package org.continuity.workload.dsl;
+package org.continuity.commons.workload.dsl;
 
 import org.continuity.workload.dsl.annotation.SystemAnnotation;
 import org.continuity.workload.dsl.system.TargetSystem;
