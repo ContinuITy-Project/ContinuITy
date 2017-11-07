@@ -1,9 +1,9 @@
-package org.continuity.wessbas.model;
+package org.continuity.workload.annotation.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -17,27 +17,29 @@ import org.springframework.context.annotation.Configuration;
  *
  */
 @Configuration
-public class ModelGeneratorConfig {
+public class RabbitMqConfig {
 
-	public static final String QUEUE_NAME = "wessbas-model-generator-input";
+	public static final String MODEL_CREATED_QUEUE_NAME = "model-created-annotation";
 
-	private static final String EXCHANGE_NAME = "wessbas-behavior-extracted";
+	private static final String MODEL_CREATED_EXCHANGE_NAME = "model-created";
 
-	private static final String ROUTING_KEY = "model-generator-input";
+	private static final String MODEL_CREATED_ROUTING_KEY = "*";
+
+	// Input queue
 
 	@Bean
-	Queue queue() {
-		return new Queue(QUEUE_NAME, false);
+	Queue behaviorExtractedQueue() {
+		return new Queue(MODEL_CREATED_QUEUE_NAME, false);
 	}
 
 	@Bean
-	DirectExchange exchange() {
-		return new DirectExchange(EXCHANGE_NAME);
+	TopicExchange behaviorExtractedExchange() {
+		return new TopicExchange(MODEL_CREATED_EXCHANGE_NAME, false, true);
 	}
 
 	@Bean
-	Binding binding(Queue queue, DirectExchange exchange) {
-		return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+	Binding behaviorExtractedBinding() {
+		return BindingBuilder.bind(behaviorExtractedQueue()).to(behaviorExtractedExchange()).with(MODEL_CREATED_ROUTING_KEY);
 	}
 
 	@Bean

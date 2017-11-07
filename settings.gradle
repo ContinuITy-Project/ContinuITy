@@ -4,6 +4,7 @@ include "continuity.wessbas"
 include "continuity.benchflow"
 include "continuity.commons"
 include "continuity.wessbas.model"
+include "continuity.workload.annotation"
 
 /**
  * Sets the name of the project build file (and all of its sub-projects) to be "${project.name}.gradle" pattern.

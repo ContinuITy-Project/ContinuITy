@@ -43,10 +43,11 @@ public enum WessbasDslInstance {
 		@Override
 		public WorkloadModel get() {
 			WessbasModelParser parser = new WessbasModelParser();
+			String path = getClass().getResource("/workloadmodel-specj.xmi").getPath();
 			try {
-				return parser.readWorkloadModel("src/test/resources/workloadmodel-specj.xmi");
+				return parser.readWorkloadModel(path);
 			} catch (IOException e) {
-				throw new RuntimeException("Error when reading src/test/resources/workloadmodel-specj.xmi!", e);
+				throw new RuntimeException("Error when reading " + path + "!", e);
 			}
 		}
 	},
@@ -55,10 +56,11 @@ public enum WessbasDslInstance {
 		@Override
 		public WorkloadModel get() {
 			WessbasModelParser parser = new WessbasModelParser();
+			String path = getClass().getResource("/workloadmodel-dvdstore.xmi").getPath();
 			try {
-				return parser.readWorkloadModel("src/test/resources/workloadmodel-dvdstore.xmi");
+				return parser.readWorkloadModel(path);
 			} catch (IOException e) {
-				throw new RuntimeException("Error when reading src/test/resources/workloadmodel-dvdstore.xmi!", e);
+				throw new RuntimeException("Error when reading " + path + "!", e);
 			}
 		}
 	};
