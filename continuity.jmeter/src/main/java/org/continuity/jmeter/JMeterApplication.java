@@ -1,4 +1,4 @@
-package org.continuity.wessbas;
+package org.continuity.jmeter;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -8,10 +8,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *
  */
 @SpringBootApplication
-public class WessbasApplication {
+public class JMeterApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(WessbasApplication.class, args);
+		SpringApplication.run(JMeterApplication.class, args);
 	}
 
 }

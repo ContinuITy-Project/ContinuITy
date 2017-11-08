@@ -2,15 +2,15 @@ package org.continuity.commons.workload.dsl;
 
 import java.util.Collections;
 
+import org.continuity.annotation.dsl.ContinuityModelElement;
+import org.continuity.annotation.dsl.WeakReference;
+import org.continuity.annotation.dsl.ann.InterfaceAnnotation;
+import org.continuity.annotation.dsl.ann.ParameterAnnotation;
+import org.continuity.annotation.dsl.ann.SystemAnnotation;
+import org.continuity.annotation.dsl.system.Parameter;
+import org.continuity.annotation.dsl.system.ServiceInterface;
+import org.continuity.annotation.dsl.visitor.ContinuityModelVisitor;
 import org.continuity.utils.enums.EnumForClassHolder;
-import org.continuity.workload.dsl.ContinuityModelElement;
-import org.continuity.workload.dsl.WeakReference;
-import org.continuity.workload.dsl.annotation.InterfaceAnnotation;
-import org.continuity.workload.dsl.annotation.ParameterAnnotation;
-import org.continuity.workload.dsl.annotation.SystemAnnotation;
-import org.continuity.workload.dsl.system.Parameter;
-import org.continuity.workload.dsl.system.ServiceInterface;
-import org.continuity.workload.dsl.visitor.ContinuityModelVisitor;
 
 /**
  * Helper for extracting annotations in a {@link ContinuityModelVisitor}.

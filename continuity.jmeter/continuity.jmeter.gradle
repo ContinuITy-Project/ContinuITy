@@ -1,17 +1,8 @@
-
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencies {
 	compile project(':continuity.commons')
-	
-	compile group: 'org.fortiss.pmwt.wex', name: 'wessbas.dsl', version: '1.0.0'
-	
-	// Needed for WESSBAS:
-	
-	compile group: 'org.eclipse.emf', name: 'org.eclipse.emf.common', version: '2.12.0'
-	compile group: 'org.eclipse.emf', name: 'org.eclipse.emf.ecore', version: '2.12.0'
-	compile group: 'org.eclipse.emf', name: 'org.eclipse.emf.ecore.xmi', version: '2.12.0'
 	
 	// JMeter 2.13 dependency tree is broken
 	

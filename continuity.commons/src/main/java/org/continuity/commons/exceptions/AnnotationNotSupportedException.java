@@ -1,9 +1,9 @@
 package org.continuity.commons.exceptions;
 
-import org.continuity.workload.dsl.annotation.ext.AnnotationExtension;
+import org.continuity.annotation.dsl.custom.CustomAnnotation;
 
 /**
- * Exception signaling that a passed {@link AnnotationExtension} is not supported by the load
+ * Exception signaling that a passed {@link CustomAnnotation} is not supported by the load
  * driver.
  *
  * @author Henning Schulz

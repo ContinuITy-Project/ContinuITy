@@ -1,5 +1,5 @@
 dependencies {
-	compile project(':continuity.workload.dsl')
+	compile project(':continuity.annotation.dsl')
 	
 	compile group: 'org.fortiss.pmwt.wex', name: 'wessbas.dsl', version: '1.0.0'
 	
