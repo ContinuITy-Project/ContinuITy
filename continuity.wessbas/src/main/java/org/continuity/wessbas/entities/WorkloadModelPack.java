@@ -1,8 +1,5 @@
 package org.continuity.wessbas.entities;
 
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.system.SystemModel;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -19,11 +16,11 @@ public class WorkloadModelPack {
 	@JsonProperty("workload-link")
 	private String workloadLink;
 
-	@JsonProperty("system-model")
-	private SystemModel systemModel;
+	@JsonProperty("system-model-link")
+	private String systemModelLink;
 
-	@JsonProperty("initial-annotation")
-	private SystemAnnotation initialAnnotation;
+	@JsonProperty("initial-annotation-link")
+	private String initialAnnotationLink;
 
 	/**
 	 * Default constructor.
@@ -31,8 +28,10 @@ public class WorkloadModelPack {
 	public WorkloadModelPack() {
 	}
 
-	public WorkloadModelPack(String link) {
-		this.workloadLink = link;
+	public WorkloadModelPack(String base, String workloadPath, String systemModelPath, String annotationPath) {
+		this.workloadLink = base + workloadPath;
+		this.systemModelLink = base + systemModelPath;
+		this.initialAnnotationLink = base + annotationPath;
 	}
 
 	/**
@@ -59,32 +58,13 @@ public class WorkloadModelPack {
 	 *
 	 * @return {@link #workloadLink}
 	 */
-	public String getLink() {
-		return this.workloadLink;
-	}
-
-	/**
-	 * Sets {@link #workloadLink}.
-	 *
-	 * @param link
-	 *            New value for {@link #workloadLink}
-	 */
-	public void setLink(String link) {
-		this.workloadLink = link;
-	}
-
-	/**
-	 * Gets {@link #workloadLink}.
-	 * 
-	 * @return {@link #workloadLink}
-	 */
 	public String getWorkloadLink() {
 		return this.workloadLink;
 	}
 
 	/**
 	 * Sets {@link #workloadLink}.
-	 * 
+	 *
 	 * @param workloadLink
 	 *            New value for {@link #workloadLink}
 	 */
@@ -93,41 +73,41 @@ public class WorkloadModelPack {
 	}
 
 	/**
-	 * Gets {@link #systemModel}.
-	 * 
-	 * @return {@link #systemModel}
+	 * Gets {@link #systemModelLink}.
+	 *
+	 * @return {@link #systemModelLink}
 	 */
-	public SystemModel getSystemModel() {
-		return this.systemModel;
+	public String getSystemModelLink() {
+		return this.systemModelLink;
 	}
 
 	/**
-	 * Sets {@link #systemModel}.
-	 * 
+	 * Sets {@link #systemModelLink}.
+	 *
 	 * @param systemModel
-	 *            New value for {@link #systemModel}
+	 *            New value for {@link #systemModelLink}
 	 */
-	public void setSystemModel(SystemModel systemModel) {
-		this.systemModel = systemModel;
+	public void setSystemModelLink(String systemModelLink) {
+		this.systemModelLink = systemModelLink;
 	}
 
 	/**
-	 * Gets {@link #initialAnnotation}.
-	 * 
+	 * Gets {@link #initialAnnotationLink}.
+	 *
 	 * @return {@link #initialAnnotation}
 	 */
-	public SystemAnnotation getInitialAnnotation() {
-		return this.initialAnnotation;
+	public String getInitialAnnotationLink() {
+		return this.initialAnnotationLink;
 	}
 
 	/**
-	 * Sets {@link #initialAnnotation}.
-	 * 
+	 * Sets {@link #initialAnnotationLink}.
+	 *
 	 * @param initialAnnotation
-	 *            New value for {@link #initialAnnotation}
+	 *            New value for {@link #initialAnnotationLink}
 	 */
-	public void setInitialAnnotation(SystemAnnotation initialAnnotation) {
-		this.initialAnnotation = initialAnnotation;
+	public void setInitialAnnotationLink(String initialAnnotationLink) {
+		this.initialAnnotationLink = initialAnnotationLink;
 	}
 
 	/**
@@ -135,7 +115,7 @@ public class WorkloadModelPack {
 	 */
 	@Override
 	public String toString() {
-		return "{ type: " + modelType + ", link: " + workloadLink + " }";
+		return "{ type: " + modelType + ", workload-link: " + workloadLink + " }";
 	}
 
 }

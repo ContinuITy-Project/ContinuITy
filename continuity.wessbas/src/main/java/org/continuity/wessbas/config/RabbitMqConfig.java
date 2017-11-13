@@ -3,7 +3,7 @@ package org.continuity.wessbas.config;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.FanoutExchange;
+import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -22,57 +22,70 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMqConfig {
 
-	public static final String BEHAVIOR_EXTRACTED_QUEUE_NAME = "wessbas-model-generator-input";
+	public static final String MONITORING_DATA_AVAILABLE_QUEUE_NAME = "wessbas-monitoring-input";
 
-	private static final String BEHAVIOR_EXTRACTED_EXCHANGE_NAME = "wessbas-behavior-extracted";
+	private static final String MONITORING_DATA_AVAILABLE_EXCHANGE_NAME = "monitoring-data-available";
+
+	private static final String MONITORING_DATA_AVAILABLE_ROUTING_KEY = "wessbas";
 
 	public static final String MODEL_CREATED_EXCHANGE_NAME = "model-created";
 
-	// Input queue
+	public static final String MODEL_CREATED_ROUTING_KEY = "wessbas";
+
+	// General
 
 	@Bean
-	Queue behaviorExtractedQueue() {
-		return new Queue(BEHAVIOR_EXTRACTED_QUEUE_NAME, false);
-	}
-
-	@Bean
-	FanoutExchange behaviorExtractedExchange() {
-		return new FanoutExchange(BEHAVIOR_EXTRACTED_EXCHANGE_NAME, false, true);
-	}
-
-	@Bean
-	Binding behaviorExtractedBinding() {
-		return BindingBuilder.bind(behaviorExtractedQueue()).to(behaviorExtractedExchange());
-	}
-
-	@Bean
-	public MessageConverter jsonMessageConverter() {
+	MessageConverter jsonMessageConverter() {
 		return new Jackson2JsonMessageConverter();
 	}
 
 	@Bean
-	public SimpleRabbitListenerContainerFactory containerFactory(ConnectionFactory connectionFactory, SimpleRabbitListenerContainerFactoryConfigurer configurer) {
+	MessagePostProcessor typeRemovingProcessor() {
+		return m -> {
+			m.getMessageProperties().getHeaders().remove("__TypeId__");
+			return m;
+		};
+	}
+
+	// Input exchange and queue
+
+	@Bean
+	Queue monitoringDataAvailableQueue() {
+		return new Queue(MONITORING_DATA_AVAILABLE_QUEUE_NAME, false);
+	}
+
+	@Bean
+	TopicExchange monitoringDataAvailableExchange() {
+		return new TopicExchange(MONITORING_DATA_AVAILABLE_EXCHANGE_NAME, false, true);
+	}
+
+	@Bean
+	Binding behaviorExtractedBinding() {
+		return BindingBuilder.bind(monitoringDataAvailableQueue()).to(monitoringDataAvailableExchange()).with(MONITORING_DATA_AVAILABLE_ROUTING_KEY);
+	}
+
+	@Bean
+	SimpleRabbitListenerContainerFactory containerFactory(ConnectionFactory connectionFactory, SimpleRabbitListenerContainerFactoryConfigurer configurer) {
 		SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
 		configurer.configure(factory, connectionFactory);
 		factory.setMessageConverter(jsonMessageConverter());
+		factory.setAfterReceivePostProcessors(typeRemovingProcessor());
 		return factory;
 	}
 
 	// Output exchange
 
 	@Bean
-	public TopicExchange modelCreatedExchange() {
+	TopicExchange modelCreatedExchange() {
 		return new TopicExchange(MODEL_CREATED_EXCHANGE_NAME, false, true);
 	}
 
 	@Bean
-	public AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+	AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
 		final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
 		rabbitTemplate.setMessageConverter(jsonMessageConverter());
-		rabbitTemplate.setBeforePublishPostProcessors(m -> {
-			m.getMessageProperties().getHeaders().remove("__TypeId__");
-			return m;
-		});
+		rabbitTemplate.setBeforePublishPostProcessors(typeRemovingProcessor());
+
 		return rabbitTemplate;
 	}
 

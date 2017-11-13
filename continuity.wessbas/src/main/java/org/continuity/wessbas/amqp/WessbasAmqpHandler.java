@@ -1,7 +1,8 @@
 package org.continuity.wessbas.amqp;
 
-import org.continuity.wessbas.adapters.WessbasPipelineManager;
 import org.continuity.wessbas.config.RabbitMqConfig;
+import org.continuity.wessbas.entities.MonitoringData;
+import org.continuity.wessbas.managers.WessbasPipelineManager;
 import org.continuity.wessbas.storage.SimpleModelStorage;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,18 +15,18 @@ import m4jdsl.WorkloadModel;
  *
  */
 @Component
-public class BehaviorAmqpHandler {
+public class WessbasAmqpHandler {
 
 	@Autowired
 	private ModelCreatedSender sender;
 
 	private WessbasPipelineManager pipelineManager = new WessbasPipelineManager(this::handleModelCreated);
 
-	@RabbitListener(queues = RabbitMqConfig.BEHAVIOR_EXTRACTED_QUEUE_NAME)
-	public void onBehaviorExtracted(Object message) {
-		System.out.println("Received message: " + message);
+	@RabbitListener(queues = RabbitMqConfig.MONITORING_DATA_AVAILABLE_QUEUE_NAME)
+	public void onMonitoringDataAvailable(MonitoringData data) {
+		System.out.println("Received monitoring data: " + data);
 
-		pipelineManager.runPipeline();
+		pipelineManager.runPipeline(data);
 	}
 
 	private void handleModelCreated(WorkloadModel workloadModel) {

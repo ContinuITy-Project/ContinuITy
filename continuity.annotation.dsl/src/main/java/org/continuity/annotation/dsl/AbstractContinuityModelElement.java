@@ -1,6 +1,5 @@
 package org.continuity.annotation.dsl;
 
-import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
@@ -9,7 +8,6 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  *
  */
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-@JsonFilter("idFilter")
 public abstract class AbstractContinuityModelElement implements ContinuityModelElement {
 
 	private String id = null;

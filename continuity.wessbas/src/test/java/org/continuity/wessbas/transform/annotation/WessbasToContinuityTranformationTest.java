@@ -7,7 +7,7 @@ import org.continuity.annotation.dsl.system.HttpInterface;
 import org.continuity.annotation.dsl.system.ServiceInterface;
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.wessbas.entities.WessbasDslInstance;
-import org.continuity.wessbas.transform.annotation.DslFromWessbasExtractor;
+import org.continuity.wessbas.transform.annotation.AnnotationFromWessbasExtractor;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,7 +35,7 @@ public class WessbasToContinuityTranformationTest {
 
 	@Test
 	public void testCreatedModel() {
-		DslFromWessbasExtractor extractor = new DslFromWessbasExtractor(createdWessbasModel, "test");
+		AnnotationFromWessbasExtractor extractor = new AnnotationFromWessbasExtractor(createdWessbasModel, "test");
 		SystemModel system = extractor.extractSystemModel();
 
 		Assert.assertEquals("Expected the system to have 3 interfaces.", 3, system.getInterfaces().size());
@@ -63,7 +63,7 @@ public class WessbasToContinuityTranformationTest {
 
 	@Test
 	public void testParsedModel() {
-		DslFromWessbasExtractor extractor = new DslFromWessbasExtractor(parsedWessbasModel, "specj");
+		AnnotationFromWessbasExtractor extractor = new AnnotationFromWessbasExtractor(parsedWessbasModel, "specj");
 		SystemModel system = extractor.extractSystemModel();
 
 		Assert.assertEquals("Expected the system to have 13 interfaces.", 13, system.getInterfaces().size());

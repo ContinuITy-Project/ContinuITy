@@ -15,12 +15,12 @@ import org.continuity.commons.workload.dsl.AnnotationExtractor;
 import m4jdsl.WorkloadModel;
 
 /**
- * Transforms the WESSBAS DSL into the ContinuITy workload DSL.
+ * Transforms the WESSBAS DSL into the ContinuITy annotation DSL.
  *
  * @author Henning Schulz
  *
  */
-public class DslFromWessbasExtractor {
+public class AnnotationFromWessbasExtractor {
 
 	private static final String SYSTEM_UNKNOWN = "UNKNOWN";
 
@@ -35,10 +35,10 @@ public class DslFromWessbasExtractor {
 	private List<Pair<Input, Parameter>> extractedInputs;
 
 	/**
-	 * Constructor. Requires calling {@link DslFromWessbasExtractor#init(WorkloadModel)
+	 * Constructor. Requires calling {@link AnnotationFromWessbasExtractor#init(WorkloadModel)
 	 * init(WorkloadModel)} before executing the transformation.
 	 */
-	public DslFromWessbasExtractor() {
+	public AnnotationFromWessbasExtractor() {
 	}
 
 	/**
@@ -47,7 +47,7 @@ public class DslFromWessbasExtractor {
 	 * @param wessbasModel
 	 *            The WESSBAS DSL instance to be transformed.
 	 */
-	public DslFromWessbasExtractor(WorkloadModel wessbasModel) {
+	public AnnotationFromWessbasExtractor(WorkloadModel wessbasModel) {
 		init(wessbasModel, null);
 	}
 
@@ -59,7 +59,7 @@ public class DslFromWessbasExtractor {
 	 * @param systemName
 	 *            The system's name.
 	 */
-	public DslFromWessbasExtractor(WorkloadModel wessbasModel, String systemName) {
+	public AnnotationFromWessbasExtractor(WorkloadModel wessbasModel, String systemName) {
 		init(wessbasModel, systemName);
 	}
 

@@ -1,8 +1,11 @@
 package org.continuity.wessbas.storage;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.continuity.wessbas.entities.WorkloadModelStorageEntry;
 
 import m4jdsl.WorkloadModel;
 
@@ -18,7 +21,7 @@ public class SimpleModelStorage {
 
 	private final AtomicInteger counter = new AtomicInteger(1);
 
-	private final Map<String, WorkloadModel> storedModels = new HashMap<>();
+	private final Map<String, WorkloadModelStorageEntry> storedModels = new HashMap<>();
 
 	private SimpleModelStorage() {
 		// Should not be created from outside.
@@ -50,7 +53,12 @@ public class SimpleModelStorage {
 	 */
 	public String put(WorkloadModel model) {
 		String id = Integer.toString(counter.getAndIncrement());
-		storedModels.put(id, model);
+		WorkloadModelStorageEntry entry = new WorkloadModelStorageEntry();
+		entry.setWorkloadModel(model);
+		entry.setId(id);
+		entry.setCreatedDate(new Date());
+
+		storedModels.put(id, entry);
 		return id;
 	}
 
@@ -61,7 +69,7 @@ public class SimpleModelStorage {
 	 *            The id of the model.
 	 * @return A {@link WorkloadModel}.
 	 */
-	public WorkloadModel get(String id) {
+	public WorkloadModelStorageEntry get(String id) {
 		return storedModels.get(id);
 	}
 

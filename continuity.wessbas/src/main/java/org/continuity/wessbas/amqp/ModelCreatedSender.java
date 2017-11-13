@@ -20,28 +20,16 @@ public class ModelCreatedSender {
 	private AmqpTemplate amqpTemplate;
 
 	public void sendCreated(String id) {
-		// ObjectMapper mapper = new ObjectMapper();
-		//
-		// EMFModule module = new EMFModule();
-		// module.configure(EMFModule.Feature.OPTION_SERIALIZE_TYPE, false);
-		// mapper.registerModule(module);
-		//
-		// JsonNode workloadModelJson = mapper.valueToTree(workloadModel);
-		// ObjectNode root = mapper.createObjectNode();
-		// root.set("type", new TextNode("wessbas"));
-		// root.set("workload-model", workloadModelJson);
-		// amqpTemplate.convertAndSend(ModelGeneratorConfig.MODEL_CREATED_EXCHANGE_NAME, "", root);
-
-		String address;
+		String hostname;
 		try {
-			address = InetAddress.getLocalHost().getHostAddress();
+			hostname = InetAddress.getLocalHost().getHostName();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
-			address = "UNKNOWN";
+			hostname = "UNKNOWN";
 		}
 
-		String link = address + ":TODO/wessbas/model/" + id;
-		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas", new WorkloadModelPack(link));
+		String base = hostname + "/wessbas";
+		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas", new WorkloadModelPack(base, "/model/" + id, "/annotation/system/" + id, "/annotation/annotation/" + id));
 	}
 
 }
