@@ -49,4 +49,13 @@ public class CSVBufferingHandler extends CSVHandler {
 		buffer.clear();
 	}
 
+	/**
+	 * Gets {@link #buffer}.
+	 * 
+	 * @return {@link #buffer}
+	 */
+	public Map<String, String[][]> getBuffer() {
+		return this.buffer;
+	}
+
 }

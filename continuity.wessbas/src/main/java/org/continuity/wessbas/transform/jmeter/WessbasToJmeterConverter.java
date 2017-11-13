@@ -6,8 +6,8 @@ import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.custom.CustomAnnotation;
 import org.continuity.annotation.dsl.custom.CustomAnnotationElement;
-import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.commons.exceptions.AnnotationNotSupportedException;
+import org.continuity.wessbas.entities.JMeterTestPlanPack;
 
 import m4jdsl.BehaviorModel;
 import m4jdsl.WorkloadModel;
@@ -24,15 +24,32 @@ public class WessbasToJmeterConverter {
 
 	private final String outputPath;
 
+	private final boolean writeToFile;
+
 	private final AdaptedTestPlanGenerator generator;
 
 	/**
 	 *
 	 */
-	public WessbasToJmeterConverter(String outputPath) {
+	public WessbasToJmeterConverter(String outputPath, boolean writeToFile) {
 		this.outputPath = outputPath;
+		this.writeToFile = writeToFile;
 		this.generator = new AdaptedTestPlanGenerator();
 		this.generator.init("configuration/generator.default.properties", "configuration/testplan.default.properties");
+	}
+
+	/**
+	 *
+	 */
+	public WessbasToJmeterConverter(String outputPath) {
+		this(outputPath, outputPath != null);
+	}
+
+	/**
+	 * Creates a new instance not writing to a file.
+	 */
+	public WessbasToJmeterConverter() {
+		this(null, false);
 	}
 
 	/**
@@ -41,18 +58,17 @@ public class WessbasToJmeterConverter {
 	 *
 	 * @param workloadModel
 	 *            The workload model.
-	 * @param system
-	 *            The system representation.
 	 * @param annotation
 	 *            The system annotation.
 	 * @param extension
 	 *            An extension of the annotation. May cause an
 	 *            {@link AnnotationNotSupportedException}.
-	 * @return An executable load test corresponding to the load represented by the workload model.
+	 * @return A pack containing an executable load test corresponding to the load represented by
+	 *         the workload model and the behaviors.
 	 * @throws AnnotationNotSupportedException
 	 *             if the passed {@link CustomAnnotation} cannot be converted to the load test.
 	 */
-	public ListedHashTree convertToWorkload(WorkloadModel workloadModel, SystemModel system, SystemAnnotation annotation, CustomAnnotation extension) throws AnnotationNotSupportedException {
+	public JMeterTestPlanPack convertToLoadTest(WorkloadModel workloadModel, SystemAnnotation annotation, CustomAnnotation extension) throws AnnotationNotSupportedException {
 		if ((extension != null) && !extension.getElements().isEmpty()) {
 			StringBuilder builder = new StringBuilder();
 			builder.append("The following extensoins are not supported: ");
@@ -65,7 +81,7 @@ public class WessbasToJmeterConverter {
 			throw new AnnotationNotSupportedException(builder.substring(0, builder.length() - 2));
 		}
 
-		return convertToWorkload(workloadModel, system, annotation);
+		return convertToLoadTest(workloadModel, annotation);
 	}
 
 	/**
@@ -74,13 +90,12 @@ public class WessbasToJmeterConverter {
 	 *
 	 * @param workloadModel
 	 *            The workload model.
-	 * @param system
-	 *            The system representation.
 	 * @param annotation
 	 *            The system annotation.
-	 * @return An executable load test corresponding to the load represented by the workload model.
+	 * @return A pack containing an executable load test corresponding to the load represented by
+	 *         the workload model and the behaviors.
 	 */
-	public ListedHashTree convertToWorkload(WorkloadModel workloadModel, SystemModel system, SystemAnnotation annotation) {
+	public JMeterTestPlanPack convertToLoadTest(WorkloadModel workloadModel, SystemAnnotation annotation) {
 		fixBehaviorModelFilenames(workloadModel);
 
 		CSVBufferingHandler csvHandler = new CSVBufferingHandler();
@@ -95,15 +110,16 @@ public class WessbasToJmeterConverter {
 			throw new RuntimeException("Error during JMeter Test Plan generation!", e);
 		}
 
-		// TODO: don't write to file
-		generator.writeToFile(testPlan, outputPath + "/testplan.jmx");
-		try {
-			csvHandler.writeToDisk(outputPath);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		if (writeToFile) {
+			generator.writeToFile(testPlan, outputPath + "/testplan.jmx");
+			try {
+				csvHandler.writeToDisk(outputPath);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
-		return testPlan;
+		return new JMeterTestPlanPack(testPlan, csvHandler.getBuffer());
 	}
 
 	private void fixBehaviorModelFilenames(WorkloadModel workloadModel) {

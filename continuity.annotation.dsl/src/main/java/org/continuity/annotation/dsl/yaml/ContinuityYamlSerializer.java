@@ -2,6 +2,7 @@ package org.continuity.annotation.dsl.yaml;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 import org.continuity.annotation.dsl.AbstractContinuityModelElement;
@@ -46,11 +47,7 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 	}
 
 	public T readFromYaml(String yamlSource) throws JsonParseException, JsonMappingException, IOException {
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
-		mapper.registerModule(new SimpleModule().setDeserializerModifier(new ContinuityDeserializerModifier()));
-
-		mapper.registerModule(new SimpleModule().addDeserializer(WeakReference.class, new WeakReferenceDeserializer()));
-		mapper.registerModule(new SimpleModule().addDeserializer(PropertyOverride.class, new PropertyOverrideDeserializer()));
+		ObjectMapper mapper = createReadMapper();
 		T read = mapper.readValue(new File(yamlSource), type);
 		ModelValidator.fixAll(read);
 		return read;
@@ -58,6 +55,23 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 
 	public T readFromYaml(URL yamlSource) throws JsonParseException, JsonMappingException, IOException {
 		return readFromYaml(yamlSource.getPath());
+	}
+
+	public T readFromYamlInputStream(InputStream inputStream) throws JsonParseException, JsonMappingException, IOException {
+		ObjectMapper mapper = createReadMapper();
+		T read = mapper.readValue(inputStream, type);
+		ModelValidator.fixAll(read);
+		return read;
+	}
+
+	private ObjectMapper createReadMapper() {
+		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
+		mapper.registerModule(new SimpleModule().setDeserializerModifier(new ContinuityDeserializerModifier()));
+
+		mapper.registerModule(new SimpleModule().addDeserializer(WeakReference.class, new WeakReferenceDeserializer()));
+		mapper.registerModule(new SimpleModule().addDeserializer(PropertyOverride.class, new PropertyOverrideDeserializer()));
+
+		return mapper;
 	}
 
 	public void writeToYaml(T model, String yamlFile) throws JsonGenerationException, JsonMappingException, IOException {

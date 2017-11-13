@@ -124,7 +124,7 @@ public enum ContinuityModelTestInstance {
 			ContinuityYamlSerializer<SystemModel> serializer = new ContinuityYamlSerializer<>(SystemModel.class);
 
 			try {
-				return serializer.readFromYaml(getClass().getResource("/dvdstore-systemmodel.yml"));
+				return serializer.readFromYamlInputStream(getClass().getResourceAsStream("/dvdstore-systemmodel.yml"));
 			} catch (IOException e) {
 				e.printStackTrace();
 				return null;
@@ -135,7 +135,7 @@ public enum ContinuityModelTestInstance {
 		protected SystemAnnotation setupAnnotation(SystemModel system) {
 			ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
 			try {
-				return serializer.readFromYaml(getClass().getResource("/dvdstore-annotation.yml"));
+				return serializer.readFromYamlInputStream(getClass().getResourceAsStream("/dvdstore-annotation.yml"));
 			} catch (IOException e) {
 				e.printStackTrace();
 				return null;

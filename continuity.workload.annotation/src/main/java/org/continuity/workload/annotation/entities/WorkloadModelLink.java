@@ -13,16 +13,17 @@ public class WorkloadModelLink {
 	@JsonProperty("model-type")
 	private String modelType = DEFAULT_MODEL_TYPE;
 
-	private String link;
+	@JsonProperty("workload-link")
+	private String workloadLink;
 
 	@JsonProperty("system-model-link")
 	private String systemModelLink;
 
-	@JsonProperty(value = "annotation-link", required = false)
+	@JsonProperty(value = "initial-annotation-link", required = false)
 	private String annotationLink;
 
-	@JsonProperty(value = "extended-annotation-link", required = false)
-	private String extendedAnnotationLink;
+	@JsonProperty(value = "custom-annotation-link", required = false)
+	private String customAnnotationLink;
 
 	/**
 	 * Default constructor.
@@ -30,8 +31,8 @@ public class WorkloadModelLink {
 	public WorkloadModelLink() {
 	}
 
-	public WorkloadModelLink(String link) {
-		this.link = link;
+	public WorkloadModelLink(String workloadLink) {
+		this.workloadLink = workloadLink;
 	}
 
 	/**
@@ -54,22 +55,22 @@ public class WorkloadModelLink {
 	}
 
 	/**
-	 * Gets {@link #link}.
+	 * Gets {@link #workloadLink}.
 	 *
-	 * @return {@link #link}
+	 * @return {@link #workloadLink}
 	 */
-	public String getLink() {
-		return this.link;
+	public String getWorkloadLink() {
+		return this.workloadLink;
 	}
 
 	/**
-	 * Sets {@link #link}.
+	 * Sets {@link #workloadLink}.
 	 *
 	 * @param link
-	 *            New value for {@link #link}
+	 *            New value for {@link #workloadLink}
 	 */
-	public void setLink(String link) {
-		this.link = link;
+	public void setWorkloadLink(String workloadLink) {
+		this.workloadLink = workloadLink;
 	}
 
 	/**
@@ -111,22 +112,22 @@ public class WorkloadModelLink {
 	}
 
 	/**
-	 * Gets {@link #extendedAnnotationLink}.
+	 * Gets {@link #customAnnotationLink}.
 	 *
-	 * @return {@link #extendedAnnotationLink}
+	 * @return {@link #customAnnotationLink}
 	 */
-	public String getExtendedAnnotationLink() {
-		return this.extendedAnnotationLink;
+	public String getCustomAnnotationLink() {
+		return this.customAnnotationLink;
 	}
 
 	/**
-	 * Sets {@link #extendedAnnotationLink}.
+	 * Sets {@link #customAnnotationLink}.
 	 *
 	 * @param extendedAnnotationLink
-	 *            New value for {@link #extendedAnnotationLink}
+	 *            New value for {@link #customAnnotationLink}
 	 */
-	public void setExtendedAnnotationLink(String extendedAnnotationLink) {
-		this.extendedAnnotationLink = extendedAnnotationLink;
+	public void setCustomAnnotationLink(String customAnnotationLink) {
+		this.customAnnotationLink = customAnnotationLink;
 	}
 
 	/**
@@ -134,7 +135,7 @@ public class WorkloadModelLink {
 	 */
 	@Override
 	public String toString() {
-		return "{ type: " + modelType + ", link: " + link + ", system-model-link: " + systemModelLink + " }";
+		return "{ type: " + modelType + ", link: " + workloadLink + ", system-model-link: " + systemModelLink + " }";
 	}
 
 }

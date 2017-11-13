@@ -2,6 +2,7 @@ package org.continuity.workload.annotation.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -24,6 +25,14 @@ public class RabbitMqConfig {
 	private static final String MODEL_CREATED_EXCHANGE_NAME = "model-created";
 
 	private static final String MODEL_CREATED_ROUTING_KEY = "*";
+
+	@Bean
+	MessagePostProcessor typeRemovingProcessor() {
+		return m -> {
+			m.getMessageProperties().getHeaders().remove("__TypeId__");
+			return m;
+		};
+	}
 
 	// Input queue
 
@@ -52,6 +61,7 @@ public class RabbitMqConfig {
 		SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
 		configurer.configure(factory, connectionFactory);
 		factory.setMessageConverter(jsonMessageConverter());
+		factory.setAfterReceivePostProcessors(typeRemovingProcessor());
 		return factory;
 	}
 

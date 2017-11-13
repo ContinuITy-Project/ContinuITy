@@ -1,4 +1,4 @@
-package org.continuity.workload.annotation;
+package org.continuity.workload.annotation.amqp;
 
 import org.continuity.workload.annotation.config.RabbitMqConfig;
 import org.continuity.workload.annotation.entities.WorkloadModelLink;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  *
  */
 @Component
-public class ModelAmpqHandler {
+public class AnnotationAmpqHandler {
 
 	@RabbitListener(queues = RabbitMqConfig.MODEL_CREATED_QUEUE_NAME)
 	public void onModelCreated(WorkloadModelLink link) {
