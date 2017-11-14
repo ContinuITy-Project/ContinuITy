@@ -5,6 +5,12 @@ import java.lang.reflect.Method;
 
 import org.continuity.annotation.dsl.ContinuityModelElement;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+
 /**
  * Holds key enums for {@link PropertyOverride}s.
  *
@@ -67,6 +73,8 @@ public class PropertyOverrideKey {
 	 * @param <T>
 	 *            The type of element holding the overridden value.
 	 */
+	@JsonTypeInfo(use = Id.NAME, include = As.PROPERTY)
+	@JsonSubTypes({ @Type(value = HttpInterface.class), @Type(value = HttpParameter.class) })
 	public static interface Any {
 
 		/**

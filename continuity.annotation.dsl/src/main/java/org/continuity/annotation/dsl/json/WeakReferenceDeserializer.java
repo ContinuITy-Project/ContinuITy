@@ -1,4 +1,4 @@
-package org.continuity.annotation.dsl.yaml;
+package org.continuity.annotation.dsl.json;
 
 import java.io.IOException;
 

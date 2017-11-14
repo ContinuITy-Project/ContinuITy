@@ -5,7 +5,6 @@ import org.continuity.annotation.dsl.custom.CustomAnnotationElement;
 import org.continuity.annotation.dsl.test.ContinuityModelTestInstance;
 import org.continuity.commons.exceptions.AnnotationNotSupportedException;
 import org.continuity.wessbas.entities.WessbasDslInstance;
-import org.continuity.wessbas.transform.jmeter.WessbasToJmeterConverter;
 import org.junit.Test;
 
 /**
@@ -17,7 +16,7 @@ public class Wessbas2JmeterTest {
 	@Test
 	public void test() {
 		WessbasToJmeterConverter converter = new WessbasToJmeterConverter("examples/dvdstore");
-		converter.convertToWorkload(WessbasDslInstance.DVDSTORE_PARSED.get(), ContinuityModelTestInstance.DVDSTORE_PARSED.getSystemModel(),
+		converter.convertToLoadTest(WessbasDslInstance.DVDSTORE_PARSED.get(),
 				ContinuityModelTestInstance.DVDSTORE_PARSED.getAnnotation());
 	}
 
@@ -29,7 +28,7 @@ public class Wessbas2JmeterTest {
 		extension.addElement(element);
 
 		WessbasToJmeterConverter converter = new WessbasToJmeterConverter("./");
-		converter.convertToWorkload(WessbasDslInstance.SIMPLE.get(), ContinuityModelTestInstance.SIMPLE.getSystemModel(), ContinuityModelTestInstance.SIMPLE.getAnnotation(), extension);
+		converter.convertToLoadTest(WessbasDslInstance.SIMPLE.get(), ContinuityModelTestInstance.SIMPLE.getAnnotation(), extension);
 	}
 
 }

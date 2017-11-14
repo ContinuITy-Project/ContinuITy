@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.continuity.annotation.dsl.WeakReference;
+import org.continuity.annotation.dsl.json.ModelSanitizers;
 import org.continuity.annotation.dsl.system.ServiceInterface;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Annotation of a {@link ServiceInterface}. Specifies the sources of the inputs.
@@ -18,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  *
  */
 @JsonPropertyOrder({ "interface", "overrides", "parameter-annotations" })
+@JsonDeserialize(converter = ModelSanitizers.InterfaceAnnotation.class)
 public class InterfaceAnnotation extends OverrideableAnnotation<PropertyOverrideKey.InterfaceLevel> {
 
 	@JsonProperty(value = "interface")

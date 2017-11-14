@@ -1,11 +1,13 @@
 package org.continuity.annotation.dsl;
 
+import org.continuity.annotation.dsl.json.WeakReferenceDeserializer;
 import org.continuity.annotation.dsl.visitor.ContinuityModelVisitor;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A weak reference to a {@link ContinuityModelElement}. It holds the id to the element and can hold
@@ -17,6 +19,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  */
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @JsonIdentityReference(alwaysAsId = true)
+@JsonDeserialize(using = WeakReferenceDeserializer.class)
 public class WeakReference<T extends ContinuityModelElement> {
 
 	private final String id;

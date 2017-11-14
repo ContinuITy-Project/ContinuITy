@@ -1,6 +1,7 @@
 package org.continuity.commons.wessbas;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 
 import org.eclipse.emf.common.util.URI;
@@ -9,6 +10,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 
 import m4jdsl.WorkloadModel;
 import m4jdsl.impl.M4jdslPackageImpl;
@@ -33,6 +35,19 @@ public class WessbasModelParser {
 	public WorkloadModel readWorkloadModel(String filename) throws IOException {
 		M4jdslPackageImpl.init();
 		EObject eobject = readEcoreFromFile(filename, "xmi");
+
+		if (eobject instanceof WorkloadModel) {
+			return (WorkloadModel) eobject;
+		} else {
+			throw new IOException("The found ecore model has type " + eobject.getClass() + ". Expected m4js.WorkloadModel!");
+		}
+	}
+
+	public WorkloadModel readWorkloadModel(InputStream inputStream) throws IOException {
+		M4jdslPackageImpl.init();
+		Resource resource = new XMIResourceImpl();
+		resource.load(inputStream, null);
+		EObject eobject = resource.getContents().get(0);
 
 		if (eobject instanceof WorkloadModel) {
 			return (WorkloadModel) eobject;

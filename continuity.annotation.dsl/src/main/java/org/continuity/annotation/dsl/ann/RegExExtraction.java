@@ -4,12 +4,14 @@ package org.continuity.annotation.dsl.ann;
 
 import org.continuity.annotation.dsl.AbstractContinuityModelElement;
 import org.continuity.annotation.dsl.WeakReference;
+import org.continuity.annotation.dsl.json.ModelSanitizers;
 import org.continuity.annotation.dsl.system.ServiceInterface;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Represents an extraction of a value specified by a regular expression from the response of an
@@ -21,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  *
  */
 @JsonPropertyOrder({ "from", "pattern", "response-key", "template", "match-number", "fallback" })
+@JsonDeserialize(converter = ModelSanitizers.RegExExtraction.class)
 public class RegExExtraction extends AbstractContinuityModelElement {
 
 	private static final String DEFAULT_RESPONSE_KEY = "<default>";

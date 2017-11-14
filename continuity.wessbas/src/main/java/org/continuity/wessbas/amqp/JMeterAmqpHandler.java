@@ -4,6 +4,7 @@ import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.entities.JMeterTestPlanPack;
 import org.continuity.wessbas.entities.LoadTestSpecification;
+import org.continuity.wessbas.entities.WorkloadModelStorageEntry;
 import org.continuity.wessbas.storage.SimpleModelStorage;
 import org.continuity.wessbas.transform.jmeter.WessbasToJmeterConverter;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -38,8 +39,23 @@ public class JMeterAmqpHandler {
 		if (id == UNKNOWN_ID) {
 			// TODO: log error message
 		} else {
-			WorkloadModel workloadModel = SimpleModelStorage.instance().get(id).getWorkloadModel();
-			SystemAnnotation annotation = restTemplate.getForObject(specification.getAnnotationLink(), SystemAnnotation.class);
+			WorkloadModelStorageEntry workloadModelEntry = SimpleModelStorage.instance().get(id);
+
+			if (workloadModelEntry == null) {
+				// TODO: Print error message
+				System.out.println("There is no workload model with id " + id);
+				return;
+			}
+
+			WorkloadModel workloadModel = workloadModelEntry.getWorkloadModel();
+			SystemAnnotation annotation = restTemplate.getForObject(fixUrl(specification.getAnnotationLink()), SystemAnnotation.class);
+
+			if (annotation == null) {
+				// TODO: Print error message
+				System.out.println("Annotation at " + specification.getAnnotationLink() + " is null!");
+				return;
+			}
+
 			JMeterTestPlanPack testPlanPack = jmeterConverter.convertToLoadTest(workloadModel, annotation);
 
 			amqpTemplate.convertAndSend(RabbitMqConfig.LOAD_TEST_CREATED_EXCHANGE_NAME, "wessbas.jmeter", testPlanPack);
@@ -54,6 +70,14 @@ public class JMeterAmqpHandler {
 			return UNKNOWN_ID;
 		} else {
 			return workloadModelLink.substring(start, end);
+		}
+	}
+
+	private String fixUrl(String url) {
+		if (url.startsWith("http")) {
+			return url;
+		} else {
+			return "http://" + url;
 		}
 	}
 

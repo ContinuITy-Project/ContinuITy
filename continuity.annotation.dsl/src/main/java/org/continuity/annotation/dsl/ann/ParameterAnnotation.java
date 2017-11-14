@@ -3,6 +3,7 @@
 package org.continuity.annotation.dsl.ann;
 
 import org.continuity.annotation.dsl.WeakReference;
+import org.continuity.annotation.dsl.json.ModelSanitizers;
 import org.continuity.annotation.dsl.system.Parameter;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Specifies the input for a specific parameter.
@@ -18,6 +20,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  *
  */
 @JsonPropertyOrder({ "parameter", "input", "overrides" })
+@JsonDeserialize(converter = ModelSanitizers.ParameterAnnotation.class)
 public class ParameterAnnotation extends OverrideableAnnotation<PropertyOverrideKey.ParameterLevel> {
 
 	@JsonProperty(value = "input")

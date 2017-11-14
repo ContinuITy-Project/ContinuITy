@@ -1,6 +1,7 @@
 package org.continuity.wessbas.entities;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.continuity.commons.wessbas.WessbasModelParser;
 
@@ -43,11 +44,11 @@ public enum WessbasDslInstance {
 		@Override
 		public WorkloadModel get() {
 			WessbasModelParser parser = new WessbasModelParser();
-			String path = getClass().getResource("/workloadmodel-specj.xmi").getPath();
+			InputStream inputStream = getClass().getResourceAsStream("/workloadmodel-specj.xmi");
 			try {
-				return parser.readWorkloadModel(path);
+				return parser.readWorkloadModel(inputStream);
 			} catch (IOException e) {
-				throw new RuntimeException("Error when reading " + path + "!", e);
+				throw new RuntimeException("Error when reading /workloadmodel-specj.xmi!", e);
 			}
 		}
 	},
@@ -56,11 +57,11 @@ public enum WessbasDslInstance {
 		@Override
 		public WorkloadModel get() {
 			WessbasModelParser parser = new WessbasModelParser();
-			String path = getClass().getResource("/workloadmodel-dvdstore.xmi").getPath();
+			InputStream inputStream = getClass().getResourceAsStream("/workloadmodel-dvdstore.xmi");
 			try {
-				return parser.readWorkloadModel(path);
+				return parser.readWorkloadModel(inputStream);
 			} catch (IOException e) {
-				throw new RuntimeException("Error when reading " + path + "!", e);
+				throw new RuntimeException("Error when reading /workloadmodel-dvdstore.xmi!", e);
 			}
 		}
 	};

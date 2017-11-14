@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.continuity.annotation.dsl.AbstractContinuityModelElement;
 
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,6 +23,7 @@ public abstract class DataInput extends AbstractContinuityModelElement implement
 
 	@JsonProperty(value = "associated")
 	@JsonInclude(Include.NON_EMPTY)
+	@JsonIdentityReference(alwaysAsId = true)
 	private List<DataInput> associated;
 
 	/**

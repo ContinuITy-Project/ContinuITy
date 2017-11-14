@@ -7,18 +7,19 @@ import java.net.URL;
 
 import org.continuity.annotation.dsl.AbstractContinuityModelElement;
 import org.continuity.annotation.dsl.ContinuityModelElement;
-import org.continuity.annotation.dsl.WeakReference;
 import org.continuity.annotation.dsl.ann.PropertyOverride;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
@@ -49,7 +50,6 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 	public T readFromYaml(String yamlSource) throws JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = createReadMapper();
 		T read = mapper.readValue(new File(yamlSource), type);
-		ModelValidator.fixAll(read);
 		return read;
 	}
 
@@ -60,30 +60,40 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 	public T readFromYamlInputStream(InputStream inputStream) throws JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = createReadMapper();
 		T read = mapper.readValue(inputStream, type);
-		ModelValidator.fixAll(read);
 		return read;
+	}
+
+	public T readFromYamlString(String yamlString) throws JsonParseException, JsonMappingException, IOException {
+		return createReadMapper().readValue(yamlString, type);
 	}
 
 	private ObjectMapper createReadMapper() {
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
 		mapper.registerModule(new SimpleModule().setDeserializerModifier(new ContinuityDeserializerModifier()));
 
-		mapper.registerModule(new SimpleModule().addDeserializer(WeakReference.class, new WeakReferenceDeserializer()));
 		mapper.registerModule(new SimpleModule().addDeserializer(PropertyOverride.class, new PropertyOverrideDeserializer()));
 
 		return mapper;
 	}
 
 	public void writeToYaml(T model, String yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
-		mapper.addMixIn(AbstractContinuityModelElement.class, ContinuityModelElementMixin.class);
-		mapper.registerModule(new SimpleModule().setSerializerModifier(new ContinuitySerializerModifier()));
-		mapper.registerModule(new SimpleModule().addSerializer(getPropertyOverrideClass(), new PropertyOverrideSerializer()));
-		mapper.writer(new SimpleFilterProvider().addFilter("idFilter", new IdFilter())).writeValue(new File(yamlFile), model);
+		createWriter().writeValue(new File(yamlFile), model);
 	}
 
 	public void writeToYaml(T model, URL yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
 		writeToYaml(model, yamlFile.getPath());
+	}
+
+	public String writeToYamlString(T model) throws JsonProcessingException {
+		return createWriter().writeValueAsString(model);
+	}
+
+	private ObjectWriter createWriter() {
+		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
+		mapper.addMixIn(AbstractContinuityModelElement.class, ContinuityModelElementMixin.class);
+		mapper.registerModule(new SimpleModule().setSerializerModifier(new ContinuitySerializerModifier()));
+		mapper.registerModule(new SimpleModule().addSerializer(getPropertyOverrideClass(), new PropertyOverrideSerializer()));
+		return mapper.writer(new SimpleFilterProvider().addFilter("idFilter", new IdFilter()));
 	}
 
 	@SuppressWarnings("unchecked")
