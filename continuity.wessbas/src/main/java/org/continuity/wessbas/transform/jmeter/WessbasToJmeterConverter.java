@@ -31,25 +31,25 @@ public class WessbasToJmeterConverter {
 	/**
 	 *
 	 */
-	public WessbasToJmeterConverter(String outputPath, boolean writeToFile) {
+	public WessbasToJmeterConverter(String configurationPath, String outputPath, boolean writeToFile) {
 		this.outputPath = outputPath;
 		this.writeToFile = writeToFile;
 		this.generator = new AdaptedTestPlanGenerator();
-		this.generator.init("configuration/generator.default.properties", "configuration/testplan.default.properties");
+		this.generator.init(configurationPath + "/generator.default.properties", configurationPath + "/testplan.default.properties");
 	}
 
 	/**
 	 *
 	 */
-	public WessbasToJmeterConverter(String outputPath) {
-		this(outputPath, outputPath != null);
+	public WessbasToJmeterConverter(String configurationPath, String outputPath) {
+		this(configurationPath, outputPath, outputPath != null);
 	}
 
 	/**
 	 * Creates a new instance not writing to a file.
 	 */
-	public WessbasToJmeterConverter() {
-		this(null, false);
+	public WessbasToJmeterConverter(String configurationPath) {
+		this(configurationPath, null, false);
 	}
 
 	/**

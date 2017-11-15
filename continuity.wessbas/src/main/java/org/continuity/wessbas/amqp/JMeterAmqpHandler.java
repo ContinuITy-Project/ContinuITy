@@ -24,7 +24,8 @@ public class JMeterAmqpHandler {
 
 	private static final String UNKNOWN_ID = "UNKNOWN";
 
-	private WessbasToJmeterConverter jmeterConverter = new WessbasToJmeterConverter();
+	@Autowired
+	private WessbasToJmeterConverter jmeterConverter;
 
 	@Autowired
 	private RestTemplate restTemplate;
@@ -43,7 +44,7 @@ public class JMeterAmqpHandler {
 
 			if (workloadModelEntry == null) {
 				// TODO: Print error message
-				System.out.println("There is no workload model with id " + id);
+				System.err.println("There is no workload model with id " + id);
 				return;
 			}
 
@@ -52,7 +53,7 @@ public class JMeterAmqpHandler {
 
 			if (annotation == null) {
 				// TODO: Print error message
-				System.out.println("Annotation at " + specification.getAnnotationLink() + " is null!");
+				System.err.println("Annotation at " + specification.getAnnotationLink() + " is null!");
 				return;
 			}
 
