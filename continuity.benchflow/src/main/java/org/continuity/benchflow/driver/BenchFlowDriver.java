@@ -1,19 +1,19 @@
 package org.continuity.benchflow.driver;
 
-import org.continuity.workload.driver.WorkloadDriver;
-
 import cloud.benchflow.dsl.definition.BenchFlowTest;
 
 /**
  * @author Henning Schulz
  *
  */
-public class BenchFlowDriver implements WorkloadDriver<BenchFlowTest> {
+public class BenchFlowDriver {
 
 	/**
-	 * {@inheritDoc}
+	 * Executes the passed load test.
+	 *
+	 * @param loadTest
+	 *            Test to be executed.
 	 */
-	@Override
 	public void executeWorkload(BenchFlowTest loadTest) {
 		// TODO Auto-generated method stub
 	}
