@@ -1,20 +1,20 @@
-package org.continuity.wessbas.entities;
+package org.continuity.jmeter.entities;
 
 import java.util.Map;
 
 import org.apache.jorphan.collections.ListedHashTree;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * @author Henning Schulz
  *
  */
-public class JMeterTestPlanPack {
+public class TestPlanPack {
 
 	@JsonProperty("test-plan")
-	@JsonSerialize(using = JMeterTestPlanSerializer.class)
+	@JsonDeserialize(using = TestPlanDeserializer.class)
 	private ListedHashTree testPlan;
 
 	private Map<String, String[][]> behaviors;
@@ -29,14 +29,14 @@ public class JMeterTestPlanPack {
 	/**
 	 *
 	 */
-	public JMeterTestPlanPack() {
+	public TestPlanPack() {
 	}
 
 	/**
 	 * @param testPlan
 	 * @param behaviors
 	 */
-	public JMeterTestPlanPack(ListedHashTree testPlan, Map<String, String[][]> behaviors) {
+	public TestPlanPack(ListedHashTree testPlan, Map<String, String[][]> behaviors) {
 		this.testPlan = testPlan;
 		this.behaviors = behaviors;
 	}

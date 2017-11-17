@@ -12,21 +12,29 @@ dependencies {
 	compile (group: 'org.apache.jmeter', name: 'jorphan', version: '2.13') {
 		exclude group: 'commons-math3', module: 'commons-math3'
 		exclude group: 'commons-pool2', module: 'commons-pool2'
+		exclude group: 'org.slf4j', module: 'slf4j-nop'
+		exclude group: 'org.mongodb', module: 'mongo-java-driver'
 	}
 	
 	compile (group: 'org.apache.jmeter', name: 'ApacheJMeter_core', version: '2.13') {
 		exclude group: 'commons-math3', module: 'commons-math3'
 		exclude group: 'commons-pool2', module: 'commons-pool2'
+		exclude group: 'org.slf4j', module: 'slf4j-nop'
+		exclude group: 'org.mongodb', module: 'mongo-java-driver'
 	}
 	
 	compile (group: 'org.apache.jmeter', name: 'ApacheJMeter_components', version: '2.13') {
 		exclude group: 'commons-math3', module: 'commons-math3'
 		exclude group: 'commons-pool2', module: 'commons-pool2'
+		exclude group: 'org.slf4j', module: 'slf4j-nop'
+		exclude group: 'org.mongodb', module: 'mongo-java-driver'
 	}
 	
 	compile (group: 'org.apache.jmeter', name: 'ApacheJMeter_http', version: '2.13') {
 		exclude group: 'commons-math3', module: 'commons-math3'
 		exclude group: 'commons-pool2', module: 'commons-pool2'
+		exclude group: 'org.slf4j', module: 'slf4j-nop'
+		exclude group: 'org.mongodb', module: 'mongo-java-driver'
 	}
 	
 	compile group: 'commons-cli', name: 'commons-cli', version: '1.4'
@@ -38,6 +46,7 @@ dependencies {
 	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 	
-	compile fileTree(dir: 'lib', include: ['*.jar'])
+	// TODO: Replace with reference to a repository
+	compile fileTree(dir: '../continuity.wessbas/lib', include: ['wessbas.testPlanGenerator.jar', 'Markov4JMeter-1.0.20140405.jar'])
 
 }

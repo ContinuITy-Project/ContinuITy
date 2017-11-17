@@ -63,6 +63,7 @@ public class ModelSanitizers {
 		return true;
 	}
 
+	// TODO: Move to another class (should not be used in @JsonSerialize annotation)
 	public static class SystemAnnotation extends StdConverter<org.continuity.annotation.dsl.ann.SystemAnnotation, org.continuity.annotation.dsl.ann.SystemAnnotation> {
 
 		/**

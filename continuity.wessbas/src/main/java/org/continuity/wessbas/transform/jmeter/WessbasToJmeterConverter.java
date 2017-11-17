@@ -3,7 +3,6 @@ package org.continuity.wessbas.transform.jmeter;
 import java.io.IOException;
 
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.custom.CustomAnnotation;
 import org.continuity.annotation.dsl.custom.CustomAnnotationElement;
 import org.continuity.commons.exceptions.AnnotationNotSupportedException;
@@ -58,8 +57,6 @@ public class WessbasToJmeterConverter {
 	 *
 	 * @param workloadModel
 	 *            The workload model.
-	 * @param annotation
-	 *            The system annotation.
 	 * @param extension
 	 *            An extension of the annotation. May cause an
 	 *            {@link AnnotationNotSupportedException}.
@@ -68,7 +65,8 @@ public class WessbasToJmeterConverter {
 	 * @throws AnnotationNotSupportedException
 	 *             if the passed {@link CustomAnnotation} cannot be converted to the load test.
 	 */
-	public JMeterTestPlanPack convertToLoadTest(WorkloadModel workloadModel, SystemAnnotation annotation, CustomAnnotation extension) throws AnnotationNotSupportedException {
+	// TODO: move to continuity.jmeter
+	private JMeterTestPlanPack convertToLoadTest(WorkloadModel workloadModel, CustomAnnotation extension) throws AnnotationNotSupportedException {
 		if ((extension != null) && !extension.getElements().isEmpty()) {
 			StringBuilder builder = new StringBuilder();
 			builder.append("The following extensoins are not supported: ");
@@ -81,7 +79,7 @@ public class WessbasToJmeterConverter {
 			throw new AnnotationNotSupportedException(builder.substring(0, builder.length() - 2));
 		}
 
-		return convertToLoadTest(workloadModel, annotation);
+		return convertToLoadTest(workloadModel);
 	}
 
 	/**
@@ -90,12 +88,10 @@ public class WessbasToJmeterConverter {
 	 *
 	 * @param workloadModel
 	 *            The workload model.
-	 * @param annotation
-	 *            The system annotation.
 	 * @return A pack containing an executable load test corresponding to the load represented by
 	 *         the workload model and the behaviors.
 	 */
-	public JMeterTestPlanPack convertToLoadTest(WorkloadModel workloadModel, SystemAnnotation annotation) {
+	public JMeterTestPlanPack convertToLoadTest(WorkloadModel workloadModel) {
 		fixBehaviorModelFilenames(workloadModel);
 
 		CSVBufferingHandler csvHandler = new CSVBufferingHandler();

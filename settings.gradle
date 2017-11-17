@@ -5,6 +5,7 @@ include "continuity.benchflow"
 include "continuity.commons"
 include "continuity.workload.annotation"
 include "continuity.jmeter"
+include "continuity.session.logs"
 
 /**
  * Sets the name of the project build file (and all of its sub-projects) to be "${project.name}.gradle" pattern.

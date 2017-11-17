@@ -1,4 +1,4 @@
-package org.continuity.wessbas.config;
+package org.continuity.jmeter.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
