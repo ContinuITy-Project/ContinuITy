@@ -24,7 +24,7 @@ public class TestPlanWriter {
 	 *            The path to the root JMeter configuration folder.
 	 */
 	public TestPlanWriter(String jmeterHome) {
-		JMeterEngineGateway.getInstance().initJMeter(jmeterHome, jmeterHome + "/jmeter.properties", Locale.ENGLISH);
+		JMeterEngineGateway.getInstance().initJMeter(jmeterHome, "jmeter.properties", Locale.ENGLISH);
 	}
 
 	private final GeneratorAdapter generatorAdapter = new GeneratorAdapter();
@@ -36,8 +36,10 @@ public class TestPlanWriter {
 		boolean succeeded = generatorAdapter.writeOutput(testPlanTree, testplanPath.toString());
 
 		for (Map.Entry<String, String[][]> entry : behavior.entrySet()) {
+			Path csvPath = outputDir.resolve(entry.getKey());
+
 			try {
-				csvHandler.writeValues(entry.getKey(), entry.getValue());
+				csvHandler.writeValues(csvPath.toString(), entry.getValue());
 			} catch (SecurityException | NullPointerException | IOException e) {
 				e.printStackTrace();
 				succeeded = false;

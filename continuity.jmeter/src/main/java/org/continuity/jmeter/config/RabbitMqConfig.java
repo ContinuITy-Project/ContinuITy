@@ -27,7 +27,7 @@ public class RabbitMqConfig {
 	 */
 	public static final String LOAD_TEST_CREATED_EXCHANGE_NAME = "load-test-created";
 
-	public static final String LOAD_TEST_CREATED_QUEUE_NAME = "jmeter-load-test-created";
+	public static final String LOAD_TEST_CREATED_QUEUE_NAME = "jmeter-handle-created-load-test";
 
 	public static final String LOAD_TEST_CREATED_ROUTING_KEY = "*.jmeter";
 

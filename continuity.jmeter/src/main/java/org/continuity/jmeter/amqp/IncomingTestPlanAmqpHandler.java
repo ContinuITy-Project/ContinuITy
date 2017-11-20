@@ -109,7 +109,7 @@ public class IncomingTestPlanAmqpHandler {
 
 	private void startJMeter(Path testPlanPath) throws IOException {
 		Runtime rt = Runtime.getRuntime();
-		Process pr = rt.exec(jmeterHome + "/bin/jmeter -t " + testPlanPath.toString());
+		Process pr = rt.exec(jmeterHome + "/bin/jmeter.bat -t " + testPlanPath.toString());
 		pr.getInputStream();
 	}
 
