@@ -55,6 +55,11 @@ dependencies {
 	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 	
+	// Swagger
+	
+	compile("io.springfox:springfox-swagger2:2.7.0")
+	compile("io.springfox:springfox-swagger-ui:2.7.0")
+	
 	compile fileTree(dir: 'lib', include: ['*.jar'])
 
 }

@@ -24,7 +24,7 @@ public class AnnotationController {
 
 	private final ConcurrentMap<String, SystemAnnotation> annotationBuffer = new ConcurrentHashMap<>();
 
-	@RequestMapping(path = "system/{id}", method = RequestMethod.GET)
+	@RequestMapping(path = "{id}/system", method = RequestMethod.GET)
 	public SystemModel getSystemModel(@PathVariable String id) {
 		SystemModel systemModel = systemModelBuffer.get(id);
 
@@ -41,7 +41,7 @@ public class AnnotationController {
 		return systemModel;
 	}
 
-	@RequestMapping(path = "annotation/{id}", method = RequestMethod.GET)
+	@RequestMapping(path = "{id}/annotation", method = RequestMethod.GET)
 	public SystemAnnotation getSystemAnnotation(@PathVariable String id) {
 		SystemAnnotation annotation = annotationBuffer.get(id);
 
