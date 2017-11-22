@@ -1,5 +1,8 @@
 package org.continuity.wessbas.amqp;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.entities.JMeterTestPlanPack;
 import org.continuity.wessbas.entities.LoadTestSpecification;
@@ -22,6 +25,8 @@ public class JMeterAmqpHandler {
 
 	private static final String UNKNOWN_ID = "UNKNOWN";
 
+	private static final Pattern WORKLOAD_LINK_PATTERN = Pattern.compile("^\\w+/wessbas/(.*)/workload$");
+
 	@Autowired
 	private WessbasToJmeterConverter jmeterConverter;
 
@@ -31,6 +36,11 @@ public class JMeterAmqpHandler {
 	@RabbitListener(queues = RabbitMqConfig.LOAD_TEST_NEEDED_QUEUE_NAME)
 	public void createTestPlan(LoadTestSpecification specification) {
 		String id = extractIdFromLink(specification.getWorkloadModelLink());
+
+		if (id == null) {
+			// TODO: print error message
+			return;
+		}
 
 		if (id == UNKNOWN_ID) {
 			// TODO: log error message
@@ -53,13 +63,11 @@ public class JMeterAmqpHandler {
 	}
 
 	private String extractIdFromLink(String workloadModelLink) {
-		int start = workloadModelLink.lastIndexOf("/") + 1;
-		int end = workloadModelLink.length();
-
-		if (start >= end) {
-			return UNKNOWN_ID;
+		Matcher matcher = WORKLOAD_LINK_PATTERN.matcher(workloadModelLink);
+		if (matcher.find()) {
+			return matcher.group(1);
 		} else {
-			return workloadModelLink.substring(start, end);
+			return null;
 		}
 	}
 

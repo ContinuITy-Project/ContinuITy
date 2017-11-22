@@ -1,6 +1,15 @@
 version: '3'
 
 services:
+  frontend:
+    image: continuity/frontend
+    hostname: frontend
+    networks:
+      - continuity-network
+    ports:
+      - '8080:80'
+    depends_on:
+      - rabbitmq
   rabbitmq:
     image: rabbitmq:3.6.8
     hostname: rabbitmq
@@ -12,7 +21,7 @@ services:
     networks:
       - continuity-network
     ports:
-      - '8080:80'
+      - '8081:80'
     depends_on:
       - rabbitmq
   wessbas:
@@ -21,7 +30,7 @@ services:
     networks:
       - continuity-network
     ports:
-      - '8081:80'
+      - '8082:80'
     depends_on:
       - rabbitmq
   jmeter:

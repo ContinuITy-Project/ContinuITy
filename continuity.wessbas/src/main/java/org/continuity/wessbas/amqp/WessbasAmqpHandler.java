@@ -25,21 +25,28 @@ public class WessbasAmqpHandler {
 	@Autowired
 	private AmqpTemplate amqpTemplate;
 
-	private WessbasPipelineManager pipelineManager = new WessbasPipelineManager(this::handleModelCreated);
-
 	@RabbitListener(queues = RabbitMqConfig.MONITORING_DATA_AVAILABLE_QUEUE_NAME)
-	public void onMonitoringDataAvailable(MonitoringData data) {
+	public String onMonitoringDataAvailable(MonitoringData data) {
 		System.out.println("Received monitoring data: " + data);
 
+		String storageId = SimpleModelStorage.instance().reserve();
+		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, model));
 		pipelineManager.runPipeline(data);
+
+		return getModelLink(storageId);
 	}
 
-	private void handleModelCreated(WorkloadModel workloadModel) {
-		String id = SimpleModelStorage.instance().put(workloadModel);
-		sendCreated(id);
+	private void handleModelCreated(String storageId, WorkloadModel workloadModel) {
+		SimpleModelStorage.instance().put(storageId, workloadModel);
+		sendCreated(storageId);
 	}
 
 	private void sendCreated(String id) {
+		String base = getModelLink(id);
+		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas", new WorkloadModelPack(base, "/workload", "/system", "/annotation"));
+	}
+
+	private String getModelLink(String id) {
 		String hostname;
 		try {
 			hostname = InetAddress.getLocalHost().getHostName();
@@ -48,8 +55,7 @@ public class WessbasAmqpHandler {
 			hostname = "UNKNOWN";
 		}
 
-		String base = hostname + "/wessbas";
-		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas", new WorkloadModelPack(base, "/model/" + id, "/annotation/system/" + id, "/annotation/annotation/" + id));
+		return hostname + "/wessbas/" + id;
 	}
 
 }

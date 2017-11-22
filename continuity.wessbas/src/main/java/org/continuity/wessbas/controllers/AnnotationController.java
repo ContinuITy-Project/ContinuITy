@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
  *
  */
 @RestController
-@RequestMapping("wessbas/annotation")
+@RequestMapping("wessbas")
 public class AnnotationController {
 
 	private final ConcurrentMap<String, SystemModel> systemModelBuffer = new ConcurrentHashMap<>();

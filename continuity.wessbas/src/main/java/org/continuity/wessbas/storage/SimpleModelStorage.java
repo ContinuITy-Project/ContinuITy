@@ -45,6 +45,33 @@ public class SimpleModelStorage {
 	}
 
 	/**
+	 * Reserves a slot in the storage.
+	 *
+	 * @return An id for the slot.
+	 */
+	public String reserve() {
+		return Integer.toString(counter.getAndIncrement());
+	}
+
+	/**
+	 * Adds a new workload model with the specified id. The id should be reserved by using
+	 * {@link #reserve()}.
+	 *
+	 * @param id
+	 *            The id of the slot.
+	 * @param model
+	 *            The model to be stored.
+	 */
+	public void put(String id, WorkloadModel model) {
+		WorkloadModelStorageEntry entry = new WorkloadModelStorageEntry();
+		entry.setWorkloadModel(model);
+		entry.setId(id);
+		entry.setCreatedDate(new Date());
+
+		storedModels.put(id, entry);
+	}
+
+	/**
 	 * Adds a new workload model and returns the automatically created id.
 	 *
 	 * @param model
@@ -52,13 +79,8 @@ public class SimpleModelStorage {
 	 * @return The created id.
 	 */
 	public String put(WorkloadModel model) {
-		String id = Integer.toString(counter.getAndIncrement());
-		WorkloadModelStorageEntry entry = new WorkloadModelStorageEntry();
-		entry.setWorkloadModel(model);
-		entry.setId(id);
-		entry.setCreatedDate(new Date());
-
-		storedModels.put(id, entry);
+		String id = reserve();
+		put(id, model);
 		return id;
 	}
 
