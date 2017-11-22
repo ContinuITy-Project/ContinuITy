@@ -9,6 +9,7 @@ import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.jmeter.config.RabbitMqConfig;
 import org.continuity.jmeter.entities.TestPlanPack;
+import org.continuity.jmeter.io.JMeterProcess;
 import org.continuity.jmeter.io.TestPlanWriter;
 import org.continuity.jmeter.transform.JMeterAnnotator;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -24,10 +25,11 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class IncomingTestPlanAmqpHandler {
 
-	private String jmeterHome = "C:/apache-jmeter-3.0/apache-jmeter-3.0";
-
 	@Autowired
 	private TestPlanWriter testPlanWriter;
+
+	@Autowired
+	private JMeterProcess jmeterProcess;
 
 	@Autowired
 	private RestTemplate restTemplate;
@@ -57,11 +59,7 @@ public class IncomingTestPlanAmqpHandler {
 		System.out.println("Wrote test plan to " + testPlanPath);
 
 		// TODO: remove
-		try {
-			startJMeter(testPlanPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		jmeterProcess.start(testPlanPath);
 
 		// Run the test:
 		// StandardJMeterEngine jmeterEngine = new StandardJMeterEngine();
@@ -105,12 +103,6 @@ public class IncomingTestPlanAmqpHandler {
 		} else {
 			return "http://" + url;
 		}
-	}
-
-	private void startJMeter(Path testPlanPath) throws IOException {
-		Runtime rt = Runtime.getRuntime();
-		Process pr = rt.exec(jmeterHome + "/bin/jmeter.bat -t " + testPlanPath.toString());
-		pr.getInputStream();
 	}
 
 }

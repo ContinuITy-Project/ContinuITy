@@ -14,3 +14,13 @@ dependencies {
 	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 }
+
+group = 'continuity'
+
+apply plugin: 'com.palantir.docker'
+
+docker {
+    name "${project.group}/workload-annotation"
+    files jar.archivePath
+    buildArgs(['JAR_FILE': "${jar.archiveName}"])
+}

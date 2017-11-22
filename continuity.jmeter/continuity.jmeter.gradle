@@ -50,3 +50,16 @@ dependencies {
 	compile fileTree(dir: '../continuity.wessbas/lib', include: ['wessbas.testPlanGenerator.jar', 'Markov4JMeter-1.0.20140405.jar'])
 
 }
+
+group = 'continuity'
+
+apply plugin: 'com.palantir.docker'
+
+docker {
+	name "${project.group}/jmeter"
+	files jar.archivePath
+	copySpec.from('.') {
+		include 'configuration/**'
+	}
+	buildArgs(['JAR_FILE': "${jar.archiveName}"])
+}
