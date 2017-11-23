@@ -12,6 +12,8 @@ import org.continuity.jmeter.entities.TestPlanPack;
 import org.continuity.jmeter.io.JMeterProcess;
 import org.continuity.jmeter.io.TestPlanWriter;
 import org.continuity.jmeter.transform.JMeterAnnotator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,8 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class IncomingTestPlanAmqpHandler {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(IncomingTestPlanAmqpHandler.class);
+
 	@Autowired
 	private TestPlanWriter testPlanWriter;
 
@@ -34,15 +38,21 @@ public class IncomingTestPlanAmqpHandler {
 	@Autowired
 	private RestTemplate restTemplate;
 
+	/**
+	 * Listens to the {@link RabbitMqConfig#LOAD_TEST_CREATED_QUEUE_NAME} queue, annotates the test
+	 * plan and executes the test.
+	 *
+	 * @param testPlanPack
+	 *            The bundle holding the test plan.
+	 */
 	@RabbitListener(queues = RabbitMqConfig.LOAD_TEST_CREATED_QUEUE_NAME)
 	public void handleIncomingTestPlan(TestPlanPack testPlanPack) {
-		System.out.println("Received test plan.");
+		LOGGER.info("Received test plan.");
 
 		ListedHashTree annotatedTestPlan = createAnnotatedTestPlan(testPlanPack);
 
 		if (annotatedTestPlan == null) {
-			// TODO: log error
-			System.err.println("ERROR: Could not annotate test plan");
+			LOGGER.error("Could not annotate the test plan! Ignoring the annotation.");
 			annotatedTestPlan = testPlanPack.getTestPlan();
 		}
 
@@ -70,23 +80,21 @@ public class IncomingTestPlanAmqpHandler {
 	private ListedHashTree createAnnotatedTestPlan(TestPlanPack testPlanPack) {
 		SystemAnnotation annotation;
 		try {
-			annotation = restTemplate.getForObject(addProtocolIfMissing(testPlanPack.getAnnotationLink() + "/annotation"), SystemAnnotation.class);
+			annotation = restTemplate.getForObject(getAnnotationLink(testPlanPack.getTag(), "annotation"), SystemAnnotation.class);
 		} catch (RestClientException e) {
 			e.printStackTrace();
 			return null;
 		}
 
 		if (annotation == null) {
-			// TODO: Print error message
-			System.err.println("Annotation at " + testPlanPack.getAnnotationLink() + "/annotation is null!");
+			LOGGER.error("Annotation with tag {} is null! Aborting.", testPlanPack.getTag());
 			return null;
 		}
 
-		SystemModel systemModel = restTemplate.getForObject(addProtocolIfMissing(testPlanPack.getAnnotationLink() + "/system"), SystemModel.class);
+		SystemModel systemModel = restTemplate.getForObject(getAnnotationLink(testPlanPack.getTag(), "system"), SystemModel.class);
 
 		if (systemModel == null) {
-			// TODO: Print error message
-			System.err.println("System at " + testPlanPack.getAnnotationLink() + "/system is null!");
+			LOGGER.error("System with tag {} is null! Aborting.", testPlanPack.getTag());
 			return null;
 		}
 
@@ -97,12 +105,8 @@ public class IncomingTestPlanAmqpHandler {
 		return testPlan;
 	}
 
-	private String addProtocolIfMissing(String url) {
-		if (url.startsWith("http")) {
-			return url;
-		} else {
-			return "http://" + url;
-		}
+	private String getAnnotationLink(String tag, String suffix) {
+		return "http://annotation/ann/" + tag + "/" + suffix;
 	}
 
 }

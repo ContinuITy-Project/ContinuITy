@@ -8,11 +8,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class WorkloadModelConfig {
 
-	@JsonProperty("type")
-	private String workloadModelType;
-
 	@JsonProperty("data")
 	private String monitoringDataLink;
+
+	private String tag;
 
 	/**
 	 * Default constructor.
@@ -21,38 +20,15 @@ public class WorkloadModelConfig {
 		// TODO Auto-generated constructor stub
 	}
 
-	/**
-	 * @param workloadModelType
-	 * @param monitoringDataLink
-	 */
-	public WorkloadModelConfig(String workloadModelType, String monitoringDataLink) {
+	public WorkloadModelConfig(String monitoringDataLink, String tag) {
 		super();
-		this.workloadModelType = workloadModelType;
 		this.monitoringDataLink = monitoringDataLink;
-	}
-
-	/**
-	 * Gets {@link #workloadModelType}.
-	 * 
-	 * @return {@link #workloadModelType}
-	 */
-	public String getWorkloadModelType() {
-		return this.workloadModelType;
-	}
-
-	/**
-	 * Sets {@link #workloadModelType}.
-	 * 
-	 * @param workloadModelType
-	 *            New value for {@link #workloadModelType}
-	 */
-	public void setWorkloadModelType(String workloadModelType) {
-		this.workloadModelType = workloadModelType;
+		this.tag = tag;
 	}
 
 	/**
 	 * Gets {@link #monitoringDataLink}.
-	 * 
+	 *
 	 * @return {@link #monitoringDataLink}
 	 */
 	public String getMonitoringDataLink() {
@@ -61,12 +37,31 @@ public class WorkloadModelConfig {
 
 	/**
 	 * Sets {@link #monitoringDataLink}.
-	 * 
+	 *
 	 * @param monitoringDataLink
 	 *            New value for {@link #monitoringDataLink}
 	 */
 	public void setMonitoringDataLink(String monitoringDataLink) {
 		this.monitoringDataLink = monitoringDataLink;
+	}
+
+	/**
+	 * Gets {@link #tag}.
+	 *
+	 * @return {@link #tag}
+	 */
+	public String getTag() {
+		return this.tag;
+	}
+
+	/**
+	 * Sets {@link #tag}.
+	 *
+	 * @param tag
+	 *            New value for {@link #tag}
+	 */
+	public void setTag(String tag) {
+		this.tag = tag;
 	}
 
 }

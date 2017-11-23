@@ -12,9 +12,9 @@ public class ModelCreatedReport {
 
 	private String message;
 
-	@JsonProperty("workload-model-link")
+	@JsonProperty("link")
 	@JsonInclude(Include.NON_NULL)
-	private String link;
+	private String workloadModelLink;
 
 	/**
 	 * Default constructor.
@@ -28,7 +28,7 @@ public class ModelCreatedReport {
 	 */
 	public ModelCreatedReport(String message, String workloadModelLink) {
 		this.message = message;
-		this.link = workloadModelLink;
+		this.workloadModelLink = workloadModelLink;
 	}
 
 	/**
@@ -58,22 +58,22 @@ public class ModelCreatedReport {
 	}
 
 	/**
-	 * Gets {@link #link}.
+	 * Gets {@link #workloadModelLink}.
 	 *
-	 * @return {@link #link}
+	 * @return {@link #workloadModelLink}
 	 */
-	public String getLink() {
-		return this.link;
+	public String getWorkloadModelLink() {
+		return this.workloadModelLink;
 	}
 
 	/**
-	 * Sets {@link #link}.
+	 * Sets {@link #workloadModelLink}.
 	 *
 	 * @param workloadModelLink
-	 *            New value for {@link #link}
+	 *            New value for {@link #workloadModelLink}
 	 */
-	public void setLink(String workloadModelLink) {
-		this.link = workloadModelLink;
+	public void setWorkloadModelLink(String workloadModelLink) {
+		this.workloadModelLink = workloadModelLink;
 	}
 
 }

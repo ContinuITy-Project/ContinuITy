@@ -28,3 +28,4 @@ hs_err_pid*
 */.settings/org.eclipse.buildship.core.prefs
 .classpath
 */.settings/org.eclipse.jdt.core.prefs
+/continuity.frontend/build/**

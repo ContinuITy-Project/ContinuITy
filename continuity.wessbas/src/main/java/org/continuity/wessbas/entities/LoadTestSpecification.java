@@ -8,11 +8,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class LoadTestSpecification {
 
+	@JsonProperty("workload-type")
+	private String workloadModelType;
+
 	@JsonProperty("workload-link")
 	private String workloadModelLink;
 
-	@JsonProperty("annotation-link")
-	private String annotationLink;
+	private String tag;
 
 	/**
 	 * Default constructor.
@@ -21,17 +23,22 @@ public class LoadTestSpecification {
 	}
 
 	/**
-	 * Constructor.
+	 * Gets {@link #workloadModelType}.
 	 *
-	 * @param workloadModelLink
-	 *            Link to the workload model.
-	 * @param annotationLink
-	 *            Link to the annotation model.
+	 * @return {@link #workloadModelType}
 	 */
-	public LoadTestSpecification(String workloadModelLink, String annotationLink) {
-		super();
-		this.workloadModelLink = workloadModelLink;
-		this.annotationLink = annotationLink;
+	public String getWorkloadModelType() {
+		return this.workloadModelType;
+	}
+
+	/**
+	 * Sets {@link #workloadModelType}.
+	 *
+	 * @param workloadModelType
+	 *            New value for {@link #workloadModelType}
+	 */
+	public void setWorkloadModelType(String workloadModelType) {
+		this.workloadModelType = workloadModelType;
 	}
 
 	/**
@@ -54,22 +61,22 @@ public class LoadTestSpecification {
 	}
 
 	/**
-	 * Gets {@link #annotationLink}.
+	 * Gets {@link #tag}.
 	 *
-	 * @return {@link #annotationLink}
+	 * @return {@link #tag}
 	 */
-	public String getAnnotationLink() {
-		return this.annotationLink;
+	public String getTag() {
+		return this.tag;
 	}
 
 	/**
-	 * Sets {@link #annotationLink}.
+	 * Sets {@link #tag}.
 	 *
-	 * @param annotationLink
-	 *            New value for {@link #annotationLink}
+	 * @param tag
+	 *            New value for {@link #tag}
 	 */
-	public void setAnnotationLink(String annotationLink) {
-		this.annotationLink = annotationLink;
+	public void setTag(String tag) {
+		this.tag = tag;
 	}
 
 }

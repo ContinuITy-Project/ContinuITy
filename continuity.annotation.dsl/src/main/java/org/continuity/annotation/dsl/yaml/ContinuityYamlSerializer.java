@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Path;
 
 import org.continuity.annotation.dsl.AbstractContinuityModelElement;
 import org.continuity.annotation.dsl.ContinuityModelElement;
@@ -57,6 +58,10 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 		return readFromYaml(yamlSource.getPath());
 	}
 
+	public T readFromYaml(Path yamlPath) throws JsonParseException, JsonMappingException, IOException {
+		return readFromYaml(yamlPath.toString());
+	}
+
 	public T readFromYamlInputStream(InputStream inputStream) throws JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = createReadMapper();
 		T read = mapper.readValue(inputStream, type);
@@ -82,6 +87,10 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 
 	public void writeToYaml(T model, URL yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
 		writeToYaml(model, yamlFile.getPath());
+	}
+
+	public void writeToYaml(T model, Path yamlPath) throws JsonGenerationException, JsonMappingException, IOException {
+		writeToYaml(model, yamlPath.toString());
 	}
 
 	public String writeToYamlString(T model) throws JsonProcessingException {

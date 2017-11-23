@@ -11,14 +11,10 @@ public class LoadTestSpecification {
 	@JsonProperty("workload-type")
 	private String workloadModelType;
 
-	@JsonProperty("load-test-type")
-	private String loadTestType;
-
 	@JsonProperty("workload-link")
 	private String workloadModelLink;
 
-	@JsonProperty("annotation-link")
-	private String annotationLink;
+	private String tag;
 
 	/**
 	 * Default constructor.
@@ -28,7 +24,7 @@ public class LoadTestSpecification {
 
 	/**
 	 * Gets {@link #workloadModelType}.
-	 * 
+	 *
 	 * @return {@link #workloadModelType}
 	 */
 	public String getWorkloadModelType() {
@@ -37,31 +33,12 @@ public class LoadTestSpecification {
 
 	/**
 	 * Sets {@link #workloadModelType}.
-	 * 
+	 *
 	 * @param workloadModelType
 	 *            New value for {@link #workloadModelType}
 	 */
 	public void setWorkloadModelType(String workloadModelType) {
 		this.workloadModelType = workloadModelType;
-	}
-
-	/**
-	 * Gets {@link #loadTestType}.
-	 * 
-	 * @return {@link #loadTestType}
-	 */
-	public String getLoadTestType() {
-		return this.loadTestType;
-	}
-
-	/**
-	 * Sets {@link #loadTestType}.
-	 * 
-	 * @param loadTestType
-	 *            New value for {@link #loadTestType}
-	 */
-	public void setLoadTestType(String loadTestType) {
-		this.loadTestType = loadTestType;
 	}
 
 	/**
@@ -84,22 +61,22 @@ public class LoadTestSpecification {
 	}
 
 	/**
-	 * Gets {@link #annotationLink}.
+	 * Gets {@link #tag}.
 	 *
-	 * @return {@link #annotationLink}
+	 * @return {@link #tag}
 	 */
-	public String getAnnotationLink() {
-		return this.annotationLink;
+	public String getTag() {
+		return this.tag;
 	}
 
 	/**
-	 * Sets {@link #annotationLink}.
+	 * Sets {@link #tag}.
 	 *
-	 * @param annotationLink
-	 *            New value for {@link #annotationLink}
+	 * @param tag
+	 *            New value for {@link #tag}
 	 */
-	public void setAnnotationLink(String annotationLink) {
-		this.annotationLink = annotationLink;
+	public void setTag(String tag) {
+		this.tag = tag;
 	}
 
 }

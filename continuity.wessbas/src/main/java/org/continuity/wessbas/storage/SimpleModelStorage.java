@@ -17,6 +17,8 @@ import m4jdsl.WorkloadModel;
  */
 public class SimpleModelStorage {
 
+	private static final String TAG_DELIM = "-";
+
 	private static SimpleModelStorage instance;
 
 	private final AtomicInteger counter = new AtomicInteger(1);
@@ -46,11 +48,13 @@ public class SimpleModelStorage {
 
 	/**
 	 * Reserves a slot in the storage.
-	 *
+	 * 
+	 * @param tag
+	 *            The tag of the model.
 	 * @return An id for the slot.
 	 */
-	public String reserve() {
-		return Integer.toString(counter.getAndIncrement());
+	public String reserve(String tag) {
+		return tag + TAG_DELIM + Integer.toString(counter.getAndIncrement());
 	}
 
 	/**
@@ -76,10 +80,12 @@ public class SimpleModelStorage {
 	 *
 	 * @param model
 	 *            The model to be stored.
+	 * @param tag
+	 *            The tag of the model.
 	 * @return The created id.
 	 */
-	public String put(WorkloadModel model) {
-		String id = reserve();
+	public String put(WorkloadModel model, String tag) {
+		String id = reserve(tag);
 		put(id, model);
 		return id;
 	}

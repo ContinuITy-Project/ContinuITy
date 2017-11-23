@@ -9,6 +9,8 @@ import org.continuity.wessbas.entities.LoadTestSpecification;
 import org.continuity.wessbas.entities.WorkloadModelStorageEntry;
 import org.continuity.wessbas.storage.SimpleModelStorage;
 import org.continuity.wessbas.transform.jmeter.WessbasToJmeterConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +25,9 @@ import m4jdsl.WorkloadModel;
 @Component
 public class JMeterAmqpHandler {
 
-	private static final String UNKNOWN_ID = "UNKNOWN";
+	private static final Logger LOGGER = LoggerFactory.getLogger(JMeterAmqpHandler.class);
 
-	private static final Pattern WORKLOAD_LINK_PATTERN = Pattern.compile("^\\w+/wessbas/(.*)/workload$");
+	private static final Pattern WORKLOAD_LINK_PATTERN = Pattern.compile("^\\w*/model/(.*)$");
 
 	@Autowired
 	private WessbasToJmeterConverter jmeterConverter;
@@ -38,28 +40,25 @@ public class JMeterAmqpHandler {
 		String id = extractIdFromLink(specification.getWorkloadModelLink());
 
 		if (id == null) {
-			// TODO: print error message
+			LOGGER.error("The id of the load test specification is null! Aborting.");
 			return;
 		}
 
-		if (id == UNKNOWN_ID) {
-			// TODO: log error message
-		} else {
-			WorkloadModelStorageEntry workloadModelEntry = SimpleModelStorage.instance().get(id);
+		WorkloadModelStorageEntry workloadModelEntry = SimpleModelStorage.instance().get(id);
 
-			if (workloadModelEntry == null) {
-				// TODO: Print error message
-				System.err.println("There is no workload model with id " + id);
-				return;
-			}
-
-			WorkloadModel workloadModel = workloadModelEntry.getWorkloadModel();
-
-			JMeterTestPlanPack testPlanPack = jmeterConverter.convertToLoadTest(workloadModel);
-			testPlanPack.setAnnotationLink(specification.getAnnotationLink());
-
-			amqpTemplate.convertAndSend(RabbitMqConfig.LOAD_TEST_CREATED_EXCHANGE_NAME, "wessbas.jmeter", testPlanPack);
+		if (workloadModelEntry == null) {
+			LOGGER.error("There is no workload model with id {}! Aborting.", id);
+			return;
 		}
+
+		WorkloadModel workloadModel = workloadModelEntry.getWorkloadModel();
+
+		JMeterTestPlanPack testPlanPack = jmeterConverter.convertToLoadTest(workloadModel);
+		testPlanPack.setTag(specification.getTag());
+
+		amqpTemplate.convertAndSend(RabbitMqConfig.LOAD_TEST_CREATED_EXCHANGE_NAME, "wessbas.jmeter", testPlanPack);
+
+		LOGGER.info("Created JMeter test plan and sent it to the {} queue.", RabbitMqConfig.LOAD_TEST_CREATED_EXCHANGE_NAME);
 	}
 
 	private String extractIdFromLink(String workloadModelLink) {

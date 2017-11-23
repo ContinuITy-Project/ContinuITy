@@ -8,6 +8,8 @@ public class MonitoringData {
 
 	private String link;
 
+	private String tag;
+
 	/**
 	 * Gets {@link #link}.
 	 *
@@ -28,11 +30,30 @@ public class MonitoringData {
 	}
 
 	/**
+	 * Gets {@link #tag}.
+	 * 
+	 * @return {@link #tag}
+	 */
+	public String getTag() {
+		return this.tag;
+	}
+
+	/**
+	 * Sets {@link #tag}.
+	 * 
+	 * @param tag
+	 *            New value for {@link #tag}
+	 */
+	public void setTag(String tag) {
+		this.tag = tag;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public String toString() {
-		return "{ link: \"" + link + "\" }";
+		return "{ link: \"" + link + "\", tag: \"" + tag + "\" }";
 	}
 
 }

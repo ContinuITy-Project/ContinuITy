@@ -22,16 +22,20 @@ public class WorkloadModelPack {
 	@JsonProperty("initial-annotation-link")
 	private String initialAnnotationLink;
 
+	private String tag;
+
 	/**
 	 * Default constructor.
 	 */
 	public WorkloadModelPack() {
 	}
 
-	public WorkloadModelPack(String base, String workloadPath, String systemModelPath, String annotationPath) {
-		this.workloadLink = base + workloadPath;
-		this.systemModelLink = base + systemModelPath;
-		this.initialAnnotationLink = base + annotationPath;
+	public WorkloadModelPack(String hostname, String id, String tag) {
+		String base = "http://" + hostname + "/model/" + id;
+		this.workloadLink = base + "/workload";
+		this.systemModelLink = base + "/system";
+		this.initialAnnotationLink = base + "/annotation";
+		this.tag = tag;
 	}
 
 	/**
@@ -111,11 +115,30 @@ public class WorkloadModelPack {
 	}
 
 	/**
+	 * Gets {@link #tag}.
+	 *
+	 * @return {@link #tag}
+	 */
+	public String getTag() {
+		return this.tag;
+	}
+
+	/**
+	 * Sets {@link #tag}.
+	 *
+	 * @param tag
+	 *            New value for {@link #tag}
+	 */
+	public void setTag(String tag) {
+		this.tag = tag;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public String toString() {
-		return "{ type: " + modelType + ", workload-link: " + workloadLink + " }";
+		return "{ type: " + modelType + ", tag: " + tag + ", workload-link: " + workloadLink + " }";
 	}
 
 }

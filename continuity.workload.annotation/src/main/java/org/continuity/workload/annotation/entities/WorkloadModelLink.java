@@ -25,14 +25,12 @@ public class WorkloadModelLink {
 	@JsonProperty(value = "custom-annotation-link", required = false)
 	private String customAnnotationLink;
 
+	private String tag;
+
 	/**
 	 * Default constructor.
 	 */
 	public WorkloadModelLink() {
-	}
-
-	public WorkloadModelLink(String workloadLink) {
-		this.workloadLink = workloadLink;
 	}
 
 	/**
@@ -128,6 +126,25 @@ public class WorkloadModelLink {
 	 */
 	public void setCustomAnnotationLink(String customAnnotationLink) {
 		this.customAnnotationLink = customAnnotationLink;
+	}
+
+	/**
+	 * Gets {@link #tag}.
+	 * 
+	 * @return {@link #tag}
+	 */
+	public String getTag() {
+		return this.tag;
+	}
+
+	/**
+	 * Sets {@link #tag}.
+	 * 
+	 * @param tag
+	 *            New value for {@link #tag}
+	 */
+	public void setTag(String tag) {
+		this.tag = tag;
 	}
 
 	/**
