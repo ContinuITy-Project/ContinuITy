@@ -35,7 +35,7 @@ public class JMeterJsonTest {
 		WessbasToJmeterConverter converter = new WessbasToJmeterConverter("configuration");
 		ListedHashTree testPlan = converter.convertToLoadTest(WessbasDslInstance.DVDSTORE_PARSED.get()).getTestPlan();
 		testPlanPack = new JMeterTestPlanPack(testPlan, Collections.singletonMap("mybeh", new String[][] {}));
-		testPlanPack.setAnnotationLink("annotation/link");
+		testPlanPack.setTag("annotation/link");
 
 		StringBuilder builder = new StringBuilder();
 		builder.append("{\"behaviors\":{\"mybeh\":[]},");

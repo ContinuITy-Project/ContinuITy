@@ -17,6 +17,8 @@ import m4jdsl.WorkloadModel;
  */
 public class SimpleModelStorage {
 
+	private static final String TAG_DELIM = "-";
+
 	private static SimpleModelStorage instance;
 
 	private final AtomicInteger counter = new AtomicInteger(1);
@@ -45,20 +47,46 @@ public class SimpleModelStorage {
 	}
 
 	/**
-	 * Adds a new workload model and returns the automatically created id.
+	 * Reserves a slot in the storage.
+	 * 
+	 * @param tag
+	 *            The tag of the model.
+	 * @return An id for the slot.
+	 */
+	public String reserve(String tag) {
+		return tag + TAG_DELIM + Integer.toString(counter.getAndIncrement());
+	}
+
+	/**
+	 * Adds a new workload model with the specified id. The id should be reserved by using
+	 * {@link #reserve()}.
 	 *
+	 * @param id
+	 *            The id of the slot.
 	 * @param model
 	 *            The model to be stored.
-	 * @return The created id.
 	 */
-	public String put(WorkloadModel model) {
-		String id = Integer.toString(counter.getAndIncrement());
+	public void put(String id, WorkloadModel model) {
 		WorkloadModelStorageEntry entry = new WorkloadModelStorageEntry();
 		entry.setWorkloadModel(model);
 		entry.setId(id);
 		entry.setCreatedDate(new Date());
 
 		storedModels.put(id, entry);
+	}
+
+	/**
+	 * Adds a new workload model and returns the automatically created id.
+	 *
+	 * @param model
+	 *            The model to be stored.
+	 * @param tag
+	 *            The tag of the model.
+	 * @return The created id.
+	 */
+	public String put(WorkloadModel model, String tag) {
+		String id = reserve(tag);
+		put(id, model);
 		return id;
 	}
 

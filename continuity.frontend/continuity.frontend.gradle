@@ -1,0 +1,26 @@
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+dependencies {
+	compile project(':continuity.commons')
+
+	compile("org.springframework.boot:spring-boot-starter-amqp")
+	compile("org.springframework.boot:spring-boot-starter-web")
+	
+	// Swagger
+	
+	compile("io.springfox:springfox-swagger2:2.7.0")
+	compile("io.springfox:springfox-swagger-ui:2.7.0")
+	
+	testCompile("org.springframework.boot:spring-boot-starter-test")
+}
+
+group = 'continuity'
+
+apply plugin: 'com.palantir.docker'
+
+docker {
+    name "${project.group}/frontend"
+    files jar.archivePath
+    buildArgs(['JAR_FILE': "${jar.archiveName}"])
+}

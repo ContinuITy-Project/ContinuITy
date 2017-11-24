@@ -1,11 +1,13 @@
-rootProject.name = "continuity.root" 
+rootProject.name = "continuity.root"
+
 include "continuity.annotation.dsl"
-include "continuity.wessbas"
 include "continuity.benchflow"
 include "continuity.commons"
-include "continuity.workload.annotation"
+include "continuity.frontend"
 include "continuity.jmeter"
 include "continuity.session.logs"
+include "continuity.wessbas"
+include "continuity.workload.annotation"
 
 /**
  * Sets the name of the project build file (and all of its sub-projects) to be "${project.name}.gradle" pattern.

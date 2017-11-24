@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  frontend:
+    image: continuity/frontend
+    hostname: frontend
+    networks:
+      - continuity-network
+    ports:
+      - '8080:80'
+    depends_on:
+      - rabbitmq
+  rabbitmq:
+    image: rabbitmq:3.6.8
+    hostname: rabbitmq
+    networks:
+      - continuity-network
+  workload-annotation:
+    image: continuity/workload-annotation
+    hostname: workload-annotation
+    networks:
+      - continuity-network
+    ports:
+      - '8081:80'
+    depends_on:
+      - rabbitmq
+  wessbas:
+    image: continuity/wessbas
+    hostname: wessbas
+    networks:
+      - continuity-network
+    ports:
+      - '8082:80'
+    depends_on:
+      - rabbitmq
+  jmeter:
+    image: continuity/jmeter
+    hostname: jmeter
+    networks:
+      - continuity-network
+    depends_on:
+      - rabbitmq
+
+networks:
+  continuity-network:
+    driver: bridge

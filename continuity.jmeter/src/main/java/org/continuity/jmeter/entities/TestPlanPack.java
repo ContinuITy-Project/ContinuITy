@@ -19,12 +19,7 @@ public class TestPlanPack {
 
 	private Map<String, String[][]> behaviors;
 
-	/**
-	 * The link to the annotation model ({@code annotationLink + "/annotation"} holds the
-	 * annotation, {@code annotationLink + "/system"} holds the system model).
-	 */
-	@JsonProperty("annotation-link")
-	private String annotationLink;
+	private String tag;
 
 	/**
 	 *
@@ -80,22 +75,22 @@ public class TestPlanPack {
 	}
 
 	/**
-	 * Gets {@link #annotationLink}.
+	 * Gets {@link #tag}.
 	 *
-	 * @return {@link #annotationLink}
+	 * @return {@link #tag}
 	 */
-	public String getAnnotationLink() {
-		return this.annotationLink;
+	public String getTag() {
+		return this.tag;
 	}
 
 	/**
-	 * Sets {@link #annotationLink}.
+	 * Sets {@link #tag}.
 	 *
-	 * @param annotationLink
-	 *            New value for {@link #annotationLink}
+	 * @param tag
+	 *            New value for {@link #tag}
 	 */
-	public void setAnnotationLink(String annotationLink) {
-		this.annotationLink = annotationLink;
+	public void setTag(String tag) {
+		this.tag = tag;
 	}
 
 }

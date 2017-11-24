@@ -9,8 +9,11 @@ import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.jmeter.config.RabbitMqConfig;
 import org.continuity.jmeter.entities.TestPlanPack;
+import org.continuity.jmeter.io.JMeterProcess;
 import org.continuity.jmeter.io.TestPlanWriter;
 import org.continuity.jmeter.transform.JMeterAnnotator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,23 +27,32 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class IncomingTestPlanAmqpHandler {
 
-	private String jmeterHome = "C:/apache-jmeter-3.0/apache-jmeter-3.0";
+	private static final Logger LOGGER = LoggerFactory.getLogger(IncomingTestPlanAmqpHandler.class);
 
 	@Autowired
 	private TestPlanWriter testPlanWriter;
 
 	@Autowired
+	private JMeterProcess jmeterProcess;
+
+	@Autowired
 	private RestTemplate restTemplate;
 
+	/**
+	 * Listens to the {@link RabbitMqConfig#LOAD_TEST_CREATED_QUEUE_NAME} queue, annotates the test
+	 * plan and executes the test.
+	 *
+	 * @param testPlanPack
+	 *            The bundle holding the test plan.
+	 */
 	@RabbitListener(queues = RabbitMqConfig.LOAD_TEST_CREATED_QUEUE_NAME)
 	public void handleIncomingTestPlan(TestPlanPack testPlanPack) {
-		System.out.println("Received test plan.");
+		LOGGER.info("Received test plan.");
 
 		ListedHashTree annotatedTestPlan = createAnnotatedTestPlan(testPlanPack);
 
 		if (annotatedTestPlan == null) {
-			// TODO: log error
-			System.err.println("ERROR: Could not annotate test plan");
+			LOGGER.error("Could not annotate the test plan! Ignoring the annotation.");
 			annotatedTestPlan = testPlanPack.getTestPlan();
 		}
 
@@ -57,11 +69,7 @@ public class IncomingTestPlanAmqpHandler {
 		System.out.println("Wrote test plan to " + testPlanPath);
 
 		// TODO: remove
-		try {
-			startJMeter(testPlanPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		jmeterProcess.start(testPlanPath);
 
 		// Run the test:
 		// StandardJMeterEngine jmeterEngine = new StandardJMeterEngine();
@@ -72,23 +80,21 @@ public class IncomingTestPlanAmqpHandler {
 	private ListedHashTree createAnnotatedTestPlan(TestPlanPack testPlanPack) {
 		SystemAnnotation annotation;
 		try {
-			annotation = restTemplate.getForObject(addProtocolIfMissing(testPlanPack.getAnnotationLink() + "/annotation"), SystemAnnotation.class);
+			annotation = restTemplate.getForObject(getAnnotationLink(testPlanPack.getTag(), "annotation"), SystemAnnotation.class);
 		} catch (RestClientException e) {
 			e.printStackTrace();
 			return null;
 		}
 
 		if (annotation == null) {
-			// TODO: Print error message
-			System.err.println("Annotation at " + testPlanPack.getAnnotationLink() + "/annotation is null!");
+			LOGGER.error("Annotation with tag {} is null! Aborting.", testPlanPack.getTag());
 			return null;
 		}
 
-		SystemModel systemModel = restTemplate.getForObject(addProtocolIfMissing(testPlanPack.getAnnotationLink() + "/system"), SystemModel.class);
+		SystemModel systemModel = restTemplate.getForObject(getAnnotationLink(testPlanPack.getTag(), "system"), SystemModel.class);
 
 		if (systemModel == null) {
-			// TODO: Print error message
-			System.err.println("System at " + testPlanPack.getAnnotationLink() + "/system is null!");
+			LOGGER.error("System with tag {} is null! Aborting.", testPlanPack.getTag());
 			return null;
 		}
 
@@ -99,18 +105,8 @@ public class IncomingTestPlanAmqpHandler {
 		return testPlan;
 	}
 
-	private String addProtocolIfMissing(String url) {
-		if (url.startsWith("http")) {
-			return url;
-		} else {
-			return "http://" + url;
-		}
-	}
-
-	private void startJMeter(Path testPlanPath) throws IOException {
-		Runtime rt = Runtime.getRuntime();
-		Process pr = rt.exec(jmeterHome + "/bin/jmeter.bat -t " + testPlanPath.toString());
-		pr.getInputStream();
+	private String getAnnotationLink(String tag, String suffix) {
+		return "http://workload-annotation/ann/" + tag + "/" + suffix;
 	}
 
 }

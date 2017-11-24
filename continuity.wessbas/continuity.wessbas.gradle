@@ -5,7 +5,9 @@ apply plugin: 'io.spring.dependency-management'
 dependencies {
 	compile project(':continuity.commons')
 	
-	compile group: 'org.fortiss.pmwt.wex', name: 'wessbas.dsl', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'm4jdsl', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'testplangenerator', version: '1.0.0'
+	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20140405'
 	
 	// Needed for WESSBAS:
 	
@@ -55,6 +57,24 @@ dependencies {
 	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 	
+	// Swagger
+	
+	compile("io.springfox:springfox-swagger2:2.7.0")
+	compile("io.springfox:springfox-swagger-ui:2.7.0")
+	
 	compile fileTree(dir: 'lib', include: ['*.jar'])
 
+}
+
+group = 'continuity'
+
+apply plugin: 'com.palantir.docker'
+
+docker {
+	name "${project.group}/wessbas"
+	files jar.archivePath
+	copySpec.from('.') {
+		include 'configuration/**'
+	}
+	buildArgs(['JAR_FILE': "${jar.archiveName}"])
 }
