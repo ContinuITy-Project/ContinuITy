@@ -5,7 +5,9 @@ apply plugin: 'io.spring.dependency-management'
 dependencies {
 	compile project(':continuity.commons')
 	
-	compile group: 'org.fortiss.pmwt.wex', name: 'wessbas.dsl', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'm4jdsl', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'testplangenerator', version: '1.0.0'
+	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20140405'
 	
 	// Needed for WESSBAS:
 	

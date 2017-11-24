@@ -5,7 +5,6 @@ import org.continuity.annotation.dsl.custom.CustomAnnotation;
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.commons.exceptions.AnnotationNotSupportedException;
 
-import cloud.benchflow.dsl.definition.BenchFlowTest;
 import m4jdsl.WorkloadModel;
 
 /**
@@ -31,7 +30,8 @@ public class WessbasToBenchFlowConverter {
 	 * @throws AnnotationNotSupportedException
 	 *             if the passed {@link CustomAnnotation} cannot be converted to the load test.
 	 */
-	public BenchFlowTest convertToWorkload(WorkloadModel workloadModel, SystemModel system, SystemAnnotation annotation, CustomAnnotation extension) throws AnnotationNotSupportedException {
+	public Object convertToWorkload(WorkloadModel workloadModel, SystemModel system, SystemAnnotation annotation, CustomAnnotation extension) throws AnnotationNotSupportedException {
+		// cloud.benchflow.dsl.definition.BenchFlowTest
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -48,8 +48,8 @@ public class WessbasToBenchFlowConverter {
 	 *            The system annotation.
 	 * @return An executable load test corresponding to the load represented by the workload model.
 	 */
-	public BenchFlowTest convertToWorkload(WorkloadModel workloadModel, SystemModel system, SystemAnnotation annotation) {
-
+	public Object convertToWorkload(WorkloadModel workloadModel, SystemModel system, SystemAnnotation annotation) {
+		// cloud.benchflow.dsl.definition.BenchFlowTest
 		return null;
 	}
 

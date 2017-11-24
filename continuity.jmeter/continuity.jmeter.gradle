@@ -4,6 +4,9 @@ apply plugin: 'io.spring.dependency-management'
 dependencies {
 	compile project(':continuity.commons')
 	
+	compile group: 'net.sf.markov4jmeter', name: 'testplangenerator', version: '1.0.0'
+	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20140405'
+	
 	// JMeter 2.13 dependency tree is broken
 	
 	compile group: 'org.apache.commons', name: 'commons-math3', version: '3.4.1'
@@ -45,9 +48,6 @@ dependencies {
 	compile("org.springframework.boot:spring-boot-starter-amqp")
 	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
-	
-	// TODO: Replace with reference to a repository
-	compile fileTree(dir: '../continuity.wessbas/lib', include: ['wessbas.testPlanGenerator.jar', 'Markov4JMeter-1.0.20140405.jar'])
 
 }
 

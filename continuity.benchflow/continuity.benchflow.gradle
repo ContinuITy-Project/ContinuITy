@@ -1,7 +1,3 @@
 dependencies {
 	compile project(':continuity.commons')
-
-	compile group: 'org.fortiss.pmwt.wex', name: 'wessbas.dsl', version: '1.0.0'
-
-	compile fileTree(dir: 'lib', include: '*.jar')
 }

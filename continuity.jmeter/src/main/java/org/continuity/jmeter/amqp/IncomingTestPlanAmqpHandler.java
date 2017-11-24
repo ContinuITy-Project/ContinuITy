@@ -106,7 +106,7 @@ public class IncomingTestPlanAmqpHandler {
 	}
 
 	private String getAnnotationLink(String tag, String suffix) {
-		return "http://annotation/ann/" + tag + "/" + suffix;
+		return "http://workload-annotation/ann/" + tag + "/" + suffix;
 	}
 
 }
