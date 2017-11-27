@@ -41,7 +41,8 @@ subprojects {
 	dependencies {
 		compile 'org.apache.commons:commons-lang3:3.4',
 		'org.apache.commons:commons-math3:3.6.1',
-		'commons-pool:commons-pool:1.6'
+		'commons-pool:commons-pool:1.6',
+		'org.json:json:20171018'
 		
 		testCompile 'junit:junit:4.12'
 	}
