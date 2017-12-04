@@ -48,10 +48,14 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 		this.type = type;
 	}
 
-	public T readFromYaml(String yamlSource) throws JsonParseException, JsonMappingException, IOException {
+	public T readFromYaml(File yamlSource) throws JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = createReadMapper();
-		T read = mapper.readValue(new File(yamlSource), type);
+		T read = mapper.readValue(yamlSource, type);
 		return read;
+	}
+
+	public T readFromYaml(String yamlSource) throws JsonParseException, JsonMappingException, IOException {
+		return readFromYaml(new File(yamlSource));
 	}
 
 	public T readFromYaml(URL yamlSource) throws JsonParseException, JsonMappingException, IOException {
@@ -81,8 +85,12 @@ public class ContinuityYamlSerializer<T extends ContinuityModelElement> {
 		return mapper;
 	}
 
+	public void writeToYaml(T model, File yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
+		createWriter().writeValue(yamlFile, model);
+	}
+
 	public void writeToYaml(T model, String yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
-		createWriter().writeValue(new File(yamlFile), model);
+		writeToYaml(model, new File(yamlFile));
 	}
 
 	public void writeToYaml(T model, URL yamlFile) throws JsonGenerationException, JsonMappingException, IOException {
