@@ -1,4 +1,4 @@
-package org.continuity.frontend.entities;
+package org.continuity.jmeter.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

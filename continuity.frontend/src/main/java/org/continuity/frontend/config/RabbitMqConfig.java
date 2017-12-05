@@ -22,7 +22,7 @@ public class RabbitMqConfig {
 	/**
 	 * routing keys: [workload-type].[load-test-type], e.g., wessbas.benchflow
 	 */
-	public static final String LOAD_TEST_NEEDED_EXCHANGE_NAME = "load-test-needed";
+	public static final String EXECUTE_LOAD_TEST_EXCHANGE_NAME = "execute-load-test";
 
 	@Bean
 	MessageConverter jsonMessageConverter() {
@@ -53,7 +53,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange loadTestNeededExchange() {
-		return new TopicExchange(LOAD_TEST_NEEDED_EXCHANGE_NAME, false, true);
+		return new TopicExchange(EXECUTE_LOAD_TEST_EXCHANGE_NAME, false, true);
 	}
 
 }
