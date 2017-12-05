@@ -34,19 +34,6 @@ public class RabbitMqConfig {
 
 	public static final String MODEL_CREATED_ROUTING_KEY = "wessbas";
 
-	// Load test creation input and output queues
-
-	public static final String LOAD_TEST_NEEDED_QUEUE_NAME = "jmeter-wessbas-test-needed";
-
-	public static final String LOAD_TEST_NEEDED_EXCHANGE_NAME = "load-test-needed";
-
-	public static final String LOAD_TEST_NEEDED_ROUTING_KEY = "wessbas.jmeter";
-
-	/**
-	 * routing keys: [workload-type].[load-test-type], e.g., wessbas.benchflow
-	 */
-	public static final String LOAD_TEST_CREATED_EXCHANGE_NAME = "load-test-created";
-
 	// General
 
 	@Bean
@@ -102,30 +89,6 @@ public class RabbitMqConfig {
 	@Bean
 	TopicExchange modelCreatedExchange() {
 		return new TopicExchange(MODEL_CREATED_EXCHANGE_NAME, false, true);
-	}
-
-	// Load test needed input
-
-	@Bean
-	Queue loadTestNeededQueue() {
-		return new Queue(LOAD_TEST_NEEDED_QUEUE_NAME, false);
-	}
-
-	@Bean
-	TopicExchange loadTestNeededExchange() {
-		return new TopicExchange(LOAD_TEST_NEEDED_EXCHANGE_NAME, false, true);
-	}
-
-	@Bean
-	Binding loadTestNeededBinding() {
-		return BindingBuilder.bind(loadTestNeededQueue()).to(loadTestNeededExchange()).with(LOAD_TEST_NEEDED_ROUTING_KEY);
-	}
-
-	// Load test output exchange
-
-	@Bean
-	TopicExchange loadTestCreatedExchange() {
-		return new TopicExchange(LOAD_TEST_CREATED_EXCHANGE_NAME, false, true);
 	}
 
 }

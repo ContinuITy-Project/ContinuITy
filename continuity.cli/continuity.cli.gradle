@@ -1,0 +1,11 @@
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+dependencies {
+	compile project(':continuity.commons')
+
+	compile('org.springframework.boot:spring-boot-starter')
+	compile("org.springframework.shell:spring-shell-starter:2.0.0.M2")
+	compile("org.springframework.boot:spring-boot-starter-web")
+}

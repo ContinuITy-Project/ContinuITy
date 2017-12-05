@@ -25,11 +25,11 @@ public class RabbitMqConfig {
 	/**
 	 * routing keys: [workload-type].[load-test-type], e.g., wessbas.benchflow
 	 */
-	public static final String LOAD_TEST_CREATED_EXCHANGE_NAME = "load-test-created";
+	public static final String EXECUTE_LOAD_TEST_EXCHANGE_NAME = "execute-load-test";
 
-	public static final String LOAD_TEST_CREATED_QUEUE_NAME = "jmeter-handle-created-load-test";
+	public static final String EXECUTE_LOAD_TEST_QUEUE_NAME = "jmeter-execute-load-test";
 
-	public static final String LOAD_TEST_CREATED_ROUTING_KEY = "*.jmeter";
+	public static final String EXECUTE_LOAD_TEST_ROUTING_KEY = "*.jmeter";
 
 	// General
 
@@ -68,17 +68,17 @@ public class RabbitMqConfig {
 
 	@Bean
 	Queue loadTestCreatedQueue() {
-		return new Queue(LOAD_TEST_CREATED_QUEUE_NAME, false);
+		return new Queue(EXECUTE_LOAD_TEST_QUEUE_NAME, false);
 	}
 
 	@Bean
 	TopicExchange loadTestCreatedExchange() {
-		return new TopicExchange(LOAD_TEST_CREATED_EXCHANGE_NAME, false, true);
+		return new TopicExchange(EXECUTE_LOAD_TEST_EXCHANGE_NAME, false, true);
 	}
 
 	@Bean
 	Binding loadTestCreatedBinding() {
-		return BindingBuilder.bind(loadTestCreatedQueue()).to(loadTestCreatedExchange()).with(LOAD_TEST_CREATED_ROUTING_KEY);
+		return BindingBuilder.bind(loadTestCreatedQueue()).to(loadTestCreatedExchange()).with(EXECUTE_LOAD_TEST_ROUTING_KEY);
 	}
 
 }

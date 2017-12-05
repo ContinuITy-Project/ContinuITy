@@ -6,7 +6,7 @@ import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.annotation.dsl.custom.CustomAnnotation;
 import org.continuity.annotation.dsl.custom.CustomAnnotationElement;
 import org.continuity.commons.exceptions.AnnotationNotSupportedException;
-import org.continuity.wessbas.entities.JMeterTestPlanPack;
+import org.continuity.wessbas.entities.JMeterTestPlanBundle;
 
 import m4jdsl.BehaviorModel;
 import m4jdsl.WorkloadModel;
@@ -66,7 +66,7 @@ public class WessbasToJmeterConverter {
 	 *             if the passed {@link CustomAnnotation} cannot be converted to the load test.
 	 */
 	// TODO: move to continuity.jmeter
-	private JMeterTestPlanPack convertToLoadTest(WorkloadModel workloadModel, CustomAnnotation extension) throws AnnotationNotSupportedException {
+	private JMeterTestPlanBundle convertToLoadTest(WorkloadModel workloadModel, CustomAnnotation extension) throws AnnotationNotSupportedException {
 		if ((extension != null) && !extension.getElements().isEmpty()) {
 			StringBuilder builder = new StringBuilder();
 			builder.append("The following extensoins are not supported: ");
@@ -91,7 +91,7 @@ public class WessbasToJmeterConverter {
 	 * @return A pack containing an executable load test corresponding to the load represented by
 	 *         the workload model and the behaviors.
 	 */
-	public JMeterTestPlanPack convertToLoadTest(WorkloadModel workloadModel) {
+	public JMeterTestPlanBundle convertToLoadTest(WorkloadModel workloadModel) {
 		fixBehaviorModelFilenames(workloadModel);
 
 		CSVBufferingHandler csvHandler = new CSVBufferingHandler();
@@ -115,7 +115,7 @@ public class WessbasToJmeterConverter {
 			}
 		}
 
-		return new JMeterTestPlanPack(testPlan, csvHandler.getBuffer());
+		return new JMeterTestPlanBundle(testPlan, csvHandler.getBuffer());
 	}
 
 	private void fixBehaviorModelFilenames(WorkloadModel workloadModel) {

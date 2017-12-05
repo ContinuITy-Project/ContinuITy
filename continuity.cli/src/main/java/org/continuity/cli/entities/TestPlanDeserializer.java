@@ -1,4 +1,4 @@
-package org.continuity.jmeter.entities;
+package org.continuity.cli.entities;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package org.continuity.wessbas.entities;
+package org.continuity.jmeter.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -11,8 +11,8 @@ public class LoadTestSpecification {
 	@JsonProperty("workload-type")
 	private String workloadModelType;
 
-	@JsonProperty("workload-link")
-	private String workloadModelLink;
+	@JsonProperty("workload-id")
+	private String workloadModelId;
 
 	private String tag;
 
@@ -42,22 +42,22 @@ public class LoadTestSpecification {
 	}
 
 	/**
-	 * Gets {@link #workloadModelLink}.
+	 * Gets {@link #workloadModelId}.
 	 *
-	 * @return {@link #workloadModelLink}
+	 * @return {@link #workloadModelId}
 	 */
-	public String getWorkloadModelLink() {
-		return this.workloadModelLink;
+	public String getWorkloadModelId() {
+		return this.workloadModelId;
 	}
 
 	/**
-	 * Sets {@link #workloadModelLink}.
+	 * Sets {@link #workloadModelId}.
 	 *
-	 * @param workloadModelLink
-	 *            New value for {@link #workloadModelLink}
+	 * @param workloadModelId
+	 *            New value for {@link #workloadModelId}
 	 */
-	public void setWorkloadModelLink(String workloadModelLink) {
-		this.workloadModelLink = workloadModelLink;
+	public void setWorkloadModelId(String workloadModelId) {
+		this.workloadModelId = workloadModelId;
 	}
 
 	/**

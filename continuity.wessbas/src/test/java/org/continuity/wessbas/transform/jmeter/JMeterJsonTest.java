@@ -6,7 +6,7 @@ import java.util.Collections;
 
 import org.apache.jmeter.save.SaveService;
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.wessbas.entities.JMeterTestPlanPack;
+import org.continuity.wessbas.entities.JMeterTestPlanBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,7 +24,7 @@ public class JMeterJsonTest {
 
 	private ObjectMapper mapper = new ObjectMapper(new JsonFactory());
 
-	private JMeterTestPlanPack testPlanPack;
+	private JMeterTestPlanBundle testPlanPack;
 
 	private String referenceJson;
 
@@ -34,8 +34,7 @@ public class JMeterJsonTest {
 
 		WessbasToJmeterConverter converter = new WessbasToJmeterConverter("configuration");
 		ListedHashTree testPlan = converter.convertToLoadTest(WessbasDslInstance.DVDSTORE_PARSED.get()).getTestPlan();
-		testPlanPack = new JMeterTestPlanPack(testPlan, Collections.singletonMap("mybeh", new String[][] {}));
-		testPlanPack.setTag("annotation/link");
+		testPlanPack = new JMeterTestPlanBundle(testPlan, Collections.singletonMap("mybeh", new String[][] {}));
 
 		StringBuilder builder = new StringBuilder();
 		builder.append("{\"behaviors\":{\"mybeh\":[]},");
@@ -52,7 +51,7 @@ public class JMeterJsonTest {
 		String json = mapper.writeValueAsString(testPlanPack);
 		Assert.assertEquals("Serialized test plan pack should be equal to the reference!", referenceJson, json);
 
-		JMeterTestPlanPack deserialized = mapper.readValue(json, JMeterTestPlanPack.class);
+		JMeterTestPlanBundle deserialized = mapper.readValue(json, JMeterTestPlanBundle.class);
 		String origJmx = toJmxString(testPlanPack.getTestPlan());
 		String readJmx = toJmxString(deserialized.getTestPlan());
 		Assert.assertEquals("Re-deserialized test plan should be equal to the original one!", origJmx, readJmx);

@@ -1,4 +1,4 @@
-package org.continuity.wessbas.entities;
+package org.continuity.commons.jmeter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

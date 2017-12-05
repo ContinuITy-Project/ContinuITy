@@ -2,6 +2,7 @@ rootProject.name = "continuity.root"
 
 include "continuity.annotation.dsl"
 include "continuity.benchflow"
+include "continuity.cli"
 include "continuity.commons"
 include "continuity.frontend"
 include "continuity.jmeter"

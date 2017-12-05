@@ -38,6 +38,8 @@ services:
     hostname: jmeter
     networks:
       - continuity-network
+    ports:
+      - '8083:80'
     depends_on:
       - rabbitmq
 
