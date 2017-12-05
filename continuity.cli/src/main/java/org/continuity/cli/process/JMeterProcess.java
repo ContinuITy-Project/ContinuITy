@@ -1,4 +1,4 @@
-package org.continuity.jmeter.io;
+package org.continuity.cli.process;
 
 import java.io.IOException;
 import java.nio.file.Path;

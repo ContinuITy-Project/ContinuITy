@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.continuity.commons.jmeter.TestPlanWriter;
 import org.continuity.jmeter.config.RabbitMqConfig;
 import org.continuity.jmeter.controllers.TestPlanController;
 import org.continuity.jmeter.entities.LoadTestSpecification;
 import org.continuity.jmeter.entities.TestPlanBundle;
-import org.continuity.jmeter.io.TestPlanWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

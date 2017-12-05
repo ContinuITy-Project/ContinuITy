@@ -4,9 +4,6 @@ apply plugin: 'io.spring.dependency-management'
 dependencies {
 	compile project(':continuity.commons')
 	
-	compile group: 'net.sf.markov4jmeter', name: 'testplangenerator', version: '1.0.0'
-	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20140405'
-	
 	// Spring Boot
 	
 	compile("org.springframework.boot:spring-boot-starter-web")

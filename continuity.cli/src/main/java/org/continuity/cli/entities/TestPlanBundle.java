@@ -1,37 +1,39 @@
-package org.continuity.wessbas.entities;
+package org.continuity.cli.entities;
 
 import java.util.Map;
 
 import org.apache.jorphan.collections.ListedHashTree;
+import org.continuity.commons.jmeter.JMeterTestPlanSerializer;
+import org.continuity.commons.jmeter.TestPlanDeserializer;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * @author Henning Schulz
  *
  */
-public class JMeterTestPlanPack {
+public class TestPlanBundle {
 
 	@JsonProperty("test-plan")
 	@JsonSerialize(using = JMeterTestPlanSerializer.class)
+	@JsonDeserialize(using = TestPlanDeserializer.class)
 	private ListedHashTree testPlan;
 
 	private Map<String, String[][]> behaviors;
 
-	private String tag;
-
 	/**
 	 *
 	 */
-	public JMeterTestPlanPack() {
+	public TestPlanBundle() {
 	}
 
 	/**
 	 * @param testPlan
 	 * @param behaviors
 	 */
-	public JMeterTestPlanPack(ListedHashTree testPlan, Map<String, String[][]> behaviors) {
+	public TestPlanBundle(ListedHashTree testPlan, Map<String, String[][]> behaviors) {
 		this.testPlan = testPlan;
 		this.behaviors = behaviors;
 	}
@@ -72,25 +74,6 @@ public class JMeterTestPlanPack {
 	 */
 	public void setBehaviors(Map<String, String[][]> behaviors) {
 		this.behaviors = behaviors;
-	}
-
-	/**
-	 * Gets {@link #tag}.
-	 *
-	 * @return {@link #tag}
-	 */
-	public String getTag() {
-		return this.tag;
-	}
-
-	/**
-	 * Sets {@link #tag}.
-	 *
-	 * @param tag
-	 *            New value for {@link #tag}
-	 */
-	public void setTag(String tag) {
-		this.tag = tag;
 	}
 
 }
