@@ -84,7 +84,6 @@ public class ModelSanitizers {
 			for (org.continuity.annotation.dsl.ann.DataInput ass : input.getAssociated()) {
 				if (!ass.getAssociated().contains(input)) {
 					ass.getAssociated().add(input);
-					System.out.println();
 				}
 			}
 		}
