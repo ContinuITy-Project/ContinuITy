@@ -33,15 +33,6 @@ services:
       - '8082:80'
     depends_on:
       - rabbitmq
-  session-logs:
-    image: continuity/session-logs
-    hostname: session-logs
-    networks:
-      - continuity-network
-    ports:
-      - '8083:80'
-    depends_on:
-      - rabbitmq
   jmeter:
     image: continuity/jmeter
     hostname: jmeter
@@ -49,6 +40,15 @@ services:
       - continuity-network
     ports:
       - '8083:80'
+    depends_on:
+      - rabbitmq
+  session-logs:
+    image: continuity/session-logs
+    hostname: session-logs
+    networks:
+      - continuity-network
+    ports:
+      - '8084:80'
     depends_on:
       - rabbitmq
 
