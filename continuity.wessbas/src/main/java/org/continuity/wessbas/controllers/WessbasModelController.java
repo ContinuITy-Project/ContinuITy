@@ -1,7 +1,5 @@
 package org.continuity.wessbas.controllers;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -13,6 +11,7 @@ import org.continuity.wessbas.storage.SimpleModelStorage;
 import org.continuity.wessbas.transform.annotation.AnnotationFromWessbasExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +34,9 @@ public class WessbasModelController {
 
 	private final ConcurrentMap<String, SystemAnnotation> annotationBuffer = new ConcurrentHashMap<>();
 
+	@Value("${spring.application.name}")
+	private String applicationName;
+
 	/**
 	 * Gets an overview of the model with the passed id.
 	 *
@@ -51,7 +53,7 @@ public class WessbasModelController {
 
 		String tag = id.substring(0, id.lastIndexOf("-"));
 
-		return ResponseEntity.ok(new WorkloadModelPack(getHostname(), id, tag));
+		return ResponseEntity.ok(new WorkloadModelPack(applicationName, id, tag));
 	}
 
 	/**
@@ -150,19 +152,6 @@ public class WessbasModelController {
 		}
 
 		return ResponseEntity.ok(annotation);
-	}
-
-	private String getHostname() {
-		String hostname;
-		try {
-			hostname = InetAddress.getLocalHost().getHostName();
-		} catch (UnknownHostException e) {
-			LOGGER.error("Could not get hostname! Returning 'UNKNOWN'.");
-			e.printStackTrace();
-			hostname = "UNKNOWN";
-		}
-
-		return hostname;
 	}
 
 }

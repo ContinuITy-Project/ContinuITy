@@ -12,15 +12,15 @@ import org.springframework.web.bind.annotation.RestController;
  *
  */
 @RestController
-@RequestMapping("annotation/dummy")
+@RequestMapping("dummy/dvdstore")
 public class DummyAnnotationController {
 
-	@RequestMapping(path = "dvdstore/annotation", method = RequestMethod.GET)
+	@RequestMapping(path = "annotation", method = RequestMethod.GET)
 	public SystemAnnotation getDvdStoreAnnotation() {
 		return ContinuityModelTestInstance.DVDSTORE_PARSED.getAnnotation();
 	}
 
-	@RequestMapping(path = "dvdstore/system", method = RequestMethod.GET)
+	@RequestMapping(path = "system", method = RequestMethod.GET)
 	public SystemModel getDvdStoreSystem() {
 		return ContinuityModelTestInstance.DVDSTORE_PARSED.getSystemModel();
 	}

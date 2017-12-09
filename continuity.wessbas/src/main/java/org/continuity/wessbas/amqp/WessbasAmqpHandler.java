@@ -1,8 +1,5 @@
 package org.continuity.wessbas.amqp;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.controllers.WessbasModelController;
 import org.continuity.wessbas.entities.MonitoringData;
@@ -14,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import m4jdsl.WorkloadModel;
@@ -32,6 +30,9 @@ public class WessbasAmqpHandler {
 	@Autowired
 	private AmqpTemplate amqpTemplate;
 
+	@Value("${spring.application.name}")
+	private String applicationName;
+
 	/**
 	 * Listener to the RabbitMQ {@link RabbitMqConfig#MONITORING_DATA_AVAILABLE_QUEUE_NAME}. Creates
 	 * a new WESSBAS model based on the specified monitoring data.
@@ -48,7 +49,7 @@ public class WessbasAmqpHandler {
 		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, data.getTag(), model));
 		pipelineManager.runPipeline(data);
 
-		return getHostname() + "/model/" + storageId;
+		return applicationName + "/model/" + storageId;
 	}
 
 	private void handleModelCreated(String storageId, String tag, WorkloadModel workloadModel) {
@@ -57,20 +58,7 @@ public class WessbasAmqpHandler {
 	}
 
 	private void sendCreated(String id, String tag) {
-		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas", new WorkloadModelPack(getHostname(), id, tag));
-	}
-
-	private String getHostname() {
-		String hostname;
-		try {
-			hostname = InetAddress.getLocalHost().getHostName();
-		} catch (UnknownHostException e) {
-			LOGGER.error("Could not get hostname! Returning 'UNKNOWN'.");
-			e.printStackTrace();
-			hostname = "UNKNOWN";
-		}
-
-		return hostname;
+		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas", new WorkloadModelPack(applicationName, id, tag));
 	}
 
 }
