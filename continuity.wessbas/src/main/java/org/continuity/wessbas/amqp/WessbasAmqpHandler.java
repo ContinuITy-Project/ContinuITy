@@ -43,9 +43,6 @@ public class WessbasAmqpHandler {
 	 */
 	@RabbitListener(queues = RabbitMqConfig.MONITORING_DATA_AVAILABLE_QUEUE_NAME)
 	public String onMonitoringDataAvailable(MonitoringData data) {
-		System.out.println("Received monitoring data: " + data);
-
-		// TODO: implement
 
 		String storageId = SimpleModelStorage.instance().reserve(data.getTag());
 		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, data.getTag(), model));

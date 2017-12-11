@@ -1,16 +1,17 @@
-package org.continuity.wessbas;
+package org.continuity.session.logs;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * @author Henning Schulz
+ * @author Alper Hidiroglu
  *
  */
 @SpringBootApplication
-public class WessbasApplication {
+public class SessionLogsApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(WessbasApplication.class, args);
+		SpringApplication.run(SessionLogsApplication.class, args);
 	}
+
 }

@@ -1,11 +1,14 @@
 package org.continuity.wessbas.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * @author Henning Schulz
  *
  */
 public class MonitoringData {
 
+	@JsonProperty("data")
 	private String link;
 
 	private String tag;
