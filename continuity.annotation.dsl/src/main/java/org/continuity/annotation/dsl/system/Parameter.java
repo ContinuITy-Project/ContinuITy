@@ -10,5 +10,5 @@ import org.continuity.annotation.dsl.ContinuityModelElement;
  * @author Henning Schulz
  *
  */
-public interface Parameter extends ContinuityModelElement {
+public interface Parameter extends ContinuityModelElement, Comparable<Parameter> {
 }

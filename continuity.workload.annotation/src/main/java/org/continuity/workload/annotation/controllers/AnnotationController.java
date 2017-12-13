@@ -57,23 +57,6 @@ public class AnnotationController {
 		return new ResponseEntity<>(systemModel, HttpStatus.OK);
 	}
 
-	@RequestMapping(path = "{tag}/system", method = RequestMethod.POST)
-	public ResponseEntity<String> updateSystemModel(@PathVariable("tag") String tag, @RequestBody SystemModel systemModel) {
-		boolean overwritten;
-
-		try {
-			overwritten = storage.saveOrUpdate(tag, systemModel);
-		} catch (IOException e) {
-			LOGGER.error("Could not save system model with tag {}!", tag);
-			e.printStackTrace();
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
-		HttpStatus status = overwritten ? HttpStatus.OK : HttpStatus.CREATED;
-		String message = "System model has been " + (overwritten ? "updated." : "created.");
-		return new ResponseEntity<>(message, status);
-	}
-
 	/**
 	 * Retrieves the specified annotation if present.
 	 *
@@ -102,6 +85,14 @@ public class AnnotationController {
 		return new ResponseEntity<>(annotation, HttpStatus.OK);
 	}
 
+	/**
+	 * Updates the annotation stored with the specified tag. If the annotation is invalid with
+	 * respect to the system model, it is rejected.
+	 *
+	 * @param tag
+	 * @param annotation
+	 * @return
+	 */
 	@RequestMapping(path = "{tag}/annotation", method = RequestMethod.POST)
 	public ResponseEntity<String> updateAnnotation(@PathVariable("tag") String tag, @RequestBody SystemAnnotation annotation) {
 		// TODO: check if it matches the system model and reject if not
