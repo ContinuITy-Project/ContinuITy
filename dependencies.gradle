@@ -36,6 +36,12 @@ subprojects {
 		maven {
 		    url 'http://repo.spring.io/milestone'
 		}
+		maven {
+			url 'https://repo.spring.io/release/'
+		}
+		maven {
+			url 'https://repo.spring.io/libs-milestone'
+		}
 	}
 	
 	dependencies {
