@@ -59,4 +59,5 @@ public class AnnotationController {
 		return restTemplate.postForEntity("http://workload-annotation/ann/" + tag + "/annotation", annotation, String.class);
 	}
 
+
 }

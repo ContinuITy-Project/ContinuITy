@@ -3,7 +3,9 @@
 package org.continuity.annotation.dsl.system;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.continuity.annotation.dsl.AbstractContinuityModelElement;
 
@@ -222,6 +224,43 @@ public class HttpInterface extends AbstractContinuityModelElement implements Ser
 		result.append(headers);
 		result.append(')');
 		return result.toString();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+
+		if (obj == this) {
+			return true;
+		}
+
+		if (!this.getClass().getName().equals(obj.getClass().getName())) {
+			return false;
+		}
+
+		HttpInterface other = (HttpInterface) obj;
+
+		boolean equal = Objects.equals(this.domain, other.domain);
+		equal = equal && Objects.equals(this.port, other.port);
+		equal = equal && Objects.equals(this.path, other.path);
+		equal = equal && Objects.equals(this.method, other.method);
+		equal = equal && Objects.equals(this.encoding, other.encoding);
+		equal = equal && Objects.equals(this.protocol, other.protocol);
+
+		Collections.sort(this.getParameters());
+		Collections.sort(other.getParameters());
+		equal = equal && this.getParameters().equals(other.getParameters());
+
+		Collections.sort(this.getHeaders());
+		Collections.sort(other.getHeaders());
+		equal = equal && this.getHeaders().equals(other.getHeaders());
+
+		return equal;
 	}
 
 	private static class EncodingValueFilter {

@@ -22,6 +22,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 @JsonSubTypes({ @Type(value = HttpInterface.class, name = "http") })
 public interface ServiceInterface<P extends Parameter> extends ContinuityModelElement {
 
+	@SuppressWarnings("unchecked")
+	public static final Class<ServiceInterface<?>> GENERIC_TYPE = (Class<ServiceInterface<?>>) (Class<?>) ServiceInterface.class;
+
 	/**
 	 * Returns representations of the parameters of the interface.
 	 *

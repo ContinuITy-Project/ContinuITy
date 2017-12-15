@@ -109,18 +109,38 @@ public class WeakReference<T extends ContinuityModelElement> {
 	}
 
 	/**
+	 * Gets the type of the reference, if present.
+	 *
+	 * @return The type or {@code null}, if not present.
+	 */
+	public Class<T> getType() {
+		return this.type;
+	}
+
+	/**
 	 * Resolves the referred element from the passed model, if possible and returns the reference.
+	 * Overwrites an already resolved element - potentially with {@code null}.
 	 *
 	 * @param model
 	 *            The model containing the referred element (can be nested).
 	 * @return The resolved reference of {@code null}, if the reference wasn't found.
 	 */
 	public T resolve(ContinuityModelElement model) {
-		if (referred == null) {
-			visitor.visit(model);
-		}
-
+		referred = null;
+		visitor.visit(model);
 		return referred;
+	}
+
+	/**
+	 * Returns whether the referred element has already been resolved. That is, if the element is
+	 * not {@code null}.
+	 *
+	 *
+	 * @return {@code true} if the referred element has been resolved of {@code false}, otherwise.
+	 */
+	@JsonIgnore
+	public boolean isResolved() {
+		return referred != null;
 	}
 
 	@SuppressWarnings("unchecked")

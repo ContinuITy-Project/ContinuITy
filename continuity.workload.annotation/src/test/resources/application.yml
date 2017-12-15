@@ -1,0 +1,13 @@
+eureka:
+  client:
+    enabled: false
+
+server:
+  port: 8081
+
+workload-annotation:
+  ribbon:
+    eureka:
+      enabled: false
+    listOfServers: localhost:8081
+    ServerListRefreshInterval: 15000
