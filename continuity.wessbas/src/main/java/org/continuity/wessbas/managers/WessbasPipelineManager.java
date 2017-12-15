@@ -1,14 +1,24 @@
 package org.continuity.wessbas.managers;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Collections;
+import java.util.Properties;
 import java.util.function.Consumer;
 
 import org.continuity.wessbas.entities.MonitoringData;
-import org.continuity.wessbas.entities.WessbasDslInstance;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
 
 import m4jdsl.WorkloadModel;
+import net.sf.markov4jmeter.behaviormodelextractor.BehaviorModelExtractor;
+import net.sf.markov4jmeter.m4jdslmodelgenerator.GeneratorException;
+import net.sf.markov4jmeter.m4jdslmodelgenerator.M4jdslModelGenerator;
 
 /**
  * Manages the WESSBAS pipeline from the input data to the output WESSBAS DSL
@@ -19,7 +29,13 @@ import m4jdsl.WorkloadModel;
  */
 public class WessbasPipelineManager {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(WessbasPipelineManager.class);
+
 	private final Consumer<WorkloadModel> onModelCreatedCallback;
+
+	private RestTemplate restTemplate;
+
+	private final Path workingDir;
 
 	/**
 	 * Constructor.
@@ -27,14 +43,27 @@ public class WessbasPipelineManager {
 	 * @param onModelCreatedCallback
 	 *            The function to be called when the model was created.
 	 */
-	public WessbasPipelineManager(Consumer<WorkloadModel> onModelCreatedCallback) {
+	public WessbasPipelineManager(Consumer<WorkloadModel> onModelCreatedCallback, RestTemplate restTemplate) {
 		this.onModelCreatedCallback = onModelCreatedCallback;
+		this.restTemplate = restTemplate;
+
+		Path tmpDir;
+		try {
+			tmpDir = Files.createTempDirectory("wessbas");
+		} catch (IOException e) {
+			LOGGER.error("Could not create a temp directory!");
+			e.printStackTrace();
+			tmpDir = Paths.get("wessbas");
+		}
+
+		workingDir = tmpDir;
+
+		LOGGER.info("Set working directory to {}", workingDir);
 	}
 
 	/**
 	 * Runs the pipeline and calls the callback when the model was created.
 	 *
-	 * TODO: Implement
 	 *
 	 * @param data
 	 *            Input monitoring data to be transformed into a WESSBAS DSL
@@ -43,36 +72,81 @@ public class WessbasPipelineManager {
 	public void runPipeline(MonitoringData data) {
 
 		String sessionLog = getSessionLog(data);
+		WorkloadModel workloadModel;
 
-		convertSessionLogIntoWessbasDSLInstance(sessionLog);
+		try {
+			workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog);
+		} catch (SecurityException | IOException | GeneratorException e) {
+			LOGGER.error("Could not create a WESSBAS workload model!");
+			e.printStackTrace();
+			return;
+		}
 
-		onModelCreatedCallback.accept(WessbasDslInstance.DVDSTORE_PARSED.get());
+		onModelCreatedCallback.accept(workloadModel);
 	}
 
 	/**
 	 * This method converts a session log into a Wessbas DSL instance.
-	 * 
+	 *
 	 * @param sessionLog
+	 * @throws IOException
+	 * @throws GeneratorException
+	 * @throws SecurityException
 	 */
-	private void convertSessionLogIntoWessbasDSLInstance(String sessionLog) {
-		// TODO Auto-generated method stub
+	private WorkloadModel convertSessionLogIntoWessbasDSLInstance(String sessionLog) throws IOException, SecurityException, GeneratorException {
+		Path sessionLogsPath = writeSessionLogIntoFile(sessionLog);
+		Properties intensityProps = createWorkloadIntensity(100); // TODO: read from somewhere
+		Properties behaviorProps = createBehaviorModel(sessionLogsPath);
+		return generateWessbasModel(intensityProps, behaviorProps);
+	}
 
+	private Path writeSessionLogIntoFile(String sessionLog) throws IOException {
+		Path sessionLogsPath = workingDir.resolve("sessions.dat");
+		Files.write(sessionLogsPath, Collections.singletonList(sessionLog), StandardOpenOption.CREATE);
+		return sessionLogsPath;
+	}
+
+	private Properties createWorkloadIntensity(int numberOfUsers) throws IOException {
+		Properties properties = new Properties();
+		properties.put("workloadIntensity.type", "constant");
+		properties.put("wl.type.value", Integer.toString(numberOfUsers));
+
+		properties.store(Files.newOutputStream(workingDir.resolve("workloadIntensity.properties"), StandardOpenOption.CREATE), null);
+
+		return properties;
+	}
+
+	private Properties createBehaviorModel(Path sessionLogsPath) throws IOException {
+		Path outputDir = workingDir.resolve("behaviormodelextractor");
+		outputDir.toFile().mkdir();
+
+		BehaviorModelExtractor behav = new BehaviorModelExtractor();
+		behav.createBehaviorModel(sessionLogsPath.toString(), outputDir.toString());
+
+		Properties behaviorProperties = new Properties();
+		behaviorProperties.load(Files.newInputStream(workingDir.resolve("behaviormodelextractor").resolve("behaviormix.txt")));
+		return behaviorProperties;
+	}
+
+	private WorkloadModel generateWessbasModel(Properties workloadIntensityProperties, Properties behaviorModelsProperties) throws FileNotFoundException, SecurityException, GeneratorException {
+		M4jdslModelGenerator generator = new M4jdslModelGenerator();
+		final String sessionDatFilePath = workingDir.resolve("sessions.dat").toString();
+
+		return generator.generateWorkloadModel(workloadIntensityProperties, behaviorModelsProperties, null, sessionDatFilePath, false);
 	}
 
 	/**
-	 * 
+	 * Sends request to Session Logs webservice and gets Session Log
+	 *
 	 * @param data
 	 * @return
 	 */
 	public String getSessionLog(MonitoringData data) {
-			
-		RestTemplate restTemplate = new RestTemplate();
-		MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
-		String urlString = "http://session-logs";
-		map.add("link", data.getLink());
-		String sessionLog = restTemplate.postForObject(urlString, map, String.class);
-		System.out.println(sessionLog.toString());
-		
+		String urlString = "http://session-logs?link=" + data.getLink();
+		String sessionLog = this.restTemplate.getForObject(urlString, String.class);
+
+		LOGGER.debug("Got session logs: {}", sessionLog);
+
 		return sessionLog;
 	}
 }
