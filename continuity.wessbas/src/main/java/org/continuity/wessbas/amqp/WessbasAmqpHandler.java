@@ -13,6 +13,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import m4jdsl.WorkloadModel;
 
@@ -30,6 +31,9 @@ public class WessbasAmqpHandler {
 	@Autowired
 	private AmqpTemplate amqpTemplate;
 
+	@Autowired
+	private RestTemplate restTemplate;
+
 	@Value("${spring.application.name}")
 	private String applicationName;
 
@@ -44,10 +48,13 @@ public class WessbasAmqpHandler {
 	 */
 	@RabbitListener(queues = RabbitMqConfig.MONITORING_DATA_AVAILABLE_QUEUE_NAME)
 	public String onMonitoringDataAvailable(MonitoringData data) {
+		LOGGER.info("Received new monitoring data with tag '{}' to be processed: '{}'", data.getLink(), data.getTag());
 
 		String storageId = SimpleModelStorage.instance().reserve(data.getTag());
-		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, data.getTag(), model));
+		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, data.getTag(), model), restTemplate);
 		pipelineManager.runPipeline(data);
+
+		LOGGER.info("Created a new workload model with id '{}'.", storageId);
 
 		return applicationName + "/model/" + storageId;
 	}

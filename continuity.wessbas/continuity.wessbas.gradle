@@ -12,8 +12,13 @@ dependencies {
 	compile project(':continuity.commons')
 	
 	compile group: 'net.sf.markov4jmeter', name: 'm4jdsl', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'commons', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'behaviormodelextractor', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'modelgenerator', version: '1.0.0'
 	compile group: 'net.sf.markov4jmeter', name: 'testplangenerator', version: '1.0.0'
 	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20140405'
+	
+	compile group: 'nz.ac.waikato.cms.weka', name: 'weka-stable', version: '3.6.11'
 	
 	// Spring Boot
 	
@@ -27,8 +32,6 @@ dependencies {
 	
 	compile("io.springfox:springfox-swagger2:2.7.0")
 	compile("io.springfox:springfox-swagger-ui:2.7.0")
-	
-	compile fileTree(dir: 'lib', include: ['*.jar'])
 
 }
 
