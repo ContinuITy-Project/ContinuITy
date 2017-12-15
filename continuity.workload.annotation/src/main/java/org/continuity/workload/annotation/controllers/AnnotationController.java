@@ -4,7 +4,9 @@ import java.io.IOException;
 
 import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.system.SystemModel;
+import org.continuity.workload.annotation.entities.AnnotationValidityReport;
 import org.continuity.workload.annotation.storage.AnnotationStorage;
+import org.continuity.workload.annotation.validation.AnnotationValidityChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +28,12 @@ public class AnnotationController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationController.class);
 
+	private final AnnotationStorage storage;
+
 	@Autowired
-	private AnnotationStorage storage;
+	public AnnotationController(AnnotationStorage storage) {
+		this.storage = storage;
+	}
 
 	/**
 	 * Retrieves the specified system model if present.
@@ -95,7 +101,25 @@ public class AnnotationController {
 	 */
 	@RequestMapping(path = "{tag}/annotation", method = RequestMethod.POST)
 	public ResponseEntity<String> updateAnnotation(@PathVariable("tag") String tag, @RequestBody SystemAnnotation annotation) {
-		// TODO: check if it matches the system model and reject if not
+		SystemModel systemModel = null;
+		AnnotationValidityReport report = null;
+
+		try {
+			systemModel = storage.readSystemModel(tag);
+		} catch (IOException e) {
+			LOGGER.error("Could not read system model with tag {}!", tag);
+			e.printStackTrace();
+		}
+
+		if (systemModel != null) {
+			AnnotationValidityChecker checker = new AnnotationValidityChecker(systemModel);
+			checker.checkAnnotation(annotation);
+			report = checker.getReport();
+
+			if (report.isBreaking()) {
+				return new ResponseEntity<>(report.toString(), HttpStatus.CONFLICT);
+			}
+		}
 
 		boolean overwritten;
 
@@ -107,9 +131,13 @@ public class AnnotationController {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		HttpStatus status = overwritten ? HttpStatus.OK : HttpStatus.CREATED;
-		String message = "Annotation has been " + (overwritten ? "updated." : "created.");
-		return new ResponseEntity<>(message, status);
+		String message = "Annotation has been " + (overwritten ? "updated" : "created");
+
+		if ((report != null) && !report.isOk()) {
+			message += " with warnings: " + report;
+		}
+
+		return new ResponseEntity<>(message, HttpStatus.CREATED);
 	}
 
 }

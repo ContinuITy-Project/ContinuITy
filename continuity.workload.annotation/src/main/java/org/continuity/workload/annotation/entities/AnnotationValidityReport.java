@@ -3,6 +3,7 @@ package org.continuity.workload.annotation.entities;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,6 +18,7 @@ public class AnnotationValidityReport {
 	@JsonValue
 	private final Map<ModelElementReference, Set<AnnotationViolation>> violations;
 
+	@JsonCreator
 	public AnnotationValidityReport(Map<ModelElementReference, Set<AnnotationViolation>> violations) {
 		this.violations = violations;
 	}
