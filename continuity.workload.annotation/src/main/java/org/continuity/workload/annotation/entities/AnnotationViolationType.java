@@ -3,8 +3,13 @@ package org.continuity.workload.annotation.entities;
 import java.io.IOException;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
@@ -12,6 +17,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
  *
  */
 @JsonSerialize(using = AnnotationViolationType.JsonSerializer.class)
+@JsonDeserialize(using = AnnotationViolationType.JsonDeserializer.class)
 public enum AnnotationViolationType {
 
 	// System changed
@@ -81,6 +87,34 @@ public enum AnnotationViolationType {
 		@Override
 		public void serialize(AnnotationViolationType value, JsonGenerator gen, SerializerProvider provider) throws IOException {
 			gen.writeString(value.getMessage());
+		}
+
+	}
+
+	private static class JsonDeserializer extends StdDeserializer<AnnotationViolationType> {
+
+		private static final long serialVersionUID = 163275591308563017L;
+
+		@SuppressWarnings("unused")
+		public JsonDeserializer() {
+			this(null);
+		}
+
+		/**
+		 * @param vc
+		 */
+		protected JsonDeserializer(Class<?> vc) {
+			super(vc);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public AnnotationViolationType deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+			String prettyName = p.getValueAsString().split("\\:")[0];
+			String name = prettyName.toUpperCase().replace(" ", "_");
+			return AnnotationViolationType.valueOf(name);
 		}
 
 	}
