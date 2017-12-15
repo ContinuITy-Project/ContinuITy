@@ -1,7 +1,7 @@
 dependencies {
 	compile project(':continuity.annotation.dsl')
 	
-	compile group: 'org.fortiss.pmwt.wex', name: 'wessbas.dsl', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'm4jdsl', version: '1.0.0'
 	
 	// Needed for WESSBAS:
 	
