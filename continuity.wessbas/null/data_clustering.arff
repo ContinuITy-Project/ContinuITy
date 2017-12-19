@@ -1,0 +1,18 @@
+@relation BehaviorModelAbsoluteInstanceSet
+
+@attribute INITIAL_INITIAL numeric
+@attribute INITIAL_ShopGET numeric
+@attribute INITIAL_HomeGET numeric
+@attribute INITIAL_exit numeric
+@attribute ShopGET_INITIAL numeric
+@attribute ShopGET_ShopGET numeric
+@attribute ShopGET_HomeGET numeric
+@attribute ShopGET_exit numeric
+@attribute HomeGET_INITIAL numeric
+@attribute HomeGET_ShopGET numeric
+@attribute HomeGET_HomeGET numeric
+@attribute HomeGET_exit numeric
+@attribute theClass {doBrowseVehicles-1,doManageInventory-1,doPurchaseVehicles-1,noSessionType}
+
+@data
+0,1,0,0,0,0,1,1,0,1,0,0,noSessionType

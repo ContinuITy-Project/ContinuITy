@@ -1,6 +1,5 @@
 package org.continuity.wessbas.amqp;
 
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.test.context.TestComponent;
 
 import m4jdsl.WorkloadModel;
@@ -14,7 +13,7 @@ public class ModelCreatedHandlingStub {
 
 	private WorkloadModel receivedWorkloadModel;
 
-	@RabbitListener(queues = ModelGeneratorTestConfig.MODEL_CREATED_QUEUE_NAME)
+	// @RabbitListener(queues = ModelGeneratorTestConfig.MODEL_CREATED_QUEUE_NAME)
 	public void handleModelCreated(Object workloadModelJson) {
 		System.out.println("Received message of type " + workloadModelJson.getClass() + " : " + workloadModelJson);
 

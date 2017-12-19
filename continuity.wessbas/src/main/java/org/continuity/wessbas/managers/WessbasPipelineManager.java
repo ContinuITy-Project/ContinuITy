@@ -9,8 +9,7 @@ import java.util.function.Consumer;
 import org.apache.commons.io.FileUtils;
 import org.continuity.wessbas.entities.MonitoringData;
 import org.continuity.wessbas.entities.WessbasDslInstance;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestTemplate;
 
 import m4jdsl.WorkloadModel;
@@ -27,6 +26,8 @@ import net.sf.markov4jmeter.behaviormodelextractor.BehaviorModelExtractor;
 public class WessbasPipelineManager {
 
 	private final Consumer<WorkloadModel> onModelCreatedCallback;
+	
+	private RestTemplate restTemplate;
 
 	/**
 	 * Constructor.
@@ -34,8 +35,10 @@ public class WessbasPipelineManager {
 	 * @param onModelCreatedCallback
 	 *            The function to be called when the model was created.
 	 */
-	public WessbasPipelineManager(Consumer<WorkloadModel> onModelCreatedCallback) {
+	@Autowired
+	public WessbasPipelineManager(Consumer<WorkloadModel> onModelCreatedCallback, RestTemplate restTemplate) {
 		this.onModelCreatedCallback = onModelCreatedCallback;
+		this.restTemplate = restTemplate;
 	}
 
 	/**
@@ -98,11 +101,10 @@ public class WessbasPipelineManager {
 	 */
 	public String getSessionLog(MonitoringData data) {
 
-		RestTemplate restTemplate = new RestTemplate();
-		MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
-		String urlString = "http://session-logs";
-		map.add("link", data.getLink());
-		String sessionLog = restTemplate.postForObject(urlString, map, String.class);
+		//MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
+		String urlString = "http://session-logs?link=" + data.getLink();
+		//map.add("link", data.getLink());
+		String sessionLog = this.restTemplate.getForObject(urlString, String.class);
 		System.out.println(sessionLog.toString());
 
 		return sessionLog;

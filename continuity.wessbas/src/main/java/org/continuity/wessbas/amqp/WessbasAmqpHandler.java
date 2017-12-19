@@ -13,6 +13,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import m4jdsl.WorkloadModel;
 
@@ -30,6 +31,8 @@ public class WessbasAmqpHandler {
 	@Autowired
 	private AmqpTemplate amqpTemplate;
 
+	private RestTemplate restTemplate;
+	
 	@Value("${spring.application.name}")
 	private String applicationName;
 
@@ -46,7 +49,7 @@ public class WessbasAmqpHandler {
 	public String onMonitoringDataAvailable(MonitoringData data) {
 
 		String storageId = SimpleModelStorage.instance().reserve(data.getTag());
-		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, data.getTag(), model));
+		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, data.getTag(), model), this.restTemplate);
 		pipelineManager.runPipeline(data);
 
 		return applicationName + "/model/" + storageId;

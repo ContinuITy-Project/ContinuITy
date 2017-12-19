@@ -36,7 +36,7 @@ public class SimpleGeneratorTest {
 	@Autowired
 	private AmqpTemplate amqpTemplate;
 
-	@Before
+	// @Before
 	public void setupReceivingQueue() {
 		this.receivingStub = new ModelCreatedHandlingStub();
 
@@ -75,7 +75,7 @@ public class SimpleGeneratorTest {
 		receivingStub.getReceivedWorkloadModel();
 	}
 
-	@After
+	// @After
 	public void shutdownReceivingQueue() {
 		RabbitAdmin admin = new RabbitAdmin(connectionFactory);
 		admin.deleteQueue(ModelGeneratorTestConfig.MODEL_CREATED_QUEUE_NAME);

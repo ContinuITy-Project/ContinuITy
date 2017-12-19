@@ -1,0 +1,5 @@
+digraph G {
+"INITIAL*" [label="INITIAL*",shape=none];
+"ShopGET" [label="ShopGET",shape=none];
+"HomeGET" [label="HomeGET",shape=none];
+}

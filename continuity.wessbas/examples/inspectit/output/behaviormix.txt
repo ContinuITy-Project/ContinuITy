@@ -1,0 +1,3 @@
+behaviorModels = gen_behavior_model0; null/gen_behavior_model0.csv; 1.0; C:/Users/ahi/git/ContinuITy/continuity.wessbas/examples/inspectit/output/behaviormodel0.csv, \
+gen_behavior_model1; null/gen_behavior_model1.csv; 0.0; C:/Users/ahi/git/ContinuITy/continuity.wessbas/examples/inspectit/output/behaviormodel1.csv, \
+gen_behavior_model2; null/gen_behavior_model2.csv; 0.0; C:/Users/ahi/git/ContinuITy/continuity.wessbas/examples/inspectit/output/behaviormodel2.csv
