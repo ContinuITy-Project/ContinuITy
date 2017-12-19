@@ -68,7 +68,7 @@ public enum AnnotationViolationType {
 		return breaking;
 	}
 
-	private static class JsonSerializer extends StdSerializer<AnnotationViolationType> {
+	protected static class JsonSerializer extends StdSerializer<AnnotationViolationType> {
 
 		private static final long serialVersionUID = -3584135264314110782L;
 
@@ -91,7 +91,7 @@ public enum AnnotationViolationType {
 
 	}
 
-	private static class JsonDeserializer extends StdDeserializer<AnnotationViolationType> {
+	protected static class JsonDeserializer extends StdDeserializer<AnnotationViolationType> {
 
 		private static final long serialVersionUID = 163275591308563017L;
 

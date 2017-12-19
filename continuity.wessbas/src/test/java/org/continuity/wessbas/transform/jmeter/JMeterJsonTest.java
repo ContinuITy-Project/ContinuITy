@@ -40,8 +40,7 @@ public class JMeterJsonTest {
 		builder.append("{\"behaviors\":{\"mybeh\":[]},");
 		builder.append("\"test-plan\":\"");
 		builder.append(toJmxString(testPlan));
-		builder.append("\",");
-		builder.append("\"annotation-link\":\"annotation/link\"}");
+		builder.append("\"}");
 
 		referenceJson = builder.toString();
 	}
