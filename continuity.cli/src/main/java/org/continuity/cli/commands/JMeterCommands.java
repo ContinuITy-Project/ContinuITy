@@ -9,6 +9,7 @@ import java.util.Map;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.entities.TestPlanBundle;
 import org.continuity.cli.process.JMeterProcess;
+import org.continuity.commons.jmeter.BehaviorPathsCorrector;
 import org.continuity.commons.jmeter.TestPlanWriter;
 import org.continuity.commons.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,8 @@ public class JMeterCommands {
 	private RestTemplate restTemplate;
 
 	private TestPlanWriter testPlanWriter;
+
+	private BehaviorPathsCorrector behaviorPathsCorrector = new BehaviorPathsCorrector();
 
 	@ShellMethod(key = { "jmeter-home" }, value = "Sets the home directory of JMeter (where the bin directory is placed).")
 	public String setJMeterHome(String jmeterHome) {
@@ -83,6 +86,7 @@ public class JMeterCommands {
 		testPlanDir.toFile().mkdirs();
 
 		TestPlanBundle testPlanBundle = response.getBody();
+		behaviorPathsCorrector.correctPaths(testPlanBundle.getTestPlan(), testPlanDir);
 		Path testPlanPath = testPlanWriter.write(testPlanBundle.getTestPlan(), testPlanBundle.getBehaviors(), testPlanDir);
 		new JMeterProcess(jmeterHome).run(testPlanPath);
 
