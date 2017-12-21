@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.ListedHashTree;
 
 import net.sf.markov4jmeter.testplangenerator.JMeterEngineGateway;
@@ -18,13 +19,30 @@ import net.sf.markov4jmeter.testplangenerator.util.CSVHandler;
 public class TestPlanWriter {
 
 	/**
-	 * Initializes JMeter.
+	 * Default contructor not initializing JMeter.
+	 */
+	public TestPlanWriter() {
+	}
+
+	/**
+	 * Creates and initializes JMeter.
 	 *
 	 * @param jmeterHome
 	 *            The path to the root JMeter configuration folder.
 	 */
 	public TestPlanWriter(String jmeterHome) {
-		JMeterEngineGateway.getInstance().initJMeter(jmeterHome, "jmeter.properties", Locale.ENGLISH);
+		init(jmeterHome);
+	}
+
+	/**
+	 * Initializes JMeter.
+	 *
+	 * @param jmeterHome
+	 *            The path to the root JMeter configuration folder.
+	 */
+	public void init(String jmeterHome) {
+		JMeterEngineGateway.getInstance().initJMeter(jmeterHome, "bin/jmeter.properties", Locale.ENGLISH);
+		JMeterUtils.initLogging();
 	}
 
 	private final GeneratorAdapter generatorAdapter = new GeneratorAdapter();

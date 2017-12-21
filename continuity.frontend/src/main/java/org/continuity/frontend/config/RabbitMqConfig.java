@@ -31,6 +31,11 @@ public class RabbitMqConfig {
 	/**
 	 * routing keys: [workload-type].[load-test-type], e.g., wessbas.benchflow
 	 */
+	public static final String CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME = "continuity.loadtest.createandexecute";
+
+	/**
+	 * routing keys: [load-test-type], e.g., benchflow
+	 */
 	public static final String EXECUTE_LOAD_TEST_EXCHANGE_NAME = "continuity.loadtest.execute";
 
 	@Bean
@@ -61,8 +66,13 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
-	TopicExchange loadTestNeededExchange() {
+	TopicExchange executeLoadTestExchange() {
 		return new TopicExchange(EXECUTE_LOAD_TEST_EXCHANGE_NAME, false, true);
+	}
+
+	@Bean
+	TopicExchange createAndExecuteLoadTestExchange() {
+		return new TopicExchange(CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME, false, true);
 	}
 
 	@Bean

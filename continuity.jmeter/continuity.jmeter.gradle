@@ -23,7 +23,22 @@ dependencies {
 	compile("io.springfox:springfox-swagger2:2.7.0")
 	compile("io.springfox:springfox-swagger-ui:2.7.0")
 	
-	compile("org.lpe.common:org.lpe.common.jmeter:1.0.4")
+	// JMeter launcher
+	
+	compile (group: 'org.apache.jmeter', name: 'ApacheJMeter', version: '3.1') {
+		exclude group: 'org.mongodb', module: 'mongo-java-driver'
+	}
+}
+
+task copyJmeterFolders(type: Copy) {
+	from '..'
+	into 'build'
+	include 'bin/**'
+	include 'lib/**'
+}
+
+build.dependsOn {
+	copyJmeterFolders
 }
 
 group = 'continuity'
@@ -33,8 +48,9 @@ apply plugin: 'com.palantir.docker'
 docker {
 	name "${project.group}/jmeter"
 	files jar.archivePath
-	copySpec.from('.') {
-		include 'configuration/**'
+	copySpec.from('build') {
+		include 'bin/**'
+		include 'lib/**'
 	}
 	buildArgs(['JAR_FILE': "${jar.archiveName}"])
 }

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.jmeter.JMeter;
+import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.jmeter.TestPlanWriter;
 import org.continuity.jmeter.config.RabbitMqConfig;
 import org.continuity.jmeter.controllers.TestPlanController;
@@ -30,21 +32,36 @@ public class TestPlanAmqpHandler {
 	@Autowired
 	private TestPlanWriter testPlanWriter;
 
+	private JMeterPropertiesCorrector behaviorPathsCorrector = new JMeterPropertiesCorrector();
+
 	/**
-	 * Listens to the {@link RabbitMqConfig#EXECUTE_LOAD_TEST_QUEUE_NAME} queue, annotates the test
-	 * plan and executes the test.
+	 * Listens to the {@link RabbitMqConfig#CREATE_AND_EXECUTE_LOAD_TEST_QUEUE_NAME} queue,
+	 * annotates the test plan and executes the test.
 	 *
 	 * @param specification
 	 *            The specification of the test plan.
 	 */
-	@RabbitListener(queues = RabbitMqConfig.EXECUTE_LOAD_TEST_QUEUE_NAME)
-	public void executeTestPlan(LoadTestSpecification specification) {
+	@RabbitListener(queues = RabbitMqConfig.CREATE_AND_EXECUTE_LOAD_TEST_QUEUE_NAME)
+	public void createAndExecuteTestPlan(LoadTestSpecification specification) {
 		LOGGER.debug("Received test plan specification.");
 
-		TestPlanBundle testPlanPack = testPlanController.createAndGetLoadTest(specification.getWorkloadModelType(), specification.getWorkloadModelId(), specification.getTag());
+		TestPlanBundle testPlanBundle = testPlanController.createAndGetLoadTest(specification.getWorkloadModelType(), specification.getWorkloadModelId(), specification.getTag());
 
 		LOGGER.debug("Got an annotated test plan pack.");
 
+		executeTestPlan(testPlanBundle);
+	}
+
+	/**
+	 * Listens to the {@link RabbitMqConfig#EXECUTE_LOAD_TEST_QUEUE_NAME} queue and executes the
+	 * sent JMeter test plan.
+	 *
+	 * @param testPlanBundle
+	 *            Test plan bundle including the test plan itself and the behaviors for
+	 *            Markov4JMeter.
+	 */
+	@RabbitListener(queues = RabbitMqConfig.EXECUTE_LOAD_TEST_QUEUE_NAME)
+	public void executeTestPlan(TestPlanBundle testPlanBundle) {
 		Path tmpPath;
 
 		try {
@@ -54,18 +71,19 @@ public class TestPlanAmqpHandler {
 			return;
 		}
 
-		Path testPlanPath = testPlanWriter.write(testPlanPack.getTestPlan(), testPlanPack.getBehaviors(), tmpPath);
+		Path resultsPath = tmpPath.resolve("results.csv");
+
+		behaviorPathsCorrector.correctPaths(testPlanBundle.getTestPlan(), tmpPath);
+		behaviorPathsCorrector.configureResultFile(testPlanBundle.getTestPlan(), resultsPath);
+		behaviorPathsCorrector.prepareForHeadlessExecution(testPlanBundle.getTestPlan());
+		Path testPlanPath = testPlanWriter.write(testPlanBundle.getTestPlan(), testPlanBundle.getBehaviors(), tmpPath);
 		LOGGER.info("Created a test plan at {}.", testPlanPath);
 
-		// TODO: Run the test:
-		// StandardJMeterEngine jmeterEngine = new StandardJMeterEngine();
-		// jmeterEngine.configure(annotatedTestPlan);
-		// jmeterEngine.run();
+		JMeter jmeter = new JMeter();
+		String[] arguments = { "-n", "-t", testPlanPath.toAbsolutePath().toString() };
+		jmeter.start(arguments);
 
-		// Alternative:
-		// JMeterWorkloadConfig config = new JMeterWorkloadConfig();
-		// fill the config
-		// JMeterWrapper.getInstance().startLoadTest(config);
+		LOGGER.info("JMeter test finished. Results are stored to {}.", resultsPath);
 	}
 
 }

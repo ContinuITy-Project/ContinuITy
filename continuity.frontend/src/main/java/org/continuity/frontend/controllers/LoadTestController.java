@@ -37,14 +37,16 @@ public class LoadTestController {
 	private AmqpTemplate amqpTemplate;
 
 	/**
-	 * Causes execution of a load test.
+	 * Causes creation from a workload model and execution of a load test.
 	 *
+	 * @param testType
+	 *            The type of the load test, e.g., BenchFlow.
 	 * @param specification
 	 *            The specification of the load test.
 	 * @return A report.
 	 */
-	@RequestMapping(path = "{type}/execute", method = RequestMethod.POST)
-	public ResponseEntity<String> executeLoadTest(@PathVariable("type") String testType, @RequestBody LoadTestSpecification specification) {
+	@RequestMapping(path = "{type}/createandexecute", method = RequestMethod.POST)
+	public ResponseEntity<String> createAndExecuteLoadTest(@PathVariable("type") String testType, @RequestBody LoadTestSpecification specification) {
 		String message;
 		HttpStatus status;
 
@@ -61,8 +63,34 @@ public class LoadTestController {
 			message = "Tag is required.";
 			status = HttpStatus.BAD_REQUEST;
 		} else {
-			amqpTemplate.convertAndSend(RabbitMqConfig.EXECUTE_LOAD_TEST_EXCHANGE_NAME, specification.getWorkloadModelType() + "." + testType, specification);
+			amqpTemplate.convertAndSend(RabbitMqConfig.CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME, specification.getWorkloadModelType() + "." + testType, specification);
 			message = "Creating a load test from" + specification.getWorkloadModelType() + " workload model " + specification.getWorkloadModelId();
+			status = HttpStatus.ACCEPTED;
+		}
+
+		return new ResponseEntity<>(message, status);
+	}
+
+	/**
+	 * Causes execution of a load test.
+	 *
+	 * @param testType
+	 *            The type of the load test, e.g., BenchFlow.
+	 * @param testPlan
+	 *            The load test to be executed.
+	 * @return A report.
+	 */
+	@RequestMapping(path = "{type}/execute", method = RequestMethod.POST)
+	public ResponseEntity<String> executeLoadTest(@PathVariable("type") String testType, @RequestBody JsonNode testPlan) {
+		String message;
+		HttpStatus status;
+
+		if (testPlan == null) {
+			message = "Load test is required.";
+			status = HttpStatus.BAD_REQUEST;
+		} else {
+			amqpTemplate.convertAndSend(RabbitMqConfig.EXECUTE_LOAD_TEST_EXCHANGE_NAME, testType, testPlan);
+			message = "Executing a " + testType + " load test";
 			status = HttpStatus.ACCEPTED;
 		}
 
