@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMqConfig {
 
-	public static final String MONITORING_DATA_AVAILABLE_EXCHANGE_NAME = "monitoring-data-available";
+	public static final String MONITORING_DATA_AVAILABLE_EXCHANGE_NAME = "continuity.workloadmodel.dataavailable";
 
 	public static final String WORKLADO_ANNOTATION_MESSAGE_EXCHANGE_NAME = "continuity.workload.annotation.message";
 
@@ -31,7 +31,7 @@ public class RabbitMqConfig {
 	/**
 	 * routing keys: [workload-type].[load-test-type], e.g., wessbas.benchflow
 	 */
-	public static final String EXECUTE_LOAD_TEST_EXCHANGE_NAME = "execute-load-test";
+	public static final String EXECUTE_LOAD_TEST_EXCHANGE_NAME = "continuity.loadtest.execute";
 
 	@Bean
 	MessageConverter jsonMessageConverter() {

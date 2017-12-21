@@ -24,13 +24,13 @@ public class RabbitMqConfig {
 
 	// Model creation input and output queues
 
-	public static final String MONITORING_DATA_AVAILABLE_QUEUE_NAME = "wessbas-monitoring-input";
+	public static final String MONITORING_DATA_AVAILABLE_QUEUE_NAME = "continuity.wessbas.workloadmodel.dataavailable";
 
-	private static final String MONITORING_DATA_AVAILABLE_EXCHANGE_NAME = "monitoring-data-available";
+	private static final String MONITORING_DATA_AVAILABLE_EXCHANGE_NAME = "continuity.workloadmodel.dataavailable";
 
 	private static final String MONITORING_DATA_AVAILABLE_ROUTING_KEY = "wessbas";
 
-	public static final String MODEL_CREATED_EXCHANGE_NAME = "model-created";
+	public static final String MODEL_CREATED_EXCHANGE_NAME = "continuity.workloadmodel.created";
 
 	public static final String MODEL_CREATED_ROUTING_KEY = "wessbas";
 

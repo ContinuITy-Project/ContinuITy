@@ -22,9 +22,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMqConfig {
 
-	public static final String MODEL_CREATED_QUEUE_NAME = "model-created-annotation";
+	public static final String MODEL_CREATED_QUEUE_NAME = "continuity.workload.annotation.workloadmodel.created";
 
-	public static final String MODEL_CREATED_EXCHANGE_NAME = "model-created";
+	public static final String MODEL_CREATED_EXCHANGE_NAME = "continuity.workloadmodel.created";
 
 	public static final String MODEL_CREATED_ROUTING_KEY = "*";
 
