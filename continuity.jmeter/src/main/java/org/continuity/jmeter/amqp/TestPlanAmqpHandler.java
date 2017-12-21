@@ -61,6 +61,11 @@ public class TestPlanAmqpHandler {
 		// StandardJMeterEngine jmeterEngine = new StandardJMeterEngine();
 		// jmeterEngine.configure(annotatedTestPlan);
 		// jmeterEngine.run();
+
+		// Alternative:
+		// JMeterWorkloadConfig config = new JMeterWorkloadConfig();
+		// fill the config
+		// JMeterWrapper.getInstance().startLoadTest(config);
 	}
 
 }

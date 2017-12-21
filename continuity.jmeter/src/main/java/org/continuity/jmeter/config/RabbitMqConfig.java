@@ -25,9 +25,9 @@ public class RabbitMqConfig {
 	/**
 	 * routing keys: [workload-type].[load-test-type], e.g., wessbas.benchflow
 	 */
-	public static final String EXECUTE_LOAD_TEST_EXCHANGE_NAME = "execute-load-test";
+	public static final String EXECUTE_LOAD_TEST_EXCHANGE_NAME = "continuity.loadtest.execute";
 
-	public static final String EXECUTE_LOAD_TEST_QUEUE_NAME = "jmeter-execute-load-test";
+	public static final String EXECUTE_LOAD_TEST_QUEUE_NAME = "continuity.jmeter.loadtest.execute";
 
 	public static final String EXECUTE_LOAD_TEST_ROUTING_KEY = "*.jmeter";
 
