@@ -30,9 +30,10 @@ public class WessbasAmqpHandler {
 
 	@Autowired
 	private AmqpTemplate amqpTemplate;
-
-	private RestTemplate restTemplate;
 	
+	@Autowired
+	private RestTemplate restTemplate;
+
 	@Value("${spring.application.name}")
 	private String applicationName;
 
@@ -49,7 +50,7 @@ public class WessbasAmqpHandler {
 	public String onMonitoringDataAvailable(MonitoringData data) {
 
 		String storageId = SimpleModelStorage.instance().reserve(data.getTag());
-		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, data.getTag(), model), this.restTemplate);
+		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, data.getTag(), model), restTemplate);
 		pipelineManager.runPipeline(data);
 
 		return applicationName + "/model/" + storageId;

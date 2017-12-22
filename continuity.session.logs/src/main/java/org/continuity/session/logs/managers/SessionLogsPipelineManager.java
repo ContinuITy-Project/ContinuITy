@@ -1,5 +1,7 @@
 package org.continuity.session.logs.managers;
 
+import org.springframework.web.client.RestTemplate;
+
 /**
  * 
  * @author Alper Hi
@@ -8,6 +10,8 @@ package org.continuity.session.logs.managers;
 public class SessionLogsPipelineManager {
 
 	private String link;
+
+	private RestTemplate restTemplate = new RestTemplate();
 
 	public SessionLogsPipelineManager(String link) {
 		this.link = link;
@@ -19,18 +23,20 @@ public class SessionLogsPipelineManager {
 	 * @return
 	 */
 	public String runPipeline() {
-		getOPENXtrace(this.link);
+		// getOPENXtrace(this.link);
 
 		return generateIntoSessionLog();
 
 	}
 
-	/**
-	 * ToDo: get OPEN.xtrace
-	 */
-	public void getOPENXtrace(String link) {
-		// implement
-	}
+	// /**
+	// * Gets OPEN.xtrace
+	// */
+	// public void getOPENXtrace(String link) {
+	// String openxtrace = this.restTemplate.getForObject(link, String.class);
+	// OPENxtraceDeserializer deserializer = new OPENxtraceDeserializer();
+	// deserializer.deserialize(openxtrace);
+	// }
 
 	/**
 	 * Input OPEN.xtrace, output Session Log String Stub
