@@ -1,0 +1,9 @@
+digraph G {
+"INITIAL*" [label="INITIAL*",shape=none];
+"ShopGET" [label="ShopGET",shape=none];
+"HomeGET" [label="HomeGET",shape=none];
+"INITIAL*"->"ShopGET" [style=solid,label="1"];
+"ShopGET"->"HomeGET" [style=solid,label="0.5; n(15743 0)"];
+"ShopGET"->"$" [style=solid,label="0.5"];
+"HomeGET"->"ShopGET" [style=solid,label="1; n(1196242 0)"];
+}

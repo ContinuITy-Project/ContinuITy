@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ASCII"?>
+<m4jdsl:WorkloadModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m4jdsl="http://m4jdsl/1.0" xsi:schemaLocation="http://m4jdsl/1.0 m4jdsl.ecore">
+  <workloadIntensity xsi:type="m4jdsl:ConstantWorkloadIntensity" formula="800" numberOfSessions="800"/>
+  <applicationModel>
+    <sessionLayerEFSM initialState="ASId2_INITIAL">
+      <applicationStates eId="ASId4_HomeGET">
+        <service name="HomeGET"/>
+        <protocolDetails initialState="PS6">
+          <protocolStates eId="PS6">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R3 (HomeGET)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/home"/>
+              <properties key="HTTPSampler.method" value="GET"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS5" action=""/>
+          </protocolStates>
+          <exitState eId="PS5"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="ASId3_ShopGET"/>
+      </applicationStates>
+      <applicationStates eId="ASId2_INITIAL">
+        <service name="INITIAL"/>
+        <protocolDetails initialState="PS2">
+          <protocolStates eId="PS2">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R1 (INITIAL)">
+              <properties key="HTTPSampler.domain" value=""/>
+              <properties key="HTTPSampler.port" value="0"/>
+              <properties key="HTTPSampler.path" value=""/>
+              <properties key="HTTPSampler.method" value=""/>
+              <properties key="HTTPSampler.encoding" value=""/>
+              <properties key="HTTPSampler.protocol" value=""/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS1" action=""/>
+          </protocolStates>
+          <exitState eId="PS1"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="ASId3_ShopGET"/>
+      </applicationStates>
+      <applicationStates eId="ASId3_ShopGET">
+        <service name="ShopGET"/>
+        <protocolDetails initialState="PS4">
+          <protocolStates eId="PS4">
+            <request xsi:type="m4jdsl:HTTPRequest" eId="R2 (ShopGET)">
+              <properties key="HTTPSampler.domain" value="localhost"/>
+              <properties key="HTTPSampler.port" value="8080"/>
+              <properties key="HTTPSampler.path" value="/dvdstore/browse"/>
+              <properties key="HTTPSampler.method" value="GET"/>
+              <properties key="HTTPSampler.encoding" value="&lt;no-encoding>"/>
+              <properties key="HTTPSampler.protocol" value="http"/>
+              <parameters name="conversationId" value="1;"/>
+            </request>
+            <outgoingTransitions guard="" targetState="PS3" action=""/>
+          </protocolStates>
+          <exitState eId="PS3"/>
+        </protocolDetails>
+        <outgoingTransitions targetState="ASId4_HomeGET"/>
+      </applicationStates>
+      <exitState eId="$"/>
+      <guardActionParameterList/>
+    </sessionLayerEFSM>
+  </applicationModel>
+  <behaviorMix>
+    <relativeFrequencies behaviorModel="//@behaviorModels.2"/>
+    <relativeFrequencies behaviorModel="//@behaviorModels.1"/>
+    <relativeFrequencies behaviorModel="//@behaviorModels.0" value="1.0"/>
+  </behaviorMix>
+  <behaviorModels name="gen_behavior_model0" filename="wessbas/behaviormodelextractor/gen_behavior_model0.csv" initialState="MSId3_INITIAL">
+    <markovStates eId="MSId2_HomeGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.0/@service">
+      <outgoingTransitions targetState="MSId4_ShopGET" probability="1.0">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="1196242.0"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId3_INITIAL" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.1/@service">
+      <outgoingTransitions targetState="MSId4_ShopGET" probability="1.0">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime"/>
+      </outgoingTransitions>
+    </markovStates>
+    <markovStates eId="MSId4_ShopGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.2/@service">
+      <outgoingTransitions targetState="MSId2_HomeGET" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime" mean="15743.0"/>
+      </outgoingTransitions>
+      <outgoingTransitions targetState="MSId1" probability="0.5">
+        <thinkTime xsi:type="m4jdsl:NormallyDistributedThinkTime"/>
+      </outgoingTransitions>
+    </markovStates>
+    <exitState eId="MSId1"/>
+  </behaviorModels>
+  <behaviorModels name="gen_behavior_model1" filename="wessbas/behaviormodelextractor/gen_behavior_model1.csv" initialState="MSId7_INITIAL">
+    <markovStates eId="MSId6_HomeGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.0/@service"/>
+    <markovStates eId="MSId7_INITIAL" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.1/@service"/>
+    <markovStates eId="MSId8_ShopGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.2/@service"/>
+    <exitState eId="MSId5"/>
+  </behaviorModels>
+  <behaviorModels name="gen_behavior_model2" filename="wessbas/behaviormodelextractor/gen_behavior_model2.csv" initialState="MSId11_INITIAL">
+    <markovStates eId="MSId10_HomeGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.0/@service"/>
+    <markovStates eId="MSId11_INITIAL" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.1/@service"/>
+    <markovStates eId="MSId12_ShopGET" service="//@applicationModel/@sessionLayerEFSM/@applicationStates.2/@service"/>
+    <exitState eId="MSId9"/>
+  </behaviorModels>
+</m4jdsl:WorkloadModel>

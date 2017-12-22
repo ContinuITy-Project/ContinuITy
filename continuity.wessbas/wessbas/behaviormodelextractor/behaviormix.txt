@@ -1,0 +1,3 @@
+behaviorModels = gen_behavior_model0; wessbas/behaviormodelextractor/gen_behavior_model0.csv; 1.0; C:/Users/ahi/git/ContinuITy/continuity.wessbas/wessbas/behaviormodelextractor/behaviormodel0.csv, \
+gen_behavior_model1; wessbas/behaviormodelextractor/gen_behavior_model1.csv; 0.0; C:/Users/ahi/git/ContinuITy/continuity.wessbas/wessbas/behaviormodelextractor/behaviormodel1.csv, \
+gen_behavior_model2; wessbas/behaviormodelextractor/gen_behavior_model2.csv; 0.0; C:/Users/ahi/git/ContinuITy/continuity.wessbas/wessbas/behaviormodelextractor/behaviormodel2.csv
