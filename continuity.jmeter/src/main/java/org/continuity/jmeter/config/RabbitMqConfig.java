@@ -29,7 +29,16 @@ public class RabbitMqConfig {
 
 	public static final String EXECUTE_LOAD_TEST_QUEUE_NAME = "continuity.jmeter.loadtest.execute";
 
-	public static final String EXECUTE_LOAD_TEST_ROUTING_KEY = "*.jmeter";
+	public static final String EXECUTE_LOAD_TEST_ROUTING_KEY = "jmeter";
+
+	/**
+	 * routing keys: [load-test-type], e.g., benchflow
+	 */
+	public static final String CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME = "continuity.loadtest.createandexecute";
+
+	public static final String CREATE_AND_EXECUTE_LOAD_TEST_QUEUE_NAME = "continuity.jmeter.loadtest.createandexecute";
+
+	public static final String CREATE_AND_EXECUTE_LOAD_TEST_ROUTING_KEY = "*.jmeter";
 
 	// General
 
@@ -67,18 +76,33 @@ public class RabbitMqConfig {
 	// Input exchange and queue
 
 	@Bean
-	Queue loadTestCreatedQueue() {
+	Queue executeLoadTestQueue() {
 		return new Queue(EXECUTE_LOAD_TEST_QUEUE_NAME, false);
 	}
 
 	@Bean
-	TopicExchange loadTestCreatedExchange() {
+	TopicExchange executeLoadTestExchange() {
 		return new TopicExchange(EXECUTE_LOAD_TEST_EXCHANGE_NAME, false, true);
 	}
 
 	@Bean
-	Binding loadTestCreatedBinding() {
-		return BindingBuilder.bind(loadTestCreatedQueue()).to(loadTestCreatedExchange()).with(EXECUTE_LOAD_TEST_ROUTING_KEY);
+	Binding executeLoadTestBinding() {
+		return BindingBuilder.bind(executeLoadTestQueue()).to(executeLoadTestExchange()).with(EXECUTE_LOAD_TEST_ROUTING_KEY);
+	}
+
+	@Bean
+	Queue createAndExecuteLoadTestQueue() {
+		return new Queue(CREATE_AND_EXECUTE_LOAD_TEST_QUEUE_NAME, false);
+	}
+
+	@Bean
+	TopicExchange createAndExecuteLoadTestExchange() {
+		return new TopicExchange(CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME, false, true);
+	}
+
+	@Bean
+	Binding createAndExecuteLoadTestBinding() {
+		return BindingBuilder.bind(createAndExecuteLoadTestQueue()).to(createAndExecuteLoadTestExchange()).with(CREATE_AND_EXECUTE_LOAD_TEST_ROUTING_KEY);
 	}
 
 }

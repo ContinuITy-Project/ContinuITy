@@ -1,8 +1,10 @@
 FROM openjdk:8-jdk
 VOLUME /tmp
+
 ARG JAR_FILE
-ADD ${JAR_FILE} app.jar
+ADD ${JAR_FILE} /bin/app.jar
 
-COPY configuration/ configuration/
+COPY lib/ lib/
+COPY bin/ bin/
 
-ENTRYPOINT ["java","-jar","/app.jar", "--port=80", "--spring.rabbitmq.host=rabbitmq", "--eureka.uri=http://eureka:8761/eureka"]
+ENTRYPOINT ["java","-jar", "/bin/app.jar", "--port=80", "--spring.rabbitmq.host=rabbitmq", "--eureka.uri=http://eureka:8761/eureka"]
