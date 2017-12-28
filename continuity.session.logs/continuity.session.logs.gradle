@@ -21,6 +21,10 @@ dependencies {
 	compile("io.springfox:springfox-swagger2:2.7.0")
 	compile("io.springfox:springfox-swagger-ui:2.7.0")
 	
+	// Needed for OpenXtrace Deserialization (not pretty). 
+	compile("org.codehaus.jackson:jackson-core-asl:1.9.13")
+	compile("org.codehaus.jackson:jackson-mapper-asl:1.9.13")
+	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 	
 	compile fileTree(dir: 'lib', include: ['*.jar'])
