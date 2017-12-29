@@ -40,6 +40,8 @@ public class RabbitMqConfig {
 
 	public static final String CREATE_AND_EXECUTE_LOAD_TEST_ROUTING_KEY = "*.jmeter";
 
+	public static final String PROVIDE_REPORT_EXCHANGE_NAME = "continuity.loadtest.report.provider";
+
 	// General
 
 	@Bean
@@ -105,4 +107,8 @@ public class RabbitMqConfig {
 		return BindingBuilder.bind(createAndExecuteLoadTestQueue()).to(createAndExecuteLoadTestExchange()).with(CREATE_AND_EXECUTE_LOAD_TEST_ROUTING_KEY);
 	}
 
+	@Bean
+	TopicExchange provideReportExchange() {
+		return new TopicExchange(PROVIDE_REPORT_EXCHANGE_NAME, false, true);
+	}
 }

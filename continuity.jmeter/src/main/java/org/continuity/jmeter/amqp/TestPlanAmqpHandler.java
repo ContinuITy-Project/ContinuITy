@@ -1,10 +1,14 @@
 package org.continuity.jmeter.amqp;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.jmeter.JMeter;
+import org.apache.jmeter.engine.StandardJMeterEngine;
+import org.apache.jmeter.testelement.TestStateListener;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.jmeter.TestPlanWriter;
 import org.continuity.jmeter.config.RabbitMqConfig;
@@ -13,6 +17,8 @@ import org.continuity.jmeter.entities.LoadTestSpecification;
 import org.continuity.jmeter.entities.TestPlanBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,6 +37,9 @@ public class TestPlanAmqpHandler {
 
 	@Autowired
 	private TestPlanWriter testPlanWriter;
+
+	@Autowired
+	private AmqpTemplate amqpTemplate;
 
 	private JMeterPropertiesCorrector behaviorPathsCorrector = new JMeterPropertiesCorrector();
 
@@ -81,9 +90,36 @@ public class TestPlanAmqpHandler {
 
 		JMeter jmeter = new JMeter();
 		String[] arguments = { "-n", "-t", testPlanPath.toAbsolutePath().toString() };
-		jmeter.start(arguments);
 
-		LOGGER.info("JMeter test finished. Results are stored to {}.", resultsPath);
+		StandardJMeterEngine.register(new TestStateListener() {
+
+			@Override
+			public void testStarted(String arg0) {
+				// do nothing
+			}
+
+			@Override
+			public void testStarted() {
+				// do nothing
+			}
+
+			@Override
+			public void testEnded(String arg0) {
+				testEnded();
+			}
+
+			@Override
+			public void testEnded() {
+				try {
+					amqpTemplate.convertAndSend(RabbitMqConfig.PROVIDE_REPORT_EXCHANGE_NAME, "jmeter", FileUtils.readFileToString(resultsPath.toFile(), Charset.defaultCharset()));
+					LOGGER.info("JMeter test finished. Results are stored to {}.", resultsPath);
+				} catch (AmqpException | IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		jmeter.start(arguments);
 	}
 
 }
