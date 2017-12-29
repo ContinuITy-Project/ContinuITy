@@ -41,7 +41,7 @@ public class TestPlanAmqpHandler {
 	@Autowired
 	private AmqpTemplate amqpTemplate;
 
-	private JMeterPropertiesCorrector behaviorPathsCorrector = new JMeterPropertiesCorrector();
+	private JMeterPropertiesCorrector jmeterPropertiesCorrector = new JMeterPropertiesCorrector();
 
 	/**
 	 * Listens to the {@link RabbitMqConfig#CREATE_AND_EXECUTE_LOAD_TEST_QUEUE_NAME} queue,
@@ -58,6 +58,7 @@ public class TestPlanAmqpHandler {
 
 		LOGGER.debug("Got an annotated test plan pack.");
 
+		jmeterPropertiesCorrector.setRuntimeProperties(testPlanBundle.getTestPlan(), specification.getNumUsers(), specification.getDuration(), specification.getRampup());
 		executeTestPlan(testPlanBundle);
 	}
 
@@ -82,9 +83,9 @@ public class TestPlanAmqpHandler {
 
 		Path resultsPath = tmpPath.resolve("results.csv");
 
-		behaviorPathsCorrector.correctPaths(testPlanBundle.getTestPlan(), tmpPath);
-		behaviorPathsCorrector.configureResultFile(testPlanBundle.getTestPlan(), resultsPath);
-		behaviorPathsCorrector.prepareForHeadlessExecution(testPlanBundle.getTestPlan());
+		jmeterPropertiesCorrector.correctPaths(testPlanBundle.getTestPlan(), tmpPath);
+		jmeterPropertiesCorrector.configureResultFile(testPlanBundle.getTestPlan(), resultsPath);
+		jmeterPropertiesCorrector.prepareForHeadlessExecution(testPlanBundle.getTestPlan());
 		Path testPlanPath = testPlanWriter.write(testPlanBundle.getTestPlan(), testPlanBundle.getBehaviors(), tmpPath);
 		LOGGER.info("Created a test plan at {}.", testPlanPath);
 

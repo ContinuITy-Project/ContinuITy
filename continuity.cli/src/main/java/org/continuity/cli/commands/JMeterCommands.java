@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellOption;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -53,7 +54,8 @@ public class JMeterCommands {
 	}
 
 	@ShellMethod(key = { "create-jmeter-test" }, value = "Creates a load test with a tag from a workload model specified by a link.")
-	public String createLoadTest(String tag, String workloadLink) throws IOException {
+	public String createLoadTest(String tag, String workloadLink, @ShellOption(defaultValue = "1") int users, @ShellOption(defaultValue = "60") int duration,
+			@ShellOption(defaultValue = "1") int rampup) throws IOException {
 		String jmeterHome = propertiesProvider.get().getProperty(KEY_JMETER_HOME);
 
 		if (testPlanWriter == null) {
@@ -82,6 +84,7 @@ public class JMeterCommands {
 		propertiesCorrector.correctPaths(testPlanBundle.getTestPlan(), testPlanDir.toAbsolutePath());
 		propertiesCorrector.configureResultFile(testPlanBundle.getTestPlan(), testPlanDir.resolve("results.csv").toAbsolutePath());
 		propertiesCorrector.prepareForHeadlessExecution(testPlanBundle.getTestPlan());
+		propertiesCorrector.setRuntimeProperties(testPlanBundle.getTestPlan(), users, duration, rampup);
 		Path testPlanPath = testPlanWriter.write(testPlanBundle.getTestPlan(), testPlanBundle.getBehaviors(), testPlanDir);
 		new JMeterProcess(jmeterHome).run(testPlanPath);
 
