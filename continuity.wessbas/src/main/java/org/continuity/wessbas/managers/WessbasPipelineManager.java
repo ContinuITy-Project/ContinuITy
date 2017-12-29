@@ -11,6 +11,7 @@ import java.util.Properties;
 import java.util.function.Consumer;
 
 import org.continuity.wessbas.entities.MonitoringData;
+import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
@@ -70,6 +71,10 @@ public class WessbasPipelineManager {
 	 *            instance.
 	 */
 	public void runPipeline(MonitoringData data) {
+		if ("dummy".equals(data.getLink())) {
+			onModelCreatedCallback.accept(WessbasDslInstance.DVDSTORE_PARSED.get());
+			return;
+		}
 
 		String sessionLog = getSessionLog(data);
 		WorkloadModel workloadModel;

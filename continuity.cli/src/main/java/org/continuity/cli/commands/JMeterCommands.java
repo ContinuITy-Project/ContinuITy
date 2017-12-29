@@ -3,8 +3,6 @@ package org.continuity.cli.commands;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.entities.TestPlanBundle;
@@ -54,8 +52,8 @@ public class JMeterCommands {
 		return old == null ? "Set JMeter config dir." : "Replaced old JMeter config dir: " + old;
 	}
 
-	@ShellMethod(key = { "create-jmeter-test" }, value = "Creates a load test with a tag from a workload model specified by type and link.")
-	public String createLoadTest(String tag, String workloadType, String workloadId) throws IOException {
+	@ShellMethod(key = { "create-jmeter-test" }, value = "Creates a load test with a tag from a workload model specified by a link.")
+	public String createLoadTest(String tag, String workloadLink) throws IOException {
 		String jmeterHome = propertiesProvider.get().getProperty(KEY_JMETER_HOME);
 
 		if (testPlanWriter == null) {
@@ -70,19 +68,14 @@ public class JMeterCommands {
 			return "Please set the jmeter home path first (call 'jmeter-home [path]')";
 		}
 
-		Map<String, String> message = new HashMap<>();
-		message.put("tag", tag);
-		message.put("workload-type", workloadType);
-		message.put("workload-id", workloadId);
-
 		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
-		ResponseEntity<TestPlanBundle> response = restTemplate.getForEntity(url + "/loadtest/jmeter/" + workloadType + "/" + workloadId + "/create?tag=" + tag, TestPlanBundle.class);
+		ResponseEntity<TestPlanBundle> response = restTemplate.getForEntity(url + "/loadtest/jmeter/" + workloadLink + "/create?tag=" + tag, TestPlanBundle.class);
 
 		if (!response.getStatusCode().is2xxSuccessful()) {
 			return response.toString();
 		}
 
-		Path testPlanDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), "jmeter-wessbas-" + workloadId);
+		Path testPlanDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), extractTempDirPrefix(workloadLink));
 		testPlanDir.toFile().mkdirs();
 
 		TestPlanBundle testPlanBundle = response.getBody();
@@ -93,6 +86,11 @@ public class JMeterCommands {
 		new JMeterProcess(jmeterHome).run(testPlanPath);
 
 		return "Stored and opened JMeter test plan at " + testPlanPath;
+	}
+
+	private String extractTempDirPrefix(String workloadLink) {
+		String[] tokens = workloadLink.split("/");
+		return "jmeter-" + tokens[0] + "-" + tokens[2];
 	}
 
 }
