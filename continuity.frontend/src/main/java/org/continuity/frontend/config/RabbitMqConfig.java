@@ -28,6 +28,12 @@ public class RabbitMqConfig {
 
 	public static final String WORKLADO_ANNOTATION_MESSAGE_ROUTING_KEY = "report";
 
+	public static final String PROVIDE_REPORT_EXCHANGE_NAME = "continuity.loadtest.report.provider";
+
+	public static final String PROVIDE_REPORT_QUEUE_NAME = "continuity.jmeter.loadtest.report.provider";
+
+	public static final String PROVIDE_REPORT_ROUTING_KEY = "jmeter";
+
 	/**
 	 * routing keys: [workload-type].[load-test-type], e.g., wessbas.benchflow
 	 */
@@ -88,6 +94,21 @@ public class RabbitMqConfig {
 	@Bean
 	Binding workloadAnnotationMessageBinding() {
 		return BindingBuilder.bind(workloadAnnotationMessageQueue()).to(workloadAnnotationMessageExchange()).with(WORKLADO_ANNOTATION_MESSAGE_ROUTING_KEY);
+	}
+
+	@Bean
+	Queue provideReportQueue() {
+		return new Queue(PROVIDE_REPORT_QUEUE_NAME, false);
+	}
+
+	@Bean
+	TopicExchange provideReportExchange() {
+		return new TopicExchange(PROVIDE_REPORT_EXCHANGE_NAME, false, true);
+	}
+
+	@Bean
+	Binding provideReportBinding() {
+		return BindingBuilder.bind(provideReportQueue()).to(provideReportExchange()).with(PROVIDE_REPORT_ROUTING_KEY);
 	}
 
 }

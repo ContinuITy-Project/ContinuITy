@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -117,4 +118,17 @@ public class LoadTestController {
 		return restTemplate.getForEntity("http://" + loadTestType + "/loadtest/" + workloadModelType + "/" + workloadModelId + "/create?tag=" + tag, JsonNode.class);
 	}
 
+	/**
+	 * Get Report of Loadtest.
+	 * 
+	 * @param timeout
+	 *            the time in millis, how long should be waited for the report.
+	 * @return
+	 */
+	@RequestMapping(value = "/report", method = RequestMethod.GET)
+	public ResponseEntity<String> getReportOfLoadtest(@RequestParam(value = "timeout", required = true) long timeout) {
+		return new ResponseEntity<String>(amqpTemplate.receiveAndConvert(RabbitMqConfig.PROVIDE_REPORT_QUEUE_NAME, timeout, new ParameterizedTypeReference<String>() {
+		}), HttpStatus.OK);
+
+	}
 }
