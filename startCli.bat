@@ -1,1 +1,0 @@
-java -jar .\continuity.cli\build\libs\continuity.cli-0.1.jar

@@ -54,18 +54,17 @@ public class LoadTestController {
 		if (specification == null) {
 			message = "Load test specification is required.";
 			status = HttpStatus.BAD_REQUEST;
-		} else if ((specification.getWorkloadModelType() == null) || "".equals(specification.getWorkloadModelType())) {
-			message = "Workload model type is required.";
-			status = HttpStatus.BAD_REQUEST;
-		} else if ((specification.getWorkloadModelId() == null) || "".equals(specification.getWorkloadModelId())) {
-			message = "Workload model ID is required.";
+		} else if ((specification.getWorkloadModelLink() == null) || "".equals(specification.getWorkloadModelLink())) {
+			message = "Workload model link is required.";
 			status = HttpStatus.BAD_REQUEST;
 		} else if ((specification.getTag() == null) || "".equals(specification.getTag())) {
 			message = "Tag is required.";
 			status = HttpStatus.BAD_REQUEST;
 		} else {
-			amqpTemplate.convertAndSend(RabbitMqConfig.CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME, specification.getWorkloadModelType() + "." + testType, specification);
-			message = "Creating a load test from" + specification.getWorkloadModelType() + " workload model " + specification.getWorkloadModelId();
+			String workloadType = extractWorkloadType(specification.getWorkloadModelLink());
+
+			amqpTemplate.convertAndSend(RabbitMqConfig.CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME, workloadType + "." + testType, specification);
+			message = "Creating a load test from" + workloadType + " workload model " + specification.getWorkloadModelLink();
 			status = HttpStatus.ACCEPTED;
 		}
 
@@ -99,7 +98,8 @@ public class LoadTestController {
 	}
 
 	/**
-	 * Creates a new load test.
+	 * Creates a new load test from a workload model. The workload model is specified by a
+	 * decomposed link: {@code workloadModelType/model/workloadModelId}
 	 *
 	 * @param loadTestType
 	 *            The type of the load test.
@@ -111,11 +111,15 @@ public class LoadTestController {
 	 *            The tag of the annotation to be used.
 	 * @return The load test.
 	 */
-	@RequestMapping(value = "{lt-type}/{wm-type}/{id}/create", method = RequestMethod.GET)
+	@RequestMapping(value = "{lt-type}/{wm-type}/model/{id}/create", method = RequestMethod.GET)
 	public ResponseEntity<JsonNode> createAndGetLoadTest(@PathVariable("lt-type") String loadTestType, @PathVariable("wm-type") String workloadModelType, @PathVariable("id") String workloadModelId,
 			@RequestParam String tag) {
 		LOGGER.debug("load test type: {}, workload model type: {}, workload model id: {}, tag: {}", loadTestType, workloadModelType, workloadModelId, tag);
-		return restTemplate.getForEntity("http://" + loadTestType + "/loadtest/" + workloadModelType + "/" + workloadModelId + "/create?tag=" + tag, JsonNode.class);
+		return restTemplate.getForEntity("http://" + loadTestType + "/loadtest/" + workloadModelType + "/model/" + workloadModelId + "/create?tag=" + tag, JsonNode.class);
+	}
+
+	private String extractWorkloadType(String workloadLink) {
+		return workloadLink.split("/")[0];
 	}
 
 	/**

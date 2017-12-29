@@ -8,11 +8,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class LoadTestSpecification {
 
-	@JsonProperty("workload-type")
-	private String workloadModelType;
-
-	@JsonProperty("workload-id")
-	private String workloadModelId;
+	@JsonProperty("workload-link")
+	private String workloadModelLink;
 
 	private String tag;
 
@@ -23,41 +20,22 @@ public class LoadTestSpecification {
 	}
 
 	/**
-	 * Gets {@link #workloadModelType}.
+	 * Gets {@link #workloadModelLink}.
 	 *
-	 * @return {@link #workloadModelType}
+	 * @return {@link #workloadModelLink}
 	 */
-	public String getWorkloadModelType() {
-		return this.workloadModelType;
+	public String getWorkloadModelLink() {
+		return this.workloadModelLink;
 	}
 
 	/**
-	 * Sets {@link #workloadModelType}.
-	 *
-	 * @param workloadModelType
-	 *            New value for {@link #workloadModelType}
-	 */
-	public void setWorkloadModelType(String workloadModelType) {
-		this.workloadModelType = workloadModelType;
-	}
-
-	/**
-	 * Gets {@link #workloadModelId}.
-	 *
-	 * @return {@link #workloadModelId}
-	 */
-	public String getWorkloadModelId() {
-		return this.workloadModelId;
-	}
-
-	/**
-	 * Sets {@link #workloadModelId}.
+	 * Sets {@link #workloadModelLink}.
 	 *
 	 * @param workloadModelId
-	 *            New value for {@link #workloadModelId}
+	 *            New value for {@link #workloadModelLink}
 	 */
-	public void setWorkloadModelId(String workloadModelId) {
-		this.workloadModelId = workloadModelId;
+	public void setWorkloadModelLink(String workloadModelId) {
+		this.workloadModelLink = workloadModelId;
 	}
 
 	/**

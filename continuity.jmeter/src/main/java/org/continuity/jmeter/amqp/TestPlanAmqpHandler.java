@@ -54,7 +54,7 @@ public class TestPlanAmqpHandler {
 	public void createAndExecuteTestPlan(LoadTestSpecification specification) {
 		LOGGER.debug("Received test plan specification.");
 
-		TestPlanBundle testPlanBundle = testPlanController.createAndGetLoadTest(specification.getWorkloadModelType(), specification.getWorkloadModelId(), specification.getTag());
+		TestPlanBundle testPlanBundle = testPlanController.createAndGetLoadTest(specification.getWorkloadModelLink(), specification.getTag());
 
 		LOGGER.debug("Got an annotated test plan pack.");
 

@@ -22,6 +22,9 @@ public class WorkloadModelPack {
 	@JsonProperty("initial-annotation-link")
 	private String initialAnnotationLink;
 
+	@JsonProperty("jmeter-link")
+	private String jmeterLink;
+
 	private String tag;
 
 	/**
@@ -31,10 +34,11 @@ public class WorkloadModelPack {
 	}
 
 	public WorkloadModelPack(String hostname, String id, String tag) {
-		String base = "http://" + hostname + "/model/" + id;
+		String base = hostname + "/model/" + id;
 		this.workloadLink = base + "/workload";
 		this.systemModelLink = base + "/system";
 		this.initialAnnotationLink = base + "/annotation";
+		this.jmeterLink = hostname + "/loadtest/jmeter/" + id + "/create";
 		this.tag = tag;
 	}
 
@@ -112,6 +116,25 @@ public class WorkloadModelPack {
 	 */
 	public void setInitialAnnotationLink(String initialAnnotationLink) {
 		this.initialAnnotationLink = initialAnnotationLink;
+	}
+
+	/**
+	 * Gets {@link #jmeterLink}.
+	 *
+	 * @return {@link #jmeterLink}
+	 */
+	public String getJmeterLink() {
+		return this.jmeterLink;
+	}
+
+	/**
+	 * Sets {@link #jmeterLink}.
+	 *
+	 * @param jmeterLink
+	 *            New value for {@link #jmeterLink}
+	 */
+	public void setJmeterLink(String jmeterLink) {
+		this.jmeterLink = jmeterLink;
 	}
 
 	/**
