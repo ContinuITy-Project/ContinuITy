@@ -9,6 +9,7 @@ import org.apache.jmeter.testelement.property.CollectionProperty;
 import org.apache.jmeter.testelement.property.JMeterProperty;
 import org.apache.jmeter.testelement.property.ObjectProperty;
 import org.apache.jmeter.testelement.property.PropertyIterator;
+import org.apache.jmeter.threads.ThreadGroup;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
 
@@ -127,6 +128,28 @@ public class JMeterPropertiesCorrector {
 
 		for (CookieManager cookieManager : search.getSearchResults()) {
 			cookieManager.removeProperty("CookieManager.implementation");
+		}
+	}
+
+	/**
+	 * Sets the number of users, the duration and the ramp up time.
+	 *
+	 * @param numUsers
+	 *            Number of users to be executed in parallel.
+	 * @param durationSeconds
+	 *            The duration od the test in seconds.
+	 * @param rampupSeconds
+	 *            The ramp up time in seconds.
+	 */
+	public void setRuntimeProperties(ListedHashTree testPlan, int numUsers, long durationSeconds, int rampupSeconds) {
+		SearchByClass<ThreadGroup> search = new SearchByClass<>(ThreadGroup.class);
+		testPlan.traverse(search);
+
+		for (ThreadGroup group : search.getSearchResults()) {
+			group.setNumThreads(numUsers);
+			group.setRampUp(rampupSeconds);
+			group.setScheduler(true);
+			group.setDuration(durationSeconds);
 		}
 	}
 

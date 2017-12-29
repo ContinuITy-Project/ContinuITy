@@ -100,7 +100,8 @@ public class WessbasPipelineManager {
 	 */
 	private WorkloadModel convertSessionLogIntoWessbasDSLInstance(String sessionLog) throws IOException, SecurityException, GeneratorException {
 		Path sessionLogsPath = writeSessionLogIntoFile(sessionLog);
-		Properties intensityProps = createWorkloadIntensity(100); // TODO: read from somewhere
+		// set 1 as default and configure actual number on demand
+		Properties intensityProps = createWorkloadIntensity(1);
 		Properties behaviorProps = createBehaviorModel(sessionLogsPath);
 		return generateWessbasModel(intensityProps, behaviorProps);
 	}

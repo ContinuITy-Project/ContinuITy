@@ -13,6 +13,13 @@ public class LoadTestSpecification {
 
 	private String tag;
 
+	@JsonProperty("num-users")
+	private int numUsers;
+
+	private long duration;
+
+	private int rampup;
+
 	/**
 	 * Default constructor.
 	 */
@@ -55,6 +62,63 @@ public class LoadTestSpecification {
 	 */
 	public void setTag(String tag) {
 		this.tag = tag;
+	}
+
+	/**
+	 * Gets {@link #numUsers}.
+	 * 
+	 * @return {@link #numUsers}
+	 */
+	public int getNumUsers() {
+		return this.numUsers;
+	}
+
+	/**
+	 * Sets {@link #numUsers}.
+	 * 
+	 * @param numUsers
+	 *            New value for {@link #numUsers}
+	 */
+	public void setNumUsers(int numUsers) {
+		this.numUsers = numUsers;
+	}
+
+	/**
+	 * Gets {@link #duration}.
+	 * 
+	 * @return {@link #duration}
+	 */
+	public long getDuration() {
+		return this.duration;
+	}
+
+	/**
+	 * Sets {@link #duration}.
+	 * 
+	 * @param duration
+	 *            New value for {@link #duration}
+	 */
+	public void setDuration(long duration) {
+		this.duration = duration;
+	}
+
+	/**
+	 * Gets {@link #rampup}.
+	 * 
+	 * @return {@link #rampup}
+	 */
+	public int getRampup() {
+		return this.rampup;
+	}
+
+	/**
+	 * Sets {@link #rampup}.
+	 * 
+	 * @param rampup
+	 *            New value for {@link #rampup}
+	 */
+	public void setRampup(int rampup) {
+		this.rampup = rampup;
 	}
 
 }
