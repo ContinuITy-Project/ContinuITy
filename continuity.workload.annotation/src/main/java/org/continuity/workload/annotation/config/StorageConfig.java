@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 public class StorageConfig {
 
 	@Bean
-	AnnotationStorage annotationStorage(@Value("${storage.path:/storage}") String storagePath) {
+	AnnotationStorage annotationStorage(@Value("${storage.path:storage}") String storagePath) {
 		return new AnnotationStorage(storagePath);
 	}
 
