@@ -2,6 +2,8 @@ package org.continuity.wessbas.managers;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -148,7 +150,13 @@ public class WessbasPipelineManager {
 	 * @return
 	 */
 	public String getSessionLog(MonitoringData data) {
-		String urlString = "http://session-logs?link=" + data.getLink();
+		String urlString = "";
+		try {
+			urlString = "http://session-logs?link=" + URLEncoder.encode(data.getLink(), "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		String sessionLog = this.restTemplate.getForObject(urlString, String.class);
 
 		LOGGER.debug("Got session logs: {}", sessionLog);

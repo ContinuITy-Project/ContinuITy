@@ -97,25 +97,19 @@ public class SessionLogsPipelineManager {
 		}
 
 		Iterable<ApplicationData> applications = null;
-		List<Iterable<BusinessTransactionData>> allBusinessTransactionsOfAllApplications = new ArrayList<Iterable<BusinessTransactionData>>();
+		Iterable<BusinessTransactionData> justOneMonitoredApplication = null;
 
 		try {
 			applications = fetcher.fetchAllApplications();
 
-			for (ApplicationData application : applications) {
-				allBusinessTransactionsOfAllApplications.add(fetcher.fetchAllBusinessTransactions(application.getId()));
+			for (ApplicationData application : (List<ApplicationData>) applications) {
+				if (!application.equals("Unknown Application")) {
+					justOneMonitoredApplication = fetcher.fetchAllBusinessTransactions(application.getId());
+				}
 			}
 
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		Iterable<BusinessTransactionData> justOneMonitoredApplication = null;
-
-		if (!((List<ApplicationData>) applications).get(1).getName().equals("Unknown Application")) {
-			justOneMonitoredApplication = allBusinessTransactionsOfAllApplications.get(1);
-		} else {
-			justOneMonitoredApplication = allBusinessTransactionsOfAllApplications.get(0);
-
 		}
 
 		HashMap<Integer, String> businessTransactionsMap = new HashMap<Integer, String>();
