@@ -19,10 +19,12 @@ services:
       - rabbitmq
       - eureka
   rabbitmq:
-    image: rabbitmq:3.6.8
+    image: rabbitmq:3.6.8-management
     hostname: rabbitmq
     networks:
       - continuity-network
+    ports:
+      - '15672:15672'
   workload-annotation:
     image: continuity/workload-annotation
     hostname: workload-annotation
