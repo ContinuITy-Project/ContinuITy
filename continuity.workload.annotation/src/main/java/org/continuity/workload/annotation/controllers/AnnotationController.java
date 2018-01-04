@@ -92,6 +92,32 @@ public class AnnotationController {
 	}
 
 	/**
+	 * Updates the system model with the specified tag.
+	 *
+	 * @param tag
+	 * @param annotation
+	 * @return
+	 */
+	@RequestMapping(path = "{tag}/system", method = RequestMethod.POST)
+	public ResponseEntity<String> updateSystemModel(@PathVariable("tag") String tag, @RequestBody SystemModel system) {
+		AnnotationValidityReport report = null;
+
+		try {
+			report = storageManager.updateSystemModel(tag, system);
+		} catch (IOException e) {
+			LOGGER.error("Error during updating system model with tag {}!", tag);
+			e.printStackTrace();
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		if (report.isBreaking()) {
+			return new ResponseEntity<>(report.toString(), HttpStatus.CONFLICT);
+		} else {
+			return new ResponseEntity<>(report.toString(), HttpStatus.CREATED);
+		}
+	}
+
+	/**
 	 * Updates the annotation stored with the specified tag. If the annotation is invalid with
 	 * respect to the system model, it is rejected.
 	 *

@@ -47,6 +47,24 @@ public class AnnotationController {
 	}
 
 	/**
+	 * Updates the system model for the specified tag.
+	 *
+	 * @param tag
+	 *            The tag of the annotation.
+	 * @param system
+	 *            The system model.
+	 */
+	@RequestMapping(path = "{tag}/system", method = RequestMethod.POST)
+	public ResponseEntity<String> updateSystemModel(@PathVariable("tag") String tag, @RequestBody SystemModel system) {
+		try {
+			return restTemplate.postForEntity("http://workload-annotation/ann/" + tag + "/system", system, String.class);
+		} catch (HttpStatusCodeException e) {
+			LOGGER.warn("Updating the system model with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
+			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+		}
+	}
+
+	/**
 	 * Updates the annotation for the specified tag.
 	 *
 	 * @param tag
