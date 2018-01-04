@@ -7,8 +7,7 @@ import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.workload.annotation.config.RabbitMqConfig;
 import org.continuity.workload.annotation.entities.AnnotationValidityReport;
 import org.continuity.workload.annotation.entities.WorkloadModelLink;
-import org.continuity.workload.annotation.storage.AnnotationStorage;
-import org.continuity.workload.annotation.validation.AnnotationValidityChecker;
+import org.continuity.workload.annotation.storage.AnnotationStorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -28,15 +27,15 @@ public class AnnotationAmpqHandler {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationAmpqHandler.class);
 
-	private final AnnotationStorage storage;
+	private final AnnotationStorageManager storageManager;
 
 	private final RestTemplate restTemplate;
 
 	private final AmqpTemplate amqpTemplate;
 
 	@Autowired
-	public AnnotationAmpqHandler(AnnotationStorage storage, RestTemplate restTemplate, AmqpTemplate amqpTemplate) {
-		this.storage = storage;
+	public AnnotationAmpqHandler(AnnotationStorageManager storageManager, RestTemplate restTemplate, AmqpTemplate amqpTemplate) {
+		this.storageManager = storageManager;
 		this.restTemplate = restTemplate;
 		this.amqpTemplate = amqpTemplate;
 	}
@@ -57,46 +56,18 @@ public class AnnotationAmpqHandler {
 			return;
 		}
 
-		SystemModel oldSystemModel;
+		AnnotationValidityReport report;
+
 		try {
-			oldSystemModel = storage.readSystemModel(link.getTag());
+			report = storageManager.createOrUpdate(link.getTag(), systemResponse.getBody(), annResponse.getBody());
 		} catch (IOException e) {
-			LOGGER.error("Could not read system model with tag {}!", link.getTag());
+			LOGGER.error("Error during storing the new system model and annotation with tag {}!", link.getTag());
 			e.printStackTrace();
 			return;
 		}
 
-		if (oldSystemModel != null) {
-			AnnotationValidityChecker checker = new AnnotationValidityChecker(systemResponse.getBody());
-			checker.checkOldSystemModel(oldSystemModel);
-			checker.checkAnnotation(annResponse.getBody());
-			AnnotationValidityReport report = checker.getReport();
-
-			if (!report.isOk()) {
-				amqpTemplate.convertAndSend(RabbitMqConfig.CLIENT_MESSAGE_EXCHANGE_NAME, "report", report);
-			}
-
-			if (report.isBreaking()) {
-				LOGGER.warn("The passed annotation with tag {} is breaking! Did not store it.", link.getTag());
-				return;
-			}
-		}
-
-		boolean overwritten;
-
-		try {
-			overwritten = storage.saveOrUpdate(link.getTag(), systemResponse.getBody());
-			storage.saveIfNotPresent(link.getTag(), annResponse.getBody());
-		} catch (IOException e) {
-			LOGGER.error("Could not save annotation with tag {}!", link.getTag());
-			e.printStackTrace();
-			return;
-		}
-
-		if (overwritten) {
-			LOGGER.info("Stored annotation with tag {} in existing directory. Old system model has been overwritten.", link.getTag());
-		} else {
-			LOGGER.info("Stored annotation with tag {} in new directory.", link.getTag());
+		if (!report.isOk()) {
+			amqpTemplate.convertAndSend(RabbitMqConfig.CLIENT_MESSAGE_EXCHANGE_NAME, "report", report);
 		}
 	}
 

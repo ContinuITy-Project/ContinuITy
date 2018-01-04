@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -75,19 +76,45 @@ public class AnnotationCommands {
 		return "Opened the system model and the annotation with tag " + tag + " from " + workingDir;
 	}
 
-	@ShellMethod(key = { "upload-annotation", "upload-ann" }, value = "Uploads and the annotation with the specified tag.")
+	@ShellMethod(key = { "upload-annotation", "upload-ann" }, value = "Uploads the annotation with the specified tag.")
 	public String uploadAnnotation(String tag) throws JsonParseException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
 		SystemAnnotation annotation = serializer.readFromYaml(workingDir + "/annotation-" + tag + ".yml");
 
 		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
-		ResponseEntity<String> response = restTemplate.postForEntity(url + "/annotation/" + tag + "/annotation", annotation, String.class);
+		ResponseEntity<String> response;
+		try {
+			response = restTemplate.postForEntity(url + "/annotation/" + tag + "/annotation", annotation, String.class);
+		} catch (HttpStatusCodeException e) {
+			response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
+		}
 
 		if (!response.getStatusCode().is2xxSuccessful()) {
 			return "Error during upload: " + response;
 		} else {
-			return "Successfully uploaded the annotation with tag " + tag + ".";
+			return "Successfully uploaded the annotation with tag " + tag + ". Report is: " + response.getBody();
+		}
+	}
+
+	@ShellMethod(key = { "upload-system", "upload-sys" }, value = "Handle with care! Uploads the system model with the specified tag. Can break the online stored annotation!")
+	public String uploadSystem(String tag) throws JsonParseException, JsonMappingException, IOException {
+		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		ContinuityYamlSerializer<SystemModel> serializer = new ContinuityYamlSerializer<>(SystemModel.class);
+		SystemModel system = serializer.readFromYaml(workingDir + "/system-model-" + tag + ".yml");
+
+		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
+		ResponseEntity<String> response;
+		try {
+			response = restTemplate.postForEntity(url + "/annotation/" + tag + "/system", system, String.class);
+		} catch (HttpStatusCodeException e) {
+			response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
+		}
+
+		if (!response.getStatusCode().is2xxSuccessful()) {
+			return "Error during upload: " + response;
+		} else {
+			return "Successfully uploaded the system with tag " + tag + ". Report is: " + response.getBody();
 		}
 	}
 

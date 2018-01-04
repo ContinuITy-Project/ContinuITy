@@ -1,15 +1,17 @@
 package org.continuity.workload.annotation.controllers;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.workload.annotation.entities.AnnotationValidityReport;
-import org.continuity.workload.annotation.storage.AnnotationStorage;
-import org.continuity.workload.annotation.validation.AnnotationValidityChecker;
+import org.continuity.workload.annotation.storage.AnnotationStorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,11 +30,14 @@ public class AnnotationController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationController.class);
 
-	private final AnnotationStorage storage;
+	@Value("${spring.application.name}")
+	private String applicationName;
+
+	private final AnnotationStorageManager storageManager;
 
 	@Autowired
-	public AnnotationController(AnnotationStorage storage) {
-		this.storage = storage;
+	public AnnotationController(AnnotationStorageManager storageManager) {
+		this.storageManager = storageManager;
 	}
 
 	/**
@@ -47,12 +52,11 @@ public class AnnotationController {
 	@RequestMapping(path = "{tag}/system", method = RequestMethod.GET)
 	public ResponseEntity<SystemModel> getSystemModel(@PathVariable("tag") String tag) {
 		SystemModel systemModel;
-
 		try {
-			systemModel = storage.readSystemModel(tag);
-		} catch (IOException e) {
-			LOGGER.error("Could not read system model with tag {}!", tag);
-			e.printStackTrace();
+			systemModel = storageManager.getSystemModel(tag);
+		} catch (IOException e1) {
+			LOGGER.error("Error during getting system model with tag {}!", tag);
+			e1.printStackTrace();
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
@@ -64,7 +68,41 @@ public class AnnotationController {
 	}
 
 	/**
-	 * Retrieves the specified annotation if present.
+	 * Retrieves the specified annotation if present and if it is not broken.
+	 *
+	 * @param tag
+	 *            The tag of the annotation.
+	 * @returnA {@link ResponseEntity} holding the annotation or specifying the error if one
+	 *          occurred. If there is no annotation for the tag, the status 404 (Not Found) will be
+	 *          returned. If the annotation is broken, a 423 (Locked) will be returned with a link
+	 *          to retrieve the annotation, anyway.
+	 */
+	@RequestMapping(path = "{tag}/annotation", method = RequestMethod.GET)
+	public ResponseEntity<?> getAnnotation(@PathVariable("tag") String tag) {
+		SystemAnnotation annotation;
+
+		try {
+			annotation = storageManager.getAnnotation(tag);
+		} catch (IOException e) {
+			LOGGER.error("Error during getting annotation with tag {}!", tag);
+			e.printStackTrace();
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		if (annotation == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		} else if (storageManager.isBroken(tag)) {
+			Map<String, String> message = new HashMap<>();
+			message.put("message", "The requested annotation is broken. Get it anyway via the redirect.");
+			message.put("redirect", applicationName + "/ann/" + tag + "/annotation/broken");
+			return new ResponseEntity<>(message, HttpStatus.LOCKED);
+		}
+
+		return new ResponseEntity<>(annotation, HttpStatus.OK);
+	}
+
+	/**
+	 * Retrieves the specified annotation if present, regardless if it is broken.
 	 *
 	 * @param tag
 	 *            The tag of the annotation.
@@ -72,14 +110,14 @@ public class AnnotationController {
 	 *          occurred. If there is no annotation for the tag, the status 404 (Not Found) will be
 	 *          returned.
 	 */
-	@RequestMapping(path = "{tag}/annotation", method = RequestMethod.GET)
-	public ResponseEntity<SystemAnnotation> getAnnotation(@PathVariable("tag") String tag) {
+	@RequestMapping(path = "{tag}/annotation/broken", method = RequestMethod.GET)
+	public ResponseEntity<SystemAnnotation> getAnnotationRegardlessBroken(@PathVariable("tag") String tag) {
 		SystemAnnotation annotation;
 
 		try {
-			annotation = storage.readAnnotation(tag);
+			annotation = storageManager.getAnnotation(tag);
 		} catch (IOException e) {
-			LOGGER.error("Could not read annotation with tag {}!", tag);
+			LOGGER.error("Error during getting annotation with tag {}!", tag);
 			e.printStackTrace();
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -110,11 +148,8 @@ public class AnnotationController {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		if (report.isBreaking()) {
-			return new ResponseEntity<>(report.toString(), HttpStatus.CONFLICT);
-		} else {
-			return new ResponseEntity<>(report.toString(), HttpStatus.CREATED);
-		}
+		// Do not return a 409 (conflict), since the system model is stored, anyway.
+		return new ResponseEntity<>(report.toString(), HttpStatus.CREATED);
 	}
 
 	/**
@@ -127,43 +162,21 @@ public class AnnotationController {
 	 */
 	@RequestMapping(path = "{tag}/annotation", method = RequestMethod.POST)
 	public ResponseEntity<String> updateAnnotation(@PathVariable("tag") String tag, @RequestBody SystemAnnotation annotation) {
-		SystemModel systemModel = null;
 		AnnotationValidityReport report = null;
 
 		try {
-			systemModel = storage.readSystemModel(tag);
+			report = storageManager.updateAnnotation(tag, annotation);
 		} catch (IOException e) {
-			LOGGER.error("Could not read system model with tag {}!", tag);
-			e.printStackTrace();
-		}
-
-		if (systemModel != null) {
-			AnnotationValidityChecker checker = new AnnotationValidityChecker(systemModel);
-			checker.checkAnnotation(annotation);
-			report = checker.getReport();
-
-			if (report.isBreaking()) {
-				return new ResponseEntity<>(report.toString(), HttpStatus.CONFLICT);
-			}
-		}
-
-		boolean overwritten;
-
-		try {
-			overwritten = storage.saveOrUpdate(tag, annotation);
-		} catch (IOException e) {
-			LOGGER.error("Could not save annotation with tag {}!", tag);
+			LOGGER.error("Error during updating annotation with tag {}!", tag);
 			e.printStackTrace();
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		String message = "Annotation has been " + (overwritten ? "updated" : "created");
-
-		if ((report != null) && !report.isOk()) {
-			message += " with warnings: " + report;
+		if (report.isBreaking()) {
+			return new ResponseEntity<>(report.toString(), HttpStatus.CONFLICT);
+		} else {
+			return new ResponseEntity<>(report.toString(), HttpStatus.CREATED);
 		}
-
-		return new ResponseEntity<>(message, HttpStatus.CREATED);
 	}
 
 }

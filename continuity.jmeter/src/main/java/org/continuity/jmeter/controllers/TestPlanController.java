@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -88,8 +88,8 @@ public class TestPlanController {
 		SystemAnnotation annotation;
 		try {
 			annotation = restTemplate.getForObject(getAnnotationLink(tag, "annotation"), SystemAnnotation.class);
-		} catch (RestClientException e) {
-			e.printStackTrace();
+		} catch (HttpStatusCodeException e) {
+			LOGGER.error("Received a non-200 response: {} ({}) - {}", e.getStatusCode(), e.getStatusCode().getReasonPhrase(), e.getResponseBodyAsString());
 			return null;
 		}
 

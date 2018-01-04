@@ -1,11 +1,16 @@
 package org.continuity.workload.annotation.validation;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.continuity.annotation.dsl.ann.Input;
 import org.continuity.annotation.dsl.ann.InterfaceAnnotation;
 import org.continuity.annotation.dsl.ann.ParameterAnnotation;
+import org.continuity.annotation.dsl.ann.RegExExtraction;
 import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.system.Parameter;
 import org.continuity.annotation.dsl.system.ServiceInterface;
@@ -46,7 +51,7 @@ public class AnnotationValidityChecker {
 	 * @param oldSystemModel
 	 *            An old system model.
 	 */
-	public void checkOldSystemModel(SystemModel oldSystemModel) {
+	public void compareToOldSystemModel(SystemModel oldSystemModel) {
 		final Set<ModelElementReference> visited = new HashSet<>();
 		ContinuityByClassSearcher<ServiceInterface<?>> searcher = new ContinuityByClassSearcher<>(ServiceInterface.GENERIC_TYPE, inter -> checkInterface(inter, oldSystemModel, visited));
 		searcher.visit(newSystemModel);
@@ -117,6 +122,26 @@ public class AnnotationValidityChecker {
 	 *            An annotation.
 	 */
 	public void checkAnnotation(SystemAnnotation annotation) {
+		checkAnnotationInternally(annotation);
+		checkAnnotationForExternalReferences(annotation);
+	}
+
+	private void checkAnnotationInternally(SystemAnnotation annotation) {
+		ContinuityByClassSearcher<ParameterAnnotation> paramSearcher = new ContinuityByClassSearcher<>(ParameterAnnotation.class, ann -> {
+			List<Input> inputs = annotation.getInputs();
+			boolean inputNotPresent = inputs.stream().map(Input::getId).filter(id -> Objects.equals(id, ann.getInput().getId())).collect(Collectors.toList()).isEmpty();
+
+			if (inputNotPresent) {
+				ModelElementReference inputRef = new ModelElementReference(ann.getInput());
+				ModelElementReference annRef = new ModelElementReference(ann);
+				reportBuilder.addViolation(annRef, new AnnotationViolation(AnnotationViolationType.ILLEGAL_INTERNAL_REFERENCE, inputRef));
+			}
+		});
+
+		paramSearcher.visit(annotation);
+	}
+
+	private void checkAnnotationForExternalReferences(SystemAnnotation annotation) {
 		ContinuityByClassSearcher<InterfaceAnnotation> interfaceSearcher = new ContinuityByClassSearcher<>(InterfaceAnnotation.class, ann -> {
 			ServiceInterface<?> interf = ann.getAnnotatedInterface().resolve(newSystemModel);
 
@@ -144,6 +169,18 @@ public class AnnotationValidityChecker {
 		});
 
 		paramSearcher.visit(annotation);
+
+		ContinuityByClassSearcher<RegExExtraction> extractionSearcher = new ContinuityByClassSearcher<>(RegExExtraction.class, extraction -> {
+			ServiceInterface<?> interf = extraction.getFrom().resolve(newSystemModel);
+
+			if (interf == null) {
+				ModelElementReference interfRef = new ModelElementReference(extraction.getFrom());
+				ModelElementReference annRef = new ModelElementReference(extraction);
+				reportBuilder.addViolation(annRef, new AnnotationViolation(AnnotationViolationType.ILLEAL_INTERFACE_REFERENCE, interfRef));
+			}
+		});
+
+		extractionSearcher.visit(annotation);
 	}
 
 	/**

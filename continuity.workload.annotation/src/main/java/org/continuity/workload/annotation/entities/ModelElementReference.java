@@ -85,7 +85,7 @@ public class ModelElementReference {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(id);
+		return Objects.hash(id, type);
 	}
 
 	/**
@@ -98,7 +98,7 @@ public class ModelElementReference {
 		}
 
 		ModelElementReference other = (ModelElementReference) obj;
-		return StringUtils.equals(this.id, other.id);
+		return StringUtils.equals(this.id, other.id) && StringUtils.equals(this.type, other.type);
 	}
 
 	/**

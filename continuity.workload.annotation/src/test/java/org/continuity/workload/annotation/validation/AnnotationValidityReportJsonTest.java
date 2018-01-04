@@ -67,7 +67,7 @@ public class AnnotationValidityReportJsonTest {
 	@Test
 	public void test() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		JsonNode parsed = mapper.readTree(report.toString());
+		JsonNode parsed = mapper.readTree(report.toString()).path("violations");
 		assertThat(parsed.path(new ModelElementReference("MyType", "MyId").toString())).containsExactlyInAnyOrder(fooReference);
 		assertThat(parsed.path(new ModelElementReference("", "System changes").toString())).containsExactlyInAnyOrder(barReference, blubReference);
 	}
