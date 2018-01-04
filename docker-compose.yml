@@ -65,6 +65,8 @@ services:
     depends_on:
       - rabbitmq
       - eureka
+    environment:
+    - "JAVA_OPTS=-DUSE_OPEN_XTRACE=false"
 
 networks:
   continuity-network:
