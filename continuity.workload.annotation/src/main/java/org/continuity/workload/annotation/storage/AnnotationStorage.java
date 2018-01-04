@@ -32,6 +32,8 @@ public class AnnotationStorage {
 
 	public AnnotationStorage(Path storagePath) {
 		this.storagePath = storagePath;
+
+		LOGGER.info("Using storage path {}.", storagePath.toAbsolutePath());
 	}
 
 	/**
@@ -64,6 +66,8 @@ public class AnnotationStorage {
 		serializer.writeToYaml(systemModel, dirPath.resolve(SYSTEM_MODEL_FILE_NAME));
 		serializer.writeToYaml(annotation, dirPath.resolve(ANNOTATION_FILE_NAME));
 
+		LOGGER.debug("Wrote system model and annotation to {}.", dirPath);
+
 		return !created;
 	}
 
@@ -92,6 +96,8 @@ public class AnnotationStorage {
 		ContinuityYamlSerializer<SystemModel> serializer = new ContinuityYamlSerializer<>(SystemModel.class);
 		serializer.writeToYaml(systemModel, dirPath.resolve(SYSTEM_MODEL_FILE_NAME));
 
+		LOGGER.debug("Wrote system model to {}.", dirPath);
+
 		return !created;
 	}
 
@@ -119,6 +125,8 @@ public class AnnotationStorage {
 		boolean created = dir.mkdirs();
 		ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
 		serializer.writeToYaml(annotation, dirPath.resolve(ANNOTATION_FILE_NAME));
+
+		LOGGER.debug("Wrote annotation to {}.", dirPath);
 
 		return !created;
 	}
@@ -149,6 +157,10 @@ public class AnnotationStorage {
 		if (!exists) {
 			ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
 			serializer.writeToYaml(annotation, dirPath.resolve(ANNOTATION_FILE_NAME));
+
+			LOGGER.debug("Wrote annotation to {}.", dirPath);
+		} else {
+			LOGGER.debug("Did not write annotation. There was already one at {}.", dirPath);
 		}
 
 		return !exists;
@@ -173,6 +185,8 @@ public class AnnotationStorage {
 		}
 
 		ContinuityYamlSerializer<SystemModel> serializer = new ContinuityYamlSerializer<>(SystemModel.class);
+
+		LOGGER.debug("Reading system model from {}.", dirPath);
 		return serializer.readFromYaml(dirPath.resolve(SYSTEM_MODEL_FILE_NAME));
 	}
 
@@ -195,6 +209,8 @@ public class AnnotationStorage {
 		}
 
 		ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
+
+		LOGGER.debug("Reading annotation from {}.", dirPath);
 		return serializer.readFromYaml(dirPath.resolve(ANNOTATION_FILE_NAME));
 	}
 
