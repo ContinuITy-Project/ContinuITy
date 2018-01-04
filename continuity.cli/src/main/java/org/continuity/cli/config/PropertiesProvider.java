@@ -36,6 +36,10 @@ public class PropertiesProvider {
 		return path != null;
 	}
 
+	public String getPath() {
+		return this.path;
+	}
+
 	public void save() throws IOException {
 		properties.store(new FileWriter(path), "ContinuITy CLI properties");
 	}
