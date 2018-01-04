@@ -8,6 +8,7 @@ import org.continuity.workload.annotation.controllers.AnnotationController;
 import org.continuity.workload.annotation.entities.AnnotationValidityReport;
 import org.continuity.workload.annotation.entities.ModelElementReference;
 import org.continuity.workload.annotation.storage.AnnotationStorage;
+import org.continuity.workload.annotation.storage.AnnotationStorageManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +41,7 @@ public class AnnotationRestValidityCheckTest {
 		storageMock = Mockito.mock(AnnotationStorage.class);
 		Mockito.when(storageMock.readSystemModel(TAG)).thenReturn(AnnotationValidityTestInstance.FIRST.getSystemModel());
 
-		controller = new AnnotationController(storageMock);
+		controller = new AnnotationController(new AnnotationStorageManager(storageMock));
 	}
 
 	@Before

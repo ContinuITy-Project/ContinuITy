@@ -27,7 +27,11 @@ public enum AnnotationViolationType {
 
 	// Annotation changed
 
-	ILLEAL_INTERFACE_REFERENCE("The reference to the interface is not valid.", true), ILLEGAL_PARAMETER_REFERENCE("The reference to the parameter is not valid.", true);
+	ILLEAL_INTERFACE_REFERENCE("The reference to the interface is not valid.", true), ILLEGAL_PARAMETER_REFERENCE("The reference to the parameter is not valid.", true),
+
+	// Annotation invalid
+
+	ILLEGAL_INTERNAL_REFERENCE("The internal reference is not valid.", true);
 
 	private final String prettyName;
 

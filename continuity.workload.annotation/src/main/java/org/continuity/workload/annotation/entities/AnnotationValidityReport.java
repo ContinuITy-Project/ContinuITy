@@ -3,9 +3,10 @@ package org.continuity.workload.annotation.entities;
 import java.util.Map;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -15,12 +16,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class AnnotationValidityReport {
 
-	@JsonValue
-	private final Map<ModelElementReference, Set<AnnotationViolation>> violations;
+	private Map<ModelElementReference, Set<AnnotationViolation>> violations;
 
-	@JsonCreator
+	@JsonProperty("violations-before-fix")
+	@JsonInclude(Include.NON_NULL)
+	private Map<ModelElementReference, Set<AnnotationViolation>> violationsBeforeFix;
+
 	public AnnotationValidityReport(Map<ModelElementReference, Set<AnnotationViolation>> violations) {
 		this.violations = violations;
+	}
+
+	/**
+	 * Default constructor.
+	 */
+	public AnnotationValidityReport() {
 	}
 
 	/**
@@ -30,6 +39,35 @@ public class AnnotationValidityReport {
 	 */
 	public Map<ModelElementReference, Set<AnnotationViolation>> getViolations() {
 		return this.violations;
+	}
+
+	/**
+	 * Sets {@link #violations}.
+	 * 
+	 * @param violations
+	 *            New value for {@link #violations}
+	 */
+	public void setViolations(Map<ModelElementReference, Set<AnnotationViolation>> violations) {
+		this.violations = violations;
+	}
+
+	/**
+	 * Gets {@link #violationsBeforeFix}.
+	 *
+	 * @return {@link #violationsBeforeFix}
+	 */
+	public Map<ModelElementReference, Set<AnnotationViolation>> getViolationsBeforeFix() {
+		return this.violationsBeforeFix;
+	}
+
+	/**
+	 * Sets {@link #violationsBeforeFix}.
+	 *
+	 * @param violationsBeforeFix
+	 *            New value for {@link #violationsBeforeFix}
+	 */
+	public void setViolationsBeforeFix(Map<ModelElementReference, Set<AnnotationViolation>> violationsBeforeFix) {
+		this.violationsBeforeFix = violationsBeforeFix;
 	}
 
 	@JsonIgnore
