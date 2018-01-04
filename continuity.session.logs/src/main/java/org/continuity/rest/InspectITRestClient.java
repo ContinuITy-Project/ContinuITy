@@ -21,7 +21,10 @@ import rocks.inspectit.shared.all.communication.data.cmr.BusinessTransactionData
  */
 public class InspectITRestClient {
 
-	private static final String PARAM_PLATFOMR_ID = "platformId";
+	private static final String PARAM_PLATFORM_ID = "platformId";
+
+	private static final String PARAM_FROM_DATE = "fromDate";
+	private static final String PARAM_TO_DATE = "toDate";
 
 
 	private static final String ALL_AGENTS_PATH = "/rest/data/agents";
@@ -52,9 +55,11 @@ public class InspectITRestClient {
 	 * @param platformID the id of the agent
 	 * @return
 	 */
-	public Iterable<InvocationSequenceData> fetchAll(long platformID){
+	public Iterable<InvocationSequenceData> fetchAll(long platformIdent, String fromDate, String toDate) {
 		final Map<String,Object> filterParams = new HashMap<>();
-		filterParams.put(PARAM_PLATFOMR_ID, platformID);
+		filterParams.put(PARAM_PLATFORM_ID, platformIdent);
+		filterParams.put(PARAM_FROM_DATE, fromDate);
+		filterParams.put(PARAM_TO_DATE, toDate);
 
 		return new Iterable<InvocationSequenceData>() {
 
@@ -109,7 +114,7 @@ public class InspectITRestClient {
 	public Iterable<MethodIdent> fetchAllMethods(long platformId) throws IOException {
 
 		Map<String,String> params = new HashMap<>();
-		params.put(PARAM_PLATFOMR_ID, ""+platformId);
+		params.put(PARAM_PLATFORM_ID, ""+platformId);
 		MethodIdent[] result = rest.performGet(ALL_METHODS_PATH + "/" + platformId + "/methods", MethodIdent[].class, params);
 
 		return Arrays.asList(result);
