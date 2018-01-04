@@ -15,7 +15,10 @@ import org.spec.research.open.xtrace.adapters.inspectit.impl.IITRemoteInvocation
 import org.spec.research.open.xtrace.adapters.inspectit.impl.IITSpanCallable;
 import org.spec.research.open.xtrace.adapters.inspectit.impl.IITTraceImpl;
 import org.spec.research.open.xtrace.api.core.callables.Callable;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import rocks.inspectit.server.open.xtrace.OPENxtraceDeserializer;
 import rocks.inspectit.shared.all.cmr.model.MethodIdent;
@@ -34,7 +37,8 @@ public class SessionLogsPipelineManager {
 
 	private static final String AGENTNAME = System.getProperty("AGENT_NAME", "dvdstore");
 
-	private static final String CMRCONFIG = System.getProperty("CMR_CONFIG", "letslx037:8182");
+	private static String CMRCONFIG;
+	private static final boolean USEOPENxtrace = Boolean.getBoolean(System.getProperty("USE_OPEN_XTRACE", "true"));
 
 	private String link;
 
@@ -42,19 +46,41 @@ public class SessionLogsPipelineManager {
 
 	public SessionLogsPipelineManager(String link) {
 		this.link = link;
+		UriComponents uri = UriComponentsBuilder.fromHttpUrl(link).build();
+		CMRCONFIG = uri.getHost() + ":" + uri.getPort();
 	}
 
+	public static void main(String[] args) {
+		SessionLogsPipelineManager manager = new SessionLogsPipelineManager("http://172.16.145.68:8182/rest/open-xtrace/get?fromDate=2018/01/04/12:00:04&toDate=2018/01/04/12:12:44");
+		System.out.println(manager.runPipeline());
+	}
 	/**
 	 * Runs the pipeline
 	 * 
 	 * @return
 	 */
 	public String runPipeline() {
+		if (USEOPENxtrace) {
 		return getSessionLogs(this.link);
+		} else {
+			return getSessionLogsUsingInvocationSequences();
+		}
 	}
 
 	/**
-	 * Gets OPEN.xtrace
+	 * Gets session logs without using the invocation sequences of the CMR.
+	 * 
+	 * @return
+	 */
+	private String getSessionLogsUsingInvocationSequences() {
+		InspectITRestClient fetcher = new InspectITRestClient(CMRCONFIG);
+		MultiValueMap<String, String> uriParameters = UriComponentsBuilder.fromHttpUrl(this.link).build().getQueryParams();
+		Iterable<InvocationSequenceData> invocationSequenceIterable = fetcher.fetchAll(0, uriParameters.getFirst("fromDate"), uriParameters.getFirst("toDate"));
+		return convertInvocationSequencesIntoSessionLogs(invocationSequenceIterable);
+	}
+
+	/**
+	 * Gets Session logs using OPEN.xtrace
 	 */
 	public String getSessionLogs(String link) {
 		String openxtrace = this.restTemplate.getForObject(link, String.class);
@@ -72,14 +98,14 @@ public class SessionLogsPipelineManager {
 				}
 			}
 
-			return convertOpenXtraceIntoSessionLogs(extractedInvocationSequences);
+			return convertInvocationSequencesIntoSessionLogs(extractedInvocationSequences);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
 
-	private String convertOpenXtraceIntoSessionLogs(List<InvocationSequenceData> invocationSequences) {
+	private String convertInvocationSequencesIntoSessionLogs(Iterable<InvocationSequenceData> invocationSequences) {
 
 		InspectITRestClient fetcher = new InspectITRestClient(CMRCONFIG);
 
