@@ -2,6 +2,8 @@ package org.continuity.commons.jmeter;
 
 import java.nio.file.Path;
 
+import org.apache.jmeter.control.Controller;
+import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.protocol.http.control.CookieManager;
 import org.apache.jmeter.reporters.ResultCollector;
 import org.apache.jmeter.samplers.SampleSaveConfiguration;
@@ -150,6 +152,13 @@ public class JMeterPropertiesCorrector {
 			group.setRampUp(rampupSeconds);
 			group.setScheduler(true);
 			group.setDuration(durationSeconds);
+
+			Controller mainController = group.getSamplerController();
+
+			if (mainController instanceof LoopController) {
+				// Sets Loop Count: Forever [CHECK]
+				((LoopController) mainController).setLoops(-1);
+			}
 		}
 	}
 
