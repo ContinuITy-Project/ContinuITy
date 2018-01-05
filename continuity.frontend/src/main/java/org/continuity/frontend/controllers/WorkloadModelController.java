@@ -1,14 +1,21 @@
 package org.continuity.frontend.controllers;
 
+import java.io.IOException;
+import java.util.Collections;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.continuity.frontend.config.RabbitMqConfig;
 import org.continuity.frontend.entities.ModelCreatedReport;
 import org.continuity.frontend.entities.WorkloadModelConfig;
+import org.continuity.frontend.entities.WorkloadModelInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.rabbit.connection.Connection;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.AntPathMatcher;
@@ -16,11 +23,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerMapping;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.rabbitmq.client.Channel;
 
 /**
  * Controls workload models.
@@ -34,11 +43,16 @@ public class WorkloadModelController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WorkloadModelController.class);
 
+	private static final String RESPONSE_QUEUE_PREFIX = "continuity.frontend.workloadmodel.created.";
+
 	@Autowired
 	private AmqpTemplate amqpTemplate;
 
 	@Autowired
 	private RestTemplate restTemplate;
+
+	@Autowired
+	private ConnectionFactory connectionFactory;
 
 	/**
 	 * Causes creation of a new workload model of the specified type and from the specified data.
@@ -59,13 +73,18 @@ public class WorkloadModelController {
 			report = new ModelCreatedReport("Need to specify a link to monitoring data.");
 			status = HttpStatus.BAD_REQUEST;
 		} else {
-			Object response = amqpTemplate.convertSendAndReceive(RabbitMqConfig.MONITORING_DATA_AVAILABLE_EXCHANGE_NAME, type, config);
+			ResponseEntity<String> linkResponse = restTemplate.getForEntity("http://" + type + "/model/" + config.getTag() + "/reserve", String.class);
 
-			if (response == null) {
-				report = new ModelCreatedReport("Could not create a workload model of type " + type + "! There was no appropriate handler.");
-				status = HttpStatus.BAD_REQUEST;
+			if (!linkResponse.getStatusCode().is2xxSuccessful()) {
+				status = linkResponse.getStatusCode();
+				report = new ModelCreatedReport("Problem during reserving workload model link: " + linkResponse.getBody());
 			} else {
-				report = new ModelCreatedReport("Creating a " + type + " model.", response.toString());
+				declareResponseQueue(linkResponse.getBody());
+
+				WorkloadModelInput input = new WorkloadModelInput(config.getMonitoringDataLink(), linkResponse.getBody());
+				amqpTemplate.convertAndSend(RabbitMqConfig.MONITORING_DATA_AVAILABLE_EXCHANGE_NAME, type, input);
+
+				report = new ModelCreatedReport("Creating a " + type + " model.", linkResponse.getBody());
 				status = HttpStatus.ACCEPTED;
 			}
 		}
@@ -73,8 +92,65 @@ public class WorkloadModelController {
 		return new ResponseEntity<>(report, status);
 	}
 
+	private void declareResponseQueue(String workloadLink) {
+		try {
+			Connection connection = connectionFactory.createConnection();
+			Channel channel = connection.createChannel(false);
+
+			String queueName = RESPONSE_QUEUE_PREFIX + workloadLink;
+			channel.queueDeclare(queueName, false, false, true, Collections.emptyMap());
+			channel.queueBind(queueName, RabbitMqConfig.WORKLOAD_MODEL_CREATED_EXCHANGE_NAME, "*." + workloadLink);
+
+			LOGGER.info("Declared a response queue for {}.", workloadLink);
+		} catch (IOException e) {
+			LOGGER.error("Could not create a response queue for {}.", workloadLink);
+			e.printStackTrace();
+		}
+	}
+
+	private void deleteResponseQueue(String workloadLink) {
+		try {
+			Connection connection = connectionFactory.createConnection();
+			Channel channel = connection.createChannel(false);
+
+			String queueName = RESPONSE_QUEUE_PREFIX + workloadLink;
+			channel.queueDelete(queueName);
+
+			LOGGER.info("Deleted the response queue for {}.", workloadLink);
+		} catch (IOException e) {
+			LOGGER.error("Could not delete the response queue for {}.", workloadLink);
+			e.printStackTrace();
+		}
+	}
+
 	/**
-	 * Retrieves the created workload model of the specified type and id.
+	 * Waits for the corresponding workload model service to finish creation of the model.
+	 *
+	 * @param request
+	 *            The request.
+	 * @param timeout
+	 *            A timeout for stopping waiting.
+	 * @return The workload model
+	 */
+	@RequestMapping(path = "wait/**", method = RequestMethod.GET)
+	public ResponseEntity<JsonNode> waitForModelCreatedUnencoded(HttpServletRequest request, @RequestParam long timeout) {
+		String link = extractWorkloadLink(request);
+		LOGGER.info("Waiting for the workload model at {} to be created", link);
+
+		JsonNode response = amqpTemplate.receiveAndConvert(RESPONSE_QUEUE_PREFIX + link, timeout, ParameterizedTypeReference.forType(JsonNode.class));
+
+		deleteResponseQueue(link);
+
+		if (response != null) {
+			return ResponseEntity.ok(response);
+		} else {
+			return ResponseEntity.noContent().build();
+		}
+	}
+
+	/**
+	 * Retrieves the created workload model of the specified type and id. It does not wait if the
+	 * model is not yet created.
 	 *
 	 * @param request
 	 *            The request.
@@ -84,7 +160,7 @@ public class WorkloadModelController {
 	public ResponseEntity<JsonNode> getWorkloadModelUnencoded(HttpServletRequest request) {
 		String link = extractWorkloadLink(request);
 		LOGGER.info("Trying to get the workload model from {}", link);
-		return restTemplate.getForEntity(link, JsonNode.class);
+		return restTemplate.getForEntity("http://" + link, JsonNode.class);
 	}
 
 	private String extractWorkloadLink(HttpServletRequest request) {
@@ -92,7 +168,7 @@ public class WorkloadModelController {
 		String bestMatchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
 
 		AntPathMatcher apm = new AntPathMatcher();
-		return "http://" + apm.extractPathWithinPattern(bestMatchPattern, path);
+		return apm.extractPathWithinPattern(bestMatchPattern, path);
 	}
 
 }

@@ -47,25 +47,41 @@ public class WessbasAmqpHandler {
 	 * @see WessbasModelController
 	 */
 	@RabbitListener(queues = RabbitMqConfig.MONITORING_DATA_AVAILABLE_QUEUE_NAME)
-	public String onMonitoringDataAvailable(MonitoringData data) {
-		LOGGER.info("Received new monitoring data with tag '{}' to be processed: '{}'", data.getLink(), data.getTag());
+	public void onMonitoringDataAvailable(MonitoringData data) {
+		LOGGER.info("Received new monitoring data '{}' to be processed for '{}'", data.getDataLink(), data.getStorageLink());
 
-		String storageId = SimpleModelStorage.instance().reserve(data.getTag());
-		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, data.getTag(), model), restTemplate);
+		String storageId = extractStorageId(data.getStorageLink());
+
+		if (storageId == null) {
+			LOGGER.error("Storage link {} was not properly formed! Aborting.", data.getStorageLink());
+		}
+
+		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, model), restTemplate);
 		pipelineManager.runPipeline(data);
 
 		LOGGER.info("Created a new workload model with id '{}'.", storageId);
-
-		return applicationName + "/model/" + storageId;
 	}
 
-	private void handleModelCreated(String storageId, String tag, WorkloadModel workloadModel) {
+	private void handleModelCreated(String storageId, WorkloadModel workloadModel) {
 		SimpleModelStorage.instance().put(storageId, workloadModel);
-		sendCreated(storageId, tag);
+		String tag = extractTag(storageId);
+		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas.wessbas/model/" + storageId, new WorkloadModelPack(applicationName, storageId, tag));
 	}
 
-	private void sendCreated(String id, String tag) {
-		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas", new WorkloadModelPack(applicationName, id, tag));
+	private String extractStorageId(String storageLink) {
+		String[] tokens = storageLink.split("/");
+
+		if (tokens.length != 3) {
+			return null;
+		} else if (!tokens[2].matches(".+-\\d+")) {
+			return null;
+		} else {
+			return tokens[2];
+		}
+	}
+
+	private String extractTag(String storageId) {
+		return storageId.substring(0, storageId.lastIndexOf("-"));
 	}
 
 }

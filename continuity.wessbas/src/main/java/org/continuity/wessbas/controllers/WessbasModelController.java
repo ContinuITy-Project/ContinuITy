@@ -1,5 +1,6 @@
 package org.continuity.wessbas.controllers;
 
+import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -152,6 +153,24 @@ public class WessbasModelController {
 		}
 
 		return ResponseEntity.ok(annotation);
+	}
+
+	/**
+	 * Reserves a workload model entry in the storage.
+	 *
+	 * @param tag
+	 *            The tag of the workload model.
+	 * @return A response entity holding a link to the workload model that will be created. The link
+	 *         is invalid until the creation is finished.
+	 */
+	@RequestMapping(path = "/{tag}/reserve", method = RequestMethod.GET)
+	public ResponseEntity<String> reserveModelLink(@PathVariable String tag) {
+		String storageId = SimpleModelStorage.instance().reserve(tag);
+		String link = applicationName + "/model/" + storageId;
+
+		LOGGER.info("Reserved workload model entry {}" + storageId);
+
+		return ResponseEntity.created(URI.create("http://" + link)).body(link);
 	}
 
 }

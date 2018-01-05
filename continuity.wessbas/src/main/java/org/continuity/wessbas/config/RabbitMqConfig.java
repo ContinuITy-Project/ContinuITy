@@ -32,8 +32,6 @@ public class RabbitMqConfig {
 
 	public static final String MODEL_CREATED_EXCHANGE_NAME = "continuity.workloadmodel.created";
 
-	public static final String MODEL_CREATED_ROUTING_KEY = "wessbas";
-
 	// General
 
 	@Bean

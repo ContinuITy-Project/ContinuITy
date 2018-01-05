@@ -44,6 +44,11 @@ public class RabbitMqConfig {
 	 */
 	public static final String EXECUTE_LOAD_TEST_EXCHANGE_NAME = "continuity.loadtest.execute";
 
+	/**
+	 * routing keys: [workload-type].[workload-link], e.g., wessbas.wessbas/model/foo-1
+	 */
+	public static final String WORKLOAD_MODEL_CREATED_EXCHANGE_NAME = "continuity.workloadmodel.created";
+
 	@Bean
 	MessageConverter jsonMessageConverter() {
 		return new Jackson2JsonMessageConverter();
@@ -109,6 +114,11 @@ public class RabbitMqConfig {
 	@Bean
 	Binding provideReportBinding() {
 		return BindingBuilder.bind(provideReportQueue()).to(provideReportExchange()).with(PROVIDE_REPORT_ROUTING_KEY);
+	}
+
+	@Bean
+	TopicExchange workloadModelCreatedExchange() {
+		return new TopicExchange(WORKLOAD_MODEL_CREATED_EXCHANGE_NAME, false, true);
 	}
 
 }
