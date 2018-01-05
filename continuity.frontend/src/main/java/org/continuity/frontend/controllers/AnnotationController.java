@@ -6,15 +6,19 @@ import java.util.Map;
 import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.frontend.config.RabbitMqConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -33,6 +37,9 @@ public class AnnotationController {
 
 	@Autowired
 	private RestTemplate restTemplate;
+
+	@Autowired
+	private AmqpTemplate amqpTemplate;
 
 	/**
 	 * Gets the system model for the specified tag.
@@ -117,5 +124,22 @@ public class AnnotationController {
 		}
 	}
 
+	/**
+	 * Retrieves a report from the workload annotation if available.
+	 *
+	 * @param timeout
+	 *            The timeout to wait for messages.
+	 * @return A response entity (200) holding a report or 204 (no content) if there is no report.
+	 */
+	@RequestMapping(path = "report", method = RequestMethod.GET)
+	public ResponseEntity<?> getAnnotationReport(@RequestParam(value = "timeout", required = true) long timeout) {
+		Map<?, ?> report = amqpTemplate.receiveAndConvert(RabbitMqConfig.WORKLADO_ANNOTATION_MESSAGE_QUEUE_NAME, timeout, ParameterizedTypeReference.forType(Map.class));
+
+		if (report != null) {
+			return ResponseEntity.ok(report);
+		} else {
+			return ResponseEntity.noContent().build();
+		}
+	}
 
 }
