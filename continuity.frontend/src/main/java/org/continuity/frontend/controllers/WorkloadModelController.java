@@ -139,9 +139,9 @@ public class WorkloadModelController {
 
 		JsonNode response = amqpTemplate.receiveAndConvert(RESPONSE_QUEUE_PREFIX + link, timeout, ParameterizedTypeReference.forType(JsonNode.class));
 
-		deleteResponseQueue(link);
-
 		if (response != null) {
+			deleteResponseQueue(link);
+
 			return ResponseEntity.ok(response);
 		} else {
 			return ResponseEntity.noContent().build();
