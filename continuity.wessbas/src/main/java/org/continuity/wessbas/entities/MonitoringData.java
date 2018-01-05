@@ -9,46 +9,47 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MonitoringData {
 
 	@JsonProperty("data")
-	private String link;
+	private String dataLink;
 
-	private String tag;
+	@JsonProperty("reserved")
+	private String storageLink;
 
 	/**
-	 * Gets {@link #link}.
+	 * Gets {@link #dataLink}.
 	 *
-	 * @return {@link #link}
+	 * @return {@link #dataLink}
 	 */
-	public String getLink() {
-		return this.link;
+	public String getDataLink() {
+		return this.dataLink;
 	}
 
 	/**
-	 * Sets {@link #link}.
+	 * Sets {@link #dataLink}.
 	 *
-	 * @param link
-	 *            New value for {@link #link}
+	 * @param dataLink
+	 *            New value for {@link #dataLink}
 	 */
-	public void setLink(String link) {
-		this.link = link;
+	public void setDataLink(String dataLink) {
+		this.dataLink = dataLink;
 	}
 
 	/**
-	 * Gets {@link #tag}.
+	 * Gets {@link #storageLink}.
 	 * 
-	 * @return {@link #tag}
+	 * @return {@link #storageLink}
 	 */
-	public String getTag() {
-		return this.tag;
+	public String getStorageLink() {
+		return this.storageLink;
 	}
 
 	/**
-	 * Sets {@link #tag}.
+	 * Sets {@link #storageLink}.
 	 * 
-	 * @param tag
-	 *            New value for {@link #tag}
+	 * @param storageLink
+	 *            New value for {@link #storageLink}
 	 */
-	public void setTag(String tag) {
-		this.tag = tag;
+	public void setStorageLink(String storageLink) {
+		this.storageLink = storageLink;
 	}
 
 	/**
@@ -56,7 +57,7 @@ public class MonitoringData {
 	 */
 	@Override
 	public String toString() {
-		return "{ link: \"" + link + "\", tag: \"" + tag + "\" }";
+		return "{ data: \"" + dataLink + "\", reserved: \"" + storageLink + "\" }";
 	}
 
 }

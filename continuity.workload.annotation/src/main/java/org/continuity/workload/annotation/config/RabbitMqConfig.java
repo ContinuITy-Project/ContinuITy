@@ -26,7 +26,10 @@ public class RabbitMqConfig {
 
 	public static final String MODEL_CREATED_EXCHANGE_NAME = "continuity.workloadmodel.created";
 
-	public static final String MODEL_CREATED_ROUTING_KEY = "*";
+	/**
+	 * routing keys: [workload-type].[workload-link], e.g., wessbas.wessbas/model/foo-1
+	 */
+	public static final String MODEL_CREATED_ROUTING_KEY = "#";
 
 	public static final String CLIENT_MESSAGE_EXCHANGE_NAME = "continuity.workload.annotation.message";
 

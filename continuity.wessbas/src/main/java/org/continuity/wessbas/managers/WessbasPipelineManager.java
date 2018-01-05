@@ -73,7 +73,7 @@ public class WessbasPipelineManager {
 	 *            instance.
 	 */
 	public void runPipeline(MonitoringData data) {
-		if ("dummy".equals(data.getLink())) {
+		if ("dummy".equals(data.getDataLink())) {
 			onModelCreatedCallback.accept(WessbasDslInstance.DVDSTORE_PARSED.get());
 			return;
 		}
@@ -152,7 +152,7 @@ public class WessbasPipelineManager {
 	public String getSessionLog(MonitoringData data) {
 		String urlString = "";
 		try {
-			urlString = "http://session-logs?link=" + URLEncoder.encode(data.getLink(), "UTF-8");
+			urlString = "http://session-logs?link=" + URLEncoder.encode(data.getDataLink(), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
