@@ -117,6 +117,17 @@ public class AnnotationAmqpValidityCheckTest {
 		Assert.assertFalse(report.isBreaking());
 		Assert.assertNotNull(report.getViolationsBeforeFix());
 		Assert.assertFalse(report.getViolationsBeforeFix().isEmpty());
+
+		// Do it twice, since now the "oldSystemModel" is the same
+		Mockito.reset(amqpMock);
+
+		callModelCreated(AnnotationValidityTestInstance.FIRST);
+		Mockito.verify(amqpMock).convertAndSend(ArgumentMatchers.eq(RabbitMqConfig.CLIENT_MESSAGE_EXCHANGE_NAME), ArgumentMatchers.eq("report"), reportCaptor.capture());
+		report = reportCaptor.getValue();
+		Assert.assertFalse(report.isOk());
+		Assert.assertFalse(report.isBreaking());
+		Assert.assertNotNull(report.getViolationsBeforeFix());
+		Assert.assertFalse(report.getViolationsBeforeFix().isEmpty());
 	}
 
 	/**

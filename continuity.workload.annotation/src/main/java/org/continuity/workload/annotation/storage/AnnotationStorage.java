@@ -91,11 +91,13 @@ public class AnnotationStorage {
 	 *            The tag of the system model.
 	 * @param systemModel
 	 *            The system model.
+	 * @param suffix
+	 *            A suffix to be appended to the file name.
 	 * @return {@code true} if and only if existing models were overwritten.
 	 * @throws IOException
 	 *             If errors during writing to files occur.
 	 */
-	public boolean saveOrUpdate(String tag, SystemModel systemModel) throws IOException {
+	public boolean saveOrUpdate(String tag, SystemModel systemModel, String suffix) throws IOException {
 		Path dirPath = storagePath.resolve(tag);
 		File dir = dirPath.toFile();
 
@@ -105,12 +107,37 @@ public class AnnotationStorage {
 		}
 
 		boolean created = dir.mkdirs();
+
+		String filename = SYSTEM_MODEL_FILE_NAME;
+
+		if (suffix != null) {
+			filename += "-" + suffix;
+		}
+
+		filename += FILE_EXTENSION;
+
 		ContinuityYamlSerializer<SystemModel> serializer = new ContinuityYamlSerializer<>(SystemModel.class);
-		serializer.writeToYaml(systemModel, dirPath.resolve(SYSTEM_MODEL_FILE_NAME + FILE_EXTENSION));
+		serializer.writeToYaml(systemModel, dirPath.resolve(filename));
 
 		LOGGER.debug("Wrote system model to {}.", dirPath);
 
 		return !created;
+	}
+
+	/**
+	 * Stores the specified system model with the specified tag. If there are already models with
+	 * the same tag, they will be overwritten.
+	 *
+	 * @param tag
+	 *            The tag of the system model.
+	 * @param systemModel
+	 *            The system model.
+	 * @return {@code true} if and only if existing models were overwritten.
+	 * @throws IOException
+	 *             If errors during writing to files occur.
+	 */
+	public boolean saveOrUpdate(String tag, SystemModel systemModel) throws IOException {
+		return saveOrUpdate(tag, systemModel, (String) null);
 	}
 
 	/**
@@ -215,7 +242,7 @@ public class AnnotationStorage {
 	 * @throws IOException
 	 *             If errors during reading the model occur.
 	 */
-	public SystemModel readSystemModel(String tag) throws IOException {
+	public SystemModel readSystemModel(String tag, String suffix) throws IOException {
 		Path dirPath = storagePath.resolve(tag);
 		File dir = dirPath.toFile();
 
@@ -224,7 +251,15 @@ public class AnnotationStorage {
 			return null;
 		}
 
-		Path systemPath = dirPath.resolve(SYSTEM_MODEL_FILE_NAME + FILE_EXTENSION);
+		String filename = SYSTEM_MODEL_FILE_NAME;
+
+		if (suffix != null) {
+			filename += "-" + suffix;
+		}
+
+		filename += FILE_EXTENSION;
+
+		Path systemPath = dirPath.resolve(filename);
 
 		if (!systemPath.toFile().exists()) {
 			LOGGER.info("There is no file {}.", systemPath.toAbsolutePath());
@@ -233,8 +268,21 @@ public class AnnotationStorage {
 
 		ContinuityYamlSerializer<SystemModel> serializer = new ContinuityYamlSerializer<>(SystemModel.class);
 
-		LOGGER.debug("Reading system model from {}.", dirPath);
+		LOGGER.debug("Reading system model from {}.", systemPath);
 		return serializer.readFromYaml(systemPath);
+	}
+
+	/**
+	 * Retrieves the system model from the specified tag if possible.
+	 *
+	 * @param tag
+	 *            The tag of the system model.
+	 * @return The stored system model or {@code null} if there is no such model.
+	 * @throws IOException
+	 *             If errors during reading the model occur.
+	 */
+	public SystemModel readSystemModel(String tag) throws IOException {
+		return readSystemModel(tag, null);
 	}
 
 	/**
@@ -292,6 +340,28 @@ public class AnnotationStorage {
 	}
 
 	/**
+	 * Removes the specified system model from the storage if possible.
+	 *
+	 * @param tag
+	 *            The tag of the system model.
+	 * @param suffix
+	 *            The suffix of the system model.
+	 * @return {@code true} if and only if there was a system model and is was successfully deleted,
+	 *         {@code false} otherwise.
+	 */
+	public boolean removeSystemIfPresent(String tag, String suffix) {
+		String filename = SYSTEM_MODEL_FILE_NAME;
+
+		if (suffix != null) {
+			filename += "-" + suffix;
+		}
+
+		filename += FILE_EXTENSION;
+
+		return removeFileIfPresent(tag, filename);
+	}
+
+	/**
 	 * Removes the specified annotation from the storage if possible.
 	 *
 	 * @param tag
@@ -302,14 +372,6 @@ public class AnnotationStorage {
 	 *         {@code false} otherwise.
 	 */
 	public boolean removeAnnotationIfPresent(String tag, String suffix) {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
-
-		if (!dir.exists() || !dir.isDirectory()) {
-			LOGGER.warn("There is no directory {}!", dir.getAbsolutePath());
-			return false;
-		}
-
 		String filename = ANNOTATION_FILE_NAME;
 
 		if (suffix != null) {
@@ -318,10 +380,44 @@ public class AnnotationStorage {
 
 		filename += FILE_EXTENSION;
 
+		return removeFileIfPresent(tag, filename);
+	}
+
+	private boolean removeFileIfPresent(String tag, String filename) {
+		Path dirPath = storagePath.resolve(tag);
+		File dir = dirPath.toFile();
+
+		if (!dir.exists() || !dir.isDirectory()) {
+			LOGGER.warn("There is no directory {}!", dir.getAbsolutePath());
+			return false;
+		}
+
 		Path annotationPath = dirPath.resolve(filename);
 		LOGGER.debug("Deleting annotation from {}.", annotationPath);
 
 		return annotationPath.toFile().delete();
+	}
+
+	/**
+	 * Returns whether there is a system model file for the specified tag and with the specified
+	 * suffix.
+	 *
+	 * @param tag
+	 *            The tag of the system model.
+	 * @param suffix
+	 *            A suffix to be appended to the file name.
+	 * @return {@code true} if there is a system model with the tag and suffix.
+	 */
+	public boolean systemSuffixExists(String tag, String suffix) {
+		String filename = SYSTEM_MODEL_FILE_NAME;
+
+		if (suffix != null) {
+			filename += "-" + suffix;
+		}
+
+		filename += FILE_EXTENSION;
+
+		return fileExists(tag, filename);
 	}
 
 	/**
@@ -332,17 +428,9 @@ public class AnnotationStorage {
 	 *            The tag of the annotation.
 	 * @param suffix
 	 *            A suffix to be appended to the file name.
-	 * @return The stored annotation or {@code null} if there is no such annotation.
+	 * @return {@code true} if there is an annotation with the tag and suffix.
 	 */
-	public boolean suffixExists(String tag, String suffix) {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
-
-		if (!dir.exists() || !dir.isDirectory()) {
-			LOGGER.error("{} is not a directory!", dir.getAbsolutePath());
-			return false;
-		}
-
+	public boolean annotationSuffixExists(String tag, String suffix) {
 		String filename = ANNOTATION_FILE_NAME;
 
 		if (suffix != null) {
@@ -350,6 +438,18 @@ public class AnnotationStorage {
 		}
 
 		filename += FILE_EXTENSION;
+
+		return fileExists(tag, filename);
+	}
+
+	private boolean fileExists(String tag, String filename) {
+		Path dirPath = storagePath.resolve(tag);
+		File dir = dirPath.toFile();
+
+		if (!dir.exists() || !dir.isDirectory()) {
+			LOGGER.error("{} is not a directory!", dir.getAbsolutePath());
+			return false;
+		}
 
 		Path annotationPath = dirPath.resolve(filename);
 		return annotationPath.toFile().exists();

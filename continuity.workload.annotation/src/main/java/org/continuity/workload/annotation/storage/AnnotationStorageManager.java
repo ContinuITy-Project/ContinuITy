@@ -21,6 +21,8 @@ public class AnnotationStorageManager {
 
 	private static final String SUFFIX_FIXED = "fixed";
 
+	private static final String SUFFIX_REFERENCE = "reference";
+
 	private final AnnotationStorage storage;
 
 	@Autowired
@@ -52,7 +54,7 @@ public class AnnotationStorageManager {
 	 * @throws IOException
 	 */
 	public SystemAnnotation getAnnotation(String tag) throws IOException {
-		if (storage.suffixExists(tag, SUFFIX_FIXED)) {
+		if (storage.annotationSuffixExists(tag, SUFFIX_FIXED)) {
 			return storage.readAnnotation(tag, SUFFIX_FIXED);
 		} else {
 			return storage.readAnnotation(tag);
@@ -70,19 +72,24 @@ public class AnnotationStorageManager {
 	 */
 	public AnnotationValidityReport updateSystemModel(String tag, SystemModel system) throws IOException {
 		storage.unmarkAsBroken(tag);
+		deleteFixedAndLog(tag);
 
-		SystemModel oldSystemModel = storage.readSystemModel(tag);
+		SystemModel refSystemModel = getSystemReference(tag);
 		SystemAnnotation annotation = storage.readAnnotation(tag);
 
-		AnnotationValidityReport report = checkEverything(system, oldSystemModel, annotation);
+		storage.saveOrUpdate(tag, system);
+
+		AnnotationValidityReport report = checkEverything(system, refSystemModel, annotation);
 
 		boolean broken = false;
 
-		if (report.isBreaking()) {
+		if (!report.isBreaking()) {
+			deleteReferenceAndLog(tag);
+		} else {
 			AnnotationFixer fixer = new AnnotationFixer();
 			SystemAnnotation fixedAnnotation = fixer.createFixedAnnotation(annotation, report);
 
-			AnnotationValidityReport newReport = checkEverything(system, oldSystemModel, fixedAnnotation);
+			AnnotationValidityReport newReport = checkEverything(system, refSystemModel, fixedAnnotation);
 			newReport.setViolationsBeforeFix(report.getViolations());
 			report = newReport;
 
@@ -92,15 +99,25 @@ public class AnnotationStorageManager {
 			} else {
 				broken = true;
 			}
-		}
 
-		storage.saveOrUpdate(tag, system);
+			storage.saveOrUpdate(tag, refSystemModel, SUFFIX_REFERENCE);
+			LOGGER.info("Created or updated reference for tag {}.", tag);
+		}
 
 		if (broken) {
 			storage.markAsBroken(tag);
+			LOGGER.warn("The annotation for tag {} is now in a broken state!", tag);
 		}
 
 		return report;
+	}
+
+	private SystemModel getSystemReference(String tag) throws IOException {
+		if (storage.systemSuffixExists(tag, SUFFIX_REFERENCE)) {
+			return storage.readSystemModel(tag, SUFFIX_REFERENCE);
+		} else {
+			return storage.readSystemModel(tag);
+		}
 	}
 
 	private AnnotationValidityReport checkEverything(SystemModel newSystemModel, SystemModel oldSystemModel, SystemAnnotation annotation) {
@@ -119,8 +136,10 @@ public class AnnotationStorageManager {
 
 	/**
 	 * Updates the annotation stored with the specified tag. If the annotation is invalid with
-	 * respect to the system model, it is rejected. Assumes the corresponding system model to be
-	 * present.
+	 * respect to the system model, it is rejected. It does <b>not</b> try to fix it. If you want to
+	 * store an annotation that covers system parts that are not part of the current system model,
+	 * please update the system model first.<br>
+	 * Assumes the corresponding system model to be present.
 	 *
 	 * @param tag
 	 * @param annotation
@@ -128,8 +147,6 @@ public class AnnotationStorageManager {
 	 * @throws IOException
 	 */
 	public AnnotationValidityReport updateAnnotation(String tag, SystemAnnotation annotation) throws IOException {
-		AnnotationValidityReport report = null;
-
 		SystemModel systemModel = storage.readSystemModel(tag);
 
 		if (systemModel == null) {
@@ -138,45 +155,22 @@ public class AnnotationStorageManager {
 
 		AnnotationValidityChecker checker = new AnnotationValidityChecker(systemModel);
 		checker.checkAnnotation(annotation);
-		report = checker.getReport();
+		AnnotationValidityReport report = checker.getReport();
 
 		if (!report.isBreaking()) {
-			storage.unmarkAsBroken(tag);
-
 			storage.saveOrUpdate(tag, annotation);
 
-			boolean deleted = storage.removeAnnotationIfPresent(tag, SUFFIX_FIXED);
-
-			if (deleted) {
-				LOGGER.info("Deleted fixed annotation with tag {}.", tag);
-			} else {
-				LOGGER.debug("Did not delete a fixed annotation with tag {}. Potentially, there was no fixed annotation.", tag);
-			}
-		} else {
-			AnnotationFixer fixer = new AnnotationFixer();
-			SystemAnnotation fixedAnnotation = fixer.createFixedAnnotation(annotation, report);
-
-			checker = new AnnotationValidityChecker(systemModel);
-			checker.checkAnnotation(annotation);
-			AnnotationValidityReport newReport = checker.getReport();
-			newReport.setViolationsBeforeFix(report.getViolations());
-			report = newReport;
-
-			if (!newReport.isBreaking()) {
-				storage.unmarkAsBroken(tag);
-
-				storage.saveOrUpdate(tag, annotation);
-				storage.saveOrUpdate(tag, fixedAnnotation, SUFFIX_FIXED);
-				LOGGER.info("Created fixed annotation for tag {}.", tag);
-			}
+			storage.unmarkAsBroken(tag);
+			deleteFixedAndLog(tag);
+			deleteReferenceAndLog(tag);
 		}
 
 		return report;
 	}
 
 	/**
-	 * Creates of updates a system model and an annotation with the specified tag and creates a
-	 * validity report.
+	 * Creates or updates a system model and an annotation with the specified tag and creates a
+	 * validity report. Existing annotations are not overwritten.
 	 *
 	 * @param tag
 	 * @param system
@@ -185,14 +179,6 @@ public class AnnotationStorageManager {
 	 * @throws IOException
 	 */
 	public AnnotationValidityReport createOrUpdate(String tag, SystemModel system, SystemAnnotation annotation) throws IOException {
-		boolean deleted = storage.removeAnnotationIfPresent(tag, SUFFIX_FIXED);
-
-		if (deleted) {
-			LOGGER.info("Deleted fixed annotation with tag {}.", tag);
-		} else {
-			LOGGER.debug("Did not delete a fixed annotation with tag {}. Potentially, there was no fixed annotation.", tag);
-		}
-
 		storage.saveIfNotPresent(tag, annotation);
 		return updateSystemModel(tag, system);
 	}
@@ -205,6 +191,26 @@ public class AnnotationStorageManager {
 	 */
 	public boolean isBroken(String tag) {
 		return storage.isMarkedAsBroken(tag);
+	}
+
+	private void deleteFixedAndLog(String tag) {
+		boolean deleted = storage.removeAnnotationIfPresent(tag, SUFFIX_FIXED);
+
+		if (deleted) {
+			LOGGER.info("Deleted fixed annotation with tag {}.", tag);
+		} else {
+			LOGGER.debug("Did not delete a fixed annotation with tag {}. Potentially, there was no fixed annotation.", tag);
+		}
+	}
+
+	private void deleteReferenceAndLog(String tag) {
+		boolean deleted = storage.removeSystemIfPresent(tag, SUFFIX_REFERENCE);
+
+		if (deleted) {
+			LOGGER.info("Deleted reference system with tag {}.", tag);
+		} else {
+			LOGGER.debug("Did not delete a reference system with tag {}. Potentially, there was no reference system.", tag);
+		}
 	}
 
 }
