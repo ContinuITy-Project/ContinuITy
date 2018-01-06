@@ -86,7 +86,7 @@ public class WessbasPipelineManager {
 		} catch (SecurityException | IOException | GeneratorException e) {
 			LOGGER.error("Could not create a WESSBAS workload model!");
 			e.printStackTrace();
-			return;
+			workloadModel = null;
 		}
 
 		onModelCreatedCallback.accept(workloadModel);

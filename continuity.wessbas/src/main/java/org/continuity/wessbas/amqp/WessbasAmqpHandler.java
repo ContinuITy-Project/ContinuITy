@@ -63,9 +63,17 @@ public class WessbasAmqpHandler {
 	}
 
 	private void handleModelCreated(String storageId, WorkloadModel workloadModel) {
-		SimpleModelStorage.instance().put(storageId, workloadModel);
+		WorkloadModelPack responsePack;
 		String tag = extractTag(storageId);
-		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas.wessbas/model/" + storageId, new WorkloadModelPack(applicationName, storageId, tag));
+
+		if (workloadModel == null) {
+			responsePack = WorkloadModelPack.asError(applicationName, storageId, tag);
+		} else {
+			SimpleModelStorage.instance().put(storageId, workloadModel);
+			responsePack = new WorkloadModelPack(applicationName, storageId, tag);
+		}
+
+		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas.wessbas/model/" + storageId, responsePack);
 	}
 
 	private String extractStorageId(String storageLink) {

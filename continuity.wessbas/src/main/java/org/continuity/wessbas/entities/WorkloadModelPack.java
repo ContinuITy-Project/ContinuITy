@@ -10,6 +10,8 @@ public class WorkloadModelPack {
 
 	private static final String DEFAULT_MODEL_TYPE = "wessbas";
 
+	private static final String ERROR_LINK = "INVALID";
+
 	@JsonProperty("model-type")
 	private String modelType = DEFAULT_MODEL_TYPE;
 
@@ -27,6 +29,8 @@ public class WorkloadModelPack {
 
 	private String tag;
 
+	private boolean error;
+
 	/**
 	 * Default constructor.
 	 */
@@ -40,6 +44,17 @@ public class WorkloadModelPack {
 		this.initialAnnotationLink = base + "/annotation";
 		this.jmeterLink = hostname + "/loadtest/jmeter/" + id + "/create";
 		this.tag = tag;
+		this.error = false;
+	}
+
+	public static WorkloadModelPack asError(String hostname, String id, String tag) {
+		WorkloadModelPack pack = new WorkloadModelPack(hostname, id, tag);
+		pack.setSystemModelLink(ERROR_LINK);
+		pack.setInitialAnnotationLink(ERROR_LINK);
+		pack.setJmeterLink(ERROR_LINK);
+		pack.setError(true);
+
+		return pack;
 	}
 
 	/**
@@ -157,11 +172,30 @@ public class WorkloadModelPack {
 	}
 
 	/**
+	 * Gets {@link #error}.
+	 *
+	 * @return {@link #error}
+	 */
+	public boolean isError() {
+		return this.error;
+	}
+
+	/**
+	 * Sets {@link #error}.
+	 *
+	 * @param error
+	 *            New value for {@link #error}
+	 */
+	public void setError(boolean error) {
+		this.error = error;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public String toString() {
-		return "{ type: " + modelType + ", tag: " + tag + ", workload-link: " + workloadLink + " }";
+		return "{ error: " + error + ", type: " + modelType + ", tag: " + tag + ", workload-link: " + workloadLink + " }";
 	}
 
 }
