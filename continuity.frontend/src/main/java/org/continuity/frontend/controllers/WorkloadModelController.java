@@ -11,6 +11,7 @@ import org.continuity.frontend.entities.WorkloadModelConfig;
 import org.continuity.frontend.entities.WorkloadModelInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpIOException;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -29,6 +30,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerMapping;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.rabbitmq.client.Channel;
 
 /**
@@ -98,7 +100,7 @@ public class WorkloadModelController {
 			Channel channel = connection.createChannel(false);
 
 			String queueName = RESPONSE_QUEUE_PREFIX + workloadLink;
-			channel.queueDeclare(queueName, false, false, true, Collections.emptyMap());
+			channel.queueDeclare(queueName, false, false, false, Collections.emptyMap());
 			channel.queueBind(queueName, RabbitMqConfig.WORKLOAD_MODEL_CREATED_EXCHANGE_NAME, "*." + workloadLink);
 
 			LOGGER.info("Declared a response queue for {}.", workloadLink);
@@ -137,13 +139,39 @@ public class WorkloadModelController {
 		String link = extractWorkloadLink(request);
 		LOGGER.info("Waiting for the workload model at {} to be created", link);
 
-		JsonNode response = amqpTemplate.receiveAndConvert(RESPONSE_QUEUE_PREFIX + link, timeout, ParameterizedTypeReference.forType(JsonNode.class));
+		JsonNode response;
+		try {
+			response = amqpTemplate.receiveAndConvert(RESPONSE_QUEUE_PREFIX + link, timeout, ParameterizedTypeReference.forType(JsonNode.class));
+		} catch (AmqpIOException e) {
+			LOGGER.error("Cannot wait for not existing response queue of model {}", link);
+
+			Throwable t = e;
+			while (t.getCause() != null) {
+				t = t.getCause();
+			}
+			LOGGER.error("Error message from {}: {}", t.getClass().getSimpleName(), t.getMessage());
+
+			return ResponseEntity.badRequest().body(new TextNode("Cannot wait for " + link));
+		}
 
 		if (response != null) {
+			boolean error = false;
+			if (response.has("error")) {
+				error = Boolean.parseBoolean(response.get("error").asText());
+			}
+
 			deleteResponseQueue(link);
 
-			return ResponseEntity.ok(response);
+			if (!error) {
+				LOGGER.info("Workload model {} is ready.", link);
+				return ResponseEntity.ok(response);
+			} else {
+				LOGGER.error("Error during creation of workload model {}!", link);
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+			}
 		} else {
+			LOGGER.info("Workload model {} was not ready, yet.", link);
+
 			return ResponseEntity.noContent().build();
 		}
 	}

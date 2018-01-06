@@ -86,7 +86,9 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange modelCreatedExchange() {
-		return new TopicExchange(MODEL_CREATED_EXCHANGE_NAME, false, true);
+		// Not declaring auto delete, since queues are bound dynamically so that the exchange might
+		// have no queue for a while
+		return new TopicExchange(MODEL_CREATED_EXCHANGE_NAME, false, false);
 	}
 
 }

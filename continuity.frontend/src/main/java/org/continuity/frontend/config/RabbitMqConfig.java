@@ -118,7 +118,9 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange workloadModelCreatedExchange() {
-		return new TopicExchange(WORKLOAD_MODEL_CREATED_EXCHANGE_NAME, false, true);
+		// Not declaring auto delete, since queues are bound dynamically so that the exchange might
+		// have no queue for a while
+		return new TopicExchange(WORKLOAD_MODEL_CREATED_EXCHANGE_NAME, false, false);
 	}
 
 }
