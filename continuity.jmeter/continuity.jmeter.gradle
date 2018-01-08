@@ -41,7 +41,7 @@ build.dependsOn {
 	copyJmeterFolders
 }
 
-group = 'continuity'
+group = 'continuityproject'
 
 apply plugin: 'com.palantir.docker'
 

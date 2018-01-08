@@ -12,7 +12,7 @@ dependencies {
 	compile("org.springframework.boot:spring-boot-starter-web")
 }
 
-group = 'continuity'
+group = 'continuityproject'
 
 apply plugin: 'com.palantir.docker'
 
