@@ -22,7 +22,7 @@ dependencies {
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 }
 
-group = 'continuity'
+group = 'continuityproject'
 
 apply plugin: 'com.palantir.docker'
 
