@@ -5,6 +5,33 @@ jdk:
 
 services:
   - docker
+env:
+  global:
+    - GIT_MAJOR_VERSION=0
+    - GIT_MINOR_VERSION=1
+after_success:
+  - if [ $TRAVIS_PULL_REQUEST == false && $TRAVIS_BRANCH == "master" ]; then
+
+    docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD;
+
+    docker tag continuityproject/workload-annotation continuityproject/workload-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/workload-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+
+    docker tag continuityproject/wessbas continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+
+    docker tag continuityproject/session-logs continuityproject/session-logs:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/session-logs:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+
+    docker tag continuityproject/jmeter continuityproject/jmeter:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/jmeter:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+
+    docker tag continuityproject/frontend continuityproject/frontend:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/frontend:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+
+    docker tag continuityproject/eureka continuityproject/eureka:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/eureka:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    fi
 
 script:
 - ./gradlew build docker
