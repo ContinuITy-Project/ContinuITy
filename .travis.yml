@@ -10,7 +10,7 @@ env:
     - GIT_MAJOR_VERSION=0
     - GIT_MINOR_VERSION=1
 after_success:
-  - if [ $TRAVIS_PULL_REQUEST == false && $TRAVIS_BRANCH == "master" ]; then
+  - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
 
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD;
 
