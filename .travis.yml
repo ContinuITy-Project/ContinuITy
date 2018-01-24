@@ -8,14 +8,17 @@ services:
 env:
   global:
     - GIT_MAJOR_VERSION=0
-    - GIT_MINOR_VERSION=1
+    - GIT_MINOR_VERSION=2
 after_success:
   - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
 
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD;
 
-    docker tag continuityproject/workload-annotation continuityproject/workload-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker push continuityproject/workload-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/system-annotation continuityproject/system-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/system-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+
+    docker tag continuityproject/system-model continuityproject/system-model:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/system-model:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
 
     docker tag continuityproject/wessbas continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;

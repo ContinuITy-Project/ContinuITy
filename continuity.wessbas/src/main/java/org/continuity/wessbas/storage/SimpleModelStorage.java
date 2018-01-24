@@ -48,7 +48,7 @@ public class SimpleModelStorage {
 
 	/**
 	 * Reserves a slot in the storage.
-	 * 
+	 *
 	 * @param tag
 	 *            The tag of the model.
 	 * @return An id for the slot.
@@ -63,14 +63,17 @@ public class SimpleModelStorage {
 	 *
 	 * @param id
 	 *            The id of the slot.
+	 * @param timestamp
+	 *            The time stamp of the data used to create the model.
 	 * @param model
 	 *            The model to be stored.
 	 */
-	public void put(String id, WorkloadModel model) {
+	public void put(String id, Date timestamp, WorkloadModel model) {
 		WorkloadModelStorageEntry entry = new WorkloadModelStorageEntry();
 		entry.setWorkloadModel(model);
 		entry.setId(id);
 		entry.setCreatedDate(new Date());
+		entry.setDataTimestamp(timestamp);
 
 		storedModels.put(id, entry);
 	}
@@ -82,11 +85,13 @@ public class SimpleModelStorage {
 	 *            The model to be stored.
 	 * @param tag
 	 *            The tag of the model.
+	 * @param timestamp
+	 *            The time stamp of the data used to create the model.
 	 * @return The created id.
 	 */
-	public String put(WorkloadModel model, String tag) {
+	public String put(WorkloadModel model, String tag, Date timestamp) {
 		String id = reserve(tag);
-		put(id, model);
+		put(id, timestamp, model);
 		return id;
 	}
 

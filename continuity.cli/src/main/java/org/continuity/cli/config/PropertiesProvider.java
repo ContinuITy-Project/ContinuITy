@@ -30,6 +30,9 @@ public class PropertiesProvider {
 		if (new File(path).exists()) {
 			properties.load(new FileReader(path));
 		}
+
+		String workingDir = properties.getProperty(KEY_WORKING_DIR);
+		new File(workingDir).mkdirs();
 	}
 
 	public boolean isInitialized() {

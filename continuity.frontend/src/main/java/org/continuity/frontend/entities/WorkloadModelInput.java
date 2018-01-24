@@ -1,5 +1,10 @@
 package org.continuity.frontend.entities;
 
+import java.util.Date;
+
+import org.continuity.commons.format.CommonFormats;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -11,12 +16,17 @@ public class WorkloadModelInput {
 	@JsonProperty("data")
 	private String monitoringDataLink;
 
+	@JsonProperty(value = "timestamp", required = false)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT)
+	private Date timestamp = new Date();
+
 	@JsonProperty("reserved")
 	private String storageLink;
 
-	public WorkloadModelInput(String monitoringDataLink, String storageLink) {
+	public WorkloadModelInput(String monitoringDataLink, Date timestamp, String storageLink) {
 		this.monitoringDataLink = monitoringDataLink;
 		this.storageLink = storageLink;
+		this.timestamp = timestamp;
 	}
 
 	public WorkloadModelInput() {
@@ -58,6 +68,25 @@ public class WorkloadModelInput {
 	 */
 	public void setStorageLink(String storageLink) {
 		this.storageLink = storageLink;
+	}
+
+	/**
+	 * Gets {@link #timestamp}.
+	 * 
+	 * @return {@link #timestamp}
+	 */
+	public Date getTimestamp() {
+		return this.timestamp;
+	}
+
+	/**
+	 * Sets {@link #timestamp}.
+	 * 
+	 * @param timestamp
+	 *            New value for {@link #timestamp}
+	 */
+	public void setTimestamp(Date timestamp) {
+		this.timestamp = timestamp;
 	}
 
 	/**
