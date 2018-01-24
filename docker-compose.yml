@@ -25,9 +25,19 @@ services:
       - continuity-network
     ports:
       - '15672:15672'
-  workload-annotation:
-    image: continuityproject/workload-annotation
-    hostname: workload-annotation
+  system-model:
+    image: continuityproject/system-model
+    hostname: system-model
+    networks:
+      - continuity-network
+    ports:
+      - '8085:80'
+    depends_on:
+      - rabbitmq
+      - eureka
+  system-annotation:
+    image: continuityproject/system-annotation
+    hostname: system-annotation
     networks:
       - continuity-network
     ports:

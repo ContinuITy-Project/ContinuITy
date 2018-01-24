@@ -83,7 +83,7 @@ public class WorkloadModelController {
 			} else {
 				declareResponseQueue(linkResponse.getBody());
 
-				WorkloadModelInput input = new WorkloadModelInput(config.getMonitoringDataLink(), linkResponse.getBody());
+				WorkloadModelInput input = new WorkloadModelInput(config.getMonitoringDataLink(), config.getTimestamp(), linkResponse.getBody());
 				amqpTemplate.convertAndSend(RabbitMqConfig.MONITORING_DATA_AVAILABLE_EXCHANGE_NAME, type, input);
 
 				report = new ModelCreatedReport("Creating a " + type + " model.", linkResponse.getBody());

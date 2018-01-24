@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.wessbas.entities.WorkloadModelPack;
@@ -103,25 +104,13 @@ public class WessbasModelController {
 	 */
 	@RequestMapping(path = "{id}/system", method = RequestMethod.GET)
 	public ResponseEntity<SystemModel> getSystemModel(@PathVariable String id) {
-		SystemModel systemModel = systemModelBuffer.get(id);
+		SystemModel systemModel = createSystemModelAndAnnotation(id).getLeft();
 
 		if (systemModel == null) {
-			WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
-
-			if (entry == null) {
-				return ResponseEntity.notFound().build();
-			}
-
-			AnnotationFromWessbasExtractor annotationExtractor = new AnnotationFromWessbasExtractor();
-			annotationExtractor.init(entry.getWorkloadModel(), id);
-
-			systemModel = annotationExtractor.extractSystemModel();
-			SystemAnnotation annotation = annotationExtractor.extractInitialAnnotation();
-
-			annotationBuffer.put(id, annotation);
+			return ResponseEntity.notFound().build();
+		} else {
+			return ResponseEntity.ok(systemModel);
 		}
-
-		return ResponseEntity.ok(systemModel);
 	}
 
 	/**
@@ -134,25 +123,40 @@ public class WessbasModelController {
 	 */
 	@RequestMapping(path = "{id}/annotation", method = RequestMethod.GET)
 	public ResponseEntity<SystemAnnotation> getSystemAnnotation(@PathVariable String id) {
-		SystemAnnotation annotation = annotationBuffer.get(id);
+		SystemAnnotation annotation = createSystemModelAndAnnotation(id).getRight();
 
 		if (annotation == null) {
+			return ResponseEntity.notFound().build();
+		} else {
+			return ResponseEntity.ok(annotation);
+		}
+	}
+
+	private Pair<SystemModel, SystemAnnotation> createSystemModelAndAnnotation(String id) {
+		SystemModel systemModel = systemModelBuffer.get(id);
+		SystemAnnotation annotation = annotationBuffer.get(id);
+
+		if ((systemModel == null) || (annotation == null)) {
 			WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
 
 			if (entry == null) {
-				return ResponseEntity.notFound().build();
+				return Pair.of(null, null);
 			}
 
 			AnnotationFromWessbasExtractor annotationExtractor = new AnnotationFromWessbasExtractor();
 			annotationExtractor.init(entry.getWorkloadModel(), id);
 
-			annotation = annotationExtractor.extractInitialAnnotation();
-			SystemModel systemModel = annotationExtractor.extractSystemModel();
+			systemModel = annotationExtractor.extractSystemModel();
+			if (entry.getDataTimestamp() != null) {
+				systemModel.setTimestamp(entry.getDataTimestamp());
+			}
 
-			systemModelBuffer.put(id, systemModel);
+			annotation = annotationExtractor.extractInitialAnnotation();
+
+			annotationBuffer.put(id, annotation);
 		}
 
-		return ResponseEntity.ok(annotation);
+		return Pair.of(systemModel, annotation);
 	}
 
 	/**

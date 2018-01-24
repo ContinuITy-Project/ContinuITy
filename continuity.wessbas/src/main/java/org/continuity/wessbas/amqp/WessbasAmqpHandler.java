@@ -1,5 +1,7 @@
 package org.continuity.wessbas.amqp;
 
+import java.util.Date;
+
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.controllers.WessbasModelController;
 import org.continuity.wessbas.entities.MonitoringData;
@@ -56,20 +58,20 @@ public class WessbasAmqpHandler {
 			LOGGER.error("Storage link {} was not properly formed! Aborting.", data.getStorageLink());
 		}
 
-		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, model), restTemplate);
+		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, model, data.getTimestamp()), restTemplate);
 		pipelineManager.runPipeline(data);
 
 		LOGGER.info("Created a new workload model with id '{}'.", storageId);
 	}
 
-	private void handleModelCreated(String storageId, WorkloadModel workloadModel) {
+	private void handleModelCreated(String storageId, WorkloadModel workloadModel, Date timestamp) {
 		WorkloadModelPack responsePack;
 		String tag = extractTag(storageId);
 
 		if (workloadModel == null) {
 			responsePack = WorkloadModelPack.asError(applicationName, storageId, tag);
 		} else {
-			SimpleModelStorage.instance().put(storageId, workloadModel);
+			SimpleModelStorage.instance().put(storageId, timestamp, workloadModel);
 			responsePack = new WorkloadModelPack(applicationName, storageId, tag);
 		}
 

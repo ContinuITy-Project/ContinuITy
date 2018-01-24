@@ -50,7 +50,7 @@ public class AnnotationController {
 	 */
 	@RequestMapping(path = "{tag}/system", method = RequestMethod.GET)
 	public ResponseEntity<SystemModel> getSystemModel(@PathVariable("tag") String tag) {
-		return restTemplate.getForEntity("http://workload-annotation/ann/" + tag + "/system", SystemModel.class);
+		return restTemplate.getForEntity("http://system-model/system/" + tag, SystemModel.class);
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class AnnotationController {
 	@RequestMapping(path = "{tag}/annotation", method = RequestMethod.GET)
 	public ResponseEntity<SystemAnnotation> getAnnotation(@PathVariable("tag") String tag) {
 		try {
-			return restTemplate.getForEntity("http://workload-annotation/ann/" + tag + "/annotation", SystemAnnotation.class);
+			return restTemplate.getForEntity("http://system-annotation/ann/" + tag + "/annotation", SystemAnnotation.class);
 		} catch (HttpStatusCodeException e) {
 			if (e.getStatusCode() == HttpStatus.LOCKED) {
 				ObjectMapper mapper = new ObjectMapper();
@@ -99,7 +99,7 @@ public class AnnotationController {
 	@RequestMapping(path = "{tag}/system", method = RequestMethod.POST)
 	public ResponseEntity<String> updateSystemModel(@PathVariable("tag") String tag, @RequestBody SystemModel system) {
 		try {
-			return restTemplate.postForEntity("http://workload-annotation/ann/" + tag + "/system", system, String.class);
+			return restTemplate.postForEntity("http://system-model/system/" + tag, system, String.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.warn("Updating the system model with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
 			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
@@ -117,7 +117,7 @@ public class AnnotationController {
 	@RequestMapping(path = "{tag}/annotation", method = RequestMethod.POST)
 	public ResponseEntity<String> updateAnnotation(@PathVariable("tag") String tag, @RequestBody SystemAnnotation annotation) {
 		try {
-			return restTemplate.postForEntity("http://workload-annotation/ann/" + tag + "/annotation", annotation, String.class);
+			return restTemplate.postForEntity("http://system-annotation/ann/" + tag + "/annotation", annotation, String.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.warn("Updating the annotation with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
 			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());

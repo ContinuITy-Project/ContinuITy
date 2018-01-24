@@ -35,3 +35,5 @@ hs_err_pid*
 **tmp**
 /continuity.cli/ws/**
 /continuity.workload.annotation/storage/**
+/continuity.system.model/storage/**
+/*/build/**

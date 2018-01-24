@@ -87,7 +87,7 @@ public class TestPlanController {
 	private ListedHashTree createAnnotatedTestPlan(TestPlanBundle testPlanPack, String tag) {
 		SystemAnnotation annotation;
 		try {
-			annotation = restTemplate.getForObject(getAnnotationLink(tag, "annotation"), SystemAnnotation.class);
+			annotation = restTemplate.getForObject("http://system-annotation/ann/" + tag + "/annotation", SystemAnnotation.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.error("Received a non-200 response: {} ({}) - {}", e.getStatusCode(), e.getStatusCode().getReasonPhrase(), e.getResponseBodyAsString());
 			return null;
@@ -98,7 +98,7 @@ public class TestPlanController {
 			return null;
 		}
 
-		SystemModel systemModel = restTemplate.getForObject(getAnnotationLink(tag, "system"), SystemModel.class);
+		SystemModel systemModel = restTemplate.getForObject("http://system-model/system/" + tag, SystemModel.class);
 
 		if (systemModel == null) {
 			LOGGER.error("System with tag {} is null! Aborting.", tag);
@@ -110,10 +110,6 @@ public class TestPlanController {
 		annotator.addAnnotations(annotation);
 
 		return testPlan;
-	}
-
-	private String getAnnotationLink(String tag, String suffix) {
-		return "http://workload-annotation/ann/" + tag + "/" + suffix;
 	}
 
 }

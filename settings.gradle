@@ -8,8 +8,9 @@ include "continuity.eureka"
 include "continuity.frontend"
 include "continuity.jmeter"
 include "continuity.session.logs"
+include "continuity.system.annotation"
+include "continuity.system.model"
 include "continuity.wessbas"
-include "continuity.workload.annotation"
 
 /**
  * Sets the name of the project build file (and all of its sub-projects) to be "${project.name}.gradle" pattern.
