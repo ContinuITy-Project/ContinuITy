@@ -67,7 +67,7 @@ public class HttpParameter extends AbstractContinuityModelElement implements Par
 
 	@Override
 	public String toString() {
-		StringBuffer result = new StringBuffer(super.toString());
+		StringBuffer result = new StringBuffer();
 		result.append(" (name: ");
 		result.append(name);
 		result.append(", parameterType: ");
