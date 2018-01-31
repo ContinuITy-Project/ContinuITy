@@ -11,6 +11,8 @@ import org.continuity.annotation.dsl.system.ServiceInterface;
 import org.continuity.annotation.dsl.system.SystemModel;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -28,6 +30,7 @@ public class SystemChangeReport {
 
 	@JsonIgnore
 	private Set<SystemChange> ignoredChangeSet;
+	@JsonInclude(value = Include.CUSTOM, valueFilter = IgnoredChangesFilter.class)
 	private Map<ModelElementReference, Set<SystemChange>> ignoredChanges;
 
 	public SystemChangeReport(Set<SystemChange> changes) {
@@ -50,7 +53,7 @@ public class SystemChangeReport {
 
 	/**
 	 * Creates an empty report not holding any changes.
-	 * 
+	 *
 	 * @return An empty report.
 	 */
 	public static SystemChangeReport empty() {
@@ -134,6 +137,30 @@ public class SystemChangeReport {
 			e.printStackTrace();
 			return super.toString() + " [ERROR during serialization!]";
 		}
+	}
+
+	public static class IgnoredChangesFilter {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			if (!(obj instanceof Map)) {
+				return false;
+			}
+
+			Map<?, ?> map = (Map<?, ?>) obj;
+			ModelElementReference key = new ModelElementReference("", "System changes");
+			if ((map.size() == 1) && map.containsKey(key)) {
+				if (map.get(key) instanceof Set) {
+					return ((Set<?>) map.get(key)).isEmpty();
+				}
+			}
+
+			return false;
+		}
+
 	}
 
 }

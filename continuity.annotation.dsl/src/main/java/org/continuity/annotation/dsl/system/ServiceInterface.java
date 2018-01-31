@@ -32,4 +32,6 @@ public interface ServiceInterface<P extends Parameter> extends ContinuityModelEl
 	 */
 	public List<P> getParameters();
 
+	public List<String> getDifferingProperties(ServiceInterface<?> other);
+
 }

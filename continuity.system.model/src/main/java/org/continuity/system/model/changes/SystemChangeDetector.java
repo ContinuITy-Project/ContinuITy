@@ -73,8 +73,10 @@ public class SystemChangeDetector {
 		} else {
 			ServiceInterface<?> oldInterf = interfHolder.element;
 
-			if (!oldInterf.equals(newInterf)) {
-				reportBuilder.addChange(new SystemChange(SystemChangeType.INTERFACE_CHANGED, ref));
+			for (String changedProperty : oldInterf.getDifferingProperties(newInterf)) {
+				if (!"parameters".equals(changedProperty)) {
+					reportBuilder.addChange(new SystemChange(SystemChangeType.INTERFACE_CHANGED, ref, changedProperty));
+				}
 			}
 
 			checkParameters(oldInterf, newInterf);

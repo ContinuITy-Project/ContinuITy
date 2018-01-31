@@ -203,6 +203,59 @@ public class HttpInterface extends AbstractContinuityModelElement implements Ser
 		this.headers = headers;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<String> getDifferingProperties(ServiceInterface<?> otherInterf) {
+		if (!this.getClass().getName().equals(otherInterf.getClass().getName())) {
+			return Collections.singletonList("type");
+		}
+
+		HttpInterface other = (HttpInterface) otherInterf;
+		List<String> differences = new ArrayList<>();
+
+		if (!Objects.equals(this.domain, other.domain)) {
+			differences.add("domain");
+		}
+
+		if (!Objects.equals(this.port, other.port)) {
+			differences.add("port");
+		}
+
+		if (!Objects.equals(this.path, other.path)) {
+			differences.add("path");
+		}
+
+		if (!Objects.equals(this.method, other.method)) {
+			differences.add("method");
+		}
+
+		if (!Objects.equals(this.encoding, other.encoding)) {
+			differences.add("encoding");
+		}
+
+		if (!Objects.equals(this.protocol, other.protocol)) {
+			differences.add("protocol");
+		}
+
+		Collections.sort(this.getParameters());
+		Collections.sort(other.getParameters());
+
+		if (!this.getParameters().equals(other.getParameters())) {
+			differences.add("parameters");
+		}
+
+		Collections.sort(this.getHeaders());
+		Collections.sort(other.getHeaders());
+
+		if (!this.getHeaders().equals(other.getHeaders())) {
+			differences.add("headers");
+		}
+
+		return differences;
+	}
+
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer(super.toString());
@@ -243,24 +296,7 @@ public class HttpInterface extends AbstractContinuityModelElement implements Ser
 			return false;
 		}
 
-		HttpInterface other = (HttpInterface) obj;
-
-		boolean equal = Objects.equals(this.domain, other.domain);
-		equal = equal && Objects.equals(this.port, other.port);
-		equal = equal && Objects.equals(this.path, other.path);
-		equal = equal && Objects.equals(this.method, other.method);
-		equal = equal && Objects.equals(this.encoding, other.encoding);
-		equal = equal && Objects.equals(this.protocol, other.protocol);
-
-		Collections.sort(this.getParameters());
-		Collections.sort(other.getParameters());
-		equal = equal && this.getParameters().equals(other.getParameters());
-
-		Collections.sort(this.getHeaders());
-		Collections.sort(other.getHeaders());
-		equal = equal && this.getHeaders().equals(other.getHeaders());
-
-		return equal;
+		return getDifferingProperties((ServiceInterface<?>) obj).isEmpty();
 	}
 
 	private static class EncodingValueFilter {

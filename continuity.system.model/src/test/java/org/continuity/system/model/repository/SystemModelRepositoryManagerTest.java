@@ -60,7 +60,7 @@ public class SystemModelRepositoryManagerTest {
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(firstModel);
 
 		SystemChangeReport report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", secondModel);
-		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected that the interface logout has been added").containsExactly("logout");
 		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() != SystemChangeType.INTERFACE_ADDED))
 		.as("Expected that there are no other changes than the addition of logout").isEmpty();
@@ -75,7 +75,7 @@ public class SystemModelRepositoryManagerTest {
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(firstModel);
 
 		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", secondModel, EnumSet.of(SystemChangeType.INTERFACE_ADDED));
-		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected that the interface logout has been added to the ignored changes").containsExactly("logout");
 		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() != SystemChangeType.INTERFACE_ADDED))
 		.as("Expected that there are no other ignored changes than the addition of logout").isEmpty();
@@ -88,13 +88,13 @@ public class SystemModelRepositoryManagerTest {
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(firstModel);
 
 		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", thirdModel, EnumSet.of(SystemChangeType.INTERFACE_ADDED));
-		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected that the interface logout has been added to the ignored changes").containsExactly("logout");
 		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() != SystemChangeType.INTERFACE_ADDED))
 		.as("Expected that there are no other ignored changes than the addition of logout").isEmpty();
-		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected the login interface to be removed").containsExactly("login");
-		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() != SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() != SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getChangedElement)
 		.as("Expected that there are no other changes than the removal of login").isEmpty();
 
 		Mockito.verify(repositoryMock).save(Mockito.eq("SystemModelRepositoryManagerTest"), modelCaptor.capture());
@@ -110,7 +110,7 @@ public class SystemModelRepositoryManagerTest {
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(secondModel);
 
 		SystemChangeReport report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", thirdModel);
-		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected that the interface login has been removed").containsExactly("login");
 		assertThat(extractChanges(report.getIgnoredChanges())).as("Expect the ignored changes of the report to be empty.").isEmpty();
 
@@ -128,7 +128,7 @@ public class SystemModelRepositoryManagerTest {
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(secondModel);
 
 		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", thirdModel, EnumSet.of(SystemChangeType.INTERFACE_REMOVED));
-		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected that the interface login has been removed as an ignored change").containsExactly("login");
 		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() != SystemChangeType.INTERFACE_REMOVED))
 		.as("Expected that there are no other ignored changes than the removal of login").isEmpty();
@@ -141,13 +141,13 @@ public class SystemModelRepositoryManagerTest {
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(firstModel);
 
 		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", thirdModel, EnumSet.of(SystemChangeType.INTERFACE_REMOVED));
-		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_REMOVED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected that the interface login has been removed as an ignored change").containsExactly("login");
 		assertThat(extractChanges(report.getIgnoredChanges()).filter(change -> change.getType() != SystemChangeType.INTERFACE_REMOVED))
 		.as("Expected that there are no other ignored changes than the removal of login").isEmpty();
-		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected the logout interface to be added").containsExactly("logout");
-		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() != SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getReferenced)
+		assertThat(extractChanges(report.getChanges()).filter(change -> change.getType() != SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getChangedElement)
 		.as("Expected that there are no other changes than the addition of logout").isEmpty();
 
 		Mockito.verify(repositoryMock).save(Mockito.eq("SystemModelRepositoryManagerTest"), modelCaptor.capture());
