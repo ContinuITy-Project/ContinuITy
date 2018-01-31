@@ -113,14 +113,14 @@ public class SystemModelRepositoryManager {
 		for (SystemChange change : report.getIgnoredChanges().values().stream().flatMap(Set::stream).collect(Collectors.toSet())) {
 			switch (change.getType()) {
 			case INTERFACE_ADDED:
-				newModel.getInterfaces().removeIf(interf -> interf.getId().equals(change.getReferenced().getId()));
+				newModel.getInterfaces().removeIf(interf -> interf.getId().equals(change.getChangedElement().getId()));
 				break;
 			case INTERFACE_CHANGED:
-				newModel.getInterfaces().removeIf(interf -> interf.getId().equals(change.getReferenced().getId()));
-				newModel.addInterface(oldModel.getInterfaces().stream().filter(interf -> interf.getId().equals(change.getReferenced().getId())).findFirst().get());
+				newModel.getInterfaces().removeIf(interf -> interf.getId().equals(change.getChangedElement().getId()));
+				newModel.addInterface(oldModel.getInterfaces().stream().filter(interf -> interf.getId().equals(change.getChangedElement().getId())).findFirst().get());
 				break;
 			case INTERFACE_REMOVED:
-				newModel.addInterface(oldModel.getInterfaces().stream().filter(interf -> interf.getId().equals(change.getReferenced().getId())).findFirst().get());
+				newModel.addInterface(oldModel.getInterfaces().stream().filter(interf -> interf.getId().equals(change.getChangedElement().getId())).findFirst().get());
 				break;
 			case PARAMETER_ADDED:
 			case PARAMETER_REMOVED:

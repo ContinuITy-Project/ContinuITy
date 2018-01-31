@@ -1,5 +1,7 @@
 package org.continuity.system.model.entities;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -11,11 +13,21 @@ public class SystemChange {
 	@JsonProperty("message")
 	private SystemChangeType type;
 
-	private ModelElementReference referenced;
+	@JsonProperty("changed-element")
+	private ModelElementReference changedElement;
+
+	@JsonProperty("changed-property")
+	@JsonInclude(Include.NON_NULL)
+	private String changedProperty;
+
+	public SystemChange(SystemChangeType type, ModelElementReference referenced, String changedProperty) {
+		this.type = type;
+		this.changedElement = referenced;
+		this.changedProperty = changedProperty;
+	}
 
 	public SystemChange(SystemChangeType type, ModelElementReference referenced) {
-		this.type = type;
-		this.referenced = referenced;
+		this(type, referenced, null);
 	}
 
 	public SystemChange(SystemChangeType type) {
@@ -35,22 +47,41 @@ public class SystemChange {
 	}
 
 	/**
-	 * Gets {@link #referenced}.
+	 * Gets {@link #changedElement}.
 	 *
-	 * @return {@link #referenced}
+	 * @return {@link #changedElement}
 	 */
-	public ModelElementReference getReferenced() {
-		return this.referenced;
+	public ModelElementReference getChangedElement() {
+		return this.changedElement;
 	}
 
 	/**
-	 * Sets {@link #referenced}.
+	 * Sets {@link #changedElement}.
 	 *
-	 * @param referenced
-	 *            New value for {@link #referenced}
+	 * @param changedElement
+	 *            New value for {@link #changedElement}
 	 */
-	public void setReferencedId(ModelElementReference referenced) {
-		this.referenced = referenced;
+	public void setChangedElement(ModelElementReference changedElement) {
+		this.changedElement = changedElement;
+	}
+
+	/**
+	 * Gets {@link #changedProperty}.
+	 *
+	 * @return {@link #changedProperty}
+	 */
+	public String getChangedProperty() {
+		return this.changedProperty;
+	}
+
+	/**
+	 * Sets {@link #changedProperty}.
+	 *
+	 * @param changedProperty
+	 *            New value for {@link #changedProperty}
+	 */
+	public void setChangedProperty(String changedProperty) {
+		this.changedProperty = changedProperty;
 	}
 
 	/**
@@ -58,7 +89,7 @@ public class SystemChange {
 	 */
 	@Override
 	public String toString() {
-		return type + ": " + referenced;
+		return type + ": " + changedElement;
 	}
 
 }
