@@ -1,12 +1,9 @@
 package org.continuity.system.annotation.validation;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.continuity.annotation.dsl.ann.Input;
 import org.continuity.annotation.dsl.ann.InterfaceAnnotation;
 import org.continuity.annotation.dsl.ann.ParameterAnnotation;
@@ -45,74 +42,8 @@ public class AnnotationValidityChecker {
 		this.newSystemModel = newSystemModel;
 	}
 
-	/**
-	 * Compares an old system model to the stored one and reports differences.
-	 *
-	 * @param oldSystemModel
-	 *            An old system model.
-	 */
-	public void compareToOldSystemModel(SystemModel oldSystemModel) {
-		final Set<ModelElementReference> visited = new HashSet<>();
-		ContinuityByClassSearcher<ServiceInterface<?>> searcher = new ContinuityByClassSearcher<>(ServiceInterface.GENERIC_TYPE, inter -> checkInterface(inter, oldSystemModel, visited));
-		searcher.visit(newSystemModel);
-
-		searcher = new ContinuityByClassSearcher<>(ServiceInterface.GENERIC_TYPE, inter -> reportRemovedInterface(inter, visited));
-		searcher.visit(oldSystemModel);
-	}
-
-	private boolean checkInterface(ServiceInterface<?> newInterf, SystemModel oldSystemModel, Set<ModelElementReference> visited) {
-		final Holder<ServiceInterface<?>> interfHolder = new Holder<>();
-		ContinuityByClassSearcher<ServiceInterface<?>> searcher = new ContinuityByClassSearcher<>(ServiceInterface.GENERIC_TYPE, oldInterf -> {
-			if (oldInterf.getId().equals(newInterf.getId())) {
-				interfHolder.element = oldInterf;
-			}
-		});
-		searcher.visit(oldSystemModel);
-
-		ModelElementReference ref = new ModelElementReference(newInterf);
-
-		if (interfHolder.element == null) {
-			reportBuilder.addViolation(new AnnotationViolation(AnnotationViolationType.INTERFACE_ADDED, ref));
-		} else {
-			ServiceInterface<?> oldInterf = interfHolder.element;
-
-			if (!oldInterf.equals(newInterf)) {
-				reportBuilder.addViolation(new AnnotationViolation(AnnotationViolationType.INTERFACE_CHANGED, ref));
-			}
-
-			checkParameters(oldInterf, newInterf);
-
-			visited.add(ref);
-		}
-
-		return true;
-	}
-
-	private boolean reportRemovedInterface(ServiceInterface<?> oldInterf, Set<ModelElementReference> visited) {
-		ModelElementReference ref = new ModelElementReference(oldInterf);
-		if (!visited.contains(ref)) {
-			reportBuilder.addViolation(new AnnotationViolation(AnnotationViolationType.INTERFACE_REMOVED, ref));
-		}
-
-		return true;
-	}
-
-	private void checkParameters(ServiceInterface<?> oldInterf, ServiceInterface<?> newInterf) {
-		if (CollectionUtils.isEqualCollection(oldInterf.getParameters(), newInterf.getParameters())) {
-			return;
-		}
-
-		for (Parameter param : newInterf.getParameters()) {
-			if (!oldInterf.getParameters().contains(param)) {
-				reportBuilder.addViolation(new AnnotationViolation(AnnotationViolationType.PARAMETER_ADDED, new ModelElementReference(param)));
-			}
-		}
-
-		for (Parameter param : oldInterf.getParameters()) {
-			if (!newInterf.getParameters().contains(param)) {
-				reportBuilder.addViolation(new AnnotationViolation(AnnotationViolationType.PARAMETER_REMOVED, new ModelElementReference(param)));
-			}
-		}
+	public void registerSystemChanges(AnnotationValidityReport systemChangeReport) {
+		reportBuilder.addViolations(systemChangeReport.getSystemChanges());
 	}
 
 	/**
@@ -190,9 +121,5 @@ public class AnnotationValidityChecker {
 	 */
 	public AnnotationValidityReport getReport() {
 		return reportBuilder.buildReport();
-	}
-
-	private static class Holder<T> {
-		T element;
 	}
 }

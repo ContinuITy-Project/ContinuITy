@@ -1,7 +1,6 @@
 package org.continuity.cli.commands;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +24,7 @@ public class WorkloadCommands {
 
 	private static final String DEFAULT_DATE = "1970-01-01T00:00:00.000Z";
 
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(CommonFormats.DATE_FORMAT);
+	private static final DateFormat DATE_FORMAT = CommonFormats.DATE_FORMAT;
 
 	@Autowired
 	private PropertiesProvider propertiesProvider;

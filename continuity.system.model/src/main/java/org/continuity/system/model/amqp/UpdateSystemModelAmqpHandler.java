@@ -72,11 +72,13 @@ public class UpdateSystemModelAmqpHandler {
 
 		if (report.changed()) {
 			try {
-				amqpTemplate.convertAndSend(RabbitMqConfig.SYSTEM_MODEL_CHANGED_EXCHANGE_NAME, link.getTag(), new SystemModelLink(applicationName, link.getTag()));
+				amqpTemplate.convertAndSend(RabbitMqConfig.SYSTEM_MODEL_CHANGED_EXCHANGE_NAME, link.getTag(), new SystemModelLink(applicationName, link.getTag(), report.getBeforeChange()));
 			} catch (AmqpException e) {
 				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", link.getTag(), RabbitMqConfig.SYSTEM_MODEL_CHANGED_EXCHANGE_NAME);
 				LOGGER.error("Exception:", e);
 			}
+		} else {
+			LOGGER.info("The new system model from link {} did not change.", link);
 		}
 	}
 }

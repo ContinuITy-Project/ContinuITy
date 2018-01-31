@@ -11,6 +11,10 @@ public class WebUtils {
 	}
 
 	public static String addProtocolIfMissing(String url) {
+		if (url == null) {
+			return null;
+		}
+
 		if (url.startsWith("http")) {
 			return url;
 		} else {

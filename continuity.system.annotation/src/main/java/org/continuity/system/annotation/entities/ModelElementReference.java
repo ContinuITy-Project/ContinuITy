@@ -1,10 +1,14 @@
 package org.continuity.system.annotation.entities;
 
+import java.io.IOException;
 import java.util.Objects;
 
 import org.apache.commons.lang.StringUtils;
 import org.continuity.annotation.dsl.ContinuityModelElement;
 import org.continuity.annotation.dsl.WeakReference;
+
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.KeyDeserializer;
 
 /**
  * @author Henning Schulz
@@ -107,6 +111,33 @@ public class ModelElementReference {
 	@Override
 	public String toString() {
 		return id + " [" + type + "]";
+	}
+
+	public static class RefKeyDeserializer extends KeyDeserializer {
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public Object deserializeKey(String key, DeserializationContext ctxt) throws IOException {
+			if (key == null) {
+				return null;
+			}
+
+			String id = null;
+			String type = null;
+
+			for (String element : key.split("\\,")) {
+				if (element.startsWith("\"id\":")) {
+					id = element.substring(6, element.length() - 1);
+				} else if (element.startsWith("\"type\":")) {
+					type = element.substring(8, element.length() - 1);
+				}
+			}
+
+			return new ModelElementReference(type, id);
+		}
+
 	}
 
 }

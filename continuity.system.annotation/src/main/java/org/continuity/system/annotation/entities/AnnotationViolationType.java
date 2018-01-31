@@ -76,7 +76,6 @@ public enum AnnotationViolationType {
 
 		private static final long serialVersionUID = -3584135264314110782L;
 
-		@SuppressWarnings("unused")
 		public JsonSerializer() {
 			this(null);
 		}
@@ -99,7 +98,6 @@ public enum AnnotationViolationType {
 
 		private static final long serialVersionUID = 163275591308563017L;
 
-		@SuppressWarnings("unused")
 		public JsonDeserializer() {
 			this(null);
 		}

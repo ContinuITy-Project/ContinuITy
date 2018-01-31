@@ -1,7 +1,6 @@
 package org.continuity.system.annotation.validation;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,7 +12,6 @@ import org.continuity.annotation.dsl.visitor.ContinuityByClassSearcher;
 import org.continuity.system.annotation.entities.AnnotationValidityReport;
 import org.continuity.system.annotation.entities.AnnotationViolation;
 import org.continuity.system.annotation.entities.AnnotationViolationType;
-import org.continuity.system.annotation.entities.ModelElementReference;
 
 /**
  * Fixes broken annotations.
@@ -44,12 +42,9 @@ public class AnnotationFixer {
 	private SystemAnnotation removeUnknownInterfaceReferences(SystemAnnotation brokenAnnotation, AnnotationValidityReport report) {
 		Set<String> removedInterfaces = new HashSet<>();
 
-		for (Map.Entry<ModelElementReference, Set<AnnotationViolation>> violationEntry : report.getViolations().entrySet()) {
-
-			for (AnnotationViolation violation : violationEntry.getValue()) {
-				if (violation.getType() == AnnotationViolationType.INTERFACE_REMOVED) {
-					removedInterfaces.add(violation.getReferenced().getId());
-				}
+		for (AnnotationViolation systemChange : report.getSystemChanges()) {
+			if (systemChange.getType() == AnnotationViolationType.INTERFACE_REMOVED) {
+				removedInterfaces.add(systemChange.getChangedElement().getId());
 			}
 		}
 

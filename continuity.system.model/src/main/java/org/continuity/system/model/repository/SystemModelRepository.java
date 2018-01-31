@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.annotation.dsl.yaml.ContinuityYamlSerializer;
+import org.continuity.commons.format.CommonFormats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,7 @@ public class SystemModelRepository {
 	private static final String SYSTEM_MODEL_FILE_NAME = "system.";
 	private static final String FILE_EXTENSION = ".yml";
 
-	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd.HH-mm-ss-SSS");
+	private static final DateFormat DATE_FORMAT = CommonFormats.DATE_FORMAT;
 
 	private final ContinuityYamlSerializer<SystemModel> serializer;
 

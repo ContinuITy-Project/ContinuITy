@@ -20,11 +20,11 @@ public class WorkloadModelStorageEntry {
 	private WorkloadModel workloadModel;
 
 	@JsonProperty("created-date")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
 	private Date createdDate;
 
 	@JsonProperty("data-timestamp")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
 	private Date dataTimestamp;
 
 	private String id;

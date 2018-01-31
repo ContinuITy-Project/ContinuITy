@@ -65,8 +65,8 @@ public class AnnotationController {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} else if (storageManager.isBroken(tag)) {
 			Map<String, String> message = new HashMap<>();
-			message.put("message", "The requested annotation is broken. Get it anyway via the redirect.");
-			message.put("redirect", applicationName + "/ann/" + tag + "/annotation/broken");
+			message.put("message", "The requested annotation is broken. Get the base via the redirect.");
+			message.put("redirect", applicationName + "/ann/" + tag + "/annotation/base");
 			return new ResponseEntity<>(message, HttpStatus.LOCKED);
 		}
 
@@ -74,23 +74,23 @@ public class AnnotationController {
 	}
 
 	/**
-	 * Retrieves the specified annotation if present, regardless if it is broken.
+	 * Retrieves the base of the specified annotation if present.
 	 *
 	 * @param tag
 	 *            The tag of the annotation.
 	 * @returnA {@link ResponseEntity} holding the annotation or specifying the error if one
-	 *          occurred. If there is no annotation for the tag, the status 404 (Not Found) will be
-	 *          returned.
+	 *          occurred. If there is no base annotation for the tag, the status 404 (Not Found)
+	 *          will be returned.
 	 */
-	@RequestMapping(path = "{tag}/annotation/broken", method = RequestMethod.GET)
-	public ResponseEntity<SystemAnnotation> getAnnotationRegardlessBroken(@PathVariable("tag") String tag) {
+	@RequestMapping(path = "{tag}/annotation/base", method = RequestMethod.GET)
+	public ResponseEntity<SystemAnnotation> getBaseAnnotation(@PathVariable("tag") String tag) {
 		SystemAnnotation annotation;
 
 		try {
-			annotation = storageManager.getAnnotation(tag);
+			annotation = storageManager.getBaseAnnotation(tag);
 		} catch (IOException e) {
-			LOGGER.error("Error during getting annotation with tag {}!", tag);
-			e.printStackTrace();
+			LOGGER.error("Error during getting base annotation with tag {}!", tag);
+			LOGGER.error("Exception:", e);
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 

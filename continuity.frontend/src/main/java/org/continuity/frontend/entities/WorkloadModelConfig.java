@@ -16,7 +16,7 @@ public class WorkloadModelConfig {
 	@JsonProperty("data")
 	private String monitoringDataLink;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
 	private Date timestamp;
 
 	private String tag;
