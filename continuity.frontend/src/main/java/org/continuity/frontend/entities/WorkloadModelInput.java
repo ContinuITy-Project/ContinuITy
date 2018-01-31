@@ -17,7 +17,7 @@ public class WorkloadModelInput {
 	private String monitoringDataLink;
 
 	@JsonProperty(value = "timestamp", required = false)
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
 	private Date timestamp = new Date();
 
 	@JsonProperty("reserved")
@@ -72,7 +72,7 @@ public class WorkloadModelInput {
 
 	/**
 	 * Gets {@link #timestamp}.
-	 * 
+	 *
 	 * @return {@link #timestamp}
 	 */
 	public Date getTimestamp() {
@@ -81,7 +81,7 @@ public class WorkloadModelInput {
 
 	/**
 	 * Sets {@link #timestamp}.
-	 * 
+	 *
 	 * @param timestamp
 	 *            New value for {@link #timestamp}
 	 */

@@ -6,11 +6,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.Date;
 
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.annotation.dsl.yaml.ContinuityYamlSerializer;
+import org.continuity.commons.format.CommonFormats;
 import org.continuity.system.model.SystemModelTestInstance;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +26,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
  */
 public class SystemModelRepositoryTest {
 
-	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-DD.HH-mm-ss-SSS");
+	private static final DateFormat DATE_FORMAT = CommonFormats.DATE_FORMAT;
 
 	private static final String TAG = "SystemModelRepositoryTest";
 

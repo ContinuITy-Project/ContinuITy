@@ -1,5 +1,9 @@
 package org.continuity.system.model.entities;
 
+import java.util.Date;
+
+import org.continuity.commons.format.CommonFormats;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -19,9 +23,9 @@ public class SystemModelLink {
 	public SystemModelLink() {
 	}
 
-	public SystemModelLink(String applicationName, String tag) {
+	public SystemModelLink(String applicationName, String tag, Date beforeDate) {
 		this.modelLink = applicationName + "/system/" + tag;
-		this.deltaLink = this.modelLink + "/delta";
+		this.deltaLink = this.modelLink + "/delta?since=" + CommonFormats.DATE_FORMAT.format(beforeDate);
 		this.tag = tag;
 	}
 
@@ -65,7 +69,7 @@ public class SystemModelLink {
 
 	/**
 	 * Gets {@link #tag}.
-	 * 
+	 *
 	 * @return {@link #tag}
 	 */
 	public String getTag() {
@@ -74,7 +78,7 @@ public class SystemModelLink {
 
 	/**
 	 * Sets {@link #tag}.
-	 * 
+	 *
 	 * @param tag
 	 *            New value for {@link #tag}
 	 */

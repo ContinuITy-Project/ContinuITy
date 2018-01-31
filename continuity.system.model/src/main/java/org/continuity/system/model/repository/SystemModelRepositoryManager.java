@@ -3,8 +3,6 @@ package org.continuity.system.model.repository;
 import java.io.IOException;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.ws.rs.NotSupportedException;
 
@@ -59,7 +57,7 @@ public class SystemModelRepositoryManager {
 	 */
 	public SystemChangeReport saveOrUpdate(String tag, SystemModel system, EnumSet<SystemChangeType> ignoredChanges) {
 		SystemChangeDetector detector = new SystemChangeDetector(system, ignoredChanges);
-		SystemChangeReport report = SystemChangeReport.empty();
+		SystemChangeReport report = SystemChangeReport.empty(system.getTimestamp());
 
 		SystemModel before = repository.readLatestBefore(tag, system.getTimestamp());
 
@@ -110,7 +108,7 @@ public class SystemModelRepositoryManager {
 	}
 
 	private SystemModel mergeIgnoredChanges(SystemModel oldModel, SystemModel newModel, SystemChangeReport report) {
-		for (SystemChange change : report.getIgnoredChanges().values().stream().flatMap(Set::stream).collect(Collectors.toSet())) {
+		for (SystemChange change : report.getIgnoredSystemChanges()) {
 			switch (change.getType()) {
 			case INTERFACE_ADDED:
 				newModel.getInterfaces().removeIf(interf -> interf.getId().equals(change.getChangedElement().getId()));
@@ -160,7 +158,7 @@ public class SystemModelRepositoryManager {
 		SystemModel latest = repository.readLatest(tag);
 
 		if (latest == null) {
-			return SystemChangeReport.empty();
+			return SystemChangeReport.empty(date);
 		}
 
 		SystemModel latestBefore = repository.readLatestBefore(tag, date);

@@ -1,5 +1,6 @@
 package org.continuity.system.annotation.validation;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,7 +31,13 @@ public class AnnotationValidationReportBuilder {
 	private final Map<ModelElementReference, AnnotationViolation> violationsPerReferenced = new HashMap<>();
 
 	public void addViolation(AnnotationViolation violation) {
-		violationsPerReferenced.put(violation.getReferenced(), violation);
+		violationsPerReferenced.put(violation.getChangedElement(), violation);
+	}
+
+	public void addViolations(Set<AnnotationViolation> violations) {
+		for (AnnotationViolation v : violations) {
+			addViolation(v);
+		}
 	}
 
 	public void addViolation(ModelElementReference affected, AnnotationViolation violation) {
@@ -88,13 +95,16 @@ public class AnnotationValidationReportBuilder {
 		Map<ModelElementReference, Set<AnnotationViolation>> report = new HashMap<>();
 		report.putAll(violations);
 
-		if (!violationsPerReferenced.isEmpty()) {
-			Set<AnnotationViolation> violationSet = new HashSet<>();
-			violationSet.addAll(violationsPerReferenced.values());
-			report.put(new ModelElementReference("", "System changes"), violationSet);
+		Set<AnnotationViolation> systemChanges;
+
+		if (violationsPerReferenced.isEmpty()) {
+			systemChanges = Collections.emptySet();
+		} else {
+			systemChanges = new HashSet<>();
+			systemChanges.addAll(violationsPerReferenced.values());
 		}
 
-		return new AnnotationValidityReport(report);
+		return new AnnotationValidityReport(systemChanges, report);
 	}
 
 }

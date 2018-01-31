@@ -39,7 +39,7 @@ public class SystemChangeDetector {
 
 	public SystemChangeDetector(SystemModel newSystemModel, EnumSet<SystemChangeType> ignoredChangeTypes) {
 		this.newSystemModel = newSystemModel;
-		this.reportBuilder = new SystemChangeReportBuilder(ignoredChangeTypes);
+		this.reportBuilder = new SystemChangeReportBuilder(ignoredChangeTypes, newSystemModel.getTimestamp());
 	}
 
 	/**
@@ -49,6 +49,8 @@ public class SystemChangeDetector {
 	 *            An old system model.
 	 */
 	public void compareTo(SystemModel oldSystemModel) {
+		reportBuilder.setBeforeChange(oldSystemModel.getTimestamp());
+
 		final Set<ModelElementReference> visited = new HashSet<>();
 		ContinuityByClassSearcher<ServiceInterface<?>> searcher = new ContinuityByClassSearcher<>(ServiceInterface.GENERIC_TYPE, inter -> checkInterface(inter, oldSystemModel, visited));
 		searcher.visit(newSystemModel);

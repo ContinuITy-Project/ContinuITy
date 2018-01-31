@@ -11,6 +11,9 @@ public class SystemAnnotationLink {
 	@JsonProperty("system-model-link")
 	private String systemModelLink;
 
+	@JsonProperty("delta-link")
+	private String deltaLink;
+
 	@JsonProperty(value = "initial-annotation-link", required = false)
 	private String annotationLink;
 
@@ -42,6 +45,25 @@ public class SystemAnnotationLink {
 	 */
 	public void setSystemModelLink(String systemModelLink) {
 		this.systemModelLink = systemModelLink;
+	}
+
+	/**
+	 * Gets {@link #deltaLink}.
+	 * 
+	 * @return {@link #deltaLink}
+	 */
+	public String getDeltaLink() {
+		return this.deltaLink;
+	}
+
+	/**
+	 * Sets {@link #deltaLink}.
+	 * 
+	 * @param deltaLink
+	 *            New value for {@link #deltaLink}
+	 */
+	public void setDeltaLink(String deltaLink) {
+		this.deltaLink = deltaLink;
 	}
 
 	/**

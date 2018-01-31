@@ -23,7 +23,7 @@ public class SystemModel extends AbstractContinuityModelElement {
 	/**
 	 * Default value is the date when the object was created.
 	 */
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH-mm-ss-SSSX")
 	private Date timestamp = new Date();
 
 	private List<ServiceInterface<?>> interfaces;

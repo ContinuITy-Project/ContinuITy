@@ -11,13 +11,14 @@ public class AnnotationViolation {
 	@JsonProperty("message")
 	private AnnotationViolationType type;
 
-	private ModelElementReference referenced;
+	@JsonProperty("changed-element")
+	private ModelElementReference changedElement;
 
 	private boolean breaking;
 
-	public AnnotationViolation(AnnotationViolationType type, ModelElementReference referenced, boolean breaking) {
+	public AnnotationViolation(AnnotationViolationType type, ModelElementReference changedElement, boolean breaking) {
 		this.type = type;
-		this.referenced = referenced;
+		this.changedElement = changedElement;
 		this.breaking = breaking;
 	}
 
@@ -42,22 +43,22 @@ public class AnnotationViolation {
 	}
 
 	/**
-	 * Gets {@link #referenced}.
+	 * Gets {@link #changedElement}.
 	 *
-	 * @return {@link #referenced}
+	 * @return {@link #changedElement}
 	 */
-	public ModelElementReference getReferenced() {
-		return this.referenced;
+	public ModelElementReference getChangedElement() {
+		return this.changedElement;
 	}
 
 	/**
-	 * Sets {@link #referenced}.
+	 * Sets {@link #changedElement}.
 	 *
-	 * @param referenced
-	 *            New value for {@link #referenced}
+	 * @param changedElement
+	 *            New value for {@link #changedElement}
 	 */
-	public void setReferencedId(ModelElementReference referenced) {
-		this.referenced = referenced;
+	public void setChangedElement(ModelElementReference changedElement) {
+		this.changedElement = changedElement;
 	}
 
 	/**

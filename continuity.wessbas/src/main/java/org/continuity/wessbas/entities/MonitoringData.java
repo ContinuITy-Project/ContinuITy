@@ -17,7 +17,7 @@ public class MonitoringData {
 	private String dataLink;
 
 	@JsonProperty(value = "timestamp", required = false)
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
 	private Date timestamp = new Date();
 
 	@JsonProperty("reserved")

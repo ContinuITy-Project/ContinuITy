@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.continuity.annotation.dsl.ann.SystemAnnotation;
 import org.continuity.annotation.dsl.system.SystemModel;
+import org.continuity.commons.utils.WebUtils;
 import org.continuity.system.annotation.config.RabbitMqConfig;
 import org.continuity.system.annotation.entities.AnnotationValidityReport;
 import org.continuity.system.annotation.entities.SystemAnnotationLink;
@@ -13,9 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -44,9 +45,11 @@ public class AnnotationAmpqHandler {
 	public void onAnnotationModelCreated(SystemAnnotationLink link) {
 		LOGGER.info("Received system annotation link: {}", link);
 
-		ResponseEntity<SystemAnnotation> annResponse = restTemplate.getForEntity(addProtocolIfMissing(link.getAnnotationLink()), SystemAnnotation.class);
-		if (annResponse.getStatusCode() != HttpStatus.OK) {
-			LOGGER.error("Could not retrieve annotation from {}. Got response code {}!", link.getAnnotationLink(), annResponse.getStatusCode());
+		ResponseEntity<SystemAnnotation> annResponse;
+		try {
+			annResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getAnnotationLink()), SystemAnnotation.class);
+		} catch (RestClientResponseException e) {
+			LOGGER.error("Received error response! Ignoring the new annotation.", e);
 			return;
 		}
 
@@ -63,15 +66,26 @@ public class AnnotationAmpqHandler {
 	public void onSystemModelCreated(SystemAnnotationLink link) {
 		LOGGER.info("Received system annotation link: {}", link);
 
-		ResponseEntity<SystemModel> systemResponse = restTemplate.getForEntity(addProtocolIfMissing(link.getSystemModelLink()), SystemModel.class);
-		if (systemResponse.getStatusCode() != HttpStatus.OK) {
-			LOGGER.error("Could not retrieve system model from {}. Got response code {}!", link.getSystemModelLink(), systemResponse.getStatusCode());
+		ResponseEntity<SystemModel> systemResponse;
+		try {
+			systemResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getSystemModelLink()), SystemModel.class);
+		} catch (RestClientResponseException e) {
+			LOGGER.error("Received error response! Ignoring the new system model.", e);
 			return;
 		}
 
+		ResponseEntity<AnnotationValidityReport> reportResponse;
 		AnnotationValidityReport report;
 		try {
-			report = storageManager.updateSystemModel(link.getTag(), systemResponse.getBody());
+			reportResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getDeltaLink()), AnnotationValidityReport.class);
+			report = reportResponse.getBody();
+		} catch (RestClientResponseException e) {
+			LOGGER.error("Received error response! Assuming there is no difference in the system models.", e);
+			report = AnnotationValidityReport.empty();
+		}
+
+		try {
+			report = storageManager.updateSystemModel(link.getTag(), systemResponse.getBody(), report);
 		} catch (IOException e) {
 			LOGGER.error("Error during storing the new system model with tag {}!", link.getTag());
 			LOGGER.error("Exception: ", e);
@@ -80,14 +94,6 @@ public class AnnotationAmpqHandler {
 
 		if (!report.isOk()) {
 			amqpTemplate.convertAndSend(RabbitMqConfig.CLIENT_MESSAGE_EXCHANGE_NAME, "report", report);
-		}
-	}
-
-	private String addProtocolIfMissing(String url) {
-		if (url.startsWith("http")) {
-			return url;
-		} else {
-			return "http://" + url;
 		}
 	}
 

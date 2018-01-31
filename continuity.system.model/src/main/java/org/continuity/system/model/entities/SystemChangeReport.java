@@ -1,18 +1,20 @@
 package org.continuity.system.model.entities;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import org.continuity.annotation.dsl.system.ServiceInterface;
 import org.continuity.annotation.dsl.system.SystemModel;
+import org.continuity.commons.format.CommonFormats;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -22,27 +24,40 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class SystemChangeReport {
 
-	// Store dates
+	@JsonInclude(Include.NON_NULL)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
+	private Date beforeChange;
+	@JsonInclude(Include.NON_NULL)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
+	private Date afterChange;
 
-	@JsonIgnore
-	private Set<SystemChange> changeSet;
-	private Map<ModelElementReference, Set<SystemChange>> changes;
+	@JsonProperty("system-changes")
+	@JsonInclude(Include.NON_EMPTY)
+	private Set<SystemChange> systemChanges;
 
-	@JsonIgnore
-	private Set<SystemChange> ignoredChangeSet;
-	@JsonInclude(value = Include.CUSTOM, valueFilter = IgnoredChangesFilter.class)
-	private Map<ModelElementReference, Set<SystemChange>> ignoredChanges;
+	@JsonProperty("ignored-system-changes")
+	@JsonInclude(Include.NON_EMPTY)
+	private Set<SystemChange> ignoredSystemChanges;
 
-	public SystemChangeReport(Set<SystemChange> changes) {
-		this(changes, Collections.emptySet());
+	/**
+	 * Sets the beforeChange date to 0.
+	 *
+	 * @param changes
+	 * @param afterChange
+	 */
+	public SystemChangeReport(Set<SystemChange> changes, Date afterChange) {
+		this(changes, Collections.emptySet(), new Date(0), afterChange);
 	}
 
-	public SystemChangeReport(Set<SystemChange> changes, Set<SystemChange> ignoredChanges) {
-		this.changeSet = changes;
-		this.changes = Collections.singletonMap(new ModelElementReference("", "System changes"), changeSet);
+	public SystemChangeReport(Set<SystemChange> changes, Date beforeChange, Date afterChange) {
+		this(changes, Collections.emptySet(), beforeChange, afterChange);
+	}
 
-		this.ignoredChangeSet = ignoredChanges;
-		this.ignoredChanges = Collections.singletonMap(new ModelElementReference("", "System changes"), ignoredChangeSet);
+	public SystemChangeReport(Set<SystemChange> changes, Set<SystemChange> ignoredChanges, Date beforeChange, Date afterChange) {
+		this.systemChanges = changes;
+		this.ignoredSystemChanges = ignoredChanges;
+		this.beforeChange = beforeChange;
+		this.afterChange = afterChange;
 	}
 
 	/**
@@ -56,8 +71,8 @@ public class SystemChangeReport {
 	 *
 	 * @return An empty report.
 	 */
-	public static SystemChangeReport empty() {
-		return new SystemChangeReport(Collections.emptySet());
+	public static SystemChangeReport empty(Date afterChange) {
+		return new SystemChangeReport(Collections.emptySet(), afterChange);
 	}
 
 	/**
@@ -75,54 +90,93 @@ public class SystemChangeReport {
 			changes.add(new SystemChange(SystemChangeType.INTERFACE_ADDED, new ModelElementReference(interf)));
 		}
 
-		return new SystemChangeReport(changes);
+		return new SystemChangeReport(changes, system.getTimestamp());
+	}
+
+
+	/**
+	 * Gets {@link #systemChanges}.
+	 *
+	 * @return {@link #systemChanges}
+	 */
+	public Set<SystemChange> getSystemChanges() {
+		return this.systemChanges;
 	}
 
 	/**
-	 * Gets {@link #changes}.
+	 * Sets {@link #systemChanges}.
 	 *
-	 * @return {@link #changes}
+	 * @param systemChanges
+	 *            New value for {@link #systemChanges}
 	 */
-	public Map<ModelElementReference, Set<SystemChange>> getChanges() {
-		return this.changes;
+	public void setSystemChanges(Set<SystemChange> systemChanges) {
+		this.systemChanges = systemChanges;
 	}
 
 	/**
-	 * Sets {@link #changes}.
+	 * Gets {@link #ignoredSystemChanges}.
 	 *
-	 * @param changes
-	 *            New value for {@link #changes}
+	 * @return {@link #ignoredSystemChanges}
 	 */
-	public void setChanges(Map<ModelElementReference, Set<SystemChange>> changes) {
-		this.changes = changes;
+	public Set<SystemChange> getIgnoredSystemChanges() {
+		return this.ignoredSystemChanges;
 	}
 
 	/**
-	 * Sets {@link #ignoredChanges}.
+	 * Sets {@link #ignoredSystemChanges}.
 	 *
-	 * @param ignoredChanges
-	 *            New value for {@link #ignoredChanges}
+	 * @param ignoredSystemChanges
+	 *            New value for {@link #ignoredSystemChanges}
 	 */
-	public void setIgnoredChanges(Map<ModelElementReference, Set<SystemChange>> ignoredChanges) {
-		this.ignoredChanges = ignoredChanges;
+	public void setIgnoredSystemChanges(Set<SystemChange> ignoredSystemChanges) {
+		this.ignoredSystemChanges = ignoredSystemChanges;
 	}
 
 	/**
-	 * Gets {@link #ignoredChanges}.
+	 * Gets {@link #beforeChange}.
 	 *
-	 * @return {@link #ignoredChanges}
+	 * @return {@link #beforeChange}
 	 */
-	public Map<ModelElementReference, Set<SystemChange>> getIgnoredChanges() {
-		return this.ignoredChanges;
+	public Date getBeforeChange() {
+		return this.beforeChange;
+	}
+
+	/**
+	 * Sets {@link #beforeChange}.
+	 *
+	 * @param beforeChange
+	 *            New value for {@link #beforeChange}
+	 */
+	public void setBeforeChange(Date beforeChange) {
+		this.beforeChange = beforeChange;
+	}
+
+	/**
+	 * Gets {@link #afterChange}.
+	 *
+	 * @return {@link #afterChange}
+	 */
+	public Date getAfterChange() {
+		return this.afterChange;
+	}
+
+	/**
+	 * Sets {@link #afterChange}.
+	 *
+	 * @param afterChange
+	 *            New value for {@link #afterChange}
+	 */
+	public void setAfterChange(Date afterChange) {
+		this.afterChange = afterChange;
 	}
 
 	@JsonIgnore
 	public boolean changed() {
-		return !changeSet.isEmpty();
+		return !systemChanges.isEmpty();
 	}
 
-	public Stream<Entry<ModelElementReference, Set<SystemChange>>> stream() {
-		return changes.entrySet().stream();
+	public Stream<SystemChange> stream() {
+		return systemChanges.stream();
 	}
 
 	/**
@@ -137,30 +191,6 @@ public class SystemChangeReport {
 			e.printStackTrace();
 			return super.toString() + " [ERROR during serialization!]";
 		}
-	}
-
-	public static class IgnoredChangesFilter {
-
-		/**
-		 * {@inheritDoc}
-		 */
-		@Override
-		public boolean equals(Object obj) {
-			if (!(obj instanceof Map)) {
-				return false;
-			}
-
-			Map<?, ?> map = (Map<?, ?>) obj;
-			ModelElementReference key = new ModelElementReference("", "System changes");
-			if ((map.size() == 1) && map.containsKey(key)) {
-				if (map.get(key) instanceof Set) {
-					return ((Set<?>) map.get(key)).isEmpty();
-				}
-			}
-
-			return false;
-		}
-
 	}
 
 }

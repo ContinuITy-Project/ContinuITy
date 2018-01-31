@@ -98,15 +98,13 @@ public class AnnotationStorage {
 	 *             If errors during writing to files occur.
 	 */
 	public boolean saveOrUpdate(String tag, SystemModel systemModel, String suffix) throws IOException {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
+		Path dirPath = getDir(tag, false, false);
 
-		if (dir.exists() && !dir.isDirectory()) {
-			LOGGER.error("{} is not a directory!", dir.getAbsolutePath());
-			throw new NotDirectoryException(dir.getAbsolutePath());
+		if (dirPath == null) {
+			throw new NotDirectoryException(storagePath.resolve(tag).toAbsolutePath().toString());
 		}
 
-		boolean created = dir.mkdirs();
+		boolean created = dirPath.toFile().mkdirs();
 
 		String filename = SYSTEM_MODEL_FILE_NAME;
 
@@ -155,15 +153,14 @@ public class AnnotationStorage {
 	 *             If errors during writing to files occur.
 	 */
 	public boolean saveOrUpdate(String tag, SystemAnnotation annotation, String suffix) throws IOException {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
+		Path dirPath = getDir(tag, false, false);
 
-		if (dir.exists() && !dir.isDirectory()) {
-			LOGGER.error("{} is not a directory!", dir.getAbsolutePath());
-			throw new NotDirectoryException(dir.getAbsolutePath());
+		if (dirPath == null) {
+			throw new NotDirectoryException(storagePath.resolve(tag).toAbsolutePath().toString());
 		}
 
-		boolean created = dir.mkdirs();
+		boolean created = dirPath.toFile().mkdirs();
+
 		ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
 
 		String filename = ANNOTATION_FILE_NAME;
@@ -209,21 +206,100 @@ public class AnnotationStorage {
 	 *             If errors during writing to files occur.
 	 */
 	public boolean saveIfNotPresent(String tag, SystemAnnotation annotation) throws IOException {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
+		return saveIfNotPresent(tag, annotation, null);
+	}
 
-		if (dir.exists() && !dir.isDirectory()) {
-			LOGGER.error("{} is not a directory!", dir.getAbsolutePath());
-			throw new NotDirectoryException(dir.getAbsolutePath());
+	/**
+	 * Stores the specified annotation with the specified tag if there is no such annotation.
+	 *
+	 * @param tag
+	 *            The tag of the annotation.
+	 * @param annotation
+	 *            The annotation
+	 * @param suffix
+	 *            A suffix to be appended to the filename.
+	 * @return {@code true} if and only if the annotation was stored.
+	 * @throws IOException
+	 *             If errors during writing to files occur.
+	 */
+	public boolean saveIfNotPresent(String tag, SystemAnnotation annotation, String suffix) throws IOException {
+		Path dirPath = getDir(tag, true, false);
+
+		if (dirPath == null) {
+			throw new NotDirectoryException(storagePath.resolve(tag).toAbsolutePath().toString());
 		}
 
-		dir.mkdirs();
-		Path annotationPath = dirPath.resolve(ANNOTATION_FILE_NAME + FILE_EXTENSION);
+		String filename = ANNOTATION_FILE_NAME;
+
+		if (suffix != null) {
+			filename += "-" + suffix;
+		}
+
+		filename += FILE_EXTENSION;
+
+		Path annotationPath = dirPath.resolve(filename);
 		boolean exists = new File(annotationPath.toString()).exists();
 
 		if (!exists) {
 			ContinuityYamlSerializer<SystemAnnotation> serializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
 			serializer.writeToYaml(annotation, annotationPath);
+
+			LOGGER.debug("Wrote annotation to {}.", dirPath);
+		} else {
+			LOGGER.debug("Did not write annotation. There was already one at {}.", dirPath);
+		}
+
+		return !exists;
+	}
+
+	/**
+	 * Stores the specified system model with the specified tag if there is no such model.
+	 *
+	 * @param tag
+	 *            The tag of the annotation.
+	 * @param system
+	 *            The system model.
+	 * @return {@code true} if and only if the system model was stored.
+	 * @throws IOException
+	 *             If errors during writing to files occur.
+	 */
+	public boolean saveIfNotPresent(String tag, SystemModel system) throws IOException {
+		return saveIfNotPresent(tag, system, null);
+	}
+
+	/**
+	 * Stores the specified system model with the specified tag if there is no such model.
+	 *
+	 * @param tag
+	 *            The tag of the annotation.
+	 * @param system
+	 *            The system model.
+	 * @param suffix
+	 *            A suffix to be appended to the filename.
+	 * @return {@code true} if and only if the system model was stored.
+	 * @throws IOException
+	 *             If errors during writing to files occur.
+	 */
+	public boolean saveIfNotPresent(String tag, SystemModel system, String suffix) throws IOException {
+		Path dirPath = getDir(tag, true, false);
+
+		if (dirPath == null) {
+			throw new NotDirectoryException(storagePath.resolve(tag).toAbsolutePath().toString());
+		}
+		String filename = SYSTEM_MODEL_FILE_NAME;
+
+		if (suffix != null) {
+			filename += "-" + suffix;
+		}
+
+		filename += FILE_EXTENSION;
+
+		Path systemPath = dirPath.resolve(filename);
+		boolean exists = new File(systemPath.toString()).exists();
+
+		if (!exists) {
+			ContinuityYamlSerializer<SystemModel> serializer = new ContinuityYamlSerializer<>(SystemModel.class);
+			serializer.writeToYaml(system, systemPath);
 
 			LOGGER.debug("Wrote annotation to {}.", dirPath);
 		} else {
@@ -243,11 +319,9 @@ public class AnnotationStorage {
 	 *             If errors during reading the model occur.
 	 */
 	public SystemModel readSystemModel(String tag, String suffix) throws IOException {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
+		Path dirPath = getDir(tag, false, true);
 
-		if (!dir.exists() || !dir.isDirectory()) {
-			LOGGER.warn("There is no directory {}!", dir.getAbsolutePath());
+		if (dirPath == null) {
 			return null;
 		}
 
@@ -297,11 +371,9 @@ public class AnnotationStorage {
 	 *             If errors during reading the annotation occur.
 	 */
 	public SystemAnnotation readAnnotation(String tag, String suffix) throws IOException {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
+		Path dirPath = getDir(tag, false, true);
 
-		if (!dir.exists() || !dir.isDirectory()) {
-			LOGGER.warn("There is no directory {}!", dir.getAbsolutePath());
+		if (dirPath == null) {
 			return null;
 		}
 
@@ -384,11 +456,10 @@ public class AnnotationStorage {
 	}
 
 	private boolean removeFileIfPresent(String tag, String filename) {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
+		Path dirPath = getDir(tag, false, true);
 
-		if (!dir.exists() || !dir.isDirectory()) {
-			LOGGER.warn("There is no directory {}!", dir.getAbsolutePath());
+		if (dirPath == null) {
+			LOGGER.warn("Could not delete file {} from tag {}.", filename, tag);
 			return false;
 		}
 
@@ -443,11 +514,9 @@ public class AnnotationStorage {
 	}
 
 	private boolean fileExists(String tag, String filename) {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
+		Path dirPath = getDir(tag, false, true);
 
-		if (!dir.exists() || !dir.isDirectory()) {
-			LOGGER.error("{} is not a directory!", dir.getAbsolutePath());
+		if (dirPath == null) {
 			return false;
 		}
 
@@ -462,15 +531,14 @@ public class AnnotationStorage {
 	 * @throws IOException
 	 */
 	public void markAsBroken(String tag) throws IOException {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
+		Path dir = getDir(tag, false, true);
 
-		if (!dir.exists() || !dir.isDirectory()) {
-			LOGGER.warn("{} is not a directory! Asked to mark as broken.", dir.getAbsolutePath());
+		if (dir == null) {
+			LOGGER.warn("Could not mark tag {} as broken!", tag);
 			return;
+		} else {
+			Files.write(dir.resolve(BROKEN_FILE_NAME), Collections.singletonList(BROKEN_CONTENT), StandardOpenOption.CREATE);
 		}
-
-		Files.write(dirPath.resolve(BROKEN_FILE_NAME), Collections.singletonList(BROKEN_CONTENT), StandardOpenOption.CREATE);
 	}
 
 	/**
@@ -481,15 +549,14 @@ public class AnnotationStorage {
 	 * @throws IOException
 	 */
 	public boolean unmarkAsBroken(String tag) throws IOException {
-		Path dirPath = storagePath.resolve(tag);
-		File dir = dirPath.toFile();
+		Path dir = getDir(tag, false, true);
 
-		if (!dir.exists() || !dir.isDirectory()) {
-			LOGGER.warn("{} is not a directory! Asked to un-mark as broken.", dir.getAbsolutePath());
+		if (dir == null) {
+			LOGGER.warn("Could not unmark tag {} as broken!", tag);
 			return false;
+		} else {
+			return Files.deleteIfExists(dir.resolve(BROKEN_FILE_NAME));
 		}
-
-		return Files.deleteIfExists(dirPath.resolve(BROKEN_FILE_NAME));
 	}
 
 	/**
@@ -499,15 +566,34 @@ public class AnnotationStorage {
 	 * @return
 	 */
 	public boolean isMarkedAsBroken(String tag) {
+		Path dir = getDir(tag, false, true);
+
+		if (dir == null) {
+			return false;
+		} else {
+			return Files.exists(dir.resolve(BROKEN_FILE_NAME));
+		}
+	}
+
+	private Path getDir(String tag, boolean createIfAbsent, boolean expectPresence) {
 		Path dirPath = storagePath.resolve(tag);
 		File dir = dirPath.toFile();
 
-		if (!dir.exists() || !dir.isDirectory()) {
-			LOGGER.warn("{} is not a directory! Asked if marked as broken.", dir.getAbsolutePath());
-			return false;
+		if (dir.exists() && !dir.isDirectory()) {
+			LOGGER.warn("{} is not a directory!", dir.getAbsolutePath());
+			return null;
 		}
 
-		return Files.exists(dirPath.resolve(BROKEN_FILE_NAME));
+		if (createIfAbsent) {
+			dir.mkdirs();
+		}
+
+		if (expectPresence && !dir.exists()) {
+			LOGGER.warn("{} does not exist!", dir.getAbsolutePath());
+			return null;
+		}
+
+		return dirPath;
 	}
 
 }
