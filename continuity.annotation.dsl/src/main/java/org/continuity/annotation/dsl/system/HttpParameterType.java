@@ -23,6 +23,16 @@ public enum HttpParameterType {
 	/**
 	 * Part of the URL.
 	 */
-	URL_PART
+	URL_PART,
+	
+	/**
+	 * A header parameter.
+	 */
+	HEADER,
+	
+	/**
+	 * Body parameter to be used in combination with {@code Content-Type} of {@code application/x-www-form-urlencoded} or {@code multipart/form-data}.
+	 */
+	FORM
 
 }

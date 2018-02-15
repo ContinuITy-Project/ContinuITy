@@ -1,7 +1,5 @@
 package org.continuity.wessbas.transform.annotation;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -11,6 +9,7 @@ import org.continuity.annotation.dsl.ann.Input;
 import org.continuity.annotation.dsl.system.HttpParameter;
 import org.continuity.annotation.dsl.system.Parameter;
 import org.continuity.annotation.dsl.system.ServiceInterface;
+import org.continuity.commons.utils.StringUtils;
 
 import m4jdsl.ApplicationModel;
 import m4jdsl.ApplicationState;
@@ -118,39 +117,13 @@ public class SessionLayerTransformer {
 
 		for (Parameter param : interf.getParameters()) {
 			HttpParameter httpParam = (HttpParameter) param;
-			param.setId(formatParameterId(interfaceName, httpParam.getName()));
+			param.setId(StringUtils.formatAsId(true, interfaceName, httpParam.getName()));
 		}
 
 		onInterfaceFound(interf);
 
 		List<Pair<Input, Parameter>> inputs = new InputDataTransformer().transform(request, interf);
 		inputs.forEach(this::onInputFound);
-	}
-
-	private String formatParameterId(String interf, String param) {
-		StringBuilder builder = new StringBuilder();
-		builder.append(interf);
-
-		String decParam;
-		try {
-			decParam = URLDecoder.decode(param, "utf-8");
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Error during ASCII replacing!", e);
-		}
-
-		String[] tokens = decParam.split("[^a-zA-Z]");
-
-		for (int i = 0; i < (tokens.length - 1); i++) {
-			if (tokens[i].length() > 0) {
-				builder.append("_");
-				builder.append(tokens[i].substring(0, 1));
-			}
-		}
-
-		builder.append("_");
-		builder.append(tokens[tokens.length - 1]);
-
-		return builder.toString();
 	}
 
 }

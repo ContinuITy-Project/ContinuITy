@@ -105,7 +105,7 @@ public class SystemModelController {
 	 * @throws URISyntaxException
 	 */
 	@RequestMapping(path = "/{tag}", method = RequestMethod.POST)
-	public ResponseEntity<String> updateSystemModel(@PathVariable String tag, @RequestBody SystemModel system) throws URISyntaxException {
+	public ResponseEntity<String> updateSystemModel(@PathVariable String tag, @RequestBody SystemModel system) {
 		SystemChangeReport report = manager.saveOrUpdate(tag, system);
 
 		if (report.changed()) {

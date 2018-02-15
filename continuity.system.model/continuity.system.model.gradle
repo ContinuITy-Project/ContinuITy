@@ -19,6 +19,11 @@ dependencies {
 	compile("io.springfox:springfox-swagger2:2.7.0")
 	compile("io.springfox:springfox-swagger-ui:2.7.0")
 	
+	compile group: 'io.swagger', name: 'swagger-parser', version: '1.0.34'
+	
+	// Required for Eclipse
+	compile("org.codehaus.groovy:groovy-all:2.4.7")
+	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 }
 
