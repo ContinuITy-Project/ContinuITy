@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -100,6 +101,49 @@ public class AnnotationController {
 	public ResponseEntity<String> updateSystemModel(@PathVariable("tag") String tag, @RequestBody SystemModel system) {
 		try {
 			return restTemplate.postForEntity("http://system-model/system/" + tag, system, String.class);
+		} catch (HttpStatusCodeException e) {
+			LOGGER.warn("Updating the system model with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
+			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+		}
+	}
+
+	/**
+	 * Updates the system model for the specified tag using the passed Open API JSON.
+	 *
+	 * @param tag
+	 *            The tag of the annotation.
+	 * @param version
+	 *            The version of the Open API specification.
+	 * @param json
+	 *            The Open API JSON.
+	 * @return A report about the changes.
+	 */
+	@RequestMapping(path = "{tag}/openapi/{version}/json/", method = RequestMethod.POST)
+	public ResponseEntity<String> updateSystemModelFromOpenApiJson(@PathVariable("tag") String tag, @PathVariable("version") String version, @RequestBody JsonNode json) {
+		try {
+			return restTemplate.postForEntity("http://system-model/openapi/" + tag + "/" + version + "/json/", json, String.class);
+		} catch (HttpStatusCodeException e) {
+			LOGGER.warn("Updating the system model with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
+			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+		}
+	}
+
+	/**
+	 * Updates the system model for the specified tag fetching the Open API specification from the
+	 * specified URL.
+	 *
+	 * @param tag
+	 *            The tag of the annotation.
+	 * @param version
+	 *            The version of the Open API specification.
+	 * @param url
+	 *            The URL to retrieve the Open API specification from.
+	 * @return A report about the changes.
+	 */
+	@RequestMapping(path = "{tag}/openapi/{version}/url/", method = RequestMethod.POST)
+	public ResponseEntity<String> updateSystemModelFromOpenApiUrl(@PathVariable("tag") String tag, @PathVariable("version") String version, @RequestBody String url) {
+		try {
+			return restTemplate.postForEntity("http://system-model/openapi/" + tag + "/" + version + "/url/", url, String.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.warn("Updating the system model with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
 			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());

@@ -27,6 +27,9 @@ dependencies {
 	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 	
+	// Required for Eclipse
+	compile("org.codehaus.groovy:groovy-all:2.4.7")
+	
 	compile fileTree(dir: 'lib', include: ['*.jar'])
 
 }

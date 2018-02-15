@@ -1,0 +1,49 @@
+---
+&Broadleaf_Heat_Clinic_API timestamp: 2018-02-16T07-42-28-451Z
+interfaces:
+- !<http>
+  &viewUpdateAccountUsingGET domain: localhost
+  port: 8080
+  path: /base/account
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  parameters:
+  - &viewUpdateAccountUsingGET_emailAddress name: emailAddress
+    parameter-type: REQ_PARAM
+  - &viewUpdateAccountUsingGET_firstName name: firstName
+    parameter-type: REQ_PARAM
+  - &viewUpdateAccountUsingGET_lastName name: lastName
+    parameter-type: REQ_PARAM
+  protocol: http
+- !<http>
+  &base_account_POST domain: localhost
+  port: 8080
+  path: /base/account
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  parameters:
+  - &base_account_POST_emailAddress name: emailAddress
+    parameter-type: REQ_PARAM
+  - &base_account_POST_firstName name: firstName
+    parameter-type: REQ_PARAM
+  - &base_account_POST_lastName name: lastName
+    parameter-type: REQ_PARAM
+  protocol: http
+- !<http>
+  &viewCustomerAddressesUsingGET domain: localhost
+  port: 8080
+  path: /base/account/{id}/addresses
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  - 'Accept: application/xml'
+  - 'Content-Type: application/xml'
+  parameters:
+  - &viewCustomerAddressesUsingGET_id name: id
+    parameter-type: URL_PART
+  protocol: HTTPS

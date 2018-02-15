@@ -28,6 +28,9 @@ dependencies {
 	compile (group: 'org.apache.jmeter', name: 'ApacheJMeter', version: '3.1') {
 		exclude group: 'org.mongodb', module: 'mongo-java-driver'
 	}
+	
+	// Required for Eclipse
+	compile("org.codehaus.groovy:groovy-all:2.4.7")
 }
 
 task copyJmeterFolders(type: Copy) {
