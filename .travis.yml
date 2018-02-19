@@ -16,24 +16,38 @@ after_success:
 
     docker tag continuityproject/system-annotation continuityproject/system-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/system-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/system-annotation continuityproject/system-annotation:latest;
+    docker push continuityproject/system-annotation:latest;
 
     docker tag continuityproject/system-model continuityproject/system-model:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/system-model:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/system-model continuityproject/system-model:latest;
+    docker push continuityproject/system-model:latest;
 
     docker tag continuityproject/wessbas continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/wessbas continuityproject/wessbas:latest;
+    docker push continuityproject/wessbas:latest;
 
     docker tag continuityproject/session-logs continuityproject/session-logs:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/session-logs:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/session-logs continuityproject/session-logs:latest;
+    docker push continuityproject/session-logs:latest;
 
     docker tag continuityproject/jmeter continuityproject/jmeter:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/jmeter:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/jmeter continuityproject/jmeter:latest;
+    docker push continuityproject/jmeter:latest;
 
     docker tag continuityproject/frontend continuityproject/frontend:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/frontend:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/frontend continuityproject/frontend:latest;
+    docker push continuityproject/frontend:latest;
 
     docker tag continuityproject/eureka continuityproject/eureka:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/eureka:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/eureka continuityproject/eureka:latest;
+    docker push continuityproject/eureka:latest;
     fi
 
 script:
