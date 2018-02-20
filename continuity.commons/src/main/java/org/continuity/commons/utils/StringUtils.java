@@ -1,11 +1,5 @@
 package org.continuity.commons.utils;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Utility class for String manipulation.
  *
@@ -13,8 +7,6 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class StringUtils {
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(StringUtils.class);
 
 	private StringUtils() {
 	}
@@ -49,16 +41,7 @@ public class StringUtils {
 	}
 
 	private static String appendAsIdPart(String string, StringBuilder builder, boolean shorten) {
-		String decString;
-		try {
-			decString = URLDecoder.decode(string, "utf-8");
-		} catch (UnsupportedEncodingException e) {
-			LOGGER.error("Error during ASCII replacing!", e);
-			LOGGER.warn("Using the string {} directly without decoding. This might lead to trouble when using it as an ID.", string);
-			decString = string;
-		}
-
-		String[] tokens = decString.split("[^a-zA-Z]");
+		String[] tokens = string.split("[^a-zA-Z0-9_]");
 
 		boolean first = true;
 
@@ -83,7 +66,7 @@ public class StringUtils {
 				builder.append("_");
 			}
 
-			builder.append(tokens[tokens.length - 1].replaceAll("[^a-zA-Z]", "_"));
+			builder.append(tokens[tokens.length - 1].replaceAll("[^a-zA-Z0-9_]", "_"));
 		}
 
 		return builder.toString();
