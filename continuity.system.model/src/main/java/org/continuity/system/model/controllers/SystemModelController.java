@@ -1,15 +1,16 @@
 package org.continuity.system.model.controllers;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.EnumSet;
 
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.commons.format.CommonFormats;
 import org.continuity.system.model.config.RabbitMqConfig;
 import org.continuity.system.model.entities.SystemChangeReport;
+import org.continuity.system.model.entities.SystemChangeType;
 import org.continuity.system.model.entities.SystemModelLink;
 import org.continuity.system.model.repository.SystemModelRepositoryManager;
 import org.slf4j.Logger;
@@ -95,18 +96,38 @@ public class SystemModelController {
 	}
 
 	/**
-	 * Stores a new system model if it differs from existing ones.
+	 * Stores a new system model if it differs from existing ones, possibly ignoring specific change
+	 * types.
 	 *
 	 * @param tag
 	 *            The tag of the system model.
 	 * @param system
 	 *            The system model to be stored.
+	 * @param ignoreInterfaceChanged
+	 *            Ignore {@link SystemChangeType#INTERFACE_CHANGED}.
+	 * @param ignoreInterfaceRemoved
+	 *            Ignore {@link SystemChangeType#INTERFACE_REMOVED}.
+	 * @param ignoreInterfaceAdded
+	 *            Ignore {@link SystemChangeType#INTERFACE_ADDED}.
+	 * @param ignoreParameterRemoved
+	 *            Ignore {@link SystemChangeType#PARAMETER_REMOVED}.
+	 * @param ignoreParameterAdded
+	 *            Ignore {@link SystemChangeType#PARAMETER_ADDED}.
 	 * @return A report holding the differences between the passed model and the next older one.
-	 * @throws URISyntaxException
 	 */
 	@RequestMapping(path = "/{tag}", method = RequestMethod.POST)
-	public ResponseEntity<String> updateSystemModel(@PathVariable String tag, @RequestBody SystemModel system) {
-		SystemChangeReport report = manager.saveOrUpdate(tag, system);
+	public ResponseEntity<String> updateSystemModel(@PathVariable String tag, @RequestBody SystemModel system,
+			@RequestParam(name = "ignore-interface-changed", defaultValue = "false") boolean ignoreInterfaceChanged,
+			@RequestParam(name = "ignore-interface-removed", defaultValue = "false") boolean ignoreInterfaceRemoved,
+			@RequestParam(name = "ignore-interface-added", defaultValue = "false") boolean ignoreInterfaceAdded,
+			@RequestParam(name = "ignore-parameter-changed", defaultValue = "false") boolean ignoreParameterChanged,
+			@RequestParam(name = "ignore-parameter-removed", defaultValue = "false") boolean ignoreParameterRemoved,
+			@RequestParam(name = "ignore-parameter-added", defaultValue = "false") boolean ignoreParameterAdded) {
+
+		EnumSet<SystemChangeType> ignoredChangeTypes = changeTypesFromBooleans(ignoreInterfaceChanged, ignoreInterfaceRemoved, ignoreInterfaceAdded, ignoreParameterChanged, ignoreParameterRemoved,
+				ignoreParameterAdded);
+
+		SystemChangeReport report = manager.saveOrUpdate(tag, system, ignoredChangeTypes);
 
 		if (report.changed()) {
 			try {
@@ -118,6 +139,52 @@ public class SystemModelController {
 		}
 
 		return ResponseEntity.ok().body(report.toString());
+	}
+
+	/**
+	 * Stores a new system model if it differs from existing ones. None of the change types will be
+	 * ignored.
+	 *
+	 * @param tag
+	 *            The tag of the system model.
+	 * @param system
+	 *            The system model to be stored.
+	 * @return A report holding the differences between the passed model and the next older one.
+	 */
+	public ResponseEntity<String> updateSystemModel(@PathVariable String tag, @RequestBody SystemModel system) {
+		return updateSystemModel(tag, system, false, false, false, false, false, false);
+	}
+
+	private EnumSet<SystemChangeType> changeTypesFromBooleans(boolean ignoreInterfaceChanged, boolean ignoreInterfaceRemoved, boolean ignoreInterfaceAdded, boolean ignoreParameterChanged,
+			boolean ignoreParameterRemoved,
+			boolean ignoreParameterAdded) {
+		EnumSet<SystemChangeType> set = EnumSet.noneOf(SystemChangeType.class);
+
+		if (ignoreInterfaceChanged) {
+			set.add(SystemChangeType.INTERFACE_CHANGED);
+		}
+
+		if (ignoreInterfaceRemoved) {
+			set.add(SystemChangeType.INTERFACE_REMOVED);
+		}
+
+		if (ignoreInterfaceAdded) {
+			set.add(SystemChangeType.INTERFACE_ADDED);
+		}
+
+		if (ignoreParameterChanged) {
+			set.add(SystemChangeType.PARAMETER_CHANGED);
+		}
+
+		if (ignoreParameterRemoved) {
+			set.add(SystemChangeType.PARAMETER_REMOVED);
+		}
+
+		if (ignoreParameterAdded) {
+			set.add(SystemChangeType.PARAMETER_ADDED);
+		}
+
+		return set;
 	}
 
 }

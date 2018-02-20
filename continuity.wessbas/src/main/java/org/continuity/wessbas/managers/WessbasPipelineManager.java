@@ -150,17 +150,48 @@ public class WessbasPipelineManager {
 	 * @return
 	 */
 	public String getSessionLog(MonitoringData data) {
-		String urlString = "";
+		String urlString = "http://session-logs?link=";
 		try {
-			urlString = "http://session-logs?link=" + URLEncoder.encode(data.getDataLink(), "UTF-8");
+			urlString += URLEncoder.encode(data.getDataLink(), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOGGER.error("Error during URL encoding!", e);
+			return null;
 		}
+
+		String tag = extractTag(data.getStorageLink());
+		if (tag != null) {
+			urlString += "&tag=" + tag;
+		}
+
 		String sessionLog = this.restTemplate.getForObject(urlString, String.class);
 
 		LOGGER.debug("Got session logs: {}", sessionLog);
 
 		return sessionLog;
 	}
+
+	private String extractTag(String storageLink) {
+		String storageId = extractStorageId(storageLink);
+
+		if (storageId == null) {
+			return null;
+		} else {
+			return storageId.substring(0, storageId.lastIndexOf("-"));
+		}
+	}
+
+	private String extractStorageId(String storageLink) {
+		String[] tokens = storageLink.split("/");
+
+		if (tokens.length != 3) {
+			LOGGER.error("Illegal storage link format: {}", storageLink);
+			return null;
+		} else if (!tokens[2].matches(".+-\\d+")) {
+			LOGGER.error("Illegal storage link format: {}", storageLink);
+			return null;
+		} else {
+			return tokens[2];
+		}
+	}
+
 }

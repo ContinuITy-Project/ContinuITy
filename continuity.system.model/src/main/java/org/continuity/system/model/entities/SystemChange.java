@@ -89,7 +89,18 @@ public class SystemChange {
 	 */
 	@Override
 	public String toString() {
-		return type + ": " + changedElement;
+		StringBuilder builder = new StringBuilder();
+		builder.append(type);
+		builder.append(":");
+		builder.append(changedElement);
+
+		if (changedProperty != null) {
+			builder.append("(");
+			builder.append(changedProperty);
+			builder.append(")");
+		}
+
+		return builder.toString();
 	}
 
 }

@@ -43,9 +43,10 @@ public class SessionLogsController {
 		try {
 			link = URLDecoder.decode(link, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOGGER.error("Could not decode URL!", e);
 		}
+
+		LOGGER.info("Creating session logs for tag {} from data {}", tag, link);
 
 		try {
 			new URL(link);
@@ -58,6 +59,7 @@ public class SessionLogsController {
 
 		String sessionLog = manager.runPipeline();
 
+		LOGGER.info("Session logs created for tag {} from data {}", tag, link);
 		return ResponseEntity.ok(sessionLog);
 	}
 }

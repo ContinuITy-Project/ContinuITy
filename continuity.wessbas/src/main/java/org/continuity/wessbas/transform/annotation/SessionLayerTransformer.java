@@ -117,7 +117,7 @@ public class SessionLayerTransformer {
 
 		for (Parameter param : interf.getParameters()) {
 			HttpParameter httpParam = (HttpParameter) param;
-			param.setId(StringUtils.formatAsId(true, interfaceName, httpParam.getName()));
+			param.setId(StringUtils.formatAsId(true, interfaceName, httpParam.getName(), httpParam.getParameterType().toString()));
 		}
 
 		onInterfaceFound(interf);

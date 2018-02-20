@@ -2,6 +2,9 @@
  */
 package org.continuity.annotation.dsl.system;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import org.continuity.annotation.dsl.AbstractContinuityModelElement;
@@ -78,6 +81,26 @@ public class HttpParameter extends AbstractContinuityModelElement implements Par
 		return result.toString();
 	}
 
+	@Override
+	public List<String> getDifferingProperties(Parameter otherParam) {
+		if (!this.getClass().getName().equals(otherParam.getClass().getName())) {
+			return Collections.singletonList("type");
+		}
+
+		HttpParameter other = (HttpParameter) otherParam;
+		List<String> differences = new ArrayList<>();
+
+		if (!Objects.equals(this.parameterType, other.parameterType)) {
+			differences.add("parameter-type");
+		}
+
+		if (!Objects.equals(this.name, other.name)) {
+			differences.add("name");
+		}
+
+		return differences;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -95,9 +118,7 @@ public class HttpParameter extends AbstractContinuityModelElement implements Par
 			return false;
 		}
 
-		HttpParameter other = (HttpParameter) obj;
-
-		return Objects.equals(this.parameterType, other.parameterType) && Objects.equals(this.name, other.name);
+		return getDifferingProperties((Parameter) obj).isEmpty();
 	}
 
 	/**

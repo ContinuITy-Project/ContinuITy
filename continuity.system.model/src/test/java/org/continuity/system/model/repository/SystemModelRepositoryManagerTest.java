@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.util.EnumSet;
 
+import org.continuity.annotation.dsl.system.HttpInterface;
+import org.continuity.annotation.dsl.system.Parameter;
 import org.continuity.annotation.dsl.system.ServiceInterface;
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.system.model.SystemModelTestInstance;
@@ -60,7 +62,8 @@ public class SystemModelRepositoryManagerTest {
 		assertThat(report.getSystemChanges().stream().filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected that the interface logout has been added").containsExactly("logout");
 		assertThat(report.getSystemChanges().stream().filter(change -> change.getType() != SystemChangeType.INTERFACE_ADDED))
-		.as("Expected that there are no other changes than the addition of logout").isEmpty();
+		.as("Expected that (except for the addition of logout) the parameters user and logoutuser are added as only changes.")
+		.extracting(SystemChange::getChangedElement).extracting(ModelElementReference::getId).containsExactlyInAnyOrder("logoutuser", "user");
 		assertThat(report.getIgnoredSystemChanges()).as("Expect the ignored changes of the report to be empty.").isEmpty();
 
 		ArgumentCaptor<SystemModel> modelCaptor = ArgumentCaptor.forClass(SystemModel.class);
@@ -74,11 +77,13 @@ public class SystemModelRepositoryManagerTest {
 		Mockito.reset(repositoryMock);
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(firstModel);
 
-		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", secondModel, EnumSet.of(SystemChangeType.INTERFACE_ADDED));
+		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", secondModel,
+				EnumSet.of(SystemChangeType.INTERFACE_ADDED, SystemChangeType.PARAMETER_ADDED, SystemChangeType.PARAMETER_REMOVED));
 		assertThat(report.getIgnoredSystemChanges().stream().filter(change -> change.getType() == SystemChangeType.INTERFACE_ADDED)).extracting(SystemChange::getChangedElement)
 		.extracting(ModelElementReference::getId).as("Expected that the interface logout has been added to the ignored changes").containsExactly("logout");
 		assertThat(report.getIgnoredSystemChanges().stream().filter(change -> change.getType() != SystemChangeType.INTERFACE_ADDED))
-		.as("Expected that there are no other ignored changes than the addition of logout").isEmpty();
+				.as("Expected that (except for the addition of logout) the parameters user and logoutuser are added as only ignored changes.").extracting(SystemChange::getChangedElement)
+				.extracting(ModelElementReference::getId).containsExactlyInAnyOrder("logoutuser", "user");
 		assertThat(report.getSystemChanges()).as("Expect the changes of the report to be empty.").isEmpty();
 
 		Mockito.verify(repositoryMock, Mockito.times(0)).save(Mockito.anyString(), Mockito.any());
@@ -156,6 +161,27 @@ public class SystemModelRepositoryManagerTest {
 		Mockito.verify(repositoryMock).save(Mockito.eq("SystemModelRepositoryManagerTest"), modelCaptor.capture());
 		assertThat(modelCaptor.getValue().getInterfaces()).extracting(ServiceInterface::getId).as("Expected the stored model to contain exactly the interfaces login and logout")
 		.containsExactlyInAnyOrder("login", "logout");
+	}
+
+	@Test
+	public void testWithIgnoredParameterRemovals() throws IOException {
+		SystemModel firstModel = SystemModelTestInstance.FIRST.get();
+		SystemModel secondModel = SystemModelTestInstance.SECOND.get();
+
+		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(firstModel);
+		SystemChangeReport report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", secondModel, EnumSet.of(SystemChangeType.PARAMETER_REMOVED));
+
+		assertThat(report.getSystemChanges()).filteredOn(change -> change.getType() == SystemChangeType.PARAMETER_ADDED).extracting(SystemChange::getChangedElement)
+		.extracting(ModelElementReference::getId).containsExactly("logoutuser");
+
+		assertThat(report.getIgnoredSystemChanges()).filteredOn(change -> change.getType() == SystemChangeType.PARAMETER_REMOVED).extracting(SystemChange::getChangedElement)
+		.extracting(ModelElementReference::getId).containsExactly("user");
+
+		ArgumentCaptor<SystemModel> modelCaptor = ArgumentCaptor.forClass(SystemModel.class);
+		Mockito.verify(repositoryMock).save(Mockito.eq("SystemModelRepositoryManagerTest"), modelCaptor.capture());
+
+		assertThat(modelCaptor.getValue().getInterfaces()).filteredOn(interf -> "login".equals(interf.getId())).extracting(interf -> (HttpInterface) interf)
+		.flatExtracting(ServiceInterface::getParameters).extracting(Parameter::getId).containsExactlyInAnyOrder("user", "logoutuser");
 	}
 
 }
