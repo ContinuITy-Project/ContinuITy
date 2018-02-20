@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import rocks.inspectit.shared.all.cmr.model.MethodIdent;
-import rocks.inspectit.shared.all.cmr.model.PlatformIdent;
 import rocks.inspectit.shared.all.communication.data.HttpTimerData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 
@@ -29,16 +27,16 @@ public class SessionConverter {
 	 * @param agent
 	 * @param invocationSequences
 	 */
-	public String convertIntoSessionLog(Map<Long, MethodIdent> methods, PlatformIdent agent, Iterable<InvocationSequenceData> invocationSequences, HashMap<Long, String> businessTransactions) {
+	public String convertIntoSessionLog(Iterable<InvocationSequenceData> invocationSequences, HashMap<Long, String> businessTransactions) {
 		HashMap<String, List<HttpTimerData>> sortedList = sortAfterSessionAndTimestamp(invocationSequences);
-		return getSessionLogsAsString(sortedList, methods, businessTransactions);
+		return getSessionLogsAsString(sortedList, businessTransactions);
 	}
 
 	/**
 	 * @param sortedList
 	 * @param methods
 	 */
-	public String getSessionLogsAsString(HashMap<String, List<HttpTimerData>> sortedList, Map<Long, MethodIdent> methods, HashMap<Long, String> businessTransactions) {
+	public String getSessionLogsAsString(HashMap<String, List<HttpTimerData>> sortedList, HashMap<Long, String> businessTransactions) {
 		boolean first = true;
 		String sessionLogs = "";
 		for (List<HttpTimerData> currentList : sortedList.values()) {
@@ -48,20 +46,26 @@ public class SessionConverter {
 			StringBuffer entry = new StringBuffer();
 			entry.append(sessionId);
 
+			boolean empty = true;
+
 			for (HttpTimerData invoc : currentList) {
 				if (businessTransactions.get(invoc.getId()) != null) {
 					entry.append(";\"").append(businessTransactions.get(invoc.getId())).append("\":").append(invoc.getTimeStamp().getTime() * 1000000).append(":")
-							.append((invoc.getTimeStamp().getTime() * 1000000) + ((long) invoc.getDuration() * 1000000));
+					.append((invoc.getTimeStamp().getTime() * 1000000) + ((long) invoc.getDuration() * 1000000));
 
 					appendHTTPInfo(entry, invoc);
+					empty = false;
 				}
 			}
-			if (first) {
-				first = false;
-			} else {
-				sessionLogs += "\n";
+
+			if (!empty) {
+				if (first) {
+					first = false;
+				} else {
+					sessionLogs += "\n";
+				}
+				sessionLogs += entry.toString();
 			}
-			sessionLogs += entry.toString();
 		}
 		return sessionLogs;
 	}
