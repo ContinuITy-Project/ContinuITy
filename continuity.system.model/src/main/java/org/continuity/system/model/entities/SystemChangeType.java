@@ -22,7 +22,8 @@ public enum SystemChangeType {
 
 	// System changed
 
-	INTERFACE_CHANGED("The interface has changed."), INTERFACE_REMOVED("The interface has been removed."), INTERFACE_ADDED("A new interface has been added."), PARAMETER_REMOVED(
+	INTERFACE_CHANGED("The interface has changed."), INTERFACE_REMOVED("The interface has been removed."), INTERFACE_ADDED("A new interface has been added."), PARAMETER_CHANGED(
+			"The parameter has changed."), PARAMETER_REMOVED(
 			"The parameter has been removed."), PARAMETER_ADDED("A new parameter has been added.");
 
 	private final String prettyName;

@@ -6,7 +6,12 @@ import java.util.EnumSet;
 
 import javax.ws.rs.NotSupportedException;
 
+import org.continuity.annotation.dsl.system.Parameter;
+import org.continuity.annotation.dsl.system.ServiceInterface;
 import org.continuity.annotation.dsl.system.SystemModel;
+import org.continuity.annotation.dsl.visitor.ContinuityByClassSearcher;
+import org.continuity.annotation.dsl.visitor.FindById;
+import org.continuity.commons.utils.DataHolder;
 import org.continuity.system.model.changes.SystemChangeDetector;
 import org.continuity.system.model.entities.SystemChange;
 import org.continuity.system.model.entities.SystemChangeReport;
@@ -114,22 +119,53 @@ public class SystemModelRepositoryManager {
 				newModel.getInterfaces().removeIf(interf -> interf.getId().equals(change.getChangedElement().getId()));
 				break;
 			case INTERFACE_CHANGED:
-				newModel.getInterfaces().removeIf(interf -> interf.getId().equals(change.getChangedElement().getId()));
-				newModel.addInterface(oldModel.getInterfaces().stream().filter(interf -> interf.getId().equals(change.getChangedElement().getId())).findFirst().get());
+				ServiceInterface<?> oldInterf = FindById.find(change.getChangedElement().getId(), ServiceInterface.GENERIC_TYPE).in(oldModel).getFound();
+				ServiceInterface<?> newInterf = FindById.find(change.getChangedElement().getId(), ServiceInterface.GENERIC_TYPE).in(newModel).getFound();
+
+				if ((oldInterf == null) || (newInterf == null)) {
+					LOGGER.error("There is a change {}, but I could not find the interface in both system versions! Ignoring the change.", change);
+				} else {
+					newInterf.clonePropertyFrom(change.getChangedProperty(), oldInterf);
+				}
 				break;
 			case INTERFACE_REMOVED:
 				newModel.addInterface(oldModel.getInterfaces().stream().filter(interf -> interf.getId().equals(change.getChangedElement().getId())).findFirst().get());
 				break;
+			case PARAMETER_CHANGED:
+				throw new NotSupportedException("Ignoring PARAMETER_CHANGED is currently not supported!");
 			case PARAMETER_ADDED:
+				throw new NotSupportedException("Ignoring PARAMETER_ADDED is currently not supported!");
 			case PARAMETER_REMOVED:
-				throw new NotSupportedException("Ignoring parameter changes is currently not supported!");
+				final DataHolder<String> idHolder = new DataHolder<>();
+				final DataHolder<Parameter> paramHolder = new DataHolder<>();
+
+				new ContinuityByClassSearcher<>(ServiceInterface.GENERIC_TYPE, interf -> {
+					final Parameter param = FindById.find(change.getChangedElement().getId(), Parameter.class).in(interf).getFound();
+
+					if (param != null) {
+						idHolder.set(interf.getId());
+						paramHolder.set(param);
+					}
+				}).visit(oldModel);
+
+				ServiceInterface<?> newInterface = FindById.find(idHolder.get(), ServiceInterface.GENERIC_TYPE).in(newModel).getFound();
+
+				if (newInterface != null) {
+					addParameter(paramHolder.get(), newInterface);
+				}
+
+				break;
 			default:
 				break;
-
 			}
 		}
 
 		return newModel;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <P extends Parameter> void addParameter(Parameter param, ServiceInterface<P> interf) {
+		interf.addParameter((P) param);
 	}
 
 	/**

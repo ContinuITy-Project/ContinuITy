@@ -17,9 +17,9 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -60,15 +60,26 @@ public class UpdateSystemModelAmqpHandler {
 	public void onModelCreated(WorkloadModelLink link) {
 		LOGGER.info("Received workload model link: {}", link);
 
-		ResponseEntity<SystemModel> systemResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getSystemModelLink()), SystemModel.class);
-		if (systemResponse.getStatusCode() != HttpStatus.OK) {
-			LOGGER.error("Could not retrieve the system model from {}. Got response code {}!", link.getSystemModelLink(), systemResponse.getStatusCode());
+		if ("INVALID".equals(link.getSystemModelLink())) {
+			LOGGER.error("Received invalid system model link: {}", link);
+			return;
+		}
+
+		ResponseEntity<SystemModel> systemResponse;
+		try {
+			systemResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getSystemModelLink()), SystemModel.class);
+		} catch (HttpStatusCodeException e) {
+			LOGGER.error("Could not retrieve the system model from {}. Got response code {}!", link.getSystemModelLink(), e.getStatusCode());
+			LOGGER.error("Exception:", e);
 			return;
 		}
 
 		SystemModel systemModel = systemResponse.getBody();
 
-		SystemChangeReport report = repositoryManager.saveOrUpdate(link.getTag(), systemModel, EnumSet.of(SystemChangeType.INTERFACE_REMOVED));
+		// A workload model may only contain parts of all available interfaces, possible parameters
+		// and possible properties (e.g., headers).
+		SystemChangeReport report = repositoryManager.saveOrUpdate(link.getTag(), systemModel,
+				EnumSet.of(SystemChangeType.INTERFACE_REMOVED, SystemChangeType.INTERFACE_CHANGED, SystemChangeType.PARAMETER_REMOVED));
 
 		if (report.changed()) {
 			try {

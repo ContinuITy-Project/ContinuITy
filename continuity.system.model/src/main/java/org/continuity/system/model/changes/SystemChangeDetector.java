@@ -2,7 +2,9 @@ package org.continuity.system.model.changes;
 
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.continuity.annotation.dsl.system.Parameter;
@@ -13,6 +15,8 @@ import org.continuity.system.model.entities.ModelElementReference;
 import org.continuity.system.model.entities.SystemChange;
 import org.continuity.system.model.entities.SystemChangeReport;
 import org.continuity.system.model.entities.SystemChangeType;
+
+import com.google.common.base.Objects;
 
 /**
  * Compares system models against a base system model. E.g., can be used to determine the
@@ -104,13 +108,22 @@ public class SystemChangeDetector {
 		}
 
 		for (Parameter param : newInterf.getParameters()) {
-			if (!oldInterf.getParameters().contains(param)) {
-				reportBuilder.addChange(new SystemChange(SystemChangeType.PARAMETER_ADDED, new ModelElementReference(param)));
+			ModelElementReference ref = new ModelElementReference(param);
+			List<Parameter> oldParams = oldInterf.getParameters().stream().filter(p -> Objects.equal(param.getId(), p.getId())).collect(Collectors.toList());
+
+			if (oldParams.isEmpty()) {
+				reportBuilder.addChange(new SystemChange(SystemChangeType.PARAMETER_ADDED, ref));
+			} else {
+				for (String changedProperty : param.getDifferingProperties(oldParams.get(0))) {
+					reportBuilder.addChange(new SystemChange(SystemChangeType.PARAMETER_CHANGED, ref, changedProperty));
+				}
 			}
 		}
 
 		for (Parameter param : oldInterf.getParameters()) {
-			if (!newInterf.getParameters().contains(param)) {
+			List<Parameter> newParams = newInterf.getParameters().stream().filter(p -> Objects.equal(param.getId(), p.getId())).collect(Collectors.toList());
+
+			if (newParams.isEmpty()) {
 				reportBuilder.addChange(new SystemChange(SystemChangeType.PARAMETER_REMOVED, new ModelElementReference(param)));
 			}
 		}

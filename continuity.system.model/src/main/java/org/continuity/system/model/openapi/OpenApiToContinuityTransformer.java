@@ -146,7 +146,7 @@ public class OpenApiToContinuityTransformer {
 		final Set<String> ids = new HashSet<>();
 
 		for (HttpParameter param : interf.getParameters()) {
-			String id = StringUtils.formatAsId(false, interf.getId(), param.getName(), param.getParameterType().toString());
+			String id = StringUtils.formatAsId(true, interf.getId(), param.getName(), param.getParameterType().toString());
 			String origId = id;
 			int i = 2;
 

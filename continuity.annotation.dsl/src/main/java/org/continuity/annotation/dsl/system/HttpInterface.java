@@ -171,6 +171,11 @@ public class HttpInterface extends AbstractContinuityModelElement implements Ser
 		return parameters;
 	}
 
+	@Override
+	public void addParameter(HttpParameter parameter) {
+		parameters.add(parameter);
+	}
+
 	/**
 	 * Sets the parameters of the interface.
 	 *
@@ -309,6 +314,46 @@ public class HttpInterface extends AbstractContinuityModelElement implements Ser
 			return DEFAULT_ENCODING.equals(obj);
 		}
 
+	}
+
+	@Override
+	public boolean clonePropertyFrom(String propertyName, ServiceInterface<?> otherInterf) {
+		if (!(otherInterf instanceof HttpInterface)) {
+			return false;
+		}
+
+		HttpInterface other = (HttpInterface) otherInterf;
+
+		switch (propertyName) {
+		case "type":
+			return false;
+		case "domain":
+			this.domain = other.domain;
+			return true;
+		case "port":
+			this.port = other.port;
+			return true;
+		case "path":
+			this.path = other.path;
+			return true;
+		case "method":
+			this.method = other.method;
+			return true;
+		case "encoding":
+			this.encoding = other.encoding;
+			return true;
+		case "protocol":
+			this.protocol = other.protocol;
+			return true;
+		case "parameters":
+			this.parameters = other.parameters;
+			return true;
+		case "headers":
+			this.headers = other.headers;
+			return true;
+		default:
+			return false;
+		}
 	}
 
 }

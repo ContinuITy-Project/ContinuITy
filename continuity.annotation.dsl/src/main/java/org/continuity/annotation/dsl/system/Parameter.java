@@ -2,6 +2,8 @@
  */
 package org.continuity.annotation.dsl.system;
 
+import java.util.List;
+
 import org.continuity.annotation.dsl.ContinuityModelElement;
 
 /**
@@ -11,4 +13,7 @@ import org.continuity.annotation.dsl.ContinuityModelElement;
  *
  */
 public interface Parameter extends ContinuityModelElement, Comparable<Parameter> {
+
+	public List<String> getDifferingProperties(Parameter other);
+
 }
