@@ -182,6 +182,7 @@ public class OpenApiToContinuityTransformer {
 		case "body":
 			return HttpParameterType.BODY;
 		default:
+			LOGGER.warn("No 'in' type defined in Open API specification. Using REQ_PARAM.");
 			return HttpParameterType.REQ_PARAM;
 
 		}
