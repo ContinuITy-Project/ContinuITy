@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.annotation.dsl.system.HttpInterface;
 import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.commons.workload.dsl.RequestUriMapper;
@@ -32,7 +33,7 @@ import rocks.inspectit.shared.all.communication.data.cmr.BusinessTransactionData
 
 /**
  *
- * @author Alper Hi, Tobias Angerstein
+ * @author Alper Hi, Tobias Angerstein, Henning Schulz
  *
  */
 public class SessionLogsPipelineManager {
@@ -111,7 +112,7 @@ public class SessionLogsPipelineManager {
 
 	private String convertInvocationSequencesIntoSessionLogs(Iterable<InvocationSequenceData> invocationSequences) {
 		SystemModel systemModel = retrieveSystemModel();
-		HashMap<Long, String> businessTransactions;
+		HashMap<Long, Pair<String, String>> businessTransactions;
 
 		if (systemModel == null) {
 			businessTransactions = getBusinessTransactionsFromInspectitBTs(invocationSequences);
@@ -138,7 +139,7 @@ public class SessionLogsPipelineManager {
 		}
 	}
 
-	private HashMap<Long, String> getBusinessTransactionsFromInspectitBTs(Iterable<InvocationSequenceData> invocationSequences) {
+	private HashMap<Long, Pair<String, String>> getBusinessTransactionsFromInspectitBTs(Iterable<InvocationSequenceData> invocationSequences) {
 		InspectITRestClient fetcher = new InspectITRestClient(CMRCONFIG);
 
 		Iterable<ApplicationData> applications = null;
@@ -166,7 +167,7 @@ public class SessionLogsPipelineManager {
 			businessTransactionsMap.put(businessTransactionId, businessTransactionName);
 		}
 
-		HashMap<Long, String> businessTransactions = new HashMap<Long, String>();
+		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<>();
 
 		for (InvocationSequenceData invoc : invocationSequences) {
 			if (businessTransactionsMap.get(invoc.getBusinessTransactionId()) != null) {
@@ -175,7 +176,7 @@ public class SessionLogsPipelineManager {
 				if (!businessTransactionName.equals("Unknown Transaction")) {
 					if ((invoc.getTimerData() != null) && (invoc.getTimerData() instanceof HttpTimerData)) {
 						HttpTimerData dat = (HttpTimerData) invoc.getTimerData();
-						businessTransactions.put(dat.getId(), businessTransactionName);
+						businessTransactions.put(dat.getId(), Pair.of(businessTransactionName, dat.getHttpInfo().getUri()));
 					}
 				}
 			}
@@ -184,8 +185,8 @@ public class SessionLogsPipelineManager {
 		return businessTransactions;
 	}
 
-	private HashMap<Long, String> getBusinessTransactionsFromSystemModel(SystemModel system, Iterable<InvocationSequenceData> invocationSequences) {
-		HashMap<Long, String> businessTransactions = new HashMap<Long, String>();
+	private HashMap<Long, Pair<String, String>> getBusinessTransactionsFromSystemModel(SystemModel system, Iterable<InvocationSequenceData> invocationSequences) {
+		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<>();
 		RequestUriMapper uriMapper = new RequestUriMapper(system);
 
 		for (InvocationSequenceData invoc : invocationSequences) {
@@ -194,7 +195,7 @@ public class SessionLogsPipelineManager {
 				HttpInterface interf = uriMapper.map(dat.getHttpInfo().getUri(), dat.getHttpInfo().getRequestMethod());
 
 				if (interf != null) {
-					businessTransactions.put(dat.getId(), interf.getId());
+					businessTransactions.put(dat.getId(), Pair.of(interf.getId(), interf.getPath()));
 				}
 			}
 		}

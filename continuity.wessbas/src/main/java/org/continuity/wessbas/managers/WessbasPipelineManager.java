@@ -165,7 +165,7 @@ public class WessbasPipelineManager {
 
 		String sessionLog = this.restTemplate.getForObject(urlString, String.class);
 
-		LOGGER.debug("Got session logs: {}", sessionLog);
+		LOGGER.info("Got session logs: {}", sessionLog);
 
 		return sessionLog;
 	}

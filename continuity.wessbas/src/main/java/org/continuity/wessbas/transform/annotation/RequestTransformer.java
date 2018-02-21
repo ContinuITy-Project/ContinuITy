@@ -66,7 +66,7 @@ public enum RequestTransformer {
 				if (KEY_BODY.equals(wParam.getName())) {
 					param.setParameterType(HttpParameterType.BODY);
 				} else if ((wParam.getName() != null) && wParam.getName().startsWith(KEY_URL_PART)) {
-					paramName = wParam.getName().split(":")[1];
+					paramName = wParam.getName().substring(KEY_URL_PART.length());
 					param.setParameterType(HttpParameterType.URL_PART);
 				} else {
 					param.setParameterType(HttpParameterType.REQ_PARAM);
@@ -83,7 +83,7 @@ public enum RequestTransformer {
 	};
 
 	private static final String KEY_BODY = "BODY";
-	private static final String KEY_URL_PART = "URL_PART:";
+	private static final String KEY_URL_PART = "URL_PART_";
 
 	private static final Map<Class<? extends Request>, RequestTransformer> transformerForType = new HashMap<>();
 

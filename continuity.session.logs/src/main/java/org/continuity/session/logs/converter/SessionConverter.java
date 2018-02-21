@@ -11,23 +11,35 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import rocks.inspectit.shared.all.communication.data.HttpTimerData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 
 /**
  * Class for converting invocation sequences into session logs.
  *
- * @author Alper Hidiroglu, Jonas Kunz, Tobias Angerstein
+ * @author Alper Hidiroglu, Jonas Kunz, Tobias Angerstein, Henning Schulz
  *
  */
 public class SessionConverter {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(SessionConverter.class);
+
 	/**
-	 * @param methods
-	 * @param agent
+	 * Converts the specified invocation sequences to session logs, naming it as specified in the
+	 * business transactions.
+	 *
 	 * @param invocationSequences
+	 *            The invocation sequences to be processed.
+	 * @param businessTransactions
+	 *            The business transactions consisting of the business transaction name and the
+	 *            abstract URI (e.g., <code>/foo/{bar}/get</code>).
+	 * @return The session logs as string.
 	 */
-	public String convertIntoSessionLog(Iterable<InvocationSequenceData> invocationSequences, HashMap<Long, String> businessTransactions) {
+	public String convertIntoSessionLog(Iterable<InvocationSequenceData> invocationSequences, HashMap<Long, Pair<String, String>> businessTransactions) {
 		HashMap<String, List<HttpTimerData>> sortedList = sortAfterSessionAndTimestamp(invocationSequences);
 		return getSessionLogsAsString(sortedList, businessTransactions);
 	}
@@ -36,7 +48,7 @@ public class SessionConverter {
 	 * @param sortedList
 	 * @param methods
 	 */
-	public String getSessionLogsAsString(HashMap<String, List<HttpTimerData>> sortedList, HashMap<Long, String> businessTransactions) {
+	public String getSessionLogsAsString(HashMap<String, List<HttpTimerData>> sortedList, HashMap<Long, Pair<String, String>> businessTransactions) {
 		boolean first = true;
 		String sessionLogs = "";
 		for (List<HttpTimerData> currentList : sortedList.values()) {
@@ -49,11 +61,13 @@ public class SessionConverter {
 			boolean empty = true;
 
 			for (HttpTimerData invoc : currentList) {
-				if (businessTransactions.get(invoc.getId()) != null) {
-					entry.append(";\"").append(businessTransactions.get(invoc.getId())).append("\":").append(invoc.getTimeStamp().getTime() * 1000000).append(":")
+				Pair<String, String> bt = businessTransactions.get(invoc.getId());
+
+				if (bt != null) {
+					entry.append(";\"").append(bt.getLeft()).append("\":").append(invoc.getTimeStamp().getTime() * 1000000).append(":")
 					.append((invoc.getTimeStamp().getTime() * 1000000) + ((long) invoc.getDuration() * 1000000));
 
-					appendHTTPInfo(entry, invoc);
+					appendHTTPInfo(entry, invoc, bt.getRight());
 					empty = false;
 				}
 			}
@@ -114,12 +128,22 @@ public class SessionConverter {
 	 * @param entry
 	 * @param seq
 	 */
-	private void appendHTTPInfo(StringBuffer entry, HttpTimerData dat) {
+	private void appendHTTPInfo(StringBuffer entry, HttpTimerData dat, String abstractUri) {
+		// TODO: Do we really need this huge try-catch block? (HSH)
 		try {
-
 			String uri = dat.getHttpInfo().getUri();
+
 			if (uri == null) {
+				LOGGER.error("Could not append HTTP info to {}: The URI was null!", entry);
 				return;
+			}
+
+			String queryString = "<no-query-string>";
+			Map<String, String[]> params = Optional.ofNullable(dat.getParameters()).map(HashMap<String, String[]>::new).orElse(new HashMap<>());
+			params.putAll(extractUriParams(uri, abstractUri));
+
+			if (params != null) {
+				queryString = encodeQueryString(params);
 			}
 
 			String host_port = dat.getHeaders().get("host");
@@ -134,13 +158,8 @@ public class SessionConverter {
 			String protocol = "HTTP/1.1";
 			String encoding = "<no-encoding>";
 			String method = dat.getHttpInfo().getRequestMethod().toUpperCase();
-			String queryString = "<no-query-string>";
-			Map<String, String[]> params = Optional.ofNullable(dat.getParameters()).map(HashMap<String, String[]>::new).orElse(new HashMap<>());
-			if (params != null) {
-				queryString = encodeQueryString(params);
-			}
 
-			entry.append(":").append(uri);
+			entry.append(":").append(abstractUri);
 			entry.append(":").append(port);
 			entry.append(":").append(host);
 			entry.append(":").append(protocol);
@@ -148,9 +167,52 @@ public class SessionConverter {
 			entry.append(":").append(queryString);
 			entry.append(":").append(encoding);
 		} catch (NoSuchElementException e) {
-			return; // do nothing, some data is missing therefore omit writing
+			LOGGER.error("Some data is missing for appending the HTTP info, therefore omit writing. Result is {}.", entry);
 		}
 
+	}
+
+	/**
+	 * Extracts the parameters from the URI. E.g., if the URI pattern is
+	 * <code>/foo/{bar}/get/{id}</code> and the actual URI is <code>/foo/abc/get/42</code>, the
+	 * extracted parameters will be <code>URL_PART_bar=abc</code> and <code>URL_PARTid=42</code>.
+	 *
+	 * @param uri
+	 *            The URI to extract the parameters from.
+	 * @param urlPattern
+	 *            The abstract URI that specifies the pattern.
+	 * @return The extracted parameters in the form <code>[URL_PART_name -> value]</code>.
+	 */
+	private Map<String, String[]> extractUriParams(String uri, String urlPattern) {
+		String[] uriParts = normalizeUri(uri).split("\\/");
+		String[] patternParts = normalizeUri(urlPattern).split("\\/");
+
+		if (uriParts.length != patternParts.length) {
+			throw new IllegalArgumentException("Uri and pattern need to have the same length, bus was '" + uri + "' and '" + urlPattern + "'!");
+		}
+
+		Map<String, String[]> params = new HashMap<>();
+
+		for (int i = 0; i < uriParts.length; i++) {
+			if (patternParts[i].matches("\\{.*\\}")) {
+				String param = patternParts[i].substring(1, patternParts[i].length() - 1);
+				params.put("URL_PART_" + param, new String[] { uriParts[i] });
+			}
+		}
+
+		return params;
+	}
+
+	private String normalizeUri(String uri) {
+		if (!uri.startsWith("/")) {
+			uri = "/" + uri;
+		}
+
+		if (!uri.endsWith("/")) {
+			uri = uri + "/";
+		}
+
+		return uri;
 	}
 
 	/**

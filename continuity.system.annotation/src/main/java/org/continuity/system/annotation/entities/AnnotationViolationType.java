@@ -23,7 +23,7 @@ public enum AnnotationViolationType {
 	// System changed
 
 	INTERFACE_CHANGED("The interface has changed.", false), INTERFACE_REMOVED("The interface has been removed.", false), INTERFACE_ADDED("A new interface has been added.",
-			false), PARAMETER_REMOVED("The parameter has been removed.", false), PARAMETER_ADDED("A new parameter has been added.", false),
+			false), PARAMETER_CHANGED("The parameter has changed.", false), PARAMETER_REMOVED("The parameter has been removed.", false), PARAMETER_ADDED("A new parameter has been added.", false),
 
 	// Annotation changed
 

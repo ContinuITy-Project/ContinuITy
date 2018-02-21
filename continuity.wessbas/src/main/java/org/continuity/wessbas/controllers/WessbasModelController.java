@@ -172,7 +172,7 @@ public class WessbasModelController {
 		String storageId = SimpleModelStorage.instance().reserve(tag);
 		String link = applicationName + "/model/" + storageId;
 
-		LOGGER.info("Reserved workload model entry {}" + storageId);
+		LOGGER.info("Reserved workload model entry {}", storageId);
 
 		return ResponseEntity.created(URI.create("http://" + link)).body(link);
 	}
