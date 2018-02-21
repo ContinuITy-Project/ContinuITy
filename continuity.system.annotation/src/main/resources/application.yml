@@ -5,6 +5,9 @@ spring:
     name: system-annotation
   rabbitmq:
     host: localhost
+    listener:
+      simple:
+        default-requeue-rejected: false
 eureka:
   client:
     serviceUrl:

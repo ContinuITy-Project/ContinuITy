@@ -5,6 +5,9 @@ spring:
     name: wessbas
   rabbitmq:
     host: localhost
+    listener:
+      simple:
+        default-requeue-rejected: false
 eureka:
   client:
     serviceUrl:
