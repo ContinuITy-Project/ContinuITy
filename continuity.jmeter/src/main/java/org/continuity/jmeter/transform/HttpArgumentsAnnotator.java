@@ -1,5 +1,6 @@
 package org.continuity.jmeter.transform;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
@@ -24,6 +25,8 @@ import org.continuity.annotation.dsl.system.SystemModel;
  */
 public class HttpArgumentsAnnotator {
 
+	private static final String KEY_URL_PART = "URL_PART_";
+
 	private final SystemModel system;
 
 	private final SystemAnnotation systemAnnotation;
@@ -38,20 +41,50 @@ public class HttpArgumentsAnnotator {
 
 	public void annotateArguments(HTTPSamplerProxy sampler) {
 		PropertyIterator it = sampler.getArguments().getArguments().iterator();
+		List<HTTPArgument> urlPartArguments = new ArrayList<>();
 
 		while (it.hasNext()) {
 			JMeterProperty prop = it.next();
 			if ((prop.getObjectValue() instanceof HTTPArgument)) {
 				HTTPArgument arg = (HTTPArgument) prop.getObjectValue();
-				annotateArg(arg);
+
+				if (arg.getName().startsWith(KEY_URL_PART)) {
+					urlPartArguments.add(arg);
+				} else {
+					annotateArg(arg);
+				}
 			}
 		}
+
+		String path = sampler.getPath();
+
+		for (HTTPArgument arg : urlPartArguments) {
+			sampler.getArguments().removeArgument(arg);
+
+			String paramName = arg.getName().substring(KEY_URL_PART.length());
+			ParameterAnnotation paramAnnotation = findAnnotationForParameterName(paramName);
+			path = path.replace("{" + paramName + "}", getInputString(paramAnnotation.getInput()));
+		}
+
+		sampler.setPath(path);
 	}
 
 	private void annotateArg(HTTPArgument arg) {
 		overrideProperties(arg, systemAnnotation.getOverrides());
 		overrideProperties(arg, interfAnnotation.getOverrides());
 
+		ParameterAnnotation paramAnnotation = findAnnotationForParameterName(arg.getName());
+
+		if (paramAnnotation != null) {
+			overrideProperties(arg, paramAnnotation.getOverrides());
+
+			// TODO: clear all arguments and create all from scratch based on
+			// ParameterAnnotations and overrides
+			arg.setValue(getInputString(paramAnnotation.getInput()));
+		}
+	}
+
+	private ParameterAnnotation findAnnotationForParameterName(String paramName) {
 		for (ParameterAnnotation paramAnnotation : interfAnnotation.getParameterAnnotations()) {
 			Parameter param = paramAnnotation.getAnnotatedParameter().resolve(system);
 			if (!(param instanceof HttpParameter)) {
@@ -60,14 +93,12 @@ public class HttpArgumentsAnnotator {
 
 			HttpParameter httpParam = (HttpParameter) param;
 
-			if (arg.getName().equals(httpParam.getName())) {
-				overrideProperties(arg, paramAnnotation.getOverrides());
-
-				// TODO: clear all arguments and create all from scratch based on
-				// ParameterAnnotations and overrides
-				addInput(arg, paramAnnotation.getInput());
+			if (paramName.equals(httpParam.getName())) {
+				return paramAnnotation;
 			}
 		}
+
+		return null;
 	}
 
 	private <T extends PropertyOverrideKey.Any> void overrideProperties(HTTPArgument arg, List<PropertyOverride<T>> overrides) {
@@ -86,19 +117,21 @@ public class HttpArgumentsAnnotator {
 		}
 	}
 
-	private void addInput(HTTPArgument arg, Input input) {
+	private String getInputString(Input input) {
 		if (input instanceof ExtractedInput) {
-			arg.setValue("${" + input.getId() + "}");
+			return "${" + input.getId() + "}";
 		} else if (input instanceof DirectDataInput) {
 			DirectDataInput dataInput = (DirectDataInput) input;
 
 			if (dataInput.getData().size() > 1) {
-				arg.setValue("${__GetRandomString(${" + input.getId() + "},;)}");
+				return "${__GetRandomString(${" + input.getId() + "},;)}";
 			} else if (dataInput.getData().size() == 1) {
-				arg.setValue(dataInput.getData().get(0));
+				return dataInput.getData().get(0);
+			} else {
+				return "";
 			}
 		} else {
-			throw new RuntimeException("Input " + input.getClass().getSimpleName() + " is not yet implemented for JMeter!");
+			throw new RuntimeException("Input " + input.getClass().getSimpleName() + " is not implemented for JMeter yet!");
 		}
 	}
 

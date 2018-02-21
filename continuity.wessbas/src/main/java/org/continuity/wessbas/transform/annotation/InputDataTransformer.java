@@ -9,6 +9,7 @@ import org.continuity.annotation.dsl.ann.DirectDataInput;
 import org.continuity.annotation.dsl.ann.Input;
 import org.continuity.annotation.dsl.system.HttpInterface;
 import org.continuity.annotation.dsl.system.HttpParameter;
+import org.continuity.annotation.dsl.system.HttpParameterType;
 import org.continuity.annotation.dsl.system.Parameter;
 import org.continuity.annotation.dsl.system.ServiceInterface;
 
@@ -31,8 +32,13 @@ public class InputDataTransformer {
 
 		for (m4jdsl.Parameter wParam : request.getParameters()) {
 			for (HttpParameter param : httpInterf.getParameters()) {
-				// TODO: consider BODY and URL_PART, too
-				if (param.getName().equals(wParam.getName())) {
+				String paramKey = param.getName();
+
+				if (param.getParameterType() == HttpParameterType.URL_PART) {
+					paramKey = "URL_PART_" + paramKey;
+				}
+
+				if (paramKey.equals(wParam.getName())) {
 					DirectDataInput input = new DirectDataInput();
 					input.setId("Input_" + param.getId());
 					if (wParam.getValue() != null) {
