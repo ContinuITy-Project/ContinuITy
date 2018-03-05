@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.continuity.annotation.dsl.ContinuityModelElement;
+import org.continuity.annotation.dsl.ann.CounterInput;
 import org.continuity.annotation.dsl.ann.DataInput;
 import org.continuity.annotation.dsl.ann.ExtractedInput;
 import org.continuity.annotation.dsl.ann.InterfaceAnnotation;
@@ -83,7 +84,7 @@ public enum NestedElementExtractor {
 	/**
 	 * For all other elements that do not have nested elements.
 	 */
-	EMPTY(Parameter.class, ParameterAnnotation.class, DataInput.class, RegExExtraction.class) {
+	EMPTY(Parameter.class, ParameterAnnotation.class, DataInput.class, CounterInput.class, RegExExtraction.class) {
 		@Override
 		protected Collection<ContinuityModelElement> extractNestedElements(ContinuityModelElement element) {
 			return Collections.emptyList();
