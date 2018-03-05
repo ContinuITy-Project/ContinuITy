@@ -10,6 +10,7 @@ import org.continuity.annotation.dsl.system.SystemModel;
 import org.continuity.annotation.dsl.yaml.ContinuityYamlSerializer;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.commons.workload.dsl.AnnotationExtractor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.shell.standard.ShellComponent;
@@ -116,6 +117,25 @@ public class AnnotationCommands {
 		} else {
 			return "Successfully uploaded the system with tag " + tag + ". Report is: " + response.getBody();
 		}
+	}
+
+	@ShellMethod(key = { "init-annotation", "init-ann" }, value = "Initializes an annotation for the stored system model with the specified tag.")
+	public String initAnnotation(String tag) throws JsonParseException, JsonMappingException, IOException {
+		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		File systemFile = new File(workingDir + "/system-model-" + tag + ".yml");
+		File annFile = new File(workingDir + "/annotation-" + tag + ".yml");
+
+		ContinuityYamlSerializer<SystemModel> systemSerializer = new ContinuityYamlSerializer<>(SystemModel.class);
+		SystemModel system = systemSerializer.readFromYaml(systemFile);
+		SystemAnnotation annotation = new AnnotationExtractor().extractAnnotation(system);
+
+		ContinuityYamlSerializer<SystemAnnotation> annSerializer = new ContinuityYamlSerializer<>(SystemAnnotation.class);
+		annSerializer.writeToYaml(annotation, annFile);
+
+		Desktop.getDesktop().open(systemFile);
+		Desktop.getDesktop().open(annFile);
+
+		return "Initialized and opened the annotation.";
 	}
 
 }
