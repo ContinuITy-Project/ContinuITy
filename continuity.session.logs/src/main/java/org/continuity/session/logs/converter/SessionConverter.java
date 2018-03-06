@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -51,10 +52,10 @@ public class SessionConverter {
 	public String getSessionLogsAsString(HashMap<String, List<HttpTimerData>> sortedList, HashMap<Long, Pair<String, String>> businessTransactions) {
 		boolean first = true;
 		String sessionLogs = "";
-		for (List<HttpTimerData> currentList : sortedList.values()) {
+		for (Entry<String, List<HttpTimerData>> currentEntry : sortedList.entrySet()) {
 
-			HttpTimerData firstElement = currentList.get(0);
-			String sessionId = extractSessionIdFromCookies(firstElement);
+			List<HttpTimerData> currentList = currentEntry.getValue();
+			String sessionId = currentEntry.getKey();
 			StringBuffer entry = new StringBuffer();
 			entry.append(sessionId);
 
@@ -98,9 +99,7 @@ public class SessionConverter {
 		for (InvocationSequenceData invoc : invocationSequences) {
 			if ((invoc.getTimerData() != null) && (invoc.getTimerData() instanceof HttpTimerData)) {
 				HttpTimerData dat = (HttpTimerData) invoc.getTimerData();
-				if (extractSessionIdFromCookies(dat) != null) {
-					sortedList.add(dat);
-				}
+				sortedList.add(dat);
 			}
 		}
 
@@ -111,15 +110,41 @@ public class SessionConverter {
 			}
 		});
 
+		String firstSessionId = null;
+		int firstSessionIdIndex = 0;
+
 		for (HttpTimerData invoc : sortedList) {
-			String sessionId = extractSessionIdFromCookies(invoc);
-			if (sortedSessionsInvoc.containsKey(sessionId)) {
-				sortedSessionsInvoc.get(sessionId).add(invoc);
-			} else {
-				List<HttpTimerData> newList = new ArrayList<HttpTimerData>();
-				newList.add(invoc);
-				sortedSessionsInvoc.put(sessionId, newList);
+			firstSessionId = extractSessionIdFromCookies(invoc);
+
+			if (firstSessionId != null) {
+				break;
 			}
+
+			firstSessionIdIndex++;
+		}
+
+		int i = 0;
+
+		for (HttpTimerData invoc : sortedList) {
+			String sessionId;
+
+			if (i < firstSessionIdIndex) {
+				sessionId = firstSessionId;
+			} else {
+				sessionId = extractSessionIdFromCookies(invoc);
+			}
+
+			if (sessionId != null) {
+				if (sortedSessionsInvoc.containsKey(sessionId)) {
+					sortedSessionsInvoc.get(sessionId).add(invoc);
+				} else {
+					List<HttpTimerData> newList = new ArrayList<HttpTimerData>();
+					newList.add(invoc);
+					sortedSessionsInvoc.put(sessionId, newList);
+				}
+			}
+
+			i++;
 		}
 		return sortedSessionsInvoc;
 	}
