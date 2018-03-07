@@ -60,16 +60,21 @@ public class SessionConverter {
 			entry.append(sessionId);
 
 			boolean empty = true;
+			boolean lastIsRedirect = false;
 
 			for (HttpTimerData invoc : currentList) {
 				Pair<String, String> bt = businessTransactions.get(invoc.getId());
 
-				if (bt != null) {
-					entry.append(";\"").append(bt.getLeft()).append("\":").append(invoc.getTimeStamp().getTime() * 1000000).append(":")
-					.append((invoc.getTimeStamp().getTime() * 1000000) + ((long) invoc.getDuration() * 1000000));
+				if ((bt != null)) {
+					if (!lastIsRedirect) {
+						entry.append(";\"").append(bt.getLeft()).append("\":").append(invoc.getTimeStamp().getTime() * 1000000).append(":")
+								.append((invoc.getTimeStamp().getTime() * 1000000) + ((long) invoc.getDuration() * 1000000));
 
-					appendHTTPInfo(entry, invoc, bt.getRight());
-					empty = false;
+						appendHTTPInfo(entry, invoc, bt.getRight());
+						empty = false;
+					}
+
+					lastIsRedirect = (invoc.getHttpResponseStatus() / 100) == 3;
 				}
 			}
 
