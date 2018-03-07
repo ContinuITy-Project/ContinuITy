@@ -7,6 +7,7 @@ import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jmeter.protocol.http.util.HTTPArgument;
 import org.apache.jmeter.testelement.property.JMeterProperty;
 import org.apache.jmeter.testelement.property.PropertyIterator;
+import org.continuity.annotation.dsl.ann.CounterInput;
 import org.continuity.annotation.dsl.ann.DirectDataInput;
 import org.continuity.annotation.dsl.ann.ExtractedInput;
 import org.continuity.annotation.dsl.ann.Input;
@@ -118,7 +119,7 @@ public class HttpArgumentsAnnotator {
 	}
 
 	private String getInputString(Input input) {
-		if (input instanceof ExtractedInput) {
+		if ((input instanceof ExtractedInput) || (input instanceof CounterInput)) {
 			return "${" + input.getId() + "}";
 		} else if (input instanceof DirectDataInput) {
 			DirectDataInput dataInput = (DirectDataInput) input;

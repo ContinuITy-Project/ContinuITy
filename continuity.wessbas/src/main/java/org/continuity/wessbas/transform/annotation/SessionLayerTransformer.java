@@ -1,7 +1,9 @@
 package org.continuity.wessbas.transform.annotation;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.apache.commons.math3.util.Pair;
@@ -37,6 +39,8 @@ public class SessionLayerTransformer {
 	private List<Consumer<ServiceInterface<?>>> interfaceListeners;
 
 	private List<Consumer<Pair<Input, Parameter>>> inputListeners;
+
+	private final Set<String> usedIds = new HashSet<>();
 
 	/**
 	 * Creates a new SessionLayerTransformer for the specified {@link ApplicationModel}.
@@ -117,13 +121,28 @@ public class SessionLayerTransformer {
 
 		for (Parameter param : interf.getParameters()) {
 			HttpParameter httpParam = (HttpParameter) param;
-			param.setId(StringUtils.formatAsId(true, interfaceName, httpParam.getName(), httpParam.getParameterType().toString()));
+			param.setId(getNewParameterId(interfaceName, httpParam));
 		}
 
 		onInterfaceFound(interf);
 
 		List<Pair<Input, Parameter>> inputs = new InputDataTransformer().transform(request, interf);
 		inputs.forEach(this::onInputFound);
+	}
+
+	private String getNewParameterId(String interfaceName, HttpParameter httpParam) {
+		String id = StringUtils.formatAsId(true, interfaceName, httpParam.getName(), httpParam.getParameterType().toString());
+
+		String currId = id;
+		int i = 1;
+
+		while (usedIds.contains(currId)) {
+			currId = id + "_" + ++i;
+		}
+
+		usedIds.add(currId);
+
+		return currId;
 	}
 
 }
