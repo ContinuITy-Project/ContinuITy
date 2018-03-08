@@ -23,6 +23,7 @@ public class JMeterAnnotator {
 		new UserDefinedVarsAnnotator(annotation).annotateVariables(testPlan);
 		new HttpSamplersAnnotator(system, annotation).annotateSamplers(testPlan);
 		new CounterAnnotator(annotation).addCounters(testPlan);
+		new HeadersAnnotator(system, annotation).annotateSamplers(testPlan);
 	}
 
 }
