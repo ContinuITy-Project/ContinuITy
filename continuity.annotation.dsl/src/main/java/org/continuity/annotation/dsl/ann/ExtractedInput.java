@@ -7,7 +7,10 @@ import java.util.List;
 
 import org.continuity.annotation.dsl.AbstractContinuityModelElement;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Represents an input that is to be extracted from the responses of one or several interfaces via
@@ -16,10 +19,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "fallback", "extractions" })
 public class ExtractedInput extends AbstractContinuityModelElement implements Input {
 
 	@JsonProperty(value = "extractions")
 	private List<RegExExtraction> extractions;
+
+	@JsonProperty(value = "initial")
+	@JsonInclude(value = Include.NON_NULL)
+	private String initialValue;
 
 	/**
 	 * Returns the RegEx extractions.
@@ -42,6 +50,14 @@ public class ExtractedInput extends AbstractContinuityModelElement implements In
 	 */
 	public void setExtractions(List<RegExExtraction> extractions) {
 		this.extractions = extractions;
+	}
+
+	public String getInitialValue() {
+		return initialValue;
+	}
+
+	public void setInitialValue(String initialValue) {
+		this.initialValue = initialValue;
 	}
 
 	@Override

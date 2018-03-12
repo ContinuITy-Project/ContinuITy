@@ -6,6 +6,7 @@ import org.apache.jmeter.config.Arguments;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
 import org.continuity.annotation.dsl.ann.DirectDataInput;
+import org.continuity.annotation.dsl.ann.ExtractedInput;
 import org.continuity.annotation.dsl.ann.SystemAnnotation;
 
 /**
@@ -34,6 +35,7 @@ public class UserDefinedVarsAnnotator {
 		for (Arguments args : search.getSearchResults()) {
 			args.getArguments().clear();
 			addDirectDataInputs(args);
+			addExtractedInputsInitialValues(args);
 		}
 	}
 
@@ -47,6 +49,14 @@ public class UserDefinedVarsAnnotator {
 				}
 
 				args.addArgument(input.getId(), builder.toString());
+			}
+		});
+	}
+
+	private void addExtractedInputsInitialValues(final Arguments args) {
+		systemAnnotation.getInputs().stream().filter(input -> input instanceof ExtractedInput).map(input -> (ExtractedInput) input).forEach(input -> {
+			if (input.getInitialValue() != null) {
+				args.addArgument(input.getId(), input.getInitialValue());
 			}
 		});
 	}
