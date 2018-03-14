@@ -83,9 +83,8 @@ public class WessbasPipelineManager {
 
 		try {
 			workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog);
-		} catch (SecurityException | IOException | GeneratorException e) {
-			LOGGER.error("Could not create a WESSBAS workload model!");
-			e.printStackTrace();
+		} catch (Exception e) {
+			LOGGER.error("Could not create a WESSBAS workload model!", e);
 			workloadModel = null;
 		}
 
