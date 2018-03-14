@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public class SessionConverter {
 	 * @return The session logs as string.
 	 */
 	public String convertIntoSessionLog(Iterable<InvocationSequenceData> invocationSequences, HashMap<Long, Pair<String, String>> businessTransactions) {
-		HashMap<String, List<HttpTimerData>> sortedList = sortAfterSessionAndTimestamp(invocationSequences);
+		HashMap<String, List<HttpTimerData>> sortedList = sortBySessionAndTimestamp(invocationSequences);
 		return getSessionLogsAsString(sortedList, businessTransactions);
 	}
 
@@ -94,7 +95,7 @@ public class SessionConverter {
 	 * @param invocationSequences
 	 * @return
 	 */
-	public HashMap<String, List<HttpTimerData>> sortAfterSessionAndTimestamp(Iterable<InvocationSequenceData> invocationSequences) {
+	public HashMap<String, List<HttpTimerData>> sortBySessionAndTimestamp(Iterable<InvocationSequenceData> invocationSequences) {
 
 		HashMap<String, List<HttpTimerData>> sortedSessionsInvoc = new HashMap<String, List<HttpTimerData>>();
 
@@ -111,7 +112,13 @@ public class SessionConverter {
 		Collections.sort(sortedList, new Comparator<HttpTimerData>() {
 			@Override
 			public int compare(HttpTimerData data1, HttpTimerData data2) {
-				return data1.getTimeStamp().getTime() > data2.getTimeStamp().getTime() ? 1 : (data1.getTimeStamp().getTime() < data2.getTimeStamp().getTime()) ? -1 : 0;
+				int startTimeComparison = Long.compare(data1.getTimeStamp().getTime(), data2.getTimeStamp().getTime());
+
+				if (startTimeComparison != 0) {
+					return startTimeComparison;
+				} else {
+					return Double.compare(data1.getDuration(), data2.getDuration());
+				}
 			}
 		});
 
@@ -170,6 +177,13 @@ public class SessionConverter {
 
 			String queryString = "<no-query-string>";
 			Map<String, String[]> params = Optional.ofNullable(dat.getParameters()).map(HashMap<String, String[]>::new).orElse(new HashMap<>());
+
+			// TODO: This is a workaround because the session logs do not support parameters without
+			// values (e.g., host/login?logout) and Wessbas fails if it is transformed to
+			// host/login=logout=
+			params = params.entrySet().stream().filter(e -> (e.getValue() != null) && (e.getValue().length > 0) && !"".equals(e.getValue()[0]))
+					.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
 			params.putAll(extractUriParams(uri, abstractUri));
 
 			if (params != null) {
