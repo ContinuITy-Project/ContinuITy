@@ -126,7 +126,7 @@ public class TestPlanAmqpHandler {
 
 					if ((runningTests.get(testId) == null) || !runningTests.get(testId)) {
 						LOGGER.warn("The test {} has been aborted with force!", testId);
-						appendix = "\nWARNING: The test has been aborted with force!";
+						appendix = "\nWARNING: The test has been aborted with force!\n";
 					}
 
 					runningTests.put(testId, false);
@@ -152,7 +152,7 @@ public class TestPlanAmqpHandler {
 
 		private StopEngineAfterTime(int testId, long duration) {
 			this.testId = testId;
-			this.endTime = System.currentTimeMillis() + Math.min(1800000, Math.max(300000, 2 * duration));
+			this.endTime = System.currentTimeMillis() + Math.min((duration * 1000) + 1800000, Math.max(300000, 2000 * duration));
 		}
 
 		@Override
