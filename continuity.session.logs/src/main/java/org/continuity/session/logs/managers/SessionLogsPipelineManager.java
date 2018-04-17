@@ -194,7 +194,7 @@ public class SessionLogsPipelineManager {
 				HttpTimerData dat = (HttpTimerData) invoc.getTimerData();
 				HttpInterface interf = uriMapper.map(dat.getHttpInfo().getUri(), dat.getHttpInfo().getRequestMethod());
 
-				if (interf != null) {
+				if ((interf != null) && interf.getDomain().equals(dat.getHttpInfo().getServerName()) && interf.getPort().equals(Integer.toString(dat.getHttpInfo().getServerPort()))) {
 					businessTransactions.put(dat.getId(), Pair.of(interf.getId(), interf.getPath()));
 				}
 			}
