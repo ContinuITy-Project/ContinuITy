@@ -33,7 +33,7 @@ public class WessbasPipelineTest {
 		mData = new MonitoringData();
 		mData.setStorageLink("wessbas/model/test-1");
 		mData.setDataLink("some/link");
-		String urlString = "http://session-logs?link=" + URLEncoder.encode(mData.getDataLink(), "UTF-8") + "&tag=test";
+		String urlString = "http://session-logs/?link=" + URLEncoder.encode(mData.getDataLink(), "UTF-8") + "&tag=test";
 		restMock = Mockito.mock(RestTemplate.class);
 		String result = "DAC0E7CAC657D59A1328DEAC1F1F9472;\"ShopGET\":1511777946984000000:1511777947595000000:/dvdstore/browse:8080:localhost:HTTP/1.1:GET:conversationId=1:<no-encoding>;\"HomeGET\":1511777963338000000:1511777963415000000:/dvdstore/home:8080:localhost:HTTP/1.1:GET:<no-query-string>:<no-encoding>;\"ShopGET\":1511779159657000000:1511779159856000000:/dvdstore/browse:8080:localhost:HTTP/1.1:GET:<no-query-string>:<no-encoding>";
 		Mockito.when(restMock.getForObject(urlString, String.class)).thenReturn(result);

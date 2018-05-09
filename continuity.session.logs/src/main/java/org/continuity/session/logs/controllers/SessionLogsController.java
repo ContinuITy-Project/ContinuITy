@@ -1,5 +1,7 @@
 package org.continuity.session.logs.controllers;
 
+import static org.continuity.api.rest.RestApi.SessionLogs.Paths.GET;
+
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -38,7 +40,7 @@ public class SessionLogsController {
 	 * @param link
 	 * @return
 	 */
-	@RequestMapping(value = "/", method = RequestMethod.GET)
+	@RequestMapping(value = GET, method = RequestMethod.GET)
 	public ResponseEntity<String> getSessionLogsFromLink(@RequestParam String link, @RequestParam(required = false) String tag) {
 		try {
 			link = URLDecoder.decode(link, "UTF-8");

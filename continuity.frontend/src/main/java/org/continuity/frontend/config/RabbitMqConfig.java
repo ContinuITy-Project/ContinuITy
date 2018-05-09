@@ -1,6 +1,6 @@
 package org.continuity.frontend.config;
 
-import org.continuity.commons.amqp.DeadLetterSpecification;
+import org.continuity.api.amqp.AmqpApi;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -22,38 +22,17 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMqConfig {
 
-	public static final String MONITORING_DATA_AVAILABLE_EXCHANGE_NAME = "continuity.workloadmodel.dataavailable";
+	private static final String SERVICE_NAME = "frontend";
 
-	public static final String WORKLADO_ANNOTATION_MESSAGE_EXCHANGE_NAME = "continuity.workload.annotation.message";
+	public static final String IDPA_ANNOTATION_MESSAGE_AVAILABLE_QUEUE_NAME = AmqpApi.IdpaAnnotation.MESSAGE_AVAILABLE.deriveQueueName(SERVICE_NAME);
 
-	public static final String WORKLADO_ANNOTATION_MESSAGE_QUEUE_NAME = "continuity.frontend.workload.annotation.message";
+	public static final String IDPA_ANNOTATION_MESSAGE_AVAILABLE_ROUTING_KEY = AmqpApi.IdpaAnnotation.MESSAGE_AVAILABLE.formatRoutingKey().of("report");
 
-	public static final String WORKLADO_ANNOTATION_MESSAGE_ROUTING_KEY = "report";
+	public static final String LOAD_TEST_REPORT_AVAILABLE_QUEUE_NAME = AmqpApi.LoadTest.REPORT_AVAILABLE.deriveQueueName(SERVICE_NAME);
 
-	public static final String PROVIDE_REPORT_EXCHANGE_NAME = "continuity.loadtest.report.provider";
+	public static final String LOAD_TEST_REPORT_AVAILABLE_ROUTING_KEY = AmqpApi.LoadTest.REPORT_AVAILABLE.formatRoutingKey().of("jmeter");
 
-	public static final String PROVIDE_REPORT_QUEUE_NAME = "continuity.jmeter.loadtest.report.provider";
-
-	public static final String PROVIDE_REPORT_ROUTING_KEY = "jmeter";
-
-	public static final String DEAD_LETTER_QUEUE_NAME = "continuity.frontend.dead.letter";
-
-	public static final String DEAD_LETTER_ROUTING_KEY = "frontend";
-
-	/**
-	 * routing keys: [workload-type].[load-test-type], e.g., wessbas.benchflow
-	 */
-	public static final String CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME = "continuity.loadtest.createandexecute";
-
-	/**
-	 * routing keys: [load-test-type], e.g., benchflow
-	 */
-	public static final String EXECUTE_LOAD_TEST_EXCHANGE_NAME = "continuity.loadtest.execute";
-
-	/**
-	 * routing keys: [workload-type].[workload-link], e.g., wessbas.wessbas/model/foo-1
-	 */
-	public static final String WORKLOAD_MODEL_CREATED_EXCHANGE_NAME = "continuity.workloadmodel.created";
+	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
 	@Bean
 	MessageConverter jsonMessageConverter() {
@@ -79,64 +58,61 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange monitoringDataAvailableExchange() {
-		return new TopicExchange(MONITORING_DATA_AVAILABLE_EXCHANGE_NAME, false, true);
+		return AmqpApi.Frontend.DATA_AVAILABLE.create();
 	}
 
 	@Bean
-	TopicExchange executeLoadTestExchange() {
-		return new TopicExchange(EXECUTE_LOAD_TEST_EXCHANGE_NAME, false, true);
+	TopicExchange loadTestExecutionRequiredExchange() {
+		return AmqpApi.Frontend.LOADTESTEXECUTION_REQUIRED.create();
 	}
 
 	@Bean
-	TopicExchange createAndExecuteLoadTestExchange() {
-		return new TopicExchange(CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME, false, true);
+	TopicExchange loadTestCreationAndExecutionRequiredExchange() {
+		return AmqpApi.Frontend.LOADTESTCREATIONANDEXECUTION_REQUIRED.create();
 	}
 
 	@Bean
-	Queue workloadAnnotationMessageQueue() {
-		return QueueBuilder.nonDurable(WORKLADO_ANNOTATION_MESSAGE_QUEUE_NAME).withArgument(DeadLetterSpecification.EXCHANGE_KEY, DeadLetterSpecification.EXCHANGE_NAME)
-				.withArgument(DeadLetterSpecification.ROUTING_KEY_KEY, DEAD_LETTER_ROUTING_KEY).build();
+	Queue idpaAnnotationMessageAvailableQueue() {
+		return QueueBuilder.nonDurable(IDPA_ANNOTATION_MESSAGE_AVAILABLE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
-	TopicExchange workloadAnnotationMessageExchange() {
-
-		return new TopicExchange(WORKLADO_ANNOTATION_MESSAGE_EXCHANGE_NAME, false, true);
+	TopicExchange idpaAnnotationMessageAvailableExchange() {
+		return AmqpApi.IdpaAnnotation.MESSAGE_AVAILABLE.create();
 	}
 
 	@Bean
-	Binding workloadAnnotationMessageBinding() {
-		return BindingBuilder.bind(workloadAnnotationMessageQueue()).to(workloadAnnotationMessageExchange()).with(WORKLADO_ANNOTATION_MESSAGE_ROUTING_KEY);
+	Binding idpaAnnotationMessageAvailableBinding() {
+		return BindingBuilder.bind(idpaAnnotationMessageAvailableQueue()).to(idpaAnnotationMessageAvailableExchange()).with(IDPA_ANNOTATION_MESSAGE_AVAILABLE_ROUTING_KEY);
 	}
 
 	@Bean
-	Queue provideReportQueue() {
-		return QueueBuilder.nonDurable(PROVIDE_REPORT_QUEUE_NAME).withArgument(DeadLetterSpecification.EXCHANGE_KEY, DeadLetterSpecification.EXCHANGE_NAME)
-				.withArgument(DeadLetterSpecification.ROUTING_KEY_KEY, DEAD_LETTER_ROUTING_KEY).build();
+	Queue loadTestReportAvailableQueue() {
+		return QueueBuilder.nonDurable(LOAD_TEST_REPORT_AVAILABLE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
-	TopicExchange provideReportExchange() {
-		return new TopicExchange(PROVIDE_REPORT_EXCHANGE_NAME, false, true);
+	TopicExchange loadTestReportAvailableExchange() {
+		return AmqpApi.LoadTest.REPORT_AVAILABLE.create();
 	}
 
 	@Bean
-	Binding provideReportBinding() {
-		return BindingBuilder.bind(provideReportQueue()).to(provideReportExchange()).with(PROVIDE_REPORT_ROUTING_KEY);
+	Binding loadTestReportAvailableBinding() {
+		return BindingBuilder.bind(loadTestReportAvailableQueue()).to(loadTestReportAvailableExchange()).with(LOAD_TEST_REPORT_AVAILABLE_ROUTING_KEY);
 	}
 
 	@Bean
 	TopicExchange workloadModelCreatedExchange() {
-		// Not declaring auto delete, since queues are bound dynamically so that the exchange might
-		// have no queue for a while
-		return new TopicExchange(WORKLOAD_MODEL_CREATED_EXCHANGE_NAME, false, false);
+		return AmqpApi.Workload.MODEL_CREATED.create();
 	}
 
 	// Dead letter exchange and queue
 
 	@Bean
 	TopicExchange deadLetterExchange() {
-		return new TopicExchange(DeadLetterSpecification.EXCHANGE_NAME, false, true);
+		return AmqpApi.DEAD_LETTER_EXCHANGE.create();
 	}
 
 	@Bean
@@ -146,7 +122,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	Binding deadLetterBinding() {
-		return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with(DEAD_LETTER_ROUTING_KEY);
+		return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with(SERVICE_NAME);
 	}
 
 }

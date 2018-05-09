@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.math3.util.Pair;
-import org.continuity.annotation.dsl.ann.Input;
-import org.continuity.annotation.dsl.ann.ParameterAnnotation;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.system.Parameter;
-import org.continuity.annotation.dsl.system.SystemModel;
-import org.continuity.annotation.dsl.visitor.ContinuityByClassSearcher;
-import org.continuity.commons.workload.dsl.AnnotationExtractor;
+import org.continuity.idpa.annotation.Input;
+import org.continuity.idpa.annotation.ParameterAnnotation;
+import org.continuity.commons.idpa.AnnotationExtractor;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.application.Parameter;
+import org.continuity.idpa.application.Application;
+import org.continuity.idpa.visitor.IdpaByClassSearcher;
 
 import m4jdsl.WorkloadModel;
 
@@ -28,9 +28,9 @@ public class AnnotationFromWessbasExtractor {
 
 	private String systemName = SYSTEM_UNKNOWN;
 
-	private SystemModel extractedSystem;
+	private Application extractedSystem;
 
-	private SystemAnnotation extractedAnnotation;
+	private ApplicationAnnotation extractedAnnotation;
 
 	private List<Pair<Input, Parameter>> extractedInputs;
 
@@ -85,17 +85,17 @@ public class AnnotationFromWessbasExtractor {
 	 *
 	 * @return The transformed system model.
 	 */
-	public SystemModel extractSystemModel() {
+	public Application extractSystemModel() {
 		if (extractedSystem != null) {
 			return extractedSystem;
 		}
 
-		extractedSystem = new SystemModel();
+		extractedSystem = new Application();
 		extractedSystem.setId(systemName);
 		extractedInputs = new ArrayList<>();
 
 		SessionLayerTransformer transformer = new SessionLayerTransformer(wessbasModel.getApplicationModel());
-		transformer.registerOnInterfaceFoundListener(extractedSystem::addInterface);
+		transformer.registerOnInterfaceFoundListener(extractedSystem::addEndpoint);
 		transformer.registerOnInputFoundListener(extractedInputs::add);
 		transformer.transform();
 
@@ -107,7 +107,7 @@ public class AnnotationFromWessbasExtractor {
 
 	private void handleInput(Input input, Parameter parameter) {
 		ParameterAnnotationHolder targetHolder = new ParameterAnnotationHolder();
-		ContinuityByClassSearcher<ParameterAnnotation> searcher = new ContinuityByClassSearcher<>(ParameterAnnotation.class, a -> checkParamAnnotation(a, parameter, targetHolder));
+		IdpaByClassSearcher<ParameterAnnotation> searcher = new IdpaByClassSearcher<>(ParameterAnnotation.class, a -> checkParamAnnotation(a, parameter, targetHolder));
 		searcher.visit(extractedAnnotation);
 
 		ParameterAnnotation ann = targetHolder.annotation;
@@ -128,7 +128,7 @@ public class AnnotationFromWessbasExtractor {
 	 *
 	 * @return The transformed annotation model.
 	 */
-	public SystemAnnotation extractInitialAnnotation() {
+	public ApplicationAnnotation extractInitialAnnotation() {
 		if (extractedAnnotation != null) {
 			return extractedAnnotation;
 		}

@@ -1,6 +1,6 @@
 package org.continuity.wessbas.config;
 
-import org.continuity.commons.amqp.DeadLetterSpecification;
+import org.continuity.api.amqp.AmqpApi;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -24,19 +24,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMqConfig {
 
-	// Model creation input and output queues
+	public static final String SERVICE_NAME = "wessbas";
 
-	public static final String MONITORING_DATA_AVAILABLE_QUEUE_NAME = "continuity.wessbas.workloadmodel.dataavailable";
+	public static final String MONITORING_DATA_AVAILABLE_QUEUE_NAME = "continuity.wessbas.frontend.data.available";
 
-	private static final String MONITORING_DATA_AVAILABLE_EXCHANGE_NAME = "continuity.workloadmodel.dataavailable";
+	private static final String MONITORING_DATA_AVAILABLE_ROUTING_KEY = AmqpApi.Frontend.DATA_AVAILABLE.formatRoutingKey().of("wessbas");
 
-	private static final String MONITORING_DATA_AVAILABLE_ROUTING_KEY = "wessbas";
-
-	public static final String MODEL_CREATED_EXCHANGE_NAME = "continuity.workloadmodel.created";
-
-	public static final String DEAD_LETTER_QUEUE_NAME = "continuity.wessbas.dead.letter";
-
-	public static final String DEAD_LETTER_ROUTING_KEY = "wessbas";
+	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
 	// General
 
@@ -71,38 +65,32 @@ public class RabbitMqConfig {
 		return factory;
 	}
 
-	// Input exchange and queue
-
 	@Bean
-	Queue monitoringDataAvailableQueue() {
-		return QueueBuilder.nonDurable(MONITORING_DATA_AVAILABLE_QUEUE_NAME).withArgument(DeadLetterSpecification.EXCHANGE_KEY, DeadLetterSpecification.EXCHANGE_NAME)
-				.withArgument(DeadLetterSpecification.ROUTING_KEY_KEY, DEAD_LETTER_ROUTING_KEY).build();
+	TopicExchange workloadModelCreatedExchange() {
+		return AmqpApi.Workload.MODEL_CREATED.create();
 	}
 
 	@Bean
 	TopicExchange monitoringDataAvailableExchange() {
-		return new TopicExchange(MONITORING_DATA_AVAILABLE_EXCHANGE_NAME, false, true);
+		return AmqpApi.Frontend.DATA_AVAILABLE.create();
 	}
 
 	@Bean
-	Binding behaviorExtractedBinding() {
+	Queue monitoringDataAvailableQueue() {
+		return QueueBuilder.nonDurable(MONITORING_DATA_AVAILABLE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
+	}
+
+	@Bean
+	Binding monitoringDataAvailableBinding() {
 		return BindingBuilder.bind(monitoringDataAvailableQueue()).to(monitoringDataAvailableExchange()).with(MONITORING_DATA_AVAILABLE_ROUTING_KEY);
-	}
-
-	// Model output exchange
-
-	@Bean
-	TopicExchange modelCreatedExchange() {
-		// Not declaring auto delete, since queues are bound dynamically so that the exchange might
-		// have no queue for a while
-		return new TopicExchange(MODEL_CREATED_EXCHANGE_NAME, false, false);
 	}
 
 	// Dead letter exchange and queue
 
 	@Bean
 	TopicExchange deadLetterExchange() {
-		return new TopicExchange(DeadLetterSpecification.EXCHANGE_NAME, false, true);
+		return AmqpApi.DEAD_LETTER_EXCHANGE.create();
 	}
 
 	@Bean
@@ -112,7 +100,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	Binding deadLetterBinding() {
-		return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with(DEAD_LETTER_ROUTING_KEY);
+		return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with(SERVICE_NAME);
 	}
 
 }

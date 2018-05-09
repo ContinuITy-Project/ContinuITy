@@ -3,6 +3,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencies {
+	compile project(':continuity.api')
 	compile project(':continuity.commons')
 
 	compile('org.springframework.boot:spring-boot-starter')

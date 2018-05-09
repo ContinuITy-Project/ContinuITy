@@ -5,13 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.math3.util.Pair;
-import org.continuity.annotation.dsl.ann.DirectDataInput;
-import org.continuity.annotation.dsl.ann.Input;
-import org.continuity.annotation.dsl.system.HttpInterface;
-import org.continuity.annotation.dsl.system.HttpParameter;
-import org.continuity.annotation.dsl.system.HttpParameterType;
-import org.continuity.annotation.dsl.system.Parameter;
-import org.continuity.annotation.dsl.system.ServiceInterface;
+import org.continuity.idpa.annotation.DirectListInput;
+import org.continuity.idpa.annotation.Input;
+import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.idpa.application.HttpParameter;
+import org.continuity.idpa.application.HttpParameterType;
+import org.continuity.idpa.application.Parameter;
+import org.continuity.idpa.application.Endpoint;
 
 import m4jdsl.Request;
 
@@ -21,12 +21,12 @@ import m4jdsl.Request;
  */
 public class InputDataTransformer {
 
-	public List<Pair<Input, Parameter>> transform(Request request, ServiceInterface<?> interf) {
-		if (!(interf instanceof HttpInterface)) {
+	public List<Pair<Input, Parameter>> transform(Request request, Endpoint<?> interf) {
+		if (!(interf instanceof HttpEndpoint)) {
 			throw new RuntimeException("Transformation of " + interf.getClass() + " is not yet implemented!");
 		}
 
-		HttpInterface httpInterf = (HttpInterface) interf;
+		HttpEndpoint httpInterf = (HttpEndpoint) interf;
 
 		List<Pair<Input, Parameter>> inputList = new ArrayList<>();
 
@@ -39,7 +39,7 @@ public class InputDataTransformer {
 				}
 
 				if (paramKey.equals(wParam.getName())) {
-					DirectDataInput input = new DirectDataInput();
+					DirectListInput input = new DirectListInput();
 					input.setId("Input_" + param.getId());
 					if (wParam.getValue() != null) {
 						input.setData(Arrays.asList(wParam.getValue().split(";")));

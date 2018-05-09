@@ -2,13 +2,13 @@ package org.continuity.wessbas.managers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.continuity.annotation.dsl.ann.DirectDataInput;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.system.HttpInterface;
-import org.continuity.annotation.dsl.system.HttpParameter;
-import org.continuity.annotation.dsl.system.HttpParameterType;
-import org.continuity.annotation.dsl.system.SystemModel;
-import org.continuity.annotation.dsl.visitor.FindById;
+import org.continuity.idpa.annotation.DirectListInput;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.idpa.application.HttpParameter;
+import org.continuity.idpa.application.HttpParameterType;
+import org.continuity.idpa.application.Application;
+import org.continuity.idpa.visitor.FindById;
 import org.continuity.wessbas.entities.MonitoringData;
 import org.continuity.wessbas.transform.annotation.AnnotationFromWessbasExtractor;
 import org.junit.Before;
@@ -47,18 +47,18 @@ public class UrlPartParametersTest {
 
 	private void testCreatedWessbasModel(WorkloadModel wessbasModel) {
 		AnnotationFromWessbasExtractor extractor = new AnnotationFromWessbasExtractor(wessbasModel);
-		SystemModel systemModel = extractor.extractSystemModel();
-		SystemAnnotation annotation = extractor.extractInitialAnnotation();
+		Application systemModel = extractor.extractSystemModel();
+		ApplicationAnnotation annotation = extractor.extractInitialAnnotation();
 
-		assertThat(systemModel.getInterfaces()).extracting(interf -> (HttpInterface) interf).extracting(HttpInterface::getPath).containsExactly("/foo/{bar}");
+		assertThat(systemModel.getEndpoints()).extracting(interf -> (HttpEndpoint) interf).extracting(HttpEndpoint::getPath).containsExactly("/foo/{bar}");
 
-		assertThat(systemModel.getInterfaces()).extracting(interf -> (HttpInterface) interf).flatExtracting(HttpInterface::getParameters).extracting(HttpParameter::getName)
+		assertThat(systemModel.getEndpoints()).extracting(interf -> (HttpEndpoint) interf).flatExtracting(HttpEndpoint::getParameters).extracting(HttpParameter::getName)
 				.containsExactlyInAnyOrder("bar", "abc");
 
-		assertThat(systemModel.getInterfaces()).extracting(interf -> (HttpInterface) interf).flatExtracting(HttpInterface::getParameters).extracting(HttpParameter::getParameterType)
+		assertThat(systemModel.getEndpoints()).extracting(interf -> (HttpEndpoint) interf).flatExtracting(HttpEndpoint::getParameters).extracting(HttpParameter::getParameterType)
 		.containsExactlyInAnyOrder(HttpParameterType.URL_PART, HttpParameterType.REQ_PARAM);
 
-		DirectDataInput input = FindById.find("Input_fooRequest_bar_URL_PART", DirectDataInput.class).in(annotation).getFound();
+		DirectListInput input = FindById.find("Input_fooRequest_bar_URL_PART", DirectListInput.class).in(annotation).getFound();
 
 		assertThat(input.getData()).containsExactlyInAnyOrder("hi", "hello");
 	}

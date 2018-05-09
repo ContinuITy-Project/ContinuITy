@@ -5,9 +5,9 @@ import java.util.Collection;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
-import org.continuity.annotation.dsl.ann.DirectDataInput;
-import org.continuity.annotation.dsl.ann.ExtractedInput;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
+import org.continuity.idpa.annotation.DirectListInput;
+import org.continuity.idpa.annotation.ExtractedInput;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
 
 /**
  * @author Henning Schulz
@@ -15,9 +15,9 @@ import org.continuity.annotation.dsl.ann.SystemAnnotation;
  */
 public class UserDefinedVarsAnnotator {
 
-	private final SystemAnnotation systemAnnotation;
+	private final ApplicationAnnotation systemAnnotation;
 
-	public UserDefinedVarsAnnotator(SystemAnnotation systemAnnotation) {
+	public UserDefinedVarsAnnotator(ApplicationAnnotation systemAnnotation) {
 		this.systemAnnotation = systemAnnotation;
 	}
 
@@ -40,7 +40,7 @@ public class UserDefinedVarsAnnotator {
 	}
 
 	private void addDirectDataInputs(final Arguments args) {
-		systemAnnotation.getInputs().stream().filter(input -> input instanceof DirectDataInput).map(input -> (DirectDataInput) input).forEach(input -> {
+		systemAnnotation.getInputs().stream().filter(input -> input instanceof DirectListInput).map(input -> (DirectListInput) input).forEach(input -> {
 			if (input.getData().size() > 1) {
 				StringBuilder builder = new StringBuilder();
 				for (String dat : input.getData()) {

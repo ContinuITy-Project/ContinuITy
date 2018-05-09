@@ -3,9 +3,6 @@ package org.continuity.wessbas.transform.jmeter;
 import java.io.IOException;
 
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.annotation.dsl.custom.CustomAnnotation;
-import org.continuity.annotation.dsl.custom.CustomAnnotationElement;
-import org.continuity.commons.exceptions.AnnotationNotSupportedException;
 import org.continuity.wessbas.entities.JMeterTestPlanBundle;
 
 import m4jdsl.BehaviorModel;
@@ -49,37 +46,6 @@ public class WessbasToJmeterConverter {
 	 */
 	public WessbasToJmeterConverter(String configurationPath) {
 		this(configurationPath, null, false);
-	}
-
-	/**
-	 * Converts the passed workload model and annotations to an executable load test. The annotation
-	 * models are to be linked.
-	 *
-	 * @param workloadModel
-	 *            The workload model.
-	 * @param extension
-	 *            An extension of the annotation. May cause an
-	 *            {@link AnnotationNotSupportedException}.
-	 * @return A pack containing an executable load test corresponding to the load represented by
-	 *         the workload model and the behaviors.
-	 * @throws AnnotationNotSupportedException
-	 *             if the passed {@link CustomAnnotation} cannot be converted to the load test.
-	 */
-	// TODO: move to continuity.jmeter
-	private JMeterTestPlanBundle convertToLoadTest(WorkloadModel workloadModel, CustomAnnotation extension) throws AnnotationNotSupportedException {
-		if ((extension != null) && !extension.getElements().isEmpty()) {
-			StringBuilder builder = new StringBuilder();
-			builder.append("The following extensoins are not supported: ");
-
-			for (CustomAnnotationElement element : extension.getElements().values()) {
-				builder.append(element.getId());
-				builder.append(", ");
-			}
-
-			throw new AnnotationNotSupportedException(builder.substring(0, builder.length() - 2));
-		}
-
-		return convertToLoadTest(workloadModel);
 	}
 
 	/**

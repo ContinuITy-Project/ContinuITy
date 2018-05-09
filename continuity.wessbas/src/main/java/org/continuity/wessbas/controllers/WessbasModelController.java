@@ -1,12 +1,21 @@
 package org.continuity.wessbas.controllers;
 
+import static org.continuity.api.rest.RestApi.Wessbas.Model.ROOT;
+import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_ANNOTATION;
+import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_APPLICATION;
+import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_WORKLOAD;
+import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.OVERVIEW;
+import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.REMOVE;
+import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.RESERVE;
+
 import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.system.SystemModel;
+import org.continuity.api.rest.RestApi;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.application.Application;
 import org.continuity.wessbas.entities.WorkloadModelPack;
 import org.continuity.wessbas.entities.WorkloadModelStorageEntry;
 import org.continuity.wessbas.storage.SimpleModelStorage;
@@ -27,14 +36,14 @@ import org.springframework.web.bind.annotation.RestController;
  *
  */
 @RestController
-@RequestMapping("/model")
+@RequestMapping(ROOT)
 public class WessbasModelController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WessbasModelController.class);
 
-	private final ConcurrentMap<String, SystemModel> systemModelBuffer = new ConcurrentHashMap<>();
+	private final ConcurrentMap<String, Application> systemModelBuffer = new ConcurrentHashMap<>();
 
-	private final ConcurrentMap<String, SystemAnnotation> annotationBuffer = new ConcurrentHashMap<>();
+	private final ConcurrentMap<String, ApplicationAnnotation> annotationBuffer = new ConcurrentHashMap<>();
 
 	@Value("${spring.application.name}")
 	private String applicationName;
@@ -46,7 +55,7 @@ public class WessbasModelController {
 	 *            The id of the stored model.
 	 * @return The stored model or a 404 (Not Found) if there is no such model.
 	 */
-	@RequestMapping(path = "/{id}", method = RequestMethod.GET)
+	@RequestMapping(path = OVERVIEW, method = RequestMethod.GET)
 	public ResponseEntity<WorkloadModelPack> getOverview(@PathVariable String id) {
 		WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
 		if (entry == null) {
@@ -65,7 +74,7 @@ public class WessbasModelController {
 	 *            The id of the stored model.
 	 * @return The stored model or a 404 (Not Found) if there is no such model.
 	 */
-	@RequestMapping(path = "/{id}/workload", method = RequestMethod.GET)
+	@RequestMapping(path = GET_WORKLOAD, method = RequestMethod.GET)
 	public ResponseEntity<WorkloadModelStorageEntry> getModel(@PathVariable String id) {
 		WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
 
@@ -83,7 +92,7 @@ public class WessbasModelController {
 	 *            The id of the stored model.
 	 * @return 200 (Ok) if the model has been successfully deleted or 404 (Not Found) otherwise.
 	 */
-	@RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
+	@RequestMapping(path = REMOVE, method = RequestMethod.DELETE)
 	public ResponseEntity<?> removeModel(@PathVariable String id) {
 		boolean succ = SimpleModelStorage.instance().remove(id);
 
@@ -99,12 +108,12 @@ public class WessbasModelController {
 	 *
 	 * @param id
 	 *            The id of the stored model.
-	 * @return A system model for the stored WESSBAS model or a 404 (Not Found) if there is no such
-	 *         model.
+	 * @return An application model for the stored WESSBAS model or a 404 (Not Found) if there is no
+	 *         such model.
 	 */
-	@RequestMapping(path = "{id}/system", method = RequestMethod.GET)
-	public ResponseEntity<SystemModel> getSystemModel(@PathVariable String id) {
-		SystemModel systemModel = createSystemModelAndAnnotation(id).getLeft();
+	@RequestMapping(path = GET_APPLICATION, method = RequestMethod.GET)
+	public ResponseEntity<Application> getApplicationModel(@PathVariable String id) {
+		Application systemModel = createIdpa(id).getLeft();
 
 		if (systemModel == null) {
 			return ResponseEntity.notFound().build();
@@ -121,9 +130,9 @@ public class WessbasModelController {
 	 * @return An annotation for the stored WESSBAS model or a 404 (Not Found) if there is no such
 	 *         model.
 	 */
-	@RequestMapping(path = "{id}/annotation", method = RequestMethod.GET)
-	public ResponseEntity<SystemAnnotation> getSystemAnnotation(@PathVariable String id) {
-		SystemAnnotation annotation = createSystemModelAndAnnotation(id).getRight();
+	@RequestMapping(path = GET_ANNOTATION, method = RequestMethod.GET)
+	public ResponseEntity<ApplicationAnnotation> getApplicationAnnotation(@PathVariable String id) {
+		ApplicationAnnotation annotation = createIdpa(id).getRight();
 
 		if (annotation == null) {
 			return ResponseEntity.notFound().build();
@@ -132,9 +141,9 @@ public class WessbasModelController {
 		}
 	}
 
-	private Pair<SystemModel, SystemAnnotation> createSystemModelAndAnnotation(String id) {
-		SystemModel systemModel = systemModelBuffer.get(id);
-		SystemAnnotation annotation = annotationBuffer.get(id);
+	private Pair<Application, ApplicationAnnotation> createIdpa(String id) {
+		Application systemModel = systemModelBuffer.get(id);
+		ApplicationAnnotation annotation = annotationBuffer.get(id);
 
 		if ((systemModel == null) || (annotation == null)) {
 			WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
@@ -167,14 +176,14 @@ public class WessbasModelController {
 	 * @return A response entity holding a link to the workload model that will be created. The link
 	 *         is invalid until the creation is finished.
 	 */
-	@RequestMapping(path = "/{tag}/reserve", method = RequestMethod.GET)
+	@RequestMapping(path = RESERVE, method = RequestMethod.GET)
 	public ResponseEntity<String> reserveModelLink(@PathVariable String tag) {
 		String storageId = SimpleModelStorage.instance().reserve(tag);
-		String link = applicationName + "/model/" + storageId;
+		String link = applicationName + RestApi.Wessbas.Model.OVERVIEW.path(storageId);
 
 		LOGGER.info("Reserved workload model entry {}", storageId);
 
-		return ResponseEntity.created(URI.create("http://" + link)).body(link);
+		return ResponseEntity.created(URI.create(link)).body(link);
 	}
 
 }

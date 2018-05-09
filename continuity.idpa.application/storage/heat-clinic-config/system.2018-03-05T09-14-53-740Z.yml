@@ -1,0 +1,1651 @@
+---
+&Broadleaf_Heat_Clinic timestamp: 2018-03-05T09-14-53-740Z
+interfaces:
+- !<http>
+  &homeUsingGET domain: localhost
+  port: 8443
+  path: /
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- !<http>
+  &hotSaucesOverviewUsingGET domain: localhost
+  port: 8443
+  path: /hot-sauces
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- !<http>
+  &hotSaucesDetailsUsingGET domain: localhost
+  port: 8443
+  path: /hot-sauces/{sauce}
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- !<http>
+  &merchandiseOverviewUsingGET domain: localhost
+  port: 8443
+  path: /merchandise
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- !<http>
+  &merchandiseDetailsUsingGET domain: localhost
+  port: 8443
+  path: /merchandise/{product}
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- !<http>
+  &clearanceUsingGET domain: localhost
+  port: 8443
+  path: /clearance
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- !<http>
+  &mensUsingGET domain: localhost
+  port: 8443
+  path: /mens
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- !<http>
+  &womensUsingGET domain: localhost
+  port: 8443
+  path: /womens
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- !<http>
+  &viewUpdateAccountUsingGET domain: localhost
+  port: 8443
+  path: /account
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &processUpdateAccountUsingPOST domain: localhost
+  port: 8443
+  path: /account
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &viewCustomerAddressesUsingGET domain: localhost
+  port: 8443
+  path: /account/addresses
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addCustomerAddressUsingPOST domain: localhost
+  port: 8443
+  path: /account/addresses
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &viewCustomerAddressUsingGET domain: localhost
+  port: 8443
+  path: /account/addresses/{customerAddressId}
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateCustomerAddressUsingPOST domain: localhost
+  port: 8443
+  path: /account/addresses/{customerAddressId}
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &viewOrderHistoryUsingGET domain: localhost
+  port: 8443
+  path: /account/orders
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &viewOrderDetailsUsingGET domain: localhost
+  port: 8443
+  path: /account/orders/{orderNumber}
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &viewChangePasswordUsingGET domain: localhost
+  port: 8443
+  path: /account/password
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &processChangePasswordUsingPOST domain: localhost
+  port: 8443
+  path: /account/password
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &viewCustomerPaymentsUsingGET domain: localhost
+  port: 8443
+  path: /account/payments
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addCustomerPaymentUsingPOST domain: localhost
+  port: 8443
+  path: /account/payments
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &makeDefaultCustomerPaymentUsingPOST domain: localhost
+  port: 8443
+  path: /account/payments/default/{customerPaymentId}
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removeCustomerPaymentUsingPOST domain: localhost
+  port: 8443
+  path: /account/payments/remove/{customerPaymentId}
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &viewAccountWishlistUsingGET domain: localhost
+  port: 8443
+  path: /account/wishlist
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addJsonUsingGET_1 domain: localhost
+  port: 8443
+  path: /account/wishlist/add
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addJsonUsingPUT_1 domain: localhost
+  port: 8443
+  path: /account/wishlist/add
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addJsonUsingPOST_1 domain: localhost
+  port: 8443
+  path: /account/wishlist/add
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addJsonUsingDELETE_1 domain: localhost
+  port: 8443
+  path: /account/wishlist/add
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addJsonUsingPATCH_1 domain: localhost
+  port: 8443
+  path: /account/wishlist/add
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addJsonUsingHEAD_1 domain: localhost
+  port: 8443
+  path: /account/wishlist/add
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addJsonUsingOPTIONS_1 domain: localhost
+  port: 8443
+  path: /account/wishlist/add
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &moveItemToCartUsingPOST domain: localhost
+  port: 8443
+  path: /account/wishlist/moveItemToCart
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &moveListToCartUsingPOST domain: localhost
+  port: 8443
+  path: /account/wishlist/moveListToCart
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removeItemFromWishlistUsingGET domain: localhost
+  port: 8443
+  path: /account/wishlist/remove
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityFromWishlistUsingGET domain: localhost
+  port: 8443
+  path: /account/wishlist/updateQuantity
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityFromWishlistUsingPUT domain: localhost
+  port: 8443
+  path: /account/wishlist/updateQuantity
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityFromWishlistUsingPOST domain: localhost
+  port: 8443
+  path: /account/wishlist/updateQuantity
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityFromWishlistUsingDELETE domain: localhost
+  port: 8443
+  path: /account/wishlist/updateQuantity
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityFromWishlistUsingPATCH domain: localhost
+  port: 8443
+  path: /account/wishlist/updateQuantity
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityFromWishlistUsingHEAD domain: localhost
+  port: 8443
+  path: /account/wishlist/updateQuantity
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityFromWishlistUsingOPTIONS domain: localhost
+  port: 8443
+  path: /account/wishlist/updateQuantity
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &cartUsingGET domain: localhost
+  port: 8443
+  path: /cart
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &cartUsingPUT domain: localhost
+  port: 8443
+  path: /cart
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &cartUsingPOST domain: localhost
+  port: 8443
+  path: /cart
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &cartUsingDELETE domain: localhost
+  port: 8443
+  path: /cart
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &cartUsingPATCH domain: localhost
+  port: 8443
+  path: /cart
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &cartUsingHEAD domain: localhost
+  port: 8443
+  path: /cart
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &cartUsingOPTIONS domain: localhost
+  port: 8443
+  path: /cart
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addUsingGET domain: localhost
+  port: 8443
+  path: /cart/add
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addUsingPUT domain: localhost
+  port: 8443
+  path: /cart/add
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addUsingPOST domain: localhost
+  port: 8443
+  path: /cart/add
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addUsingDELETE domain: localhost
+  port: 8443
+  path: /cart/add
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addUsingPATCH domain: localhost
+  port: 8443
+  path: /cart/add
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addUsingHEAD domain: localhost
+  port: 8443
+  path: /cart/add
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addUsingOPTIONS domain: localhost
+  port: 8443
+  path: /cart/add
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &emptyUsingGET domain: localhost
+  port: 8443
+  path: /cart/empty
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &emptyUsingPUT domain: localhost
+  port: 8443
+  path: /cart/empty
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &emptyUsingPOST domain: localhost
+  port: 8443
+  path: /cart/empty
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &emptyUsingDELETE domain: localhost
+  port: 8443
+  path: /cart/empty
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &emptyUsingPATCH domain: localhost
+  port: 8443
+  path: /cart/empty
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &emptyUsingHEAD domain: localhost
+  port: 8443
+  path: /cart/empty
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &emptyUsingOPTIONS domain: localhost
+  port: 8443
+  path: /cart/empty
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &miniCartUsingGET domain: localhost
+  port: 8443
+  path: /cart/mini
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &miniCartUsingPUT domain: localhost
+  port: 8443
+  path: /cart/mini
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &miniCartUsingPOST domain: localhost
+  port: 8443
+  path: /cart/mini
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &miniCartUsingDELETE domain: localhost
+  port: 8443
+  path: /cart/mini
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &miniCartUsingPATCH domain: localhost
+  port: 8443
+  path: /cart/mini
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &miniCartUsingHEAD domain: localhost
+  port: 8443
+  path: /cart/mini
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &miniCartUsingOPTIONS domain: localhost
+  port: 8443
+  path: /cart/mini
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addPromoUsingGET domain: localhost
+  port: 8443
+  path: /cart/promo
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addPromoUsingPUT domain: localhost
+  port: 8443
+  path: /cart/promo
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addPromoUsingPOST domain: localhost
+  port: 8443
+  path: /cart/promo
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addPromoUsingDELETE domain: localhost
+  port: 8443
+  path: /cart/promo
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addPromoUsingPATCH domain: localhost
+  port: 8443
+  path: /cart/promo
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addPromoUsingHEAD domain: localhost
+  port: 8443
+  path: /cart/promo
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &addPromoUsingOPTIONS domain: localhost
+  port: 8443
+  path: /cart/promo
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removePromoUsingGET domain: localhost
+  port: 8443
+  path: /cart/promo/remove
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removePromoUsingPUT domain: localhost
+  port: 8443
+  path: /cart/promo/remove
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removePromoUsingPOST domain: localhost
+  port: 8443
+  path: /cart/promo/remove
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removePromoUsingDELETE domain: localhost
+  port: 8443
+  path: /cart/promo/remove
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removePromoUsingPATCH domain: localhost
+  port: 8443
+  path: /cart/promo/remove
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removePromoUsingHEAD domain: localhost
+  port: 8443
+  path: /cart/promo/remove
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removePromoUsingOPTIONS domain: localhost
+  port: 8443
+  path: /cart/promo/remove
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removeUsingGET domain: localhost
+  port: 8443
+  path: /cart/remove
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removeUsingPUT domain: localhost
+  port: 8443
+  path: /cart/remove
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removeUsingPOST domain: localhost
+  port: 8443
+  path: /cart/remove
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removeUsingDELETE domain: localhost
+  port: 8443
+  path: /cart/remove
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removeUsingPATCH domain: localhost
+  port: 8443
+  path: /cart/remove
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removeUsingHEAD domain: localhost
+  port: 8443
+  path: /cart/remove
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &removeUsingOPTIONS domain: localhost
+  port: 8443
+  path: /cart/remove
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &pricingSummaryUsingGET domain: localhost
+  port: 8443
+  path: /cart/summary
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &pricingSummaryUsingPUT domain: localhost
+  port: 8443
+  path: /cart/summary
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &pricingSummaryUsingPOST domain: localhost
+  port: 8443
+  path: /cart/summary
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &pricingSummaryUsingDELETE domain: localhost
+  port: 8443
+  path: /cart/summary
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &pricingSummaryUsingPATCH domain: localhost
+  port: 8443
+  path: /cart/summary
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &pricingSummaryUsingHEAD domain: localhost
+  port: 8443
+  path: /cart/summary
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &pricingSummaryUsingOPTIONS domain: localhost
+  port: 8443
+  path: /cart/summary
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityUsingGET domain: localhost
+  port: 8443
+  path: /cart/updateQuantity
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityUsingPUT domain: localhost
+  port: 8443
+  path: /cart/updateQuantity
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityUsingPOST domain: localhost
+  port: 8443
+  path: /cart/updateQuantity
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityUsingDELETE domain: localhost
+  port: 8443
+  path: /cart/updateQuantity
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityUsingPATCH domain: localhost
+  port: 8443
+  path: /cart/updateQuantity
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityUsingHEAD domain: localhost
+  port: 8443
+  path: /cart/updateQuantity
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &updateQuantityUsingOPTIONS domain: localhost
+  port: 8443
+  path: /cart/updateQuantity
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &checkoutUsingGET domain: localhost
+  port: 8443
+  path: /checkout
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &showMultishipAddAddressUsingGET domain: localhost
+  port: 8443
+  path: /checkout/add-address
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &saveMultishipAddAddressUsingPOST domain: localhost
+  port: 8443
+  path: /checkout/add-address
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &processPassthroughCheckoutUsingPOST domain: localhost
+  port: 8443
+  path: /checkout/cod/complete
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &processCompleteCheckoutOrderFinalizedUsingPOST domain: localhost
+  port: 8443
+  path: /checkout/complete
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &checkoutLoginUsingGET domain: localhost
+  port: 8443
+  path: /checkout/login
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &showMultishipUsingGET domain: localhost
+  port: 8443
+  path: /checkout/multiship
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &saveMultishipUsingPOST domain: localhost
+  port: 8443
+  path: /checkout/multiship
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &savePaymentInfoUsingPOST domain: localhost
+  port: 8443
+  path: /checkout/payment
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &saveBillingAddressUsingPOST domain: localhost
+  port: 8443
+  path: /checkout/payment/billing
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &saveGlobalOrderDetailsUsingPOST domain: localhost
+  port: 8443
+  path: /checkout/savedetails
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &convertToSingleshipUsingGET domain: localhost
+  port: 8443
+  path: /checkout/singleship
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &saveSingleShipUsingPOST domain: localhost
+  port: 8443
+  path: /checkout/singleship
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getCheckoutStagePartialUsingGET domain: localhost
+  port: 8443
+  path: /checkout/{stage}
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &displayOrderConfirmationByOrderNumberUsingGET domain: localhost
+  port: 8443
+  path: /confirmation/{orderNumber}
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &indexUsingGET domain: localhost
+  port: 8443
+  path: /contactus
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &indexUsingPUT domain: localhost
+  port: 8443
+  path: /contactus
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &indexUsingPOST domain: localhost
+  port: 8443
+  path: /contactus
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &indexUsingDELETE domain: localhost
+  port: 8443
+  path: /contactus
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &indexUsingPATCH domain: localhost
+  port: 8443
+  path: /contactus
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &indexUsingHEAD domain: localhost
+  port: 8443
+  path: /contactus
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &indexUsingOPTIONS domain: localhost
+  port: 8443
+  path: /contactus
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &sendConfirmationEmailUsingPOST domain: localhost
+  port: 8443
+  path: /contactus/success
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &loginUsingGET domain: localhost
+  port: 8443
+  path: /login
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &loginUsingPUT domain: localhost
+  port: 8443
+  path: /login
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &loginUsingPOST domain: localhost
+  port: 8443
+  path: /login
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &loginUsingDELETE domain: localhost
+  port: 8443
+  path: /login
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &loginUsingPATCH domain: localhost
+  port: 8443
+  path: /login
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &loginUsingHEAD domain: localhost
+  port: 8443
+  path: /login
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &loginUsingOPTIONS domain: localhost
+  port: 8443
+  path: /login
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &forgotPasswordUsingGET domain: localhost
+  port: 8443
+  path: /login/forgotPassword
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &processForgotPasswordUsingPOST domain: localhost
+  port: 8443
+  path: /login/forgotPassword
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &resetPasswordUsingGET domain: localhost
+  port: 8443
+  path: /login/resetPassword
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &processResetPasswordUsingPOST domain: localhost
+  port: 8443
+  path: /login/resetPassword
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getProductQuickViewUsingGET domain: localhost
+  port: 8443
+  path: /product-quick-view
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getProductQuickViewUsingPUT domain: localhost
+  port: 8443
+  path: /product-quick-view
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getProductQuickViewUsingPOST domain: localhost
+  port: 8443
+  path: /product-quick-view
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getProductQuickViewUsingDELETE domain: localhost
+  port: 8443
+  path: /product-quick-view
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getProductQuickViewUsingPATCH domain: localhost
+  port: 8443
+  path: /product-quick-view
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getProductQuickViewUsingHEAD domain: localhost
+  port: 8443
+  path: /product-quick-view
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getProductQuickViewUsingOPTIONS domain: localhost
+  port: 8443
+  path: /product-quick-view
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &redirectUsingGET domain: localhost
+  port: 8443
+  path: /redirect
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &redirectUsingPUT domain: localhost
+  port: 8443
+  path: /redirect
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &redirectUsingPOST domain: localhost
+  port: 8443
+  path: /redirect
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &redirectUsingDELETE domain: localhost
+  port: 8443
+  path: /redirect
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &redirectUsingPATCH domain: localhost
+  port: 8443
+  path: /redirect
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &redirectUsingHEAD domain: localhost
+  port: 8443
+  path: /redirect
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &redirectUsingOPTIONS domain: localhost
+  port: 8443
+  path: /redirect
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &registerUsingGET domain: localhost
+  port: 8443
+  path: /register
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &processRegisterUsingPOST domain: localhost
+  port: 8443
+  path: /register
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &viewReviewFormUsingGET domain: localhost
+  port: 8443
+  path: /reviews/product/{itemId}
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &reviewItemUsingPOST domain: localhost
+  port: 8443
+  path: /reviews/product/{itemId}
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getRobotsFileUsingGET domain: localhost
+  port: 8443
+  path: /robots.txt
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getRobotsFileUsingPUT domain: localhost
+  port: 8443
+  path: /robots.txt
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getRobotsFileUsingPOST domain: localhost
+  port: 8443
+  path: /robots.txt
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getRobotsFileUsingDELETE domain: localhost
+  port: 8443
+  path: /robots.txt
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getRobotsFileUsingPATCH domain: localhost
+  port: 8443
+  path: /robots.txt
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getRobotsFileUsingHEAD domain: localhost
+  port: 8443
+  path: /robots.txt
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &getRobotsFileUsingOPTIONS domain: localhost
+  port: 8443
+  path: /robots.txt
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &applyGiftCardUsingPOST domain: localhost
+  port: 8443
+  path: /sample-giftcard/apply
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &searchUsingGET domain: localhost
+  port: 8443
+  path: /search
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &searchUsingPUT domain: localhost
+  port: 8443
+  path: /search
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &searchUsingPOST domain: localhost
+  port: 8443
+  path: /search
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &searchUsingDELETE domain: localhost
+  port: 8443
+  path: /search
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &searchUsingPATCH domain: localhost
+  port: 8443
+  path: /search
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &searchUsingHEAD domain: localhost
+  port: 8443
+  path: /search
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &searchUsingOPTIONS domain: localhost
+  port: 8443
+  path: /search
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingGET domain: localhost
+  port: 8443
+  path: /sitemap*.gz
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingPUT domain: localhost
+  port: 8443
+  path: /sitemap*.gz
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingPOST domain: localhost
+  port: 8443
+  path: /sitemap*.gz
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingDELETE domain: localhost
+  port: 8443
+  path: /sitemap*.gz
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingPATCH domain: localhost
+  port: 8443
+  path: /sitemap*.gz
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingHEAD domain: localhost
+  port: 8443
+  path: /sitemap*.gz
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingOPTIONS domain: localhost
+  port: 8443
+  path: /sitemap*.gz
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingGET_1 domain: localhost
+  port: 8443
+  path: /sitemap*.xml
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingPUT_1 domain: localhost
+  port: 8443
+  path: /sitemap*.xml
+  method: PUT
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingPOST_1 domain: localhost
+  port: 8443
+  path: /sitemap*.xml
+  method: POST
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingDELETE_1 domain: localhost
+  port: 8443
+  path: /sitemap*.xml
+  method: DELETE
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingPATCH_1 domain: localhost
+  port: 8443
+  path: /sitemap*.xml
+  method: PATCH
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingHEAD_1 domain: localhost
+  port: 8443
+  path: /sitemap*.xml
+  method: HEAD
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- !<http>
+  &retrieveSiteMapIndexUsingOPTIONS_1 domain: localhost
+  port: 8443
+  path: /sitemap*.xml
+  method: OPTIONS
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http

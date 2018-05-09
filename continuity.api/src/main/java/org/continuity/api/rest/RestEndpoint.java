@@ -1,0 +1,215 @@
+package org.continuity.api.rest;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Stack;
+
+import org.springframework.web.bind.annotation.RequestMethod;
+
+/**
+ * Represents one REST endpoint of a service, containing the service name, the path incl. path
+ * parameters and the request method.
+ *
+ * @author Henning Schulz
+ *
+ */
+public class RestEndpoint {
+
+	private final String serviceName;
+
+	private final String root;
+
+	private final List<StringOrPar> elements;
+
+	private final RequestMethod method;
+
+	private RestEndpoint(String serviceName, String root, List<StringOrPar> elements, RequestMethod method) {
+		this.serviceName = serviceName;
+		this.root = root;
+		this.elements = elements;
+		this.method = method;
+	}
+
+	/**
+	 * Creates a new instance.
+	 *
+	 * @param serviceName
+	 *            The name of the service.
+	 * @param root
+	 *            The root path element.
+	 * @param path
+	 *            The path (without the root).
+	 * @param method
+	 *            The request method.
+	 * @return The new RestEndpoint instance.
+	 */
+	protected static RestEndpoint of(String serviceName, String root, String path, RequestMethod method) {
+		String[] pathElements = path.split("\\/");
+		List<StringOrPar> elements = new ArrayList<>();
+
+		for (String elem : pathElements) {
+			if (elem.startsWith("{")) {
+				elements.add(StringOrPar.of(PathPar.of(elem.substring(1, elem.length() - 1))));
+			} else {
+				elements.add(StringOrPar.of(elem));
+			}
+		}
+
+		return new RestEndpoint(serviceName, root, elements, method);
+	}
+
+	/**
+	 * Returns the represented generic path, e.g., <code>/my/path/{id}</code> where
+	 * <code>{id}</code> denotes a parameter.
+	 *
+	 * @return The generic path as string.
+	 */
+	public String genericPath() {
+		return elements.stream().reduce(StringOrPar.of(root), StringOrPar::concat).toString();
+	}
+
+	/**
+	 * Returns the represented path with parameter instance values, e.g., <code>/my/path/MyId</code>
+	 * for the generic path <code>/my/path/{id}</code>.
+	 *
+	 * @param values
+	 *            The parameter values to fill in the parameters.
+	 * @return The path as string.
+	 */
+	public String path(Object... values) {
+		List<Object> valueList = Arrays.asList(values);
+		Collections.reverse(valueList);
+
+		Stack<Object> valueStack = new Stack<>();
+		valueStack.addAll(valueList);
+
+		return elements.stream().reduce(StringOrPar.of(root), (a, b) -> StringOrPar.concatWithValues(a, b, valueStack)).toString();
+	}
+
+	/**
+	 * Creates the complete request URL.
+	 *
+	 * @param values
+	 *            The values for the path parameters.
+	 * @return A builder for getting and modifying the URL.
+	 */
+	public RequestBuilder requestUrl(Object... values) {
+		return new RequestBuilder(serviceName, path(values));
+	}
+
+	/**
+	 * Gets the request method.
+	 *
+	 * @return The request method of this endpoint.
+	 */
+	public RequestMethod method() {
+		return method;
+	}
+
+	/**
+	 * Represents either a string or a {@link PathPar}. For usage in REST paths with parameters.
+	 *
+	 * @author Henning Schulz
+	 *
+	 */
+	public static class StringOrPar {
+
+		private final String string;
+		private final PathPar par;
+
+		private StringOrPar(String string, PathPar par) {
+			this.string = string;
+			this.par = par;
+		}
+
+		/**
+		 * Creates an instance representing a string.
+		 *
+		 * @param string
+		 *            The string value.
+		 * @return The instance.
+		 */
+		public static StringOrPar of(String string) {
+			return new StringOrPar(string, null);
+		}
+
+		/**
+		 * Creates an instance representing a {@link PathPar}.
+		 *
+		 * @param par
+		 *            The {@link PathPar} value.
+		 * @return The instance.
+		 */
+		public static StringOrPar of(PathPar par) {
+			return new StringOrPar(null, par);
+		}
+
+		/**
+		 * Concats two instances.
+		 *
+		 * @param first
+		 *            The first instance.
+		 * @param second
+		 *            The second instance.
+		 * @return <code>first/second</code>.
+		 */
+		public static StringOrPar concat(StringOrPar first, StringOrPar second) {
+			if ("/".equals(second.toString()) || "".equals(second.toString())) {
+				return first;
+			}
+
+			return StringOrPar.of(first + "/" + second);
+		}
+
+		/**
+		 * Note: Assumes that the first element is always string!
+		 *
+		 * @param first
+		 * @param second
+		 * @param values
+		 * @return
+		 */
+		public static StringOrPar concatWithValues(StringOrPar first, StringOrPar second, Stack<Object> values) {
+			if ("/".equals(second.toString()) || "".equals(second.toString())) {
+				return first;
+			}
+
+			if (second.isPar()) {
+				return StringOrPar.of(first + "/" + values.pop());
+			} else {
+				return StringOrPar.of(first + "/" + second);
+			}
+		}
+
+		/**
+		 * Returns whether this instance represents a string.
+		 *
+		 * @return {@code true}, if it is a string.
+		 */
+		public boolean isString() {
+			return string != null;
+		}
+
+		/**
+		 * Returns whether this instance represents a {@link PathPar}.
+		 *
+		 * @return {@code true}, if it is a {@link PathPar}.
+		 */
+		public boolean isPar() {
+			return par != null;
+		}
+
+		@Override
+		public String toString() {
+			if (isPar()) {
+				return par.generic();
+			} else {
+				return string;
+			}
+		}
+
+	}
+
+}

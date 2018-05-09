@@ -9,6 +9,7 @@ dependencyManagement {
 }
 
 dependencies {
+	compile project(':continuity.api')
 	compile project(':continuity.commons')
 	
 	compile group: 'net.sf.markov4jmeter', name: 'm4jdsl', version: '1.0.0'

@@ -6,9 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.continuity.annotation.dsl.system.HttpInterface;
-import org.continuity.annotation.dsl.system.SystemModel;
-import org.continuity.commons.workload.dsl.RequestUriMapper;
+import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.api.rest.RestApi.IdpaApplication;
+import org.continuity.commons.idpa.RequestUriMapper;
+import org.continuity.idpa.application.Application;
 import org.continuity.rest.InspectITRestClient;
 import org.continuity.session.logs.converter.SessionConverter;
 import org.slf4j.Logger;
@@ -111,7 +112,7 @@ public class SessionLogsPipelineManager {
 	}
 
 	private String convertInvocationSequencesIntoSessionLogs(Iterable<InvocationSequenceData> invocationSequences) {
-		SystemModel systemModel = retrieveSystemModel();
+		Application systemModel = retrieveSystemModel();
 		HashMap<Long, Pair<String, String>> businessTransactions;
 
 		if (systemModel == null) {
@@ -125,14 +126,14 @@ public class SessionLogsPipelineManager {
 		return converter.convertIntoSessionLog(invocationSequences, businessTransactions);
 	}
 
-	private SystemModel retrieveSystemModel() {
+	private Application retrieveSystemModel() {
 		if (tag == null) {
 			LOGGER.warn("Cannot retrieve the system model for naming the Session Logs. The tag is nulL!");
 			return null;
 		}
 
 		try {
-			return eurekaRestTemplate.getForObject("http://system-model/system/" + tag, SystemModel.class);
+			return eurekaRestTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(tag).get(), Application.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.error("Received error status code when asking for system model with tag " + tag, e);
 			return null;
@@ -185,14 +186,14 @@ public class SessionLogsPipelineManager {
 		return businessTransactions;
 	}
 
-	private HashMap<Long, Pair<String, String>> getBusinessTransactionsFromSystemModel(SystemModel system, Iterable<InvocationSequenceData> invocationSequences) {
+	private HashMap<Long, Pair<String, String>> getBusinessTransactionsFromSystemModel(Application system, Iterable<InvocationSequenceData> invocationSequences) {
 		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<>();
 		RequestUriMapper uriMapper = new RequestUriMapper(system);
 
 		for (InvocationSequenceData invoc : invocationSequences) {
 			if ((invoc.getTimerData() != null) && (invoc.getTimerData() instanceof HttpTimerData)) {
 				HttpTimerData dat = (HttpTimerData) invoc.getTimerData();
-				HttpInterface interf = uriMapper.map(dat.getHttpInfo().getUri(), dat.getHttpInfo().getRequestMethod());
+				HttpEndpoint interf = uriMapper.map(dat.getHttpInfo().getUri(), dat.getHttpInfo().getRequestMethod());
 
 				if ((interf != null) && interf.getDomain().equals(dat.getHttpInfo().getServerName()) && interf.getPort().equals(Integer.toString(dat.getHttpInfo().getServerPort()))) {
 					businessTransactions.put(dat.getId(), Pair.of(interf.getId(), interf.getPath()));

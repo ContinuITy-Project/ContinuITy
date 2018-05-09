@@ -7,57 +7,57 @@ import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jorphan.collections.HashTree;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
-import org.continuity.annotation.dsl.ContinuityModelElement;
-import org.continuity.annotation.dsl.ann.InterfaceAnnotation;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.system.HttpInterface;
-import org.continuity.annotation.dsl.system.ServiceInterface;
-import org.continuity.annotation.dsl.system.SystemModel;
-import org.continuity.annotation.dsl.visitor.ContinuityByClassSearcher;
+import org.continuity.idpa.IdpaElement;
+import org.continuity.idpa.annotation.EndpointAnnotation;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.idpa.application.Endpoint;
+import org.continuity.idpa.application.Application;
+import org.continuity.idpa.visitor.IdpaByClassSearcher;
 
 public abstract class AbstractSamplerAnnotator {
 
 	private static final Pattern REQUEST_PATTERN = Pattern.compile("R\\d+\\s\\((.*)\\)");
 
-	private final SystemModel system;
+	private final Application system;
 
-	private final SystemAnnotation annotation;
+	private final ApplicationAnnotation annotation;
 
-	protected AbstractSamplerAnnotator(SystemModel system, SystemAnnotation annotation) {
+	protected AbstractSamplerAnnotator(Application system, ApplicationAnnotation annotation) {
 		this.system = system;
 		this.annotation = annotation;
 	}
 
-	protected abstract void annotateHttpSamplerBySystemAnnotation(HTTPSamplerProxy sampler, SystemAnnotation annotation, HashTree samplerTree);
+	protected abstract void annotateHttpSamplerBySystemAnnotation(HTTPSamplerProxy sampler, ApplicationAnnotation annotation, HashTree samplerTree);
 
-	protected abstract void annotateHttpSamplerByInterfaceAnnotation(HTTPSamplerProxy sampler, InterfaceAnnotation annotation, HashTree samplerTree);
+	protected abstract void annotateHttpSamplerByInterfaceAnnotation(HTTPSamplerProxy sampler, EndpointAnnotation annotation, HashTree samplerTree);
 
-	protected SystemModel getSystem() {
+	protected Application getSystem() {
 		return system;
 	}
 
-	protected SystemAnnotation getAnnotation() {
+	protected ApplicationAnnotation getAnnotation() {
 		return annotation;
 	}
 
 	public void annotateSamplers(ListedHashTree testPlan) {
-		ContinuityByClassSearcher<InterfaceAnnotation> searcher = new ContinuityByClassSearcher<>(InterfaceAnnotation.class, e -> annotateInterface(e, testPlan));
+		IdpaByClassSearcher<EndpointAnnotation> searcher = new IdpaByClassSearcher<>(EndpointAnnotation.class, e -> annotateInterface(e, testPlan));
 		searcher.visit(annotation);
 	}
 
-	private void annotateInterface(ContinuityModelElement element, ListedHashTree testPlan) {
-		InterfaceAnnotation annotation = (InterfaceAnnotation) element;
+	private void annotateInterface(IdpaElement element, ListedHashTree testPlan) {
+		EndpointAnnotation annotation = (EndpointAnnotation) element;
 
-		ServiceInterface<?> interf = annotation.getAnnotatedInterface().resolve(system);
+		Endpoint<?> interf = annotation.getAnnotatedEndpoint().resolve(system);
 
-		if (interf instanceof HttpInterface) {
+		if (interf instanceof HttpEndpoint) {
 			annotateHttpInterface(annotation, testPlan);
 		} else {
 			throw new RuntimeException("Annotation of " + interf.getClass().getSimpleName() + " in JMeter is not yet implemented!");
 		}
 	}
 
-	private void annotateHttpInterface(InterfaceAnnotation interfAnnotation, ListedHashTree testPlan) {
+	private void annotateHttpInterface(EndpointAnnotation interfAnnotation, ListedHashTree testPlan) {
 		SearchByClass<HTTPSamplerProxy> search = new SearchByClass<>(HTTPSamplerProxy.class);
 		testPlan.traverse(search);
 
@@ -65,7 +65,7 @@ public abstract class AbstractSamplerAnnotator {
 			HashTree samplerTree = search.getSubTree(sampler);
 			annotateHttpSamplerBySystemAnnotation(sampler, annotation, samplerTree);
 
-			if (areEqualRequests(interfAnnotation.getAnnotatedInterface().getId(), sampler.getName())) {
+			if (areEqualRequests(interfAnnotation.getAnnotatedEndpoint().getId(), sampler.getName())) {
 				annotateHttpSamplerByInterfaceAnnotation(sampler, interfAnnotation, samplerTree);
 			}
 		}

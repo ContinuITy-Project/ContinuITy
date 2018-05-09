@@ -8,6 +8,7 @@ dependencyManagement {
 }
 
 dependencies {
+	compile project(':continuity.api')
 	compile project(':continuity.commons')
 	
 	// Spring Boot
