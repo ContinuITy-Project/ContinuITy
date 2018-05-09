@@ -7,22 +7,22 @@ services:
   - docker
 env:
   global:
-    - GIT_MAJOR_VERSION=0
-    - GIT_MINOR_VERSION=3
+    - GIT_MAJOR_VERSION=1
+    - GIT_MINOR_VERSION=0
 after_success:
   - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
 
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD;
 
-    docker tag continuityproject/system-annotation continuityproject/system-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker push continuityproject/system-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker tag continuityproject/system-annotation continuityproject/system-annotation:latest;
-    docker push continuityproject/system-annotation:latest;
+    docker tag continuityproject/idpa-annotation continuityproject/idpa-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/idpa-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/idpa-annotation continuityproject/idpa-annotation:latest;
+    docker push continuityproject/idpa-annotation:latest;
 
-    docker tag continuityproject/system-model continuityproject/system-model:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker push continuityproject/system-model:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker tag continuityproject/system-model continuityproject/system-model:latest;
-    docker push continuityproject/system-model:latest;
+    docker tag continuityproject/idpa-application continuityproject/idpa-application:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/idpa-application:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/idpa-application continuityproject/idpa-application:latest;
+    docker push continuityproject/idpa-application:latest;
 
     docker tag continuityproject/wessbas continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;

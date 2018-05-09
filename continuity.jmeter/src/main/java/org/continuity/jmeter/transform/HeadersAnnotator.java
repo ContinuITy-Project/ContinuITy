@@ -6,11 +6,11 @@ import org.apache.jmeter.protocol.http.gui.HeaderPanel;
 import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jorphan.collections.HashTree;
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.annotation.dsl.ann.InterfaceAnnotation;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.system.HttpInterface;
-import org.continuity.annotation.dsl.system.ServiceInterface;
-import org.continuity.annotation.dsl.system.SystemModel;
+import org.continuity.idpa.annotation.EndpointAnnotation;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.idpa.application.Endpoint;
+import org.continuity.idpa.application.Application;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,25 +23,25 @@ public class HeadersAnnotator extends AbstractSamplerAnnotator {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(HeadersAnnotator.class);
 
-	protected HeadersAnnotator(SystemModel system, SystemAnnotation annotation) {
+	protected HeadersAnnotator(Application system, ApplicationAnnotation annotation) {
 		super(system, annotation);
 	}
 
 	@Override
-	protected void annotateHttpSamplerBySystemAnnotation(HTTPSamplerProxy sampler, SystemAnnotation annotation, HashTree samplerTree) {
+	protected void annotateHttpSamplerBySystemAnnotation(HTTPSamplerProxy sampler, ApplicationAnnotation annotation, HashTree samplerTree) {
 		// TODO: add global overrides to global header manager
 	}
 
 	@Override
-	protected void annotateHttpSamplerByInterfaceAnnotation(HTTPSamplerProxy sampler, InterfaceAnnotation annotation, HashTree samplerTree) {
+	protected void annotateHttpSamplerByInterfaceAnnotation(HTTPSamplerProxy sampler, EndpointAnnotation annotation, HashTree samplerTree) {
 		HeaderPanel headerGui = new HeaderPanel();
 		HeaderManager headerManager = (HeaderManager) headerGui.createTestElement();
 		samplerTree.getTree(sampler).add(new ListedHashTree(headerManager));
 
-		ServiceInterface<?> interf = annotation.getAnnotatedInterface().getReferred();
+		Endpoint<?> interf = annotation.getAnnotatedEndpoint().getReferred();
 
-		if (interf instanceof HttpInterface) {
-			HttpInterface httpInterf = (HttpInterface) interf;
+		if (interf instanceof HttpEndpoint) {
+			HttpEndpoint httpInterf = (HttpEndpoint) interf;
 			addHeaders(headerManager, httpInterf.getHeaders());
 		} else {
 			LOGGER.error("Cannot add headers from interface {}, since it is not an HttpInterface (but {})!", interf.getId(), interf.getClass().getSimpleName());

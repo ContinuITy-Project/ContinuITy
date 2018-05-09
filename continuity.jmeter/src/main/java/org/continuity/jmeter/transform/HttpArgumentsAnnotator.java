@@ -7,18 +7,18 @@ import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jmeter.protocol.http.util.HTTPArgument;
 import org.apache.jmeter.testelement.property.JMeterProperty;
 import org.apache.jmeter.testelement.property.PropertyIterator;
-import org.continuity.annotation.dsl.ann.CounterInput;
-import org.continuity.annotation.dsl.ann.DirectDataInput;
-import org.continuity.annotation.dsl.ann.ExtractedInput;
-import org.continuity.annotation.dsl.ann.Input;
-import org.continuity.annotation.dsl.ann.InterfaceAnnotation;
-import org.continuity.annotation.dsl.ann.ParameterAnnotation;
-import org.continuity.annotation.dsl.ann.PropertyOverride;
-import org.continuity.annotation.dsl.ann.PropertyOverrideKey;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.system.HttpParameter;
-import org.continuity.annotation.dsl.system.Parameter;
-import org.continuity.annotation.dsl.system.SystemModel;
+import org.continuity.idpa.annotation.CounterInput;
+import org.continuity.idpa.annotation.DirectListInput;
+import org.continuity.idpa.annotation.ExtractedInput;
+import org.continuity.idpa.annotation.Input;
+import org.continuity.idpa.annotation.EndpointAnnotation;
+import org.continuity.idpa.annotation.ParameterAnnotation;
+import org.continuity.idpa.annotation.PropertyOverride;
+import org.continuity.idpa.annotation.PropertyOverrideKey;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.application.HttpParameter;
+import org.continuity.idpa.application.Parameter;
+import org.continuity.idpa.application.Application;
 
 /**
  * @author Henning Schulz
@@ -28,13 +28,13 @@ public class HttpArgumentsAnnotator {
 
 	private static final String KEY_URL_PART = "URL_PART_";
 
-	private final SystemModel system;
+	private final Application system;
 
-	private final SystemAnnotation systemAnnotation;
+	private final ApplicationAnnotation systemAnnotation;
 
-	private final InterfaceAnnotation interfAnnotation;
+	private final EndpointAnnotation interfAnnotation;
 
-	public HttpArgumentsAnnotator(SystemModel system, SystemAnnotation systemAnnotation, InterfaceAnnotation interfAnnotation) {
+	public HttpArgumentsAnnotator(Application system, ApplicationAnnotation systemAnnotation, EndpointAnnotation interfAnnotation) {
 		this.system = system;
 		this.systemAnnotation = systemAnnotation;
 		this.interfAnnotation = interfAnnotation;
@@ -121,8 +121,8 @@ public class HttpArgumentsAnnotator {
 	private String getInputString(Input input) {
 		if ((input instanceof ExtractedInput) || (input instanceof CounterInput)) {
 			return "${" + input.getId() + "}";
-		} else if (input instanceof DirectDataInput) {
-			DirectDataInput dataInput = (DirectDataInput) input;
+		} else if (input instanceof DirectListInput) {
+			DirectListInput dataInput = (DirectListInput) input;
 
 			if (dataInput.getData().size() > 1) {
 				return "${__GetRandomString(${" + input.getId() + "},;)}";

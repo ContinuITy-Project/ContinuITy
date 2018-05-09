@@ -5,17 +5,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.continuity.annotation.dsl.system.HttpInterface;
-import org.continuity.annotation.dsl.system.HttpParameter;
-import org.continuity.annotation.dsl.system.HttpParameterType;
-import org.continuity.annotation.dsl.system.ServiceInterface;
+import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.idpa.application.HttpParameter;
+import org.continuity.idpa.application.HttpParameterType;
+import org.continuity.idpa.application.Endpoint;
 
 import m4jdsl.HTTPRequest;
 import m4jdsl.Property;
 import m4jdsl.Request;
 
 /**
- * Transforms a {@link Request} of the WESSBAS model into a {@link ServiceInterface} of the
+ * Transforms a {@link Request} of the WESSBAS model into a {@link Endpoint} of the
  * ContinuITy model.
  *
  * @author Henning Schulz
@@ -29,8 +29,8 @@ public enum RequestTransformer {
 	HTTP(HTTPRequest.class) {
 
 		@Override
-		public ServiceInterface<?> transform(Request request) {
-			HttpInterface interf = new HttpInterface();
+		public Endpoint<?> transform(Request request) {
+			HttpEndpoint interf = new HttpEndpoint();
 
 			for (Property property : request.getProperties()) {
 				switch (property.getKey()) {
@@ -111,7 +111,7 @@ public enum RequestTransformer {
 		}
 	}
 
-	public abstract ServiceInterface<?> transform(Request request);
+	public abstract Endpoint<?> transform(Request request);
 
 	private RequestTransformer(Class<? extends Request> requestType) {
 		this.requestType = requestType;

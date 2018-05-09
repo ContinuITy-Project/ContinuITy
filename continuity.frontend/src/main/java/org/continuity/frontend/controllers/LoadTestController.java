@@ -1,5 +1,13 @@
 package org.continuity.frontend.controllers;
 
+import static org.continuity.api.rest.RestApi.Frontend.Loadtest.ROOT;
+import static org.continuity.api.rest.RestApi.Frontend.Loadtest.Paths.CREATE_AND_EXECUTE;
+import static org.continuity.api.rest.RestApi.Frontend.Loadtest.Paths.CREATE_AND_GET;
+import static org.continuity.api.rest.RestApi.Frontend.Loadtest.Paths.EXECUTE;
+import static org.continuity.api.rest.RestApi.Frontend.Loadtest.Paths.REPORT_PATH;
+
+import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.rest.RestApi.Generic;
 import org.continuity.frontend.config.RabbitMqConfig;
 import org.continuity.frontend.entities.LoadTestSpecification;
 import org.slf4j.Logger;
@@ -26,7 +34,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  */
 @RestController
-@RequestMapping("loadtest")
+@RequestMapping(ROOT)
 public class LoadTestController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LoadTestController.class);
@@ -46,7 +54,7 @@ public class LoadTestController {
 	 *            The specification of the load test.
 	 * @return A report.
 	 */
-	@RequestMapping(path = "{type}/createandexecute", method = RequestMethod.POST)
+	@RequestMapping(path = CREATE_AND_EXECUTE, method = RequestMethod.POST)
 	public ResponseEntity<String> createAndExecuteLoadTest(@PathVariable("type") String testType, @RequestBody LoadTestSpecification specification) {
 		String message;
 		HttpStatus status;
@@ -63,7 +71,8 @@ public class LoadTestController {
 		} else {
 			String workloadType = extractWorkloadType(specification.getWorkloadModelLink());
 
-			amqpTemplate.convertAndSend(RabbitMqConfig.CREATE_AND_EXECUTE_LOAD_TEST_EXCHANGE_NAME, workloadType + "." + testType, specification);
+			amqpTemplate.convertAndSend(AmqpApi.Frontend.LOADTESTCREATIONANDEXECUTION_REQUIRED.name(),
+					AmqpApi.Frontend.LOADTESTCREATIONANDEXECUTION_REQUIRED.formatRoutingKey().of(workloadType, testType), specification);
 			message = "Creating a load test from" + workloadType + " workload model " + specification.getWorkloadModelLink();
 			status = HttpStatus.ACCEPTED;
 		}
@@ -80,7 +89,7 @@ public class LoadTestController {
 	 *            The load test to be executed.
 	 * @return A report.
 	 */
-	@RequestMapping(path = "{type}/execute", method = RequestMethod.POST)
+	@RequestMapping(path = EXECUTE, method = RequestMethod.POST)
 	public ResponseEntity<String> executeLoadTest(@PathVariable("type") String testType, @RequestBody JsonNode testPlan) {
 		String message;
 		HttpStatus status;
@@ -89,7 +98,7 @@ public class LoadTestController {
 			message = "Load test is required.";
 			status = HttpStatus.BAD_REQUEST;
 		} else {
-			amqpTemplate.convertAndSend(RabbitMqConfig.EXECUTE_LOAD_TEST_EXCHANGE_NAME, testType, testPlan);
+			amqpTemplate.convertAndSend(AmqpApi.Frontend.LOADTESTEXECUTION_REQUIRED.name(), AmqpApi.Frontend.LOADTESTEXECUTION_REQUIRED.formatRoutingKey().of(testType), testPlan);
 			message = "Executing a " + testType + " load test";
 			status = HttpStatus.ACCEPTED;
 		}
@@ -111,11 +120,11 @@ public class LoadTestController {
 	 *            The tag of the annotation to be used.
 	 * @return The load test.
 	 */
-	@RequestMapping(value = "{lt-type}/{wm-type}/model/{id}/create", method = RequestMethod.GET)
+	@RequestMapping(value = CREATE_AND_GET, method = RequestMethod.GET)
 	public ResponseEntity<JsonNode> createAndGetLoadTest(@PathVariable("lt-type") String loadTestType, @PathVariable("wm-type") String workloadModelType, @PathVariable("id") String workloadModelId,
 			@RequestParam String tag) {
 		LOGGER.debug("load test type: {}, workload model type: {}, workload model id: {}, tag: {}", loadTestType, workloadModelType, workloadModelId, tag);
-		return restTemplate.getForEntity("http://" + loadTestType + "/loadtest/" + workloadModelType + "/model/" + workloadModelId + "/create?tag=" + tag, JsonNode.class);
+		return restTemplate.getForEntity(Generic.GET_AND_CREATE_LOAD_TEST.get(loadTestType).requestUrl(workloadModelType, workloadModelId).withQuery("tag", tag).get(), JsonNode.class);
 	}
 
 	private String extractWorkloadType(String workloadLink) {
@@ -124,14 +133,14 @@ public class LoadTestController {
 
 	/**
 	 * Get Report of Loadtest.
-	 * 
+	 *
 	 * @param timeout
 	 *            the time in millis, how long should be waited for the report.
 	 * @return
 	 */
-	@RequestMapping(value = "/report", method = RequestMethod.GET)
+	@RequestMapping(value = REPORT_PATH, method = RequestMethod.GET)
 	public ResponseEntity<String> getReportOfLoadtest(@RequestParam(value = "timeout", required = true) long timeout) {
-		return new ResponseEntity<String>(amqpTemplate.receiveAndConvert(RabbitMqConfig.PROVIDE_REPORT_QUEUE_NAME, timeout, new ParameterizedTypeReference<String>() {
+		return new ResponseEntity<String>(amqpTemplate.receiveAndConvert(RabbitMqConfig.LOAD_TEST_REPORT_AVAILABLE_QUEUE_NAME, timeout, new ParameterizedTypeReference<String>() {
 		}), HttpStatus.OK);
 
 	}

@@ -7,11 +7,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.apache.commons.math3.util.Pair;
-import org.continuity.annotation.dsl.ann.Input;
-import org.continuity.annotation.dsl.system.HttpParameter;
-import org.continuity.annotation.dsl.system.Parameter;
-import org.continuity.annotation.dsl.system.ServiceInterface;
 import org.continuity.commons.utils.StringUtils;
+import org.continuity.idpa.annotation.Input;
+import org.continuity.idpa.application.HttpParameter;
+import org.continuity.idpa.application.Parameter;
+import org.continuity.idpa.application.Endpoint;
 
 import m4jdsl.ApplicationModel;
 import m4jdsl.ApplicationState;
@@ -20,7 +20,7 @@ import m4jdsl.Request;
 
 /**
  * Extracts the single requests of an {@link ApplicationModel} of the WESSBAS DSL and transforms
- * them to {@link ServiceInterface}s. Each time one interface has been found, registered listeners
+ * them to {@link Endpoint}s. Each time one interface has been found, registered listeners
  * are called. The listeners can be registered via
  * {@link SessionLayerTransformer#registerOnInterfaceFoundListener(Consumer)
  * registerOnInterfaceFoundListener(Consumer)}. <br>
@@ -36,7 +36,7 @@ public class SessionLayerTransformer {
 
 	private final ApplicationModel applicationModel;
 
-	private List<Consumer<ServiceInterface<?>>> interfaceListeners;
+	private List<Consumer<Endpoint<?>>> interfaceListeners;
 
 	private List<Consumer<Pair<Input, Parameter>>> inputListeners;
 
@@ -53,12 +53,12 @@ public class SessionLayerTransformer {
 	}
 
 	/**
-	 * Registers a new listener that is called when a new {@link ServiceInterface} has been found.
+	 * Registers a new listener that is called when a new {@link Endpoint} has been found.
 	 *
 	 * @param listener
 	 *            The listener to be called.
 	 */
-	public void registerOnInterfaceFoundListener(Consumer<ServiceInterface<?>> listener) {
+	public void registerOnInterfaceFoundListener(Consumer<Endpoint<?>> listener) {
 		if (interfaceListeners == null) {
 			interfaceListeners = new ArrayList<>();
 		}
@@ -80,7 +80,7 @@ public class SessionLayerTransformer {
 		inputListeners.add(listener);
 	}
 
-	private void onInterfaceFound(ServiceInterface<?> sInterface) {
+	private void onInterfaceFound(Endpoint<?> sInterface) {
 		interfaceListeners.forEach(l -> l.accept(sInterface));
 	}
 
@@ -116,7 +116,7 @@ public class SessionLayerTransformer {
 		ProtocolState protocolState = state.getProtocolDetails().getProtocolStates().get(0);
 		Request request = protocolState.getRequest();
 
-		ServiceInterface<?> interf = RequestTransformer.get(request.getClass()).transform(request);
+		Endpoint<?> interf = RequestTransformer.get(request.getClass()).transform(request);
 		interf.setId(interfaceName);
 
 		for (Parameter param : interf.getParameters()) {

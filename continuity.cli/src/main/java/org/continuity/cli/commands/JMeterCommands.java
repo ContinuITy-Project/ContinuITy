@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.continuity.api.rest.RestApi.Frontend.Loadtest;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.entities.TestPlanBundle;
 import org.continuity.cli.process.JMeterProcess;
@@ -71,7 +72,11 @@ public class JMeterCommands {
 		}
 
 		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
-		ResponseEntity<TestPlanBundle> response = restTemplate.getForEntity(url + "/loadtest/jmeter/" + workloadLink + "/create?tag=" + tag, TestPlanBundle.class);
+		String[] linkElements = workloadLink.split("\\/");
+		String workloadType = linkElements[0];
+		String workloadId = linkElements[linkElements.length - 1];
+		ResponseEntity<TestPlanBundle> response = restTemplate.getForEntity(Loadtest.CREATE_AND_GET.requestUrl("jmeter", workloadType, workloadId).withQuery("tag", tag).withHost(url).get(),
+				TestPlanBundle.class);
 
 		if (!response.getStatusCode().is2xxSuccessful()) {
 			return response.toString();

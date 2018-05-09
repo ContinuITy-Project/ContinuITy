@@ -1,5 +1,8 @@
 package org.continuity.wessbas.controllers;
 
+import static org.continuity.api.rest.RestApi.Wessbas.JMeter.ROOT;
+import static org.continuity.api.rest.RestApi.Wessbas.JMeter.Paths.CREATE;
+
 import org.continuity.wessbas.entities.JMeterTestPlanBundle;
 import org.continuity.wessbas.entities.WorkloadModelStorageEntry;
 import org.continuity.wessbas.storage.SimpleModelStorage;
@@ -19,7 +22,7 @@ import m4jdsl.WorkloadModel;
  *
  */
 @RestController
-@RequestMapping("loadtest/jmeter")
+@RequestMapping(ROOT)
 public class JMeterController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(JMeterController.class);
@@ -27,7 +30,7 @@ public class JMeterController {
 	@Autowired
 	private WessbasToJmeterConverter jmeterConverter;
 
-	@RequestMapping(value = "{id}/create", method = RequestMethod.GET)
+	@RequestMapping(value = CREATE, method = RequestMethod.GET)
 	public JMeterTestPlanBundle createTestPlan(@PathVariable("id") String workloadModelId) {
 		if (workloadModelId == null) {
 			throw new IllegalArgumentException("The workload model id is null!");

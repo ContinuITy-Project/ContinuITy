@@ -8,6 +8,7 @@ dependencyManagement {
 }
 
 dependencies {
+	compile project(':continuity.api')
 	compile project(':continuity.commons')
 
 	compile("org.springframework.boot:spring-boot-starter-amqp")

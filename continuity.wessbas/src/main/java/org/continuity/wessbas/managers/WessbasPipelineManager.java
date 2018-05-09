@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.function.Consumer;
 
+import org.continuity.api.rest.RestApi.SessionLogs;
 import org.continuity.wessbas.entities.MonitoringData;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.slf4j.Logger;
@@ -149,20 +150,17 @@ public class WessbasPipelineManager {
 	 * @return
 	 */
 	public String getSessionLog(MonitoringData data) {
-		String urlString = "http://session-logs?link=";
+		String link;
 		try {
-			urlString += URLEncoder.encode(data.getDataLink(), "UTF-8");
+			link = URLEncoder.encode(data.getDataLink(), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			LOGGER.error("Error during URL encoding!", e);
 			return null;
 		}
 
 		String tag = extractTag(data.getStorageLink());
-		if (tag != null) {
-			urlString += "&tag=" + tag;
-		}
 
-		String sessionLog = this.restTemplate.getForObject(urlString, String.class);
+		String sessionLog = this.restTemplate.getForObject(SessionLogs.GET.requestUrl().withQuery("link", link).withQuery("tag", tag).get(), String.class);
 
 		LOGGER.debug("Got session logs: {}", sessionLog);
 

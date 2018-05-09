@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.continuity.api.rest.RestApi.Frontend.WorkloadModel;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.commons.format.CommonFormats;
 import org.continuity.commons.utils.WebUtils;
@@ -44,7 +45,7 @@ public class WorkloadCommands {
 		message.put("timestamp", timestamp);
 
 		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
-		return restTemplate.postForEntity(url + "/workloadmodel/" + type + "/create", message, String.class);
+		return restTemplate.postForEntity(WorkloadModel.CREATE.requestUrl(type).withHost(url).get(), message, String.class);
 	}
 
 }

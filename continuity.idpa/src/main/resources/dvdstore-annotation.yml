@@ -1,0 +1,175 @@
+---
+overrides:
+- HttpEndpoint.domain: 192.168.99.100
+inputs:
+- !<direct>
+  &Input_ApplicationPerformanceSettingsGET_actionMethod data:
+  - performancesettings.xhtml%3Aperformancesettings.changeSlowLatestOrders%28%29
+- !<direct>
+  &Input_ApplicationPerformanceSettingsGET_conversationId data:
+  - 7
+  - 8
+- !<direct>
+  &Input_CartGET_conversationId data:
+  - 6
+- !<direct>
+  &Input_CartPOST_c_C_C_QuantityValueText data:
+  - 1
+- !<direct>
+  &Input_CartPOST_c_C_ResetCartButton data:
+  - Empty+Cart
+- !<extracted>
+  &CartPOST_ViewStateExtractedInput extractions:
+  - from: CartGET
+    pattern: id="javax.faces.ViewState" value="(.*)"
+- !<direct>
+  &Input_CartPOST_c_CartDetailsForm data:
+  - cartdetails%3ACartDetailsForm
+- !<direct>
+  &Input_DVDGET_actionMethod data:
+  - dvd.xhtml%3Asearch.addToCart
+- !<direct>
+  &Input_DVDGET_conversationId data:
+  - 2
+  - 5
+  - 6
+- !<direct>
+  &Input_LatestOrdersPOST_L_Password data:
+  - password
+- !<direct>
+  &Input_LatestOrdersPOST_L_Logout data:
+  - Logout
+- !<direct>
+  &Input_LatestOrdersPOST_L_Login data:
+  - Login
+- !<extracted>
+  &LatestOrdersPOST_ViewStateExtractedInput extractions:
+  - from: LatestOrdersGET
+    pattern: id="javax.faces.ViewState" value="(.*)"
+- !<direct>
+  &Input_LatestOrdersPOST_LoginForm data:
+  - LoginForm
+- !<direct>
+  &Input_LatestOrdersPOST_L_Username data:
+  - user1
+- !<direct>
+  &Input_LatestOrdersPOST_LogoutForm data:
+  - LogoutForm
+- !<direct>
+  &Input_ShopGET_conversationId data:
+  - 6
+  - 10
+- !<direct>
+  &Input_ShopPOST_S_Search data:
+  - Search
+- !<direct>
+  &Input_ShopPOST_S_PageSize data:
+  - 15
+- !<direct>
+  &Input_ShopPOST_SearchForm data:
+  - SearchForm
+- !<direct>
+  &Input_ShopPOST_S_Query data:
+  - Syriana
+  - Madagascar
+- !<extracted>
+  &ShopPOST_ViewStateExtractedInput extractions:
+  - from: ShopGET
+    pattern: id="javax.faces.ViewState" value="(.*)"
+endpoint-annotations:
+- endpoint: ApplicationPerformanceSettingsGET
+  overrides: []
+  parameter-annotations:
+  - parameter: ApplicationPerformanceSettingsGET_actionMethod
+    input: *Input_ApplicationPerformanceSettingsGET_actionMethod
+    overrides: []
+  - parameter: ApplicationPerformanceSettingsGET_conversationId
+    input: *Input_ApplicationPerformanceSettingsGET_conversationId
+    overrides: []
+- endpoint: CartGET
+  overrides: []
+  parameter-annotations:
+  - parameter: CartGET_conversationId
+    input: *Input_CartGET_conversationId
+    overrides: []
+- endpoint: CartPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: CartPOST_c_C_C_QuantityValueText
+    input: *Input_CartPOST_c_C_C_QuantityValueText
+    overrides: []
+  - parameter: CartPOST_c_C_ResetCartButton
+    input: *Input_CartPOST_c_C_ResetCartButton
+    overrides: []
+  - parameter: CartPOST_j_f_ViewState
+    input: *CartPOST_ViewStateExtractedInput
+    overrides:
+    - HttpParameter.encoded: "true"
+  - parameter: CartPOST_c_CartDetailsForm
+    input: *Input_CartPOST_c_CartDetailsForm
+    overrides: []
+- endpoint: DVDGET
+  overrides: []
+  parameter-annotations:
+  - parameter: DVDGET_actionMethod
+    input: *Input_DVDGET_actionMethod
+    overrides: []
+  - parameter: DVDGET_conversationId
+    input: *Input_DVDGET_conversationId
+    overrides: []
+- endpoint: HomeGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: LatestOrdersGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: LatestOrdersPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: LatestOrdersPOST_L_Password
+    input: *Input_LatestOrdersPOST_L_Password
+    overrides: []
+  - parameter: LatestOrdersPOST_L_Logout
+    input: *Input_LatestOrdersPOST_L_Logout
+    overrides: []
+  - parameter: LatestOrdersPOST_L_Login
+    input: *Input_LatestOrdersPOST_L_Login
+    overrides: []
+  - parameter: LatestOrdersPOST_j_f_ViewState
+    input: *LatestOrdersPOST_ViewStateExtractedInput
+    overrides:
+    - HttpParameter.encoded: "true"
+  - parameter: LatestOrdersPOST_LoginForm
+    input: *Input_LatestOrdersPOST_LoginForm
+    overrides: []
+  - parameter: LatestOrdersPOST_L_Username
+    input: *Input_LatestOrdersPOST_L_Username
+    overrides: []
+  - parameter: LatestOrdersPOST_LogoutForm
+    input: *Input_LatestOrdersPOST_LogoutForm
+    overrides: []
+- endpoint: ShopGET
+  overrides: []
+  parameter-annotations:
+  - parameter: ShopGET_conversationId
+    input: *Input_ShopGET_conversationId
+    overrides: []
+- endpoint: ShopPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: ShopPOST_S_Search
+    input: *Input_ShopPOST_S_Search
+    overrides: []
+  - parameter: ShopPOST_S_PageSize
+    input: *Input_ShopPOST_S_PageSize
+    overrides: []
+  - parameter: ShopPOST_j_f_ViewState
+    input: *ShopPOST_ViewStateExtractedInput
+    overrides:
+    - HttpParameter.encoded: "true"
+  - parameter: ShopPOST_SearchForm
+    input: *Input_ShopPOST_SearchForm
+    overrides: []
+  - parameter: ShopPOST_S_Query
+    input: *Input_ShopPOST_S_Query
+    overrides: []

@@ -7,9 +7,9 @@ import org.apache.jmeter.modifiers.gui.CounterConfigGui;
 import org.apache.jorphan.collections.HashTree;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
-import org.continuity.annotation.dsl.ann.CounterInput;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.visitor.ContinuityByClassSearcher;
+import org.continuity.idpa.annotation.CounterInput;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.visitor.IdpaByClassSearcher;
 
 import net.voorn.markov4jmeter.control.MarkovController;
 
@@ -21,9 +21,9 @@ import net.voorn.markov4jmeter.control.MarkovController;
  */
 public class CounterAnnotator {
 
-	private final SystemAnnotation systemAnnotation;
+	private final ApplicationAnnotation systemAnnotation;
 
-	public CounterAnnotator(SystemAnnotation systemAnnotation) {
+	public CounterAnnotator(ApplicationAnnotation systemAnnotation) {
 		this.systemAnnotation = systemAnnotation;
 	}
 
@@ -41,7 +41,7 @@ public class CounterAnnotator {
 		Collection<MarkovController> searchResult = search.getSearchResults();
 
 		for (MarkovController markovController : searchResult) {
-			new ContinuityByClassSearcher<>(CounterInput.class, input -> addCounterToThreadGroup(input, search.getSubTree(markovController).getTree(markovController))).visit(systemAnnotation);
+			new IdpaByClassSearcher<>(CounterInput.class, input -> addCounterToThreadGroup(input, search.getSubTree(markovController).getTree(markovController))).visit(systemAnnotation);
 		}
 	}
 

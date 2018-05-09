@@ -41,9 +41,35 @@ services:
     ports:
       - '15672:15672'
 
-  workload-annotation:
-    image: continuityproject/workload-annotation
-    hostname: workload-annotation
+  idpa-application:
+    image: continuityproject/idpa-application
+    hostname: idpa-application
+    networks:
+      - continuity-network
+    ports:
+      - '8085:80'
+      - '5005:5000'
+
+    depends_on:
+      - rabbitmq
+      - eureka
+
+    entrypoint:
+      - java
+      - -Xdebug
+      - -Xnoagent
+      - -Djava.compiler=NONE
+      - -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5000
+      - -jar
+      - /app.jar
+      - --port=80
+      - --spring.rabbitmq.host=rabbitmq
+      - --eureka.uri=http://eureka:8761/eureka
+      - --storage.path=/storage
+
+  idpa-annotation:
+    image: continuityproject/idpa-annotation
+    hostname: idpa-annotation
     networks:
       - continuity-network
     ports:

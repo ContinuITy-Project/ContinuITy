@@ -1,9 +1,15 @@
 package org.continuity.jmeter.controllers;
 
+import static org.continuity.api.rest.RestApi.JMeter.TestPlan.ROOT;
+import static org.continuity.api.rest.RestApi.JMeter.TestPlan.Paths.CREATE_AND_GET;
+
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.system.SystemModel;
+import org.continuity.api.rest.RestApi;
+import org.continuity.api.rest.RestApi.IdpaAnnotation;
+import org.continuity.api.rest.RestApi.IdpaApplication;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.application.Application;
 import org.continuity.jmeter.amqp.TestPlanAmqpHandler;
 import org.continuity.jmeter.entities.TestPlanBundle;
 import org.continuity.jmeter.entities.WorkloadLinks;
@@ -26,7 +32,7 @@ import org.springframework.web.client.RestTemplate;
  *
  */
 @RestController
-@RequestMapping("loadtest")
+@RequestMapping(ROOT)
 public class TestPlanController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TestPlanAmqpHandler.class);
@@ -46,9 +52,9 @@ public class TestPlanController {
 	 *            The tag to be used to retrieve the annotation.
 	 * @return The transformed JMeter test plan.
 	 */
-	@RequestMapping(value = "{type}/model/{id}/create", method = RequestMethod.GET)
+	@RequestMapping(value = CREATE_AND_GET, method = RequestMethod.GET)
 	public TestPlanBundle createAndGetLoadTest(@PathVariable("type") String workloadModelType, @PathVariable("id") String workloadModelId, @RequestParam String tag) {
-		return createAndGetLoadTest(workloadModelType + "/model/" + workloadModelId, tag);
+		return createAndGetLoadTest(RestApi.Generic.WORKLOAD_MODEL_LINK.get(workloadModelType).requestUrl(workloadModelId).get(), tag);
 	}
 
 	/**
@@ -85,9 +91,9 @@ public class TestPlanController {
 	}
 
 	private ListedHashTree createAnnotatedTestPlan(TestPlanBundle testPlanPack, String tag) {
-		SystemAnnotation annotation;
+		ApplicationAnnotation annotation;
 		try {
-			annotation = restTemplate.getForObject("http://system-annotation/ann/" + tag + "/annotation", SystemAnnotation.class);
+			annotation = restTemplate.getForObject(IdpaAnnotation.Annotation.GET.requestUrl(tag).get(), ApplicationAnnotation.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.error("Received a non-200 response: {} ({}) - {}", e.getStatusCode(), e.getStatusCode().getReasonPhrase(), e.getResponseBodyAsString());
 			return null;
@@ -98,15 +104,15 @@ public class TestPlanController {
 			return null;
 		}
 
-		SystemModel systemModel = restTemplate.getForObject("http://system-model/system/" + tag, SystemModel.class);
+		Application application = restTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(tag).get(), Application.class);
 
-		if (systemModel == null) {
-			LOGGER.error("System with tag {} is null! Aborting.", tag);
+		if (application == null) {
+			LOGGER.error("Application with tag {} is null! Aborting.", tag);
 			return null;
 		}
 
 		ListedHashTree testPlan = testPlanPack.getTestPlan();
-		JMeterAnnotator annotator = new JMeterAnnotator(testPlan, systemModel);
+		JMeterAnnotator annotator = new JMeterAnnotator(testPlan, application);
 		annotator.addAnnotations(annotation);
 
 		return testPlan;

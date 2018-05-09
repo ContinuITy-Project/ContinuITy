@@ -11,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.jmeter.JMeter;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.testelement.TestStateListener;
+import org.continuity.api.amqp.AmqpApi;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.jmeter.TestPlanWriter;
 import org.continuity.commons.utils.JMeterUtils;
@@ -51,13 +52,13 @@ public class TestPlanAmqpHandler {
 	private final AtomicInteger testCounter = new AtomicInteger(0);
 
 	/**
-	 * Listens to the {@link RabbitMqConfig#CREATE_AND_EXECUTE_LOAD_TEST_QUEUE_NAME} queue,
+	 * Listens to the {@link RabbitMqConfig#LOAD_TEST_CREATION_AND_EXECUTION_REQUIRED_QUEUE_NAME} queue,
 	 * annotates the test plan and executes the test.
 	 *
 	 * @param specification
 	 *            The specification of the test plan.
 	 */
-	@RabbitListener(queues = RabbitMqConfig.CREATE_AND_EXECUTE_LOAD_TEST_QUEUE_NAME)
+	@RabbitListener(queues = RabbitMqConfig.LOAD_TEST_CREATION_AND_EXECUTION_REQUIRED_QUEUE_NAME)
 	public void createAndExecuteTestPlan(LoadTestSpecification specification) {
 		LOGGER.debug("Received test plan specification.");
 
@@ -77,7 +78,7 @@ public class TestPlanAmqpHandler {
 	 *            Test plan bundle including the test plan itself and the behaviors for
 	 *            Markov4JMeter.
 	 */
-	@RabbitListener(queues = RabbitMqConfig.EXECUTE_LOAD_TEST_QUEUE_NAME)
+	@RabbitListener(queues = RabbitMqConfig.LOAD_TEST_EXECUTION_REQUIRED_QUEUE_NAME)
 	public void executeTestPlan(TestPlanBundle testPlanBundle) {
 		Path tmpPath;
 
@@ -131,7 +132,8 @@ public class TestPlanAmqpHandler {
 
 					runningTests.put(testId, false);
 
-					amqpTemplate.convertAndSend(RabbitMqConfig.PROVIDE_REPORT_EXCHANGE_NAME, "jmeter", FileUtils.readFileToString(resultsPath.toFile(), Charset.defaultCharset()) + appendix);
+					amqpTemplate.convertAndSend(AmqpApi.LoadTest.REPORT_AVAILABLE.name(), AmqpApi.LoadTest.REPORT_AVAILABLE.formatRoutingKey().of("jmeter"),
+							FileUtils.readFileToString(resultsPath.toFile(), Charset.defaultCharset()) + appendix);
 					LOGGER.info("JMeter test finished. Results are stored to {}.", resultsPath);
 				} catch (AmqpException | IOException e) {
 					LOGGER.error("Error when pushing the test results to the queue!", e);

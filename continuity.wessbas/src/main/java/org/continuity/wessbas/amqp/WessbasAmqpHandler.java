@@ -2,6 +2,8 @@ package org.continuity.wessbas.amqp;
 
 import java.util.Date;
 
+import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.rest.RestApi;
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.controllers.WessbasModelController;
 import org.continuity.wessbas.entities.MonitoringData;
@@ -75,7 +77,9 @@ public class WessbasAmqpHandler {
 			responsePack = new WorkloadModelPack(applicationName, storageId, tag);
 		}
 
-		amqpTemplate.convertAndSend(RabbitMqConfig.MODEL_CREATED_EXCHANGE_NAME, "wessbas.wessbas/model/" + storageId, responsePack);
+		// The second part of the routing key is the link to the model
+		String routingKey = AmqpApi.Workload.MODEL_CREATED.formatRoutingKey().of("wessbas", "wessbas" + RestApi.Wessbas.Model.OVERVIEW.path(storageId));
+		amqpTemplate.convertAndSend(AmqpApi.Workload.MODEL_CREATED.name(), routingKey, responsePack);
 	}
 
 	private String extractStorageId(String storageLink) {

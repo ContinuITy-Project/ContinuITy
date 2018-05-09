@@ -25,9 +25,9 @@ services:
       - continuity-network
     ports:
       - '15672:15672'
-  system-model:
-    image: continuityproject/system-model
-    hostname: system-model
+  idpa-application:
+    image: continuityproject/idpa-application
+    hostname: idpa-application
     networks:
       - continuity-network
     ports:
@@ -35,9 +35,9 @@ services:
     depends_on:
       - rabbitmq
       - eureka
-  system-annotation:
-    image: continuityproject/system-annotation
-    hostname: system-annotation
+  idpa-annotation:
+    image: continuityproject/idpa-annotation
+    hostname: idpa-annotation
     networks:
       - continuity-network
     ports:

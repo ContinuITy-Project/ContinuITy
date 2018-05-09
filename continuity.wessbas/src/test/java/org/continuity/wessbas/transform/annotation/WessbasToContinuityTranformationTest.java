@@ -2,10 +2,10 @@ package org.continuity.wessbas.transform.annotation;
 
 import java.io.IOException;
 
-import org.continuity.annotation.dsl.ann.SystemAnnotation;
-import org.continuity.annotation.dsl.system.HttpInterface;
-import org.continuity.annotation.dsl.system.ServiceInterface;
-import org.continuity.annotation.dsl.system.SystemModel;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.idpa.application.Endpoint;
+import org.continuity.idpa.application.Application;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.continuity.wessbas.transform.annotation.AnnotationFromWessbasExtractor;
 import org.junit.Assert;
@@ -36,20 +36,20 @@ public class WessbasToContinuityTranformationTest {
 	@Test
 	public void testCreatedModel() {
 		AnnotationFromWessbasExtractor extractor = new AnnotationFromWessbasExtractor(createdWessbasModel, "test");
-		SystemModel system = extractor.extractSystemModel();
+		Application system = extractor.extractSystemModel();
 
-		Assert.assertEquals("Expected the system to have 3 interfaces.", 3, system.getInterfaces().size());
+		Assert.assertEquals("Expected the system to have 3 interfaces.", 3, system.getEndpoints().size());
 
-		for (ServiceInterface<?> interf : system.getInterfaces()) {
+		for (Endpoint<?> interf : system.getEndpoints()) {
 			switch (interf.getId()) {
 			case "Login":
-				Assert.assertEquals("Wrong method for Login!", "GET", ((HttpInterface) interf).getMethod());
+				Assert.assertEquals("Wrong method for Login!", "GET", ((HttpEndpoint) interf).getMethod());
 				break;
 			case "Add2Cart":
-				Assert.assertEquals("Wrong method for Add2Cart!", "POST", ((HttpInterface) interf).getMethod());
+				Assert.assertEquals("Wrong method for Add2Cart!", "POST", ((HttpEndpoint) interf).getMethod());
 				break;
 			case "Purchase":
-				Assert.assertEquals("Wrong method for Purchase!", "GET", ((HttpInterface) interf).getMethod());
+				Assert.assertEquals("Wrong method for Purchase!", "GET", ((HttpEndpoint) interf).getMethod());
 				break;
 			default:
 				Assert.fail("Found the unexpected interface " + interf.getId());
@@ -57,16 +57,16 @@ public class WessbasToContinuityTranformationTest {
 			}
 		}
 
-		SystemAnnotation annotation = extractor.extractInitialAnnotation();
-		Assert.assertEquals("Extracted system and annotation should have the same number of interfaces!", system.getInterfaces().size(), annotation.getInterfaceAnnotations().size());
+		ApplicationAnnotation annotation = extractor.extractInitialAnnotation();
+		Assert.assertEquals("Extracted system and annotation should have the same number of interfaces!", system.getEndpoints().size(), annotation.getEndpointAnnotations().size());
 	}
 
 	@Test
 	public void testParsedModel() {
 		AnnotationFromWessbasExtractor extractor = new AnnotationFromWessbasExtractor(parsedWessbasModel, "specj");
-		SystemModel system = extractor.extractSystemModel();
+		Application system = extractor.extractSystemModel();
 
-		Assert.assertEquals("Expected the system to have 13 interfaces.", 13, system.getInterfaces().size());
+		Assert.assertEquals("Expected the system to have 13 interfaces.", 13, system.getEndpoints().size());
 	}
 
 }

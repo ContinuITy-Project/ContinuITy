@@ -1,5 +1,7 @@
 package org.continuity.wessbas.entities;
 
+import org.continuity.api.rest.RestApi.Wessbas;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -18,8 +20,8 @@ public class WorkloadModelPack {
 	@JsonProperty("workload-link")
 	private String workloadLink;
 
-	@JsonProperty("system-model-link")
-	private String systemModelLink;
+	@JsonProperty("application-link")
+	private String applicationLink;
 
 	@JsonProperty("initial-annotation-link")
 	private String initialAnnotationLink;
@@ -38,18 +40,17 @@ public class WorkloadModelPack {
 	}
 
 	public WorkloadModelPack(String hostname, String id, String tag) {
-		String base = hostname + "/model/" + id;
-		this.workloadLink = base + "/workload";
-		this.systemModelLink = base + "/system";
-		this.initialAnnotationLink = base + "/annotation";
-		this.jmeterLink = hostname + "/loadtest/jmeter/" + id + "/create";
+		this.workloadLink = hostname + Wessbas.Model.GET_WORKLOAD.path(id);
+		this.applicationLink = hostname + Wessbas.Model.GET_APPLICATION.path(id);
+		this.initialAnnotationLink = hostname + Wessbas.Model.GET_ANNOTATION.path(id);
+		this.jmeterLink = hostname + Wessbas.JMeter.CREATE.path(id);
 		this.tag = tag;
 		this.error = false;
 	}
 
 	public static WorkloadModelPack asError(String hostname, String id, String tag) {
 		WorkloadModelPack pack = new WorkloadModelPack(hostname, id, tag);
-		pack.setSystemModelLink(ERROR_LINK);
+		pack.setApplicationLink(ERROR_LINK);
 		pack.setInitialAnnotationLink(ERROR_LINK);
 		pack.setJmeterLink(ERROR_LINK);
 		pack.setError(true);
@@ -96,22 +97,22 @@ public class WorkloadModelPack {
 	}
 
 	/**
-	 * Gets {@link #systemModelLink}.
+	 * Gets {@link #applicationLink}.
 	 *
-	 * @return {@link #systemModelLink}
+	 * @return {@link #applicationLink}
 	 */
-	public String getSystemModelLink() {
-		return this.systemModelLink;
+	public String getApplicationLink() {
+		return this.applicationLink;
 	}
 
 	/**
-	 * Sets {@link #systemModelLink}.
+	 * Sets {@link #applicationLink}.
 	 *
-	 * @param systemModel
-	 *            New value for {@link #systemModelLink}
+	 * @param applicationLink
+	 *            New value for {@link #applicationLink}
 	 */
-	public void setSystemModelLink(String systemModelLink) {
-		this.systemModelLink = systemModelLink;
+	public void setApplicationLink(String applicationLink) {
+		this.applicationLink = applicationLink;
 	}
 
 	/**
