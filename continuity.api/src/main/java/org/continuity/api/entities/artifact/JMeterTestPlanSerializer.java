@@ -1,4 +1,4 @@
-package org.continuity.commons.jmeter;
+package org.continuity.api.entities.artifact;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

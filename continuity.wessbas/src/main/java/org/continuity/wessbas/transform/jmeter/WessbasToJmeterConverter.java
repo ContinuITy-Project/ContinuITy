@@ -3,7 +3,7 @@ package org.continuity.wessbas.transform.jmeter;
 import java.io.IOException;
 
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.wessbas.entities.JMeterTestPlanBundle;
+import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 
 import m4jdsl.BehaviorModel;
 import m4jdsl.WorkloadModel;

@@ -7,9 +7,9 @@ import static org.continuity.api.rest.RestApi.Frontend.Loadtest.Paths.EXECUTE;
 import static org.continuity.api.rest.RestApi.Frontend.Loadtest.Paths.REPORT_PATH;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.config.LoadTestConfiguration;
 import org.continuity.api.rest.RestApi.Generic;
 import org.continuity.frontend.config.RabbitMqConfig;
-import org.continuity.frontend.entities.LoadTestSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -55,7 +55,7 @@ public class LoadTestController {
 	 * @return A report.
 	 */
 	@RequestMapping(path = CREATE_AND_EXECUTE, method = RequestMethod.POST)
-	public ResponseEntity<String> createAndExecuteLoadTest(@PathVariable("type") String testType, @RequestBody LoadTestSpecification specification) {
+	public ResponseEntity<String> createAndExecuteLoadTest(@PathVariable("type") String testType, @RequestBody LoadTestConfiguration specification) {
 		String message;
 		HttpStatus status;
 

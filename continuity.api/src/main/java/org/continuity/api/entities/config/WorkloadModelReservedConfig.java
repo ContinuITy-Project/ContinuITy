@@ -1,8 +1,8 @@
-package org.continuity.frontend.entities;
+package org.continuity.api.entities.config;
 
 import java.util.Date;
 
-import org.continuity.commons.format.CommonFormats;
+import org.continuity.api.entities.ApiFormats;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,44 +11,44 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
-public class WorkloadModelInput {
+public class WorkloadModelReservedConfig {
 
 	@JsonProperty("data")
-	private String monitoringDataLink;
+	private String dataLink;
 
 	@JsonProperty(value = "timestamp", required = false)
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ApiFormats.DATE_FORMAT_PATTERN)
 	private Date timestamp = new Date();
 
 	@JsonProperty("reserved")
 	private String storageLink;
 
-	public WorkloadModelInput(String monitoringDataLink, Date timestamp, String storageLink) {
-		this.monitoringDataLink = monitoringDataLink;
+	public WorkloadModelReservedConfig(String monitoringDataLink, Date timestamp, String storageLink) {
+		this.dataLink = monitoringDataLink;
 		this.storageLink = storageLink;
 		this.timestamp = timestamp;
 	}
 
-	public WorkloadModelInput() {
+	public WorkloadModelReservedConfig() {
 	}
 
 	/**
-	 * Gets {@link #monitoringDataLink}.
+	 * Gets {@link #dataLink}.
 	 *
-	 * @return {@link #monitoringDataLink}
+	 * @return {@link #dataLink}
 	 */
-	public String getMonitoringDataLink() {
-		return this.monitoringDataLink;
+	public String getDataLink() {
+		return this.dataLink;
 	}
 
 	/**
-	 * Sets {@link #monitoringDataLink}.
+	 * Sets {@link #dataLink}.
 	 *
-	 * @param monitoringDataLink
-	 *            New value for {@link #monitoringDataLink}
+	 * @param dataLink
+	 *            New value for {@link #dataLink}
 	 */
-	public void setMonitoringDataLink(String monitoringDataLink) {
-		this.monitoringDataLink = monitoringDataLink;
+	public void setDataLink(String dataLink) {
+		this.dataLink = dataLink;
 	}
 
 	/**
@@ -94,7 +94,7 @@ public class WorkloadModelInput {
 	 */
 	@Override
 	public String toString() {
-		return "{ data: \"" + monitoringDataLink + "\", reserved: \"" + storageLink + "\" }";
+		return "{ data: \"" + dataLink + "\", reserved: \"" + storageLink + "\" }";
 	}
 
 }

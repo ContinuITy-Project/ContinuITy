@@ -6,7 +6,7 @@ import java.util.Collections;
 
 import org.apache.jmeter.save.SaveService;
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.wessbas.entities.JMeterTestPlanBundle;
+import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.junit.Assert;
 import org.junit.Before;

@@ -3,7 +3,7 @@ package org.continuity.wessbas.controllers;
 import static org.continuity.api.rest.RestApi.Wessbas.JMeter.ROOT;
 import static org.continuity.api.rest.RestApi.Wessbas.JMeter.Paths.CREATE;
 
-import org.continuity.wessbas.entities.JMeterTestPlanBundle;
+import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.wessbas.entities.WorkloadModelStorageEntry;
 import org.continuity.wessbas.storage.SimpleModelStorage;
 import org.continuity.wessbas.transform.jmeter.WessbasToJmeterConverter;

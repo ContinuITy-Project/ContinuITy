@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 
+import org.continuity.api.entities.report.AnnotationValidityReport;
+import org.continuity.api.entities.report.ModelElementReference;
 import org.continuity.idpa.annotation.controllers.AnnotationController;
-import org.continuity.idpa.annotation.entities.AnnotationValidityReport;
-import org.continuity.idpa.annotation.entities.ModelElementReference;
 import org.continuity.idpa.annotation.storage.AnnotationStorage;
 import org.continuity.idpa.annotation.storage.AnnotationStorageManager;
 import org.junit.Assert;

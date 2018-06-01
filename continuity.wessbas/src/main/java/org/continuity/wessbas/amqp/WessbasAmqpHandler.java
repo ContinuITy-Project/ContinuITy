@@ -3,10 +3,10 @@ package org.continuity.wessbas.amqp;
 import java.util.Date;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.config.WorkloadModelReservedConfig;
 import org.continuity.api.rest.RestApi;
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.controllers.WessbasModelController;
-import org.continuity.wessbas.entities.MonitoringData;
 import org.continuity.wessbas.entities.WorkloadModelPack;
 import org.continuity.wessbas.managers.WessbasPipelineManager;
 import org.continuity.wessbas.storage.SimpleModelStorage;
@@ -51,7 +51,7 @@ public class WessbasAmqpHandler {
 	 * @see WessbasModelController
 	 */
 	@RabbitListener(queues = RabbitMqConfig.MONITORING_DATA_AVAILABLE_QUEUE_NAME)
-	public void onMonitoringDataAvailable(MonitoringData data) {
+	public void onMonitoringDataAvailable(WorkloadModelReservedConfig data) {
 		LOGGER.info("Received new monitoring data '{}' to be processed for '{}'", data.getDataLink(), data.getStorageLink());
 
 		String storageId = extractStorageId(data.getStorageLink());

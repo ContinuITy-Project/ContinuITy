@@ -1,6 +1,6 @@
 package org.continuity.wessbas.transform.jmeter;
 
-import org.continuity.wessbas.entities.JMeterTestPlanBundle;
+import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.junit.Assert;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package org.continuity.idpa.application.entities;
+package org.continuity.api.entities.report;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

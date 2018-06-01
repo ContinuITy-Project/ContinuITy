@@ -2,8 +2,8 @@ package org.continuity.idpa.annotation.storage;
 
 import java.io.IOException;
 
+import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
-import org.continuity.idpa.annotation.entities.AnnotationValidityReport;
 import org.continuity.idpa.annotation.validation.AnnotationFixer;
 import org.continuity.idpa.annotation.validation.AnnotationValidityChecker;
 import org.continuity.idpa.application.Application;

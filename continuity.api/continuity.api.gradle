@@ -7,6 +7,20 @@ dependencyManagement {
 }
 
 dependencies {
+	compile project(':continuity.idpa')
+	
 	compile("org.springframework.boot:spring-boot-starter-web")
 	compile("org.springframework.boot:spring-boot-starter-amqp")
+	
+	// JMeter 
+	
+	compile (group: 'org.apache.jmeter', name: 'ApacheJMeter_core', version: '3.1') {
+		exclude group: 'org.mongodb', module: 'mongo-java-driver'
+	}
+	compile (group: 'org.apache.jmeter', name: 'ApacheJMeter_components', version: '3.1') {
+		exclude group: 'org.mongodb', module: 'mongo-java-driver'
+	}
+	compile (group: 'org.apache.jmeter', name: 'ApacheJMeter_http', version: '3.1') {
+		exclude group: 'org.mongodb', module: 'mongo-java-driver'
+	}
 }

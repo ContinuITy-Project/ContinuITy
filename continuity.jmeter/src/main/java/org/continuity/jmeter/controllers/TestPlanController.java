@@ -4,6 +4,8 @@ import static org.continuity.api.rest.RestApi.JMeter.TestPlan.ROOT;
 import static org.continuity.api.rest.RestApi.JMeter.TestPlan.Paths.CREATE_AND_GET;
 
 import org.apache.jorphan.collections.ListedHashTree;
+import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
+import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.rest.RestApi;
 import org.continuity.api.rest.RestApi.IdpaAnnotation;
 import org.continuity.api.rest.RestApi.IdpaApplication;
@@ -11,8 +13,6 @@ import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.continuity.jmeter.amqp.TestPlanAmqpHandler;
-import org.continuity.jmeter.entities.TestPlanBundle;
-import org.continuity.jmeter.entities.WorkloadLinks;
 import org.continuity.jmeter.transform.JMeterAnnotator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public class TestPlanController {
 	 * @return The transformed JMeter test plan.
 	 */
 	@RequestMapping(value = CREATE_AND_GET, method = RequestMethod.GET)
-	public TestPlanBundle createAndGetLoadTest(@PathVariable("type") String workloadModelType, @PathVariable("id") String workloadModelId, @RequestParam String tag) {
+	public JMeterTestPlanBundle createAndGetLoadTest(@PathVariable("type") String workloadModelType, @PathVariable("id") String workloadModelId, @RequestParam String tag) {
 		return createAndGetLoadTest(RestApi.Generic.WORKLOAD_MODEL_LINK.get(workloadModelType).requestUrl(workloadModelId).get(), tag);
 	}
 
@@ -69,16 +69,16 @@ public class TestPlanController {
 	 *            The tag to be used to retrieve the annotation.
 	 * @return The transformed JMeter test plan.
 	 */
-	public TestPlanBundle createAndGetLoadTest(String workloadModelLink, String tag) {
+	public JMeterTestPlanBundle createAndGetLoadTest(String workloadModelLink, String tag) {
 		LOGGER.debug("Creating a load test from {}.", workloadModelLink);
 
-		WorkloadLinks workloadLinks = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadModelLink), WorkloadLinks.class);
+		LinkExchangeModel workloadLinks = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadModelLink), LinkExchangeModel.class);
 
 		if ((workloadLinks == null) || (workloadLinks.getJmeterLink() == null)) {
 			throw new IllegalArgumentException("The workload model at " + workloadModelLink + " cannot be transformed into JMeter!");
 		}
 
-		TestPlanBundle testPlanPack = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadLinks.getJmeterLink()), TestPlanBundle.class);
+		JMeterTestPlanBundle testPlanPack = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadLinks.getJmeterLink()), JMeterTestPlanBundle.class);
 
 		ListedHashTree annotatedTestPlan = createAnnotatedTestPlan(testPlanPack, tag);
 
@@ -87,10 +87,10 @@ public class TestPlanController {
 			annotatedTestPlan = testPlanPack.getTestPlan();
 		}
 
-		return new TestPlanBundle(annotatedTestPlan, testPlanPack.getBehaviors());
+		return new JMeterTestPlanBundle(annotatedTestPlan, testPlanPack.getBehaviors());
 	}
 
-	private ListedHashTree createAnnotatedTestPlan(TestPlanBundle testPlanPack, String tag) {
+	private ListedHashTree createAnnotatedTestPlan(JMeterTestPlanBundle testPlanPack, String tag) {
 		ApplicationAnnotation annotation;
 		try {
 			annotation = restTemplate.getForObject(IdpaAnnotation.Annotation.GET.requestUrl(tag).get(), ApplicationAnnotation.class);

@@ -5,9 +5,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.rest.RestApi.Frontend.WorkloadModel;
 import org.continuity.cli.config.PropertiesProvider;
-import org.continuity.commons.format.CommonFormats;
 import org.continuity.commons.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +25,7 @@ public class WorkloadCommands {
 
 	private static final String DEFAULT_DATE = "1970-01-01T00:00:00.000Z";
 
-	private static final DateFormat DATE_FORMAT = CommonFormats.DATE_FORMAT;
+	private static final DateFormat DATE_FORMAT = ApiFormats.DATE_FORMAT;
 
 	@Autowired
 	private PropertiesProvider propertiesProvider;

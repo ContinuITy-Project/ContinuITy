@@ -10,10 +10,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.continuity.idpa.annotation.entities.AnnotationValidityReport;
-import org.continuity.idpa.annotation.entities.AnnotationViolation;
-import org.continuity.idpa.annotation.entities.AnnotationViolationType;
-import org.continuity.idpa.annotation.entities.ModelElementReference;
+import org.continuity.api.entities.report.AnnotationValidityReport;
+import org.continuity.api.entities.report.AnnotationViolation;
+import org.continuity.api.entities.report.AnnotationViolationType;
+import org.continuity.api.entities.report.ApplicationChange;
+import org.continuity.api.entities.report.ApplicationChangeType;
+import org.continuity.api.entities.report.ModelElementReference;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,10 +39,10 @@ public class AnnotationValidityReportJsonTest {
 	public void setupReport() {
 		Map<ModelElementReference, Set<AnnotationViolation>> violations = new HashMap<>();
 		violations.put(new ModelElementReference("MyType", "MyId"),
-				Collections.singleton(new AnnotationViolation(AnnotationViolationType.ENDPOINT_ADDED, new ModelElementReference("HttpEndpoint", "foo"))));
+				Collections.singleton(new AnnotationViolation(AnnotationViolationType.ILLEGAL_ENDPOINT_REFERENCE, new ModelElementReference("HttpEndpoint", "foo"))));
 
-		Set<AnnotationViolation> systemChanges = new HashSet<>(Arrays.asList(new AnnotationViolation(AnnotationViolationType.ENDPOINT_REMOVED, new ModelElementReference("HttpEndpoint", "bar")),
-				new AnnotationViolation(AnnotationViolationType.PARAMETER_ADDED, new ModelElementReference("HttpParameter", "blub"))));
+		Set<ApplicationChange> systemChanges = new HashSet<>(Arrays.asList(new ApplicationChange(ApplicationChangeType.ENDPOINT_REMOVED, new ModelElementReference("HttpEndpoint", "bar")),
+				new ApplicationChange(ApplicationChangeType.PARAMETER_ADDED, new ModelElementReference("HttpParameter", "blub"))));
 
 		report = new AnnotationValidityReport(systemChanges, violations);
 	}
@@ -50,16 +52,17 @@ public class AnnotationValidityReportJsonTest {
 		ObjectMapper mapper = new ObjectMapper();
 
 		fooReference = mapper.createObjectNode();
-		fooReference.putObject("changed-element").put("type", "HttpEndpoint").put("id", "foo");
-		fooReference.put("breaking", false).put("message", AnnotationViolationType.ENDPOINT_ADDED.getMessage());
+		fooReference.putObject("affected-element").put("type", "HttpEndpoint").put("id", "foo");
+		fooReference.put("breaking", true).put("message", AnnotationViolationType.ILLEGAL_ENDPOINT_REFERENCE.getMessage());
 
 		barReference = mapper.createObjectNode();
 		barReference.putObject("changed-element").put("type", "HttpEndpoint").put("id", "bar");
-		barReference.put("breaking", false).put("message", AnnotationViolationType.ENDPOINT_REMOVED.getMessage());
+		barReference.put("message", ApplicationChangeType.ENDPOINT_REMOVED.getMessage());
 
 		blubReference = mapper.createObjectNode();
 		blubReference.putObject("changed-element").put("type", "HttpParameter").put("id", "blub");
-		blubReference.put("breaking", false).put("message", AnnotationViolationType.PARAMETER_ADDED.getMessage());
+		blubReference.put("message", ApplicationChangeType.PARAMETER_ADDED.getMessage());
+
 	}
 
 	@Test

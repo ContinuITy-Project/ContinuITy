@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.api.rest.RestApi.Frontend.Loadtest;
 import org.continuity.cli.config.PropertiesProvider;
-import org.continuity.cli.entities.TestPlanBundle;
 import org.continuity.cli.process.JMeterProcess;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.jmeter.TestPlanWriter;
@@ -75,8 +75,8 @@ public class JMeterCommands {
 		String[] linkElements = workloadLink.split("\\/");
 		String workloadType = linkElements[0];
 		String workloadId = linkElements[linkElements.length - 1];
-		ResponseEntity<TestPlanBundle> response = restTemplate.getForEntity(Loadtest.CREATE_AND_GET.requestUrl("jmeter", workloadType, workloadId).withQuery("tag", tag).withHost(url).get(),
-				TestPlanBundle.class);
+		ResponseEntity<JMeterTestPlanBundle> response = restTemplate.getForEntity(Loadtest.CREATE_AND_GET.requestUrl("jmeter", workloadType, workloadId).withQuery("tag", tag).withHost(url).get(),
+				JMeterTestPlanBundle.class);
 
 		if (!response.getStatusCode().is2xxSuccessful()) {
 			return response.toString();
@@ -85,7 +85,7 @@ public class JMeterCommands {
 		Path testPlanDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), extractTempDirPrefix(workloadLink));
 		testPlanDir.toFile().mkdirs();
 
-		TestPlanBundle testPlanBundle = response.getBody();
+		JMeterTestPlanBundle testPlanBundle = response.getBody();
 		propertiesCorrector.correctPaths(testPlanBundle.getTestPlan(), testPlanDir.toAbsolutePath());
 		propertiesCorrector.configureResultFile(testPlanBundle.getTestPlan(), testPlanDir.resolve("results.csv").toAbsolutePath());
 		propertiesCorrector.prepareForHeadlessExecution(testPlanBundle.getTestPlan());

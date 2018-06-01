@@ -6,13 +6,13 @@ import java.nio.file.Path;
 import java.util.Collections;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.report.AnnotationValidityReport;
+import org.continuity.api.entities.report.ApplicationChange;
+import org.continuity.api.entities.report.ApplicationChangeType;
+import org.continuity.api.entities.report.ModelElementReference;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.amqp.AnnotationAmpqHandler;
-import org.continuity.idpa.annotation.entities.AnnotationValidityReport;
-import org.continuity.idpa.annotation.entities.AnnotationViolation;
-import org.continuity.idpa.annotation.entities.AnnotationViolationType;
-import org.continuity.idpa.annotation.entities.ModelElementReference;
-import org.continuity.idpa.annotation.entities.SystemAnnotationLink;
 import org.continuity.idpa.annotation.storage.AnnotationStorage;
 import org.continuity.idpa.annotation.storage.AnnotationStorageManager;
 import org.continuity.idpa.application.Application;
@@ -62,23 +62,23 @@ public class AnnotationAmqpValidityCheckTest {
 			Mockito.when(restMock.getForEntity(testInstance.getAnnotationLink(), ApplicationAnnotation.class)).thenReturn(testInstance.getAnnotationEntity());
 		}
 
-		AnnotationValidationReportBuilder builder = new AnnotationValidationReportBuilder();
-		builder.addViolation(new AnnotationViolation(AnnotationViolationType.ENDPOINT_REMOVED, new ModelElementReference("HttpInterface", "logout")));
-		builder.addViolation(new AnnotationViolation(AnnotationViolationType.ENDPOINT_ADDED, new ModelElementReference("HttpInterface", "login")));
+		AnnotationValidityReportBuilder builder = new AnnotationValidityReportBuilder();
+		builder.addApplicationChange(new ApplicationChange(ApplicationChangeType.ENDPOINT_REMOVED, new ModelElementReference("HttpInterface", "logout")));
+		builder.addApplicationChange(new ApplicationChange(ApplicationChangeType.ENDPOINT_ADDED, new ModelElementReference("HttpInterface", "login")));
 		AnnotationValidityReport firstReport = builder.buildReport();
 
-		builder = new AnnotationValidationReportBuilder();
-		builder.addViolation(new AnnotationViolation(AnnotationViolationType.ENDPOINT_ADDED, new ModelElementReference("HttpInterface", "logout")));
-		builder.addViolation(new AnnotationViolation(AnnotationViolationType.PARAMETER_ADDED, new ModelElementReference("HttpParameter", "logoutuser")));
+		builder = new AnnotationValidityReportBuilder();
+		builder.addApplicationChange(new ApplicationChange(ApplicationChangeType.ENDPOINT_ADDED, new ModelElementReference("HttpInterface", "logout")));
+		builder.addApplicationChange(new ApplicationChange(ApplicationChangeType.PARAMETER_ADDED, new ModelElementReference("HttpParameter", "logoutuser")));
 		AnnotationValidityReport secondReport = builder.buildReport();
 
-		builder = new AnnotationValidationReportBuilder();
-		builder.addViolation(new AnnotationViolation(AnnotationViolationType.ENDPOINT_REMOVED, new ModelElementReference("HttpInterface", "login")));
-		builder.addViolation(new AnnotationViolation(AnnotationViolationType.PARAMETER_REMOVED, new ModelElementReference("HttpParameter", "logoutuser")));
+		builder = new AnnotationValidityReportBuilder();
+		builder.addApplicationChange(new ApplicationChange(ApplicationChangeType.ENDPOINT_REMOVED, new ModelElementReference("HttpInterface", "login")));
+		builder.addApplicationChange(new ApplicationChange(ApplicationChangeType.PARAMETER_REMOVED, new ModelElementReference("HttpParameter", "logoutuser")));
 		AnnotationValidityReport thirdReport = builder.buildReport();
 
-		builder = new AnnotationValidationReportBuilder();
-		builder.addViolation(new AnnotationViolation(AnnotationViolationType.ENDPOINT_ADDED, new ModelElementReference("HttpInterface", "login")));
+		builder = new AnnotationValidityReportBuilder();
+		builder.addApplicationChange(new ApplicationChange(ApplicationChangeType.ENDPOINT_ADDED, new ModelElementReference("HttpInterface", "login")));
 		AnnotationValidityReport allFromFirstReport = builder.buildReport();
 
 		AnnotationValidityReport emptyReport = new AnnotationValidityReport(Collections.emptySet(), Collections.emptyMap());
@@ -255,22 +255,22 @@ public class AnnotationAmqpValidityCheckTest {
 	}
 
 	private void callSystemModelCreated(AnnotationValidityTestInstance testInstance) {
-		SystemAnnotationLink link = new SystemAnnotationLink();
+		LinkExchangeModel link = new LinkExchangeModel();
 		link.setTag(TAG);
 
 		link.setApplicationLink(testInstance.getSystemLink());
-		link.setAnnotationLink(testInstance.getAnnotationLink());
+		link.setInitialAnnotationLink(testInstance.getAnnotationLink());
 		link.setDeltaLink(testInstance.getSystemLink() + "/delta");
 
-		annotationHandler.onSystemModelCreated(link);
+		annotationHandler.onApplicationModelChanged(link);
 	}
 
 	private void callAnnotationCreated(AnnotationValidityTestInstance testInstance) {
-		SystemAnnotationLink link = new SystemAnnotationLink();
+		LinkExchangeModel link = new LinkExchangeModel();
 		link.setTag(TAG);
 
 		link.setApplicationLink(testInstance.getSystemLink());
-		link.setAnnotationLink(testInstance.getAnnotationLink());
+		link.setInitialAnnotationLink(testInstance.getAnnotationLink());
 		link.setDeltaLink(testInstance.getSystemLink() + "/delta");
 
 		annotationHandler.onAnnotationModelCreated(link);

@@ -3,11 +3,11 @@ package org.continuity.idpa.annotation.amqp;
 import java.io.IOException;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.config.RabbitMqConfig;
-import org.continuity.idpa.annotation.entities.AnnotationValidityReport;
-import org.continuity.idpa.annotation.entities.SystemAnnotationLink;
 import org.continuity.idpa.annotation.storage.AnnotationStorageManager;
 import org.continuity.idpa.application.Application;
 import org.slf4j.Logger;
@@ -43,12 +43,12 @@ public class AnnotationAmpqHandler {
 	}
 
 	@RabbitListener(queues = RabbitMqConfig.WORKLOAD_MODEL_CREATED_QUEUE_NAME)
-	public void onAnnotationModelCreated(SystemAnnotationLink link) {
+	public void onAnnotationModelCreated(LinkExchangeModel link) {
 		LOGGER.info("Received system annotation link: {}", link);
 
 		ResponseEntity<ApplicationAnnotation> annResponse;
 		try {
-			annResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getAnnotationLink()), ApplicationAnnotation.class);
+			annResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getInitialAnnotationLink()), ApplicationAnnotation.class);
 		} catch (RestClientResponseException e) {
 			LOGGER.error("Received error response! Ignoring the new annotation.", e);
 			return;
@@ -64,7 +64,7 @@ public class AnnotationAmpqHandler {
 	}
 
 	@RabbitListener(queues = RabbitMqConfig.IDPA_APPLICATION_CHANGED_QUEUE_NAME)
-	public void onSystemModelCreated(SystemAnnotationLink link) {
+	public void onApplicationModelChanged(LinkExchangeModel link) {
 		LOGGER.info("Received system annotation link: {}", link);
 
 		ResponseEntity<Application> systemResponse;

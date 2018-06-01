@@ -2,7 +2,7 @@ package org.continuity.wessbas.entities;
 
 import java.util.Date;
 
-import org.continuity.commons.format.CommonFormats;
+import org.continuity.api.entities.ApiFormats;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,11 +20,11 @@ public class WorkloadModelStorageEntry {
 	private WorkloadModel workloadModel;
 
 	@JsonProperty("created-date")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ApiFormats.DATE_FORMAT_PATTERN)
 	private Date createdDate;
 
 	@JsonProperty("data-timestamp")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ApiFormats.DATE_FORMAT_PATTERN)
 	private Date dataTimestamp;
 
 	private String id;

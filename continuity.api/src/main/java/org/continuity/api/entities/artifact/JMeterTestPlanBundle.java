@@ -1,10 +1,8 @@
-package org.continuity.cli.entities;
+package org.continuity.api.entities.artifact;
 
 import java.util.Map;
 
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.commons.jmeter.JMeterTestPlanSerializer;
-import org.continuity.commons.jmeter.TestPlanDeserializer;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -14,11 +12,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @author Henning Schulz
  *
  */
-public class TestPlanBundle {
+public class JMeterTestPlanBundle {
 
 	@JsonProperty("test-plan")
 	@JsonSerialize(using = JMeterTestPlanSerializer.class)
-	@JsonDeserialize(using = TestPlanDeserializer.class)
+	@JsonDeserialize(using = JMeterTestPlanDeserializer.class)
 	private ListedHashTree testPlan;
 
 	private Map<String, String[][]> behaviors;
@@ -26,14 +24,14 @@ public class TestPlanBundle {
 	/**
 	 *
 	 */
-	public TestPlanBundle() {
+	public JMeterTestPlanBundle() {
 	}
 
 	/**
 	 * @param testPlan
 	 * @param behaviors
 	 */
-	public TestPlanBundle(ListedHashTree testPlan, Map<String, String[][]> behaviors) {
+	public JMeterTestPlanBundle(ListedHashTree testPlan, Map<String, String[][]> behaviors) {
 		this.testPlan = testPlan;
 		this.behaviors = behaviors;
 	}

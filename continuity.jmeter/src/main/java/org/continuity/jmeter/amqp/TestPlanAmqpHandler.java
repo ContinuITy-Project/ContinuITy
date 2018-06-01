@@ -12,13 +12,13 @@ import org.apache.jmeter.JMeter;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.testelement.TestStateListener;
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
+import org.continuity.api.entities.config.LoadTestConfiguration;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.jmeter.TestPlanWriter;
 import org.continuity.commons.utils.JMeterUtils;
 import org.continuity.jmeter.config.RabbitMqConfig;
 import org.continuity.jmeter.controllers.TestPlanController;
-import org.continuity.jmeter.entities.LoadTestSpecification;
-import org.continuity.jmeter.entities.TestPlanBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
@@ -59,10 +59,10 @@ public class TestPlanAmqpHandler {
 	 *            The specification of the test plan.
 	 */
 	@RabbitListener(queues = RabbitMqConfig.LOAD_TEST_CREATION_AND_EXECUTION_REQUIRED_QUEUE_NAME)
-	public void createAndExecuteTestPlan(LoadTestSpecification specification) {
+	public void createAndExecuteTestPlan(LoadTestConfiguration specification) {
 		LOGGER.debug("Received test plan specification.");
 
-		TestPlanBundle testPlanBundle = testPlanController.createAndGetLoadTest(specification.getWorkloadModelLink(), specification.getTag());
+		JMeterTestPlanBundle testPlanBundle = testPlanController.createAndGetLoadTest(specification.getWorkloadModelLink(), specification.getTag());
 
 		LOGGER.debug("Got an annotated test plan pack.");
 
@@ -79,7 +79,7 @@ public class TestPlanAmqpHandler {
 	 *            Markov4JMeter.
 	 */
 	@RabbitListener(queues = RabbitMqConfig.LOAD_TEST_EXECUTION_REQUIRED_QUEUE_NAME)
-	public void executeTestPlan(TestPlanBundle testPlanBundle) {
+	public void executeTestPlan(JMeterTestPlanBundle testPlanBundle) {
 		Path tmpPath;
 
 		try {

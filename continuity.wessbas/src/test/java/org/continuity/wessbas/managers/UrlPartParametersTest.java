@@ -2,14 +2,14 @@ package org.continuity.wessbas.managers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.continuity.idpa.annotation.DirectListInput;
+import org.continuity.api.entities.config.WorkloadModelReservedConfig;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.annotation.DirectListInput;
+import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.HttpParameter;
 import org.continuity.idpa.application.HttpParameterType;
-import org.continuity.idpa.application.Application;
 import org.continuity.idpa.visitor.FindById;
-import org.continuity.wessbas.entities.MonitoringData;
 import org.continuity.wessbas.transform.annotation.AnnotationFromWessbasExtractor;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +26,7 @@ public class UrlPartParametersTest {
 
 	private WessbasPipelineManager manager;
 
-	private MonitoringData data;
+	private WorkloadModelReservedConfig data;
 
 	@Before
 	public void setup() {
@@ -35,7 +35,7 @@ public class UrlPartParametersTest {
 
 		manager = new WessbasPipelineManager(this::testCreatedWessbasModel, restMock);
 
-		data = new MonitoringData();
+		data = new WorkloadModelReservedConfig();
 		data.setDataLink("http://data-link");
 		data.setStorageLink("wessbas/model/mytag-1");
 	}

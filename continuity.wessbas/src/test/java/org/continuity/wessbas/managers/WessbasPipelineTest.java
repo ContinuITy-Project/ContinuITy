@@ -6,7 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.function.Consumer;
 
-import org.continuity.wessbas.entities.MonitoringData;
+import org.continuity.api.entities.config.WorkloadModelReservedConfig;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -23,14 +23,14 @@ public class WessbasPipelineTest {
 
 	private Consumer<WorkloadModel> consumerMock;
 
-	MonitoringData mData;
+	WorkloadModelReservedConfig mData;
 
 	WessbasPipelineManager pipelineManager;
 
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() throws UnsupportedEncodingException {
-		mData = new MonitoringData();
+		mData = new WorkloadModelReservedConfig();
 		mData.setStorageLink("wessbas/model/test-1");
 		mData.setDataLink("some/link");
 		String urlString = "http://session-logs/?link=" + URLEncoder.encode(mData.getDataLink(), "UTF-8") + "&tag=test";
