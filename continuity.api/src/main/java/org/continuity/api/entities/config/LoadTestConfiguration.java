@@ -1,4 +1,4 @@
-package org.continuity.jmeter.entities;
+package org.continuity.api.entities.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Henning Schulz
  *
  */
-public class LoadTestSpecification {
+public class LoadTestConfiguration {
 
 	@JsonProperty("workload-link")
 	private String workloadModelLink;
@@ -23,7 +23,7 @@ public class LoadTestSpecification {
 	/**
 	 * Default constructor.
 	 */
-	public LoadTestSpecification() {
+	public LoadTestConfiguration() {
 	}
 
 	/**

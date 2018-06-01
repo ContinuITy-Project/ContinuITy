@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.continuity.commons.format.CommonFormats;
+import org.continuity.api.entities.ApiFormats;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.yaml.IdpaYamlSerializer;
 import org.slf4j.Logger;
@@ -37,7 +37,7 @@ public class ApplicationModelRepository {
 	private static final String APPLICATION_FILE_NAME = "application.";
 	private static final String FILE_EXTENSION = ".yml";
 
-	private static final DateFormat DATE_FORMAT = CommonFormats.DATE_FORMAT;
+	private static final DateFormat DATE_FORMAT = ApiFormats.DATE_FORMAT;
 
 	private final IdpaYamlSerializer<Application> serializer;
 

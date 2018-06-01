@@ -1,17 +1,15 @@
-package org.continuity.idpa.application.entities;
+package org.continuity.api.entities.report;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Stream;
 
-import org.continuity.commons.format.CommonFormats;
+import org.continuity.api.entities.ApiFormats;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,18 +20,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Henning Schulz
  *
  */
-public class ApplicationChangeReport {
+public class ApplicationChangeReport extends AbstractIdpaReport {
 
 	@JsonInclude(Include.NON_NULL)
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ApiFormats.DATE_FORMAT_PATTERN)
 	private Date beforeChange;
 	@JsonInclude(Include.NON_NULL)
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ApiFormats.DATE_FORMAT_PATTERN)
 	private Date afterChange;
-
-	@JsonProperty("application-changes")
-	@JsonInclude(Include.NON_EMPTY)
-	private Set<ApplicationChange> applicationChanges;
 
 	@JsonProperty("ignored-application-changes")
 	@JsonInclude(Include.NON_EMPTY)
@@ -54,7 +48,8 @@ public class ApplicationChangeReport {
 	}
 
 	public ApplicationChangeReport(Set<ApplicationChange> changes, Set<ApplicationChange> ignoredChanges, Date beforeChange, Date afterChange) {
-		this.applicationChanges = changes;
+		super(changes);
+
 		this.ignoredApplicationChanges = ignoredChanges;
 		this.beforeChange = beforeChange;
 		this.afterChange = afterChange;
@@ -91,26 +86,6 @@ public class ApplicationChangeReport {
 		}
 
 		return new ApplicationChangeReport(changes, application.getTimestamp());
-	}
-
-
-	/**
-	 * Gets {@link #applicationChanges}.
-	 *
-	 * @return {@link #applicationChanges}
-	 */
-	public Set<ApplicationChange> getApplicationChanges() {
-		return this.applicationChanges;
-	}
-
-	/**
-	 * Sets {@link #applicationChanges}.
-	 *
-	 * @param applicationChanges
-	 *            New value for {@link #applicationChanges}
-	 */
-	public void setApplicationChanges(Set<ApplicationChange> applicationChanges) {
-		this.applicationChanges = applicationChanges;
 	}
 
 	/**
@@ -168,15 +143,6 @@ public class ApplicationChangeReport {
 	 */
 	public void setAfterChange(Date afterChange) {
 		this.afterChange = afterChange;
-	}
-
-	@JsonIgnore
-	public boolean changed() {
-		return !applicationChanges.isEmpty();
-	}
-
-	public Stream<ApplicationChange> stream() {
-		return applicationChanges.stream();
 	}
 
 	/**

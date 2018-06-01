@@ -4,15 +4,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.continuity.api.entities.report.AnnotationValidityReport;
+import org.continuity.api.entities.report.AnnotationViolation;
+import org.continuity.api.entities.report.AnnotationViolationType;
+import org.continuity.api.entities.report.ModelElementReference;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.EndpointAnnotation;
 import org.continuity.idpa.annotation.Input;
 import org.continuity.idpa.annotation.ParameterAnnotation;
 import org.continuity.idpa.annotation.RegExExtraction;
-import org.continuity.idpa.annotation.entities.AnnotationValidityReport;
-import org.continuity.idpa.annotation.entities.AnnotationViolation;
-import org.continuity.idpa.annotation.entities.AnnotationViolationType;
-import org.continuity.idpa.annotation.entities.ModelElementReference;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.Parameter;
@@ -30,7 +30,7 @@ public class AnnotationValidityChecker {
 
 	private final Application newApplication;
 
-	private final AnnotationValidationReportBuilder reportBuilder = new AnnotationValidationReportBuilder();
+	private final AnnotationValidityReportBuilder reportBuilder = new AnnotationValidityReportBuilder();
 
 	/**
 	 * Creates an instance with the current application model as base.
@@ -43,7 +43,7 @@ public class AnnotationValidityChecker {
 	}
 
 	public void registerApplicationChanges(AnnotationValidityReport applicationChangeReport) {
-		reportBuilder.addViolations(applicationChangeReport.getApplicationChanges());
+		reportBuilder.addApplicationChanges(applicationChangeReport.getApplicationChanges());
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class AnnotationValidityChecker {
 			if (interf == null) {
 				ModelElementReference interfRef = new ModelElementReference(ann.getAnnotatedEndpoint());
 				ModelElementReference annRef = new ModelElementReference(ann);
-				reportBuilder.addViolation(annRef, new AnnotationViolation(AnnotationViolationType.ILLEAL_ENDPOINT_REFERENCE, interfRef));
+				reportBuilder.addViolation(annRef, new AnnotationViolation(AnnotationViolationType.ILLEGAL_ENDPOINT_REFERENCE, interfRef));
 			}
 
 			reportBuilder.resolveInterfaceAnnotation(ann);
@@ -107,7 +107,7 @@ public class AnnotationValidityChecker {
 			if (interf == null) {
 				ModelElementReference interfRef = new ModelElementReference(extraction.getFrom());
 				ModelElementReference annRef = new ModelElementReference(extraction);
-				reportBuilder.addViolation(annRef, new AnnotationViolation(AnnotationViolationType.ILLEAL_ENDPOINT_REFERENCE, interfRef));
+				reportBuilder.addViolation(annRef, new AnnotationViolation(AnnotationViolationType.ILLEGAL_ENDPOINT_REFERENCE, interfRef));
 			}
 		});
 

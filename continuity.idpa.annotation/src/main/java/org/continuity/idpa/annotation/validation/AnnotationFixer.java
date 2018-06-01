@@ -4,13 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.continuity.idpa.annotation.ExtractedInput;
-import org.continuity.idpa.annotation.EndpointAnnotation;
-import org.continuity.idpa.annotation.RegExExtraction;
-import org.continuity.idpa.annotation.entities.AnnotationValidityReport;
-import org.continuity.idpa.annotation.entities.AnnotationViolation;
-import org.continuity.idpa.annotation.entities.AnnotationViolationType;
+import org.continuity.api.entities.report.AnnotationValidityReport;
+import org.continuity.api.entities.report.ApplicationChange;
+import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.annotation.EndpointAnnotation;
+import org.continuity.idpa.annotation.ExtractedInput;
+import org.continuity.idpa.annotation.RegExExtraction;
 import org.continuity.idpa.visitor.IdpaByClassSearcher;
 
 /**
@@ -42,9 +42,9 @@ public class AnnotationFixer {
 	private ApplicationAnnotation removeUnknownInterfaceReferences(ApplicationAnnotation brokenAnnotation, AnnotationValidityReport report) {
 		Set<String> removedInterfaces = new HashSet<>();
 
-		for (AnnotationViolation systemChange : report.getApplicationChanges()) {
-			if (systemChange.getType() == AnnotationViolationType.ENDPOINT_REMOVED) {
-				removedInterfaces.add(systemChange.getChangedElement().getId());
+		for (ApplicationChange appChange : report.getApplicationChanges()) {
+			if (appChange.getType() == ApplicationChangeType.ENDPOINT_REMOVED) {
+				removedInterfaces.add(appChange.getChangedElement().getId());
 			}
 		}
 

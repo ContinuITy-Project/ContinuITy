@@ -13,11 +13,11 @@ import java.util.Date;
 import java.util.EnumSet;
 
 import org.continuity.api.amqp.AmqpApi;
-import org.continuity.commons.format.CommonFormats;
+import org.continuity.api.entities.ApiFormats;
+import org.continuity.api.entities.report.ApplicationChangeReport;
+import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.idpa.application.Application;
-import org.continuity.idpa.application.entities.ApplicationChangeReport;
-import org.continuity.idpa.application.entities.ApplicationChangeType;
-import org.continuity.idpa.application.entities.SystemModelLink;
+import org.continuity.idpa.application.entities.ApplicationModelLink;
 import org.continuity.idpa.application.repository.ApplicationModelRepositoryManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public class ApplicationController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationController.class);
 
-	private static final DateFormat DATE_FORMAT = CommonFormats.DATE_FORMAT;
+	private static final DateFormat DATE_FORMAT = ApiFormats.DATE_FORMAT;
 
 	private final AmqpTemplate amqpTemplate;
 
@@ -85,7 +85,7 @@ public class ApplicationController {
 	 * @param tag
 	 *            The tag of the application model.
 	 * @param since
-	 *            The date to compare against in the format {@link CommonFormats#DATE_FORMAT}.
+	 *            The date to compare against in the format {@link ApiFormats#DATE_FORMAT}.
 	 * @return The delta report.
 	 */
 	@RequestMapping(path = GET_DELTA, method = RequestMethod.GET)
@@ -139,7 +139,7 @@ public class ApplicationController {
 		if (report.changed()) {
 			try {
 				amqpTemplate.convertAndSend(AmqpApi.IdpaApplication.APPLICATION_CHANGED.name(), AmqpApi.IdpaApplication.APPLICATION_CHANGED.formatRoutingKey().of(tag),
-						new SystemModelLink(applicationName, tag, report.getBeforeChange()));
+						new ApplicationModelLink(applicationName, tag, report.getBeforeChange()));
 			} catch (AmqpException e) {
 				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", tag, AmqpApi.IdpaApplication.APPLICATION_CHANGED.name());
 				LOGGER.error("Exception:", e);

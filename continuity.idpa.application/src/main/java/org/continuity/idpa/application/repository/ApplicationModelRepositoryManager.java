@@ -6,14 +6,14 @@ import java.util.EnumSet;
 
 import javax.ws.rs.NotSupportedException;
 
+import org.continuity.api.entities.report.ApplicationChange;
+import org.continuity.api.entities.report.ApplicationChangeReport;
+import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.commons.utils.DataHolder;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.Parameter;
 import org.continuity.idpa.application.changes.ApplicationChangeDetector;
-import org.continuity.idpa.application.entities.ApplicationChange;
-import org.continuity.idpa.application.entities.ApplicationChangeReport;
-import org.continuity.idpa.application.entities.ApplicationChangeType;
 import org.continuity.idpa.legacy.IdpaFromOldAnnotationConverter;
 import org.continuity.idpa.visitor.FindById;
 import org.continuity.idpa.visitor.IdpaByClassSearcher;

@@ -1,10 +1,10 @@
-package org.continuity.idpa.annotation.entities;
+package org.continuity.api.entities.report;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import org.continuity.idpa.annotation.entities.ModelElementReference.RefKeyDeserializer;
+import org.continuity.api.entities.report.ModelElementReference.RefKeyDeserializer;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -20,10 +20,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AnnotationValidityReport {
-
-	@JsonProperty("application-changes")
-	private Set<AnnotationViolation> applicationChanges;
+public class AnnotationValidityReport extends AbstractIdpaReport {
 
 	@JsonDeserialize(keyUsing = RefKeyDeserializer.class)
 	private Map<ModelElementReference, Set<AnnotationViolation>> violations;
@@ -33,8 +30,9 @@ public class AnnotationValidityReport {
 	@JsonDeserialize(keyUsing = RefKeyDeserializer.class)
 	private Map<ModelElementReference, Set<AnnotationViolation>> violationsBeforeFix;
 
-	public AnnotationValidityReport(Set<AnnotationViolation> applicationChanges, Map<ModelElementReference, Set<AnnotationViolation>> violations) {
-		this.applicationChanges = applicationChanges;
+	public AnnotationValidityReport(Set<ApplicationChange> applicationChanges, Map<ModelElementReference, Set<AnnotationViolation>> violations) {
+		super(applicationChanges);
+
 		this.violations = violations;
 	}
 
@@ -42,25 +40,6 @@ public class AnnotationValidityReport {
 	 * Default constructor.
 	 */
 	public AnnotationValidityReport() {
-	}
-
-	/**
-	 * Gets {@link #applicationChanges}.
-	 *
-	 * @return {@link #applicationChanges}
-	 */
-	public Set<AnnotationViolation> getApplicationChanges() {
-		return this.applicationChanges;
-	}
-
-	/**
-	 * Sets {@link #applicationChanges}.
-	 *
-	 * @param applicationChanges
-	 *            New value for {@link #applicationChanges}
-	 */
-	public void setApplicationChanges(Set<AnnotationViolation> applicationChanges) {
-		this.applicationChanges = applicationChanges;
 	}
 
 	/**
@@ -103,13 +82,12 @@ public class AnnotationValidityReport {
 
 	@JsonIgnore
 	public boolean isOk() {
-		return applicationChanges.isEmpty() && violations.isEmpty();
+		return getApplicationChanges().isEmpty() && violations.isEmpty();
 	}
 
 	@JsonIgnore
 	public boolean isBreaking() {
-		boolean breaking = violations.values().stream().flatMap(Set::stream).reduce(false, (b, v) -> b || v.isBreaking(), Boolean::logicalOr);
-		return breaking || applicationChanges.stream().reduce(false, (b, v) -> b || v.isBreaking(), Boolean::logicalOr);
+		return violations.values().stream().flatMap(Set::stream).reduce(false, (b, v) -> b || v.isBreaking(), Boolean::logicalOr);
 	}
 
 	/**

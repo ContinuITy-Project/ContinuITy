@@ -1,4 +1,4 @@
-package org.continuity.cli.entities;
+package org.continuity.api.entities.artifact;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
  * @author Henning Schulz
  *
  */
-public class TestPlanDeserializer extends StdDeserializer<ListedHashTree> {
+public class JMeterTestPlanDeserializer extends StdDeserializer<ListedHashTree> {
 
 	/**
 	 *
@@ -26,14 +26,14 @@ public class TestPlanDeserializer extends StdDeserializer<ListedHashTree> {
 	/**
 	 *
 	 */
-	public TestPlanDeserializer() {
+	public JMeterTestPlanDeserializer() {
 		this(null);
 	}
 
 	/**
 	 * @param vc
 	 */
-	protected TestPlanDeserializer(Class<?> vc) {
+	protected JMeterTestPlanDeserializer(Class<?> vc) {
 		super(vc);
 	}
 

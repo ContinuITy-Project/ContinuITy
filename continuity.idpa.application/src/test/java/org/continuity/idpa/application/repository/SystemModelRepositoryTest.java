@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.Date;
 
-import org.continuity.commons.format.CommonFormats;
+import org.continuity.api.entities.ApiFormats;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.SystemModelTestInstance;
 import org.continuity.idpa.yaml.IdpaYamlSerializer;
@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
  */
 public class SystemModelRepositoryTest {
 
-	private static final DateFormat DATE_FORMAT = CommonFormats.DATE_FORMAT;
+	private static final DateFormat DATE_FORMAT = ApiFormats.DATE_FORMAT;
 
 	private static final String TAG = "SystemModelRepositoryTest";
 

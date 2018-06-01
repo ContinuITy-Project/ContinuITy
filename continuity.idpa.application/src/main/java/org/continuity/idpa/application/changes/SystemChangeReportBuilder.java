@@ -5,9 +5,9 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.continuity.idpa.application.entities.ApplicationChange;
-import org.continuity.idpa.application.entities.ApplicationChangeReport;
-import org.continuity.idpa.application.entities.ApplicationChangeType;
+import org.continuity.api.entities.report.ApplicationChange;
+import org.continuity.api.entities.report.ApplicationChangeReport;
+import org.continuity.api.entities.report.ApplicationChangeType;
 
 /**
  * @author Henning Schulz
@@ -48,7 +48,7 @@ public class SystemChangeReportBuilder {
 
 	/**
 	 * Sets {@link #beforeChange}.
-	 * 
+	 *
 	 * @param beforeChange
 	 *            New value for {@link #beforeChange}
 	 */

@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.api.rest.RestApi;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
-import org.continuity.idpa.annotation.entities.AnnotationValidityReport;
 import org.continuity.idpa.annotation.storage.AnnotationStorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

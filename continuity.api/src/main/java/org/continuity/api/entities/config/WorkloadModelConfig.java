@@ -1,8 +1,8 @@
-package org.continuity.frontend.entities;
+package org.continuity.api.entities.config;
 
 import java.util.Date;
 
-import org.continuity.commons.format.CommonFormats;
+import org.continuity.api.entities.ApiFormats;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,7 +16,7 @@ public class WorkloadModelConfig {
 	@JsonProperty("data")
 	private String monitoringDataLink;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonFormats.DATE_FORMAT_PATTERN)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ApiFormats.DATE_FORMAT_PATTERN)
 	private Date timestamp;
 
 	private String tag;

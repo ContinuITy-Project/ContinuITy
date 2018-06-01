@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.function.Consumer;
 
+import org.continuity.api.entities.config.WorkloadModelReservedConfig;
 import org.continuity.api.rest.RestApi.SessionLogs;
-import org.continuity.wessbas.entities.MonitoringData;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +73,7 @@ public class WessbasPipelineManager {
 	 *            Input monitoring data to be transformed into a WESSBAS DSL
 	 *            instance.
 	 */
-	public void runPipeline(MonitoringData data) {
+	public void runPipeline(WorkloadModelReservedConfig data) {
 		if ("dummy".equals(data.getDataLink())) {
 			onModelCreatedCallback.accept(WessbasDslInstance.DVDSTORE_PARSED.get());
 			return;
@@ -149,7 +149,7 @@ public class WessbasPipelineManager {
 	 * @param data
 	 * @return
 	 */
-	public String getSessionLog(MonitoringData data) {
+	public String getSessionLog(WorkloadModelReservedConfig data) {
 		String link;
 		try {
 			link = URLEncoder.encode(data.getDataLink(), "UTF-8");

@@ -1,4 +1,4 @@
-package org.continuity.idpa.annotation.entities;
+package org.continuity.api.entities.report;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -11,14 +11,14 @@ public class AnnotationViolation {
 	@JsonProperty("message")
 	private AnnotationViolationType type;
 
-	@JsonProperty("changed-element")
-	private ModelElementReference changedElement;
+	@JsonProperty("affected-element")
+	private ModelElementReference affectedElement;
 
 	private boolean breaking;
 
 	public AnnotationViolation(AnnotationViolationType type, ModelElementReference changedElement, boolean breaking) {
 		this.type = type;
-		this.changedElement = changedElement;
+		this.affectedElement = changedElement;
 		this.breaking = breaking;
 	}
 
@@ -43,22 +43,22 @@ public class AnnotationViolation {
 	}
 
 	/**
-	 * Gets {@link #changedElement}.
+	 * Gets {@link #affectedElement}.
 	 *
-	 * @return {@link #changedElement}
+	 * @return {@link #affectedElement}
 	 */
-	public ModelElementReference getChangedElement() {
-		return this.changedElement;
+	public ModelElementReference getAffectedElement() {
+		return this.affectedElement;
 	}
 
 	/**
-	 * Sets {@link #changedElement}.
+	 * Sets {@link #affectedElement}.
 	 *
 	 * @param changedElement
-	 *            New value for {@link #changedElement}
+	 *            New value for {@link #affectedElement}
 	 */
-	public void setChangedElement(ModelElementReference changedElement) {
-		this.changedElement = changedElement;
+	public void setAffectedElement(ModelElementReference changedElement) {
+		this.affectedElement = changedElement;
 	}
 
 	/**

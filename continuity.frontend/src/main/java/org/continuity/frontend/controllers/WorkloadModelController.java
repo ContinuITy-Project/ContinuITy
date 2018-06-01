@@ -9,11 +9,11 @@ import java.io.IOException;
 import java.util.Collections;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.config.WorkloadModelConfig;
+import org.continuity.api.entities.config.WorkloadModelReservedConfig;
 import org.continuity.api.rest.RestApi;
 import org.continuity.api.rest.RestApi.Generic;
 import org.continuity.frontend.entities.ModelCreatedReport;
-import org.continuity.frontend.entities.WorkloadModelConfig;
-import org.continuity.frontend.entities.WorkloadModelInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpIOException;
@@ -84,7 +84,7 @@ public class WorkloadModelController {
 			} else {
 				declareResponseQueue(linkResponse.getBody());
 
-				WorkloadModelInput input = new WorkloadModelInput(config.getMonitoringDataLink(), config.getTimestamp(), linkResponse.getBody());
+				WorkloadModelReservedConfig input = new WorkloadModelReservedConfig(config.getMonitoringDataLink(), config.getTimestamp(), linkResponse.getBody());
 				amqpTemplate.convertAndSend(AmqpApi.Frontend.DATA_AVAILABLE.name(), AmqpApi.Frontend.DATA_AVAILABLE.formatRoutingKey().of(type), input);
 
 				report = new ModelCreatedReport("Creating a " + type + " model.", linkResponse.getBody());

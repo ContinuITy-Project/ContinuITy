@@ -1,9 +1,8 @@
-package org.continuity.idpa.annotation.entities;
+package org.continuity.api.entities.report;
 
 import java.io.IOException;
 import java.util.Objects;
 
-import org.apache.commons.lang.StringUtils;
 import org.continuity.idpa.IdpaElement;
 import org.continuity.idpa.WeakReference;
 
@@ -102,7 +101,7 @@ public class ModelElementReference {
 		}
 
 		ModelElementReference other = (ModelElementReference) obj;
-		return StringUtils.equals(this.id, other.id) && StringUtils.equals(this.type, other.type);
+		return Objects.equals(this.id, other.id) && Objects.equals(this.type, other.type);
 	}
 
 	/**

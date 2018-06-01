@@ -7,13 +7,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.continuity.idpa.application.Parameter;
-import org.continuity.idpa.application.entities.ModelElementReference;
-import org.continuity.idpa.application.entities.ApplicationChange;
-import org.continuity.idpa.application.entities.ApplicationChangeReport;
-import org.continuity.idpa.application.entities.ApplicationChangeType;
-import org.continuity.idpa.application.Endpoint;
+import org.continuity.api.entities.report.ApplicationChange;
+import org.continuity.api.entities.report.ApplicationChangeReport;
+import org.continuity.api.entities.report.ApplicationChangeType;
+import org.continuity.api.entities.report.ModelElementReference;
 import org.continuity.idpa.application.Application;
+import org.continuity.idpa.application.Endpoint;
+import org.continuity.idpa.application.Parameter;
 import org.continuity.idpa.visitor.IdpaByClassSearcher;
 
 import com.google.common.base.Objects;

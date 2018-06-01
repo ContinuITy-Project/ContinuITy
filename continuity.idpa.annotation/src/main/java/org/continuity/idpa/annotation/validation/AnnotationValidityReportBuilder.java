@@ -1,24 +1,26 @@
 package org.continuity.idpa.annotation.validation;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.continuity.api.entities.report.AnnotationValidityReport;
+import org.continuity.api.entities.report.AnnotationViolation;
+import org.continuity.api.entities.report.ApplicationChange;
+import org.continuity.api.entities.report.ModelElementReference;
 import org.continuity.idpa.WeakReference;
 import org.continuity.idpa.annotation.EndpointAnnotation;
 import org.continuity.idpa.annotation.ParameterAnnotation;
-import org.continuity.idpa.annotation.entities.AnnotationValidityReport;
-import org.continuity.idpa.annotation.entities.AnnotationViolation;
-import org.continuity.idpa.annotation.entities.ModelElementReference;
 import org.continuity.idpa.application.Parameter;
 
 /**
  * @author Henning Schulz
  *
  */
-public class AnnotationValidationReportBuilder {
+public class AnnotationValidityReportBuilder {
+
+	private final Set<ApplicationChange> applicationChanges = new HashSet<>();
 
 	/**
 	 * Affected annotation --> Set of violations
@@ -30,8 +32,16 @@ public class AnnotationValidationReportBuilder {
 	 */
 	private final Map<ModelElementReference, AnnotationViolation> violationsPerReferenced = new HashMap<>();
 
+	public void addApplicationChange(ApplicationChange change) {
+		applicationChanges.add(change);
+	}
+
+	public void addApplicationChanges(Set<ApplicationChange> changes) {
+		applicationChanges.addAll(changes);
+	}
+
 	public void addViolation(AnnotationViolation violation) {
-		violationsPerReferenced.put(violation.getChangedElement(), violation);
+		violationsPerReferenced.put(violation.getAffectedElement(), violation);
 	}
 
 	public void addViolations(Set<AnnotationViolation> violations) {
@@ -95,16 +105,13 @@ public class AnnotationValidationReportBuilder {
 		Map<ModelElementReference, Set<AnnotationViolation>> report = new HashMap<>();
 		report.putAll(violations);
 
-		Set<AnnotationViolation> systemChanges;
-
-		if (violationsPerReferenced.isEmpty()) {
-			systemChanges = Collections.emptySet();
-		} else {
-			systemChanges = new HashSet<>();
-			systemChanges.addAll(violationsPerReferenced.values());
+		if (!violationsPerReferenced.isEmpty()) {
+			Set<AnnotationViolation> unresolvedViolations = new HashSet<>();
+			unresolvedViolations.addAll(violationsPerReferenced.values());
+			violations.put(new ModelElementReference("UNRESOLVED", "?"), unresolvedViolations);
 		}
 
-		return new AnnotationValidityReport(systemChanges, report);
+		return new AnnotationValidityReport(applicationChanges, report);
 	}
 
 }

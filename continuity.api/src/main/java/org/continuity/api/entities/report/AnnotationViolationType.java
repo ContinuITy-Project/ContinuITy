@@ -1,4 +1,4 @@
-package org.continuity.idpa.annotation.entities;
+package org.continuity.api.entities.report;
 
 import java.io.IOException;
 
@@ -20,16 +20,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 @JsonDeserialize(using = AnnotationViolationType.JsonDeserializer.class)
 public enum AnnotationViolationType {
 
-	// System changed
-
-	ENDPOINT_CHANGED("The endpoint has changed.", false), ENDPOINT_REMOVED("The endpoint has been removed.", false), ENDPOINT_ADDED("A new endpoint has been added.",
-			false), PARAMETER_CHANGED("The parameter has changed.", false), PARAMETER_REMOVED("The parameter has been removed.", false), PARAMETER_ADDED("A new parameter has been added.", false),
-
-	// Annotation changed
-
-	ILLEAL_ENDPOINT_REFERENCE("The reference to the endpoint is not valid.", true), ILLEGAL_PARAMETER_REFERENCE("The reference to the parameter is not valid.", true),
-
-	// Annotation invalid
+	ILLEGAL_ENDPOINT_REFERENCE("The reference to the endpoint is not valid.", true), ILLEGAL_PARAMETER_REFERENCE("The reference to the parameter is not valid.", true),
 
 	ILLEGAL_INTERNAL_REFERENCE("The internal reference is not valid.", true);
 
