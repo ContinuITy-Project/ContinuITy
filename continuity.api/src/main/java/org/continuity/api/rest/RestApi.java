@@ -143,6 +143,9 @@ public class RestApi {
 			/** {@value #ROOT}/get/{type}/model/{id} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
+			/** {@value #ROOT}/get/{type}/model/{id} */
+			public static final RestEndpoint PERSIST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PERSIST, RequestMethod.GET);
+
 			private WorkloadModel() {
 			}
 
@@ -151,6 +154,7 @@ public class RestApi {
 				public static final String CREATE = "/{type}/create";
 				public static final String WAIT = "/wait/{type}/model/{id}";
 				public static final String GET = "/get/{type}/model/{id}";
+				public static final String PERSIST = "/persist/{type}/model/{id}";
 
 				private Paths() {
 				}
@@ -457,6 +461,9 @@ public class RestApi {
 			/** {@value #ROOT}/reserve/{tag} */
 			public static final RestEndpoint RESERVE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.RESERVE, RequestMethod.GET);
 
+			/** {@value #ROOT}/{id}/persist */
+			public static final RestEndpoint PERSIST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PERSIST, RequestMethod.GET);
+
 			private Model() {
 			}
 
@@ -468,6 +475,7 @@ public class RestApi {
 				public static final String GET_APPLICATION = "/{id}/application";
 				public static final String GET_ANNOTATION = "/{id}/annotation";
 				public static final String RESERVE = "/reserve/{tag}";
+				public static final String PERSIST = "/{id}/persist";
 
 				private Paths() {
 				}
@@ -496,12 +504,17 @@ public class RestApi {
 		/** [workload-model-type]/{tag}/reserve */
 		public static final Map<String, RestEndpoint> RESERVE_WORKLOAD_MODEL = new HashMap<>();
 
+		/** [workload-model-type]/model/{id}/persist */
+		public static final Map<String, RestEndpoint> PERSIST_WORKLOAD_MODEL = new HashMap<>();
+
 		static {
 			GET_AND_CREATE_LOAD_TEST.put("jmeter", JMeter.TestPlan.CREATE_AND_GET);
 
 			WORKLOAD_MODEL_LINK.put("wessbas", Wessbas.Model.OVERVIEW);
 
 			RESERVE_WORKLOAD_MODEL.put("wessbas", Wessbas.Model.RESERVE);
+
+			PERSIST_WORKLOAD_MODEL.put("wessbas", Wessbas.Model.PERSIST);
 		}
 
 		private Generic() {

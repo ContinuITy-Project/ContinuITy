@@ -3,6 +3,7 @@ package org.continuity.frontend.controllers;
 import static org.continuity.api.rest.RestApi.Frontend.WorkloadModel.ROOT;
 import static org.continuity.api.rest.RestApi.Frontend.WorkloadModel.Paths.CREATE;
 import static org.continuity.api.rest.RestApi.Frontend.WorkloadModel.Paths.GET;
+import static org.continuity.api.rest.RestApi.Frontend.WorkloadModel.Paths.PERSIST;
 import static org.continuity.api.rest.RestApi.Frontend.WorkloadModel.Paths.WAIT;
 
 import java.io.IOException;
@@ -193,6 +194,20 @@ public class WorkloadModelController {
 	public ResponseEntity<JsonNode> getWorkloadModel(@PathVariable String type, @PathVariable String id) {
 		LOGGER.info("Trying to get the workload model from {}", Generic.WORKLOAD_MODEL_LINK.get(type).path(id));
 		return restTemplate.getForEntity(Generic.WORKLOAD_MODEL_LINK.get(type).requestUrl(id).get(), JsonNode.class);
+	}
+
+	/**
+	 * Retrieves the created workload model of the specified type and id. It does not wait if the
+	 * model is not yet created.
+	 *
+	 * @param request
+	 *            The request.
+	 * @return The workload model.
+	 */
+	@RequestMapping(path = PERSIST, method = RequestMethod.GET)
+	public ResponseEntity<String> persistWorkloadModel(@PathVariable String type, @PathVariable String id) {
+		LOGGER.info("Trying to persist the workload model from {}", Generic.WORKLOAD_MODEL_LINK.get(type).path(id));
+		return restTemplate.getForEntity(Generic.PERSIST_WORKLOAD_MODEL.get(type).requestUrl(id).get(), String.class);
 	}
 
 }

@@ -37,3 +37,4 @@ hs_err_pid*
 /continuity.idpa.application/storage/**
 /continuity.idpa.annotation/storage/**
 /*/build/**
+continuity.wessbas/persisted
