@@ -5,10 +5,14 @@ import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_ANNOTATION
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_APPLICATION;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_WORKLOAD;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.OVERVIEW;
+import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.PERSIST;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.REMOVE;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.RESERVE;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -29,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import wessbas.commons.util.XmiEcoreHandler;
+
 /**
  * Controls the created WESSBAS models.
  *
@@ -47,6 +53,9 @@ public class WessbasModelController {
 
 	@Value("${spring.application.name}")
 	private String applicationName;
+
+	@Value("${persist.path:persisted}")
+	private String persistPath;
 
 	/**
 	 * Gets an overview of the model with the passed id.
@@ -184,6 +193,35 @@ public class WessbasModelController {
 		LOGGER.info("Reserved workload model entry {}", storageId);
 
 		return ResponseEntity.created(URI.create(link)).body(link);
+	}
+
+	/**
+	 * Persists the model with the passed id to the file system.
+	 *
+	 * @param id
+	 *            The id of the stored model.
+	 * @return The path to the persisted model or a 404 (Not Found) if there is no such model.
+	 * @throws IOException
+	 *             If an error during persisting occurs.
+	 */
+	@RequestMapping(path = PERSIST, method = RequestMethod.GET)
+	public ResponseEntity<String> persist(@PathVariable String id) throws IOException {
+		WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
+
+		if (entry == null) {
+			LOGGER.warn("Could not persist model {}. This model does not exist!", id);
+			return ResponseEntity.notFound().build();
+		} else {
+			String file = "wessbas-model-" + id + ".xmi";
+			Path dir = Paths.get(persistPath);
+			dir.toFile().mkdirs();
+			Path path = dir.resolve(file);
+
+			XmiEcoreHandler.getInstance().ecoreToXMI(entry.getWorkloadModel(), path.toString());
+
+			LOGGER.warn("Persisted model {} to {}", id, path);
+			return ResponseEntity.ok(path.toAbsolutePath().toString());
+		}
 	}
 
 }
