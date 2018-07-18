@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author Henning Schulz
  *
  */
-@JsonPropertyOrder({ "filename", "column", "separator", "associated" })
+@JsonPropertyOrder({ "file", "column", "separator", "associated" })
 public class CsvInput extends ListInput {
 
 	private static final String DEFAULT_SEPARATOR = ";";
