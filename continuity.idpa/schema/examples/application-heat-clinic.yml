@@ -1,0 +1,495 @@
+---
+# Note that the !<http> tags were replaced by "@type": http.
+# This is because JSON schemata do not support YAML tags properly.
+&heat-clinic-test-2
+timestamp: 2018-03-07T17-57-00-000Z
+endpoints:
+- &addJsonUsingPOST_1
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/wishlist/add
+  method: POST
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  - 'Content-Type: application/x-www-form-urlencoded'
+  - 'X-Requested-With: XMLHttpRequest'
+  parameters:
+  - &addJsonUsingPOST_1_csrfToken_REQ_PARAM
+    name: csrfToken
+    parameter-type: REQ_PARAM
+  - &addJsonUsingPOST_1_quantity_REQ_PARAM
+    name: quantity
+    parameter-type: REQ_PARAM
+  - &addJsonUsingPOST_1_productId_REQ_PARAM
+    name: productId
+    parameter-type: REQ_PARAM
+  protocol: http
+- &addUsingPOST
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /cart/add
+  method: POST
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  - 'Content-Type: application/x-www-form-urlencoded'
+  - 'X-Requested-With: XMLHttpRequest'
+  parameters:
+  - &addUsingPOST_csrfToken_REQ_PARAM
+    name: csrfToken
+    parameter-type: REQ_PARAM
+  - &addUsingPOST_quantity_REQ_PARAM
+    name: quantity
+    parameter-type: REQ_PARAM
+  - &addUsingPOST_productId_REQ_PARAM
+    name: productId
+    parameter-type: REQ_PARAM
+  - &addUsingPOST_itemAttributesCOLOR_REQ_PARAM
+    name: itemAttributes%5BCOLOR%5D
+    parameter-type: REQ_PARAM
+  - &addUsingPOST_itemAttributesNAME_REQ_PARAM
+    name: itemAttributes%5BNAME%5D
+    parameter-type: REQ_PARAM
+  - &addUsingPOST_itemAttributesSIZE_REQ_PARAM
+    name: itemAttributes%5BSIZE%5D
+    parameter-type: REQ_PARAM
+  protocol: http
+- &cartUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /cart
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &checkoutLoginUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /checkout/login
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &checkoutUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /checkout
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  parameters:
+  - &checkoutUsingGET_g_checkout_REQ_PARAM
+    name: guest-checkout
+    parameter-type: REQ_PARAM
+  protocol: http
+- &clearanceUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /clearance
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- &homeUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- &hotSaucesDetailsUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /hot-sauces/{sauce}
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  parameters:
+  - &hotSaucesDetailsUsingGET_sauce_URL_PART
+    name: sauce
+    parameter-type: URL_PART
+  protocol: http
+- &hotSaucesOverviewUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /hot-sauces
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- &loginUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /login
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &doLoginUsingPOST
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /login_post.htm
+  method: POST
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  - 'Content-Type: application/x-www-form-urlencoded'
+  parameters:
+  - &doLoginUsingPOST_csrfToken_REQ_PARAM
+    name: csrfToken
+    parameter-type: REQ_PARAM
+  - &doLoginUsingPOST_password_REQ_PARAM
+    name: password
+    parameter-type: REQ_PARAM
+  - &doLoginUsingPOST_remember_me_REQ_PARAM
+    name: remember-me
+    parameter-type: REQ_PARAM
+  - &doLoginUsingPOST_username_REQ_PARAM
+    name: username
+    parameter-type: REQ_PARAM
+  protocol: http
+- &logoutUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /logout
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &mensUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /mens
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- &merchandiseDetailsUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /merchandise/{product}
+  method: GET
+  parameters:
+  - &merchandiseDetailsUsingGET_product_URL_PART
+    name: product
+    parameter-type: URL_PART
+  protocol: http
+- &merchandiseOverviewUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /merchandise
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http
+- &miniCartUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /cart/mini
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  - 'X-Requested-With: XMLHttpRequest'
+  protocol: http
+- &moveItemToCartUsingPOST
+  "@type": http
+  domain: localhost
+  port: "80"
+  path: /account/wishlist/moveItemToCart
+  method: POST
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  - 'Content-Type: application/x-www-form-urlencoded'
+  parameters:
+  - &moveItemToCartUsingPOST_csrfToken_REQ_PARAM
+    name: csrfToken
+    parameter-type: REQ_PARAM
+  - &moveItemToCartUsingPOST_itemId_REQ_PARAM
+    name: itemId
+    parameter-type: REQ_PARAM
+  protocol: http
+- &moveListToCartUsingPOST
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/wishlist/moveListToCart
+  method: POST
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  - 'Content-Type: application/x-www-form-urlencoded'
+  parameters:
+  - &moveListToCartUsingPOST_csrfToken_REQ_PARAM
+    name: csrfToken
+    parameter-type: REQ_PARAM
+  protocol: http
+- &pricingSummaryUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /cart/summary
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  - 'X-Requested-With: XMLHttpRequest'
+  parameters:
+  - &pricingSummaryUsingGET_isCheckoutContext_REQ_PARAM
+    name: isCheckoutContext
+    parameter-type: REQ_PARAM
+  protocol: http
+- &processPassthroughCheckoutUsingPOST
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /checkout/cod/complete
+  method: POST
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  - 'Content-Type: application/x-www-form-urlencoded'
+  parameters:
+  - &processPassthroughCheckoutUsingPOST_csrfToken_REQ_PARAM
+    name: csrfToken
+    parameter-type: REQ_PARAM
+  protocol: http
+- &removeItemFromWishlistUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/wishlist/remove
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  - 'X-Requested-With: XMLHttpRequest'
+  parameters:
+  - &removeItemFromWishlistUsingGET_orderItemId_REQ_PARAM
+    name: orderItemId
+    parameter-type: REQ_PARAM
+  protocol: http
+- &removeUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /cart/remove
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  - 'X-Requested-With: XMLHttpRequest'
+  parameters:
+  - &removeUsingGET_productId_REQ_PARAM
+    name: productId
+    parameter-type: REQ_PARAM
+  - &removeUsingGET_orderItemId_REQ_PARAM
+    name: orderItemId
+    parameter-type: REQ_PARAM
+  protocol: http
+- &saveSingleShipUsingPOST
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /checkout/singleship
+  method: POST
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  - 'Content-Type: application/x-www-form-urlencoded'
+  - 'X-Requested-With: XMLHttpRequest'
+  parameters:
+  - &saveSingleShipUsingPOST_a_postalCode_REQ_PARAM
+    name: address.postalCode
+    parameter-type: REQ_PARAM
+  - &saveSingleShipUsingPOST_a_fullName_REQ_PARAM
+    name: address.fullName
+    parameter-type: REQ_PARAM
+  - &saveSingleShipUsingPOST_csrfToken_REQ_PARAM
+    name: csrfToken
+    parameter-type: REQ_PARAM
+  - &saveSingleShipUsingPOST_a_city_REQ_PARAM
+    name: address.city
+    parameter-type: REQ_PARAM
+  - &saveSingleShipUsingPOST_a_stateProvinceRegion_REQ_PARAM
+    name: address.stateProvinceRegion
+    parameter-type: REQ_PARAM
+  - &saveSingleShipUsingPOST_a_addressLine1_REQ_PARAM
+    name: address.addressLine1
+    parameter-type: REQ_PARAM
+  - &saveSingleShipUsingPOST_a_isoCountryAlpha2_REQ_PARAM
+    name: address.isoCountryAlpha2
+    parameter-type: REQ_PARAM
+  - &saveSingleShipUsingPOST_fulfillmentOptionId_REQ_PARAM
+    name: fulfillmentOptionId
+    parameter-type: REQ_PARAM
+  protocol: http
+- &searchUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /search
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  parameters:
+  - &searchUsingGET_q_REQ_PARAM
+    name: q
+    parameter-type: REQ_PARAM
+  protocol: http
+- &updateQuantityFromWishlistUsingPOST
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/wishlist/updateQuantity
+  method: POST
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  - 'Content-Type: application/x-www-form-urlencoded'
+  - 'X-Requested-With: XMLHttpRequest'
+  parameters:
+  - &updateQuantityFromWishlistUsingPOST_csrfToken_REQ_PARAM
+    name: csrfToken
+    parameter-type: REQ_PARAM
+  - &updateQuantityFromWishlistUsingPOST_quantity_REQ_PARAM
+    name: quantity
+    parameter-type: REQ_PARAM
+  - &updateQuantityFromWishlistUsingPOST_productId_REQ_PARAM
+    name: productId
+    parameter-type: REQ_PARAM
+  - &updateQuantityFromWishlistUsingPOST_orderItemId_REQ_PARAM
+    name: orderItemId
+    parameter-type: REQ_PARAM
+  - &updateQuantityFromWishlistUsingPOST_skuId_REQ_PARAM
+    name: skuId
+    parameter-type: REQ_PARAM
+  protocol: http
+- &updateQuantityUsingPOST
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /cart/updateQuantity
+  method: POST
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  - 'Content-Type: application/x-www-form-urlencoded'
+  - 'X-Requested-With: XMLHttpRequest'
+  parameters:
+  - &updateQuantityUsingPOST_csrfToken_REQ_PARAM
+    name: csrfToken
+    parameter-type: REQ_PARAM
+  - &updateQuantityUsingPOST_quantity_REQ_PARAM
+    name: quantity
+    parameter-type: REQ_PARAM
+  - &updateQuantityUsingPOST_productId_REQ_PARAM
+    name: productId
+    parameter-type: REQ_PARAM
+  - &updateQuantityUsingPOST_orderItemId_REQ_PARAM
+    name: orderItemId
+    parameter-type: REQ_PARAM
+  - &updateQuantityUsingPOST_skuId_REQ_PARAM
+    name: skuId
+    parameter-type: REQ_PARAM
+  protocol: http
+- &viewAccountWishlistUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/wishlist
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &viewChangePasswordUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/password
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &viewCustomerAddressesUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/addresses
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &viewCustomerPaymentsUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/payments
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &viewOrderDetailsUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/orders/{orderNumber}
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  - 'X-Requested-With: XMLHttpRequest'
+  parameters:
+  - &viewOrderDetailsUsingGET_orderNumber_URL_PART
+    name: orderNumber
+    parameter-type: URL_PART
+  protocol: http
+- &viewOrderHistoryUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account/orders
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &viewUpdateAccountUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /account
+  method: GET
+  headers:
+  - 'Accept: application/json'
+  - 'Content-Type: application/json'
+  protocol: http
+- &womensUsingGET
+  "@type": http
+  domain: www.heat-clinic.com
+  port: "80"
+  path: /womens
+  method: GET
+  headers:
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  protocol: http

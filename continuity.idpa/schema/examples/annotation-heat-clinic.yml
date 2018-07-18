@@ -1,0 +1,622 @@
+---
+# Note that the !<direct> etc. tags were replaced by "@type": direct.
+# This is because JSON schemata do not support YAML tags properly.
+overrides:
+- HttpEndpoint.domain: localhost
+inputs:
+- &Input_doLoginUsingPOST_username_REQ_PARAM
+  "@type": counter
+  format: user-#@test'.'com
+  scope: GLOBAL
+  start: 1
+  increment: 1
+  maximum: 200
+- &Input_doLoginUsingPOST_password_REQ_PARAM
+  "@type": counter
+  format: password-#
+  scope: GLOBAL
+  start: 1
+  increment: 1
+  maximum: 200
+- &Input_saveSingleShipUsingPOST_a_fullName_REQ_PARAM
+  "@type": counter
+  format: User' '#
+  scope: GLOBAL
+  start: 1
+  increment: 1
+  maximum: 200
+- &Input_doLoginUsingPOST_remember_me_REQ_PARAM
+  "@type": direct
+  data:
+  - "false"
+- &Input_extracted_csrfToken
+  "@type": extracted
+  extractions:
+  - from: cartUsingGET
+    pattern: \{"firstName":"\w*","lastName":"\w*","csrfToken":"(.*)","cartItemIdsWithoutOptions"
+  - from: checkoutLoginUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: checkoutUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: clearanceUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: homeUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: hotSaucesDetailsUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: hotSaucesOverviewUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: loginUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: mensUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: merchandiseDetailsUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: merchandiseOverviewUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: searchUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: viewAccountWishlistUsingGET
+    pattern: \{"firstName":"\w*","lastName":"\w*","csrfToken":"(.*)","cartItemIdsWithoutOptions"
+  - from: viewChangePasswordUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: viewCustomerAddressesUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: viewCustomerPaymentsUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: viewOrderHistoryUsingGET
+    pattern: \{"firstName":"\w*","lastName":"\w*","csrfToken":"(.*)","cartItemIdsWithoutOptions"
+  - from: viewUpdateAccountUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+  - from: womensUsingGET
+    pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form>
+- &Input_extracted_lastProductId
+  "@type": extracted
+  extractions:
+  - from: searchUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)"/>
+    match-number: 0
+  - from: homeUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)"/>
+    match-number: 0
+  - from: hotSaucesOverviewUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)"/>
+    match-number: 0
+  - from: hotSaucesDetailsUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)"/>
+    match-number: 0
+  - from: clearanceUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)"/>
+    match-number: 0
+  - from: merchandiseOverviewUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)"/>
+    match-number: 0
+  - from: merchandiseDetailsUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)"/>
+    match-number: 0
+  - from: mensUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)"/>
+    match-number: 0
+  - from: womensUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)"/>
+    match-number: 0
+  initial: "3"
+- &Input_addJsonUsingPOST_1_quantity_REQ_PARAM
+  "@type": direct
+  data:
+  - "1"
+  - "2"
+  - "3"
+  - "4"
+  - "5"
+- &Input_addUsingPOST_quantity_REQ_PARAM
+  "@type": direct
+  data:
+  - "1"
+  - "2"
+  - "3"
+  - "4"
+  - "5"
+  - "6"
+  - "7"
+  - "8"
+  - "9"
+  - "10"
+- &Input_addUsingPOST_itemAttributesCOLOR_REQ_PARAM
+  "@type": direct
+  data:
+  - Black
+  - Red
+  - Silver
+- &Input_addUsingPOST_itemAttributesNAME_REQ_PARAM
+  "@type": direct
+  data:
+  - Me
+  - You
+- &Input_addUsingPOST_itemAttributesSIZE_REQ_PARAM
+  "@type": direct
+  data:
+  - S
+  - M
+  - L
+  - XL
+- &Input_checkoutUsingGET_g_checkout_REQ_PARAM
+  "@type": direct
+  data:
+  - "true"
+  - "false"
+- &Input_hotSaucesDetailsUsingGET_sauce_URL_PART
+  "@type": direct
+  data:
+  - sudden_death_sauce
+  - sweet_death_sauce
+  - hoppin_hot_sauce
+  - day_of_the_dead_chipotle_hot_sauce
+  - day_of_the_dead_habanero_hot_sauce
+  - day_of_the_dead_scotch_bonnet_sauce
+  - green_ghost
+  - blazin_saddle_hot_habanero_pepper_sauce
+  - armageddon_hot_sauce_to_end_all
+  - dr_chilemeisters_insane_hot_sauce
+  - bull_snort_cowboy_cayenne_pepper_hot_sauce
+  - cafe_louisiane_sweet_cajun_blackening_sauce
+  - bull_snort_smokin_toncils_hot_sauce
+  - cool_cayenne_pepper_hot_sauce
+  - roasted_garlic_hot_sauce
+  - scotch_bonnet_hot_sauce
+  - insanity_sauce
+  - hurtin_jalepeno_hot_sauce
+  - roasted_red_pepper_chipotle_hot_sauce
+- &Input_merchandiseDetailsUsingGET_product_URL_PART
+  "@type": direct
+  data:
+  - hawt_like_a_habanero_mens
+  - hawt_like_a_habanero_womens
+  - heat_clinic_hand-drawn_mens
+  - heat_clinic_hand-drawn_womens
+  - heat_clinic_mascot_mens
+  - heat_clinic_mascot_womens
+- &Input_pricingSummaryUsingGET_isCheckoutContext_REQ_PARAM
+  "@type": direct
+  data:
+  - "true"
+- &Input_extracted_orderItemId_in_cart
+  "@type": extracted
+  extractions:
+  - from: cartUsingGET
+    pattern: <input type="hidden" name="orderItemId" value="([0-9]+)" />
+    fallback: ORDER_ITEM_ID_NOT_FOUND
+- &Input_extracted_productId_in_cart
+  "@type": extracted
+  extractions:
+  - from: cartUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)" />
+    fallback: PRODUCT_ID_NOT_FOUND
+- &Input_extracted_skuId_in_cart
+  "@type": extracted
+  extractions:
+  - from: cartUsingGET
+    pattern: <input type="hidden" name="skuId" value="([0-9]+)" />
+    fallback: SKU_ID_NOT_FOUND
+- &Input_extracted_orderItemId_in_wishlist
+  "@type": extracted
+  extractions:
+  - from: viewAccountWishlistUsingGET
+    pattern: <input type="hidden" name="orderItemId" value="([0-9]+)" />
+    match-number: 0
+    fallback: ORDER_ITEM_ID_NOT_FOUND
+- &Input_saveSingleShipUsingPOST_a_postalCode_REQ_PARAM
+  "@type": direct
+  data:
+  - "600001"
+  - "200000"
+  - "00001"
+  - "700028"
+  - "510852"
+  - "4000"
+  - "100000"
+  - "00810"
+  - "11369"
+  - "700000"
+  - "215000"
+  - "28001"
+  - "100011"
+  - "400001"
+  - "01000000"
+  - "600003"
+  - "2000"
+  - "339696"
+  - "1000001"
+  - "110012"
+- &Input_saveSingleShipUsingPOST_a_city_REQ_PARAM
+  "@type": direct
+  data:
+  - Busan
+  - Shanghai
+  - Kinshasa
+  - Kolkata
+  - Shenzhen
+  - Durban
+  - Hanoi
+  - Mexico City
+  - Tehran
+  - Ho Chi Minh City
+  - Suzhou
+  - Madrid
+  - Seoul
+  - Mumbai
+  - Sao Paulo
+  - Chennai
+  - Johannesburg
+  - Singapore
+  - Tokyo
+  - Delhi
+- &Input_saveSingleShipUsingPOST_a_stateProvinceRegion_REQ_PARAM
+  "@type": direct
+  data:
+  - My State
+- &Input_saveSingleShipUsingPOST_a_addressLine1_REQ_PARAM
+  "@type": direct
+  data:
+  - Udamstr.
+  - Uferstr.
+  - Uhlbacher Platz
+  - Uhlbacher Str.
+  - Uhlbergstr.
+  - Uhuweg
+  - Ukrainestr.
+  - Ulmenstr.
+  - Ulmer Str.
+  - Ulrichstr.
+  - Umgelterweg
+  - Ungsteiner Str.
+  - Universitaetsstr.
+  - Unkenweg
+  - Unter dem Birkenkopf
+  - Unter den Birken
+  - Unteraicher Str.
+  - Untere Brandstr.
+  - Untere Hagstr.
+  - Untere Heckenstr.
+  - Untere Querstr.
+  - Untere Schiessaeckerstr.
+  - Untere Str.
+  - Untere Waldplaetze
+  - Unterer Bruehl
+  - Unterer Dornbusch
+  - Unterer Grund
+  - Unterer Hurtweg
+  - Unterhaeuser Str.
+  - Unterlaender Str.
+  - Untertuerkheimer Kelterplatz
+  - Urachplatz
+  - Urachstr.
+  - Uranusweg
+  - Urbacher Str.
+  - Urbansplatz
+  - Urbanstr.
+  - Ursulastr.
+  - Usedomstr.
+- &Input_saveSingleShipUsingPOST_a_isoCountryAlpha2_REQ_PARAM
+  "@type": direct
+  data:
+  - KR
+  - CN
+  - CD
+  - IN
+  - CN
+  - ZA
+  - VN
+  - MX
+  - IR
+  - VN
+  - CN
+  - ES
+  - KR
+  - IN
+  - BR
+  - IN
+  - ZA
+  - SG
+  - JP
+  - IN
+- &Input_saveSingleShipUsingPOST_fulfillmentOptionId_REQ_PARAM
+  "@type": direct
+  data:
+  - "1"
+- &Input_searchUsingGET_q_REQ_PARAM
+  "@type": direct
+  data:
+  - habanero
+  - hot
+  - jalapeno
+  - bbq
+  - insane
+  - hoppin
+  - death
+  - dead
+  - pepper
+  - sweet
+  - bull
+  - garlic
+  - roasted
+  - sauce
+  - bull+snort
+  - sauce
+  - hot+sauce
+  - day+of+the+dead
+  - shirt
+  - hawt
+  - maskot
+- &Input_updateQuantityFromWishlistUsingPOST_quantity_REQ_PARAM
+  "@type": direct
+  data:
+  - "1"
+  - "2"
+  - "3"
+  - "4"
+  - "5"
+- &Input_updateQuantityFromWishlistUsingPOST_productId_REQ_PARAM
+  "@type": extracted
+  extractions:
+  - from: viewAccountWishlistUsingGET
+    pattern: <input type="hidden" name="productId" value="([0-9]+)" />
+    fallback: PRODUCT_ID_NOT_FOUND
+- &Input_updateQuantityFromWishlistUsingPOST_skuId_REQ_PARAM
+  "@type": extracted
+  extractions:
+  - from: viewAccountWishlistUsingGET
+    pattern: <input type="hidden" name="skuId" value="([0-9]+)" />
+    fallback: SKU_ID_NOT_FOUND
+- &Input_updateQuantityUsingPOST_quantity_REQ_PARAM
+  "@type": direct
+  data:
+  - "1"
+  - "2"
+  - "3"
+  - "4"
+  - "5"
+  - "6"
+  - "7"
+  - "8"
+  - "9"
+  - "10"
+- &Input_viewOrderDetailsUsingGET_orderNumber_URL_PART
+  "@type": extracted
+  extractions:
+  - from: viewOrderHistoryUsingGET
+    pattern: <tr class="js-orderHistoryRow" data-order-number="(.*)">
+    fallback: ORDER_NUMBER_NOT_FOUND
+endpoint-annotations:
+- endpoint: addJsonUsingPOST_1
+  overrides: []
+  parameter-annotations:
+  - parameter: addJsonUsingPOST_1_csrfToken_REQ_PARAM
+    input: *Input_extracted_csrfToken
+    overrides: []
+  - parameter: addJsonUsingPOST_1_quantity_REQ_PARAM
+    input: *Input_addJsonUsingPOST_1_quantity_REQ_PARAM
+    overrides: []
+  - parameter: addJsonUsingPOST_1_productId_REQ_PARAM
+    input: *Input_extracted_lastProductId
+    overrides: []
+- endpoint: addUsingPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: addUsingPOST_csrfToken_REQ_PARAM
+    input: *Input_extracted_csrfToken
+    overrides:
+    - HttpParameter.encoded: "false"
+  - parameter: addUsingPOST_quantity_REQ_PARAM
+    input: *Input_addUsingPOST_quantity_REQ_PARAM
+    overrides: []
+  - parameter: addUsingPOST_productId_REQ_PARAM
+    input: *Input_extracted_lastProductId
+    overrides: []
+  - parameter: addUsingPOST_itemAttributesCOLOR_REQ_PARAM
+    input: *Input_addUsingPOST_itemAttributesCOLOR_REQ_PARAM
+    overrides: []
+  - parameter: addUsingPOST_itemAttributesNAME_REQ_PARAM
+    input: *Input_addUsingPOST_itemAttributesNAME_REQ_PARAM
+    overrides: []
+  - parameter: addUsingPOST_itemAttributesSIZE_REQ_PARAM
+    input: *Input_addUsingPOST_itemAttributesSIZE_REQ_PARAM
+    overrides: []
+- endpoint: cartUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: checkoutLoginUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: checkoutUsingGET
+  overrides: []
+  parameter-annotations:
+  - parameter: checkoutUsingGET_g_checkout_REQ_PARAM
+    input: *Input_checkoutUsingGET_g_checkout_REQ_PARAM
+    overrides: []
+- endpoint: clearanceUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: homeUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: hotSaucesDetailsUsingGET
+  overrides: []
+  parameter-annotations:
+  - parameter: hotSaucesDetailsUsingGET_sauce_URL_PART
+    input: *Input_hotSaucesDetailsUsingGET_sauce_URL_PART
+    overrides: []
+- endpoint: hotSaucesOverviewUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: loginUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: doLoginUsingPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: doLoginUsingPOST_csrfToken_REQ_PARAM
+    input: *Input_extracted_csrfToken
+    overrides: []
+  - parameter: doLoginUsingPOST_password_REQ_PARAM
+    input: *Input_doLoginUsingPOST_password_REQ_PARAM
+    overrides: []
+  - parameter: doLoginUsingPOST_remember_me_REQ_PARAM
+    input: *Input_doLoginUsingPOST_remember_me_REQ_PARAM
+    overrides: []
+  - parameter: doLoginUsingPOST_username_REQ_PARAM
+    input: *Input_doLoginUsingPOST_username_REQ_PARAM
+    overrides: []
+- endpoint: mensUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: merchandiseDetailsUsingGET
+  overrides: []
+  parameter-annotations:
+  - parameter: merchandiseDetailsUsingGET_product_URL_PART
+    input: *Input_merchandiseDetailsUsingGET_product_URL_PART
+    overrides: []
+- endpoint: merchandiseOverviewUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: miniCartUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: moveItemToCartUsingPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: moveItemToCartUsingPOST_csrfToken_REQ_PARAM
+    input: *Input_extracted_csrfToken
+    overrides: []
+  - parameter: moveItemToCartUsingPOST_itemId_REQ_PARAM
+    input: *Input_extracted_orderItemId_in_wishlist
+    overrides: []
+- endpoint: moveListToCartUsingPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: moveListToCartUsingPOST_csrfToken_REQ_PARAM
+    input: *Input_extracted_csrfToken
+    overrides: []
+- endpoint: pricingSummaryUsingGET
+  overrides: []
+  parameter-annotations:
+  - parameter: pricingSummaryUsingGET_isCheckoutContext_REQ_PARAM
+    input: *Input_pricingSummaryUsingGET_isCheckoutContext_REQ_PARAM
+    overrides: []
+- endpoint: processPassthroughCheckoutUsingPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: processPassthroughCheckoutUsingPOST_csrfToken_REQ_PARAM
+    input: *Input_extracted_csrfToken
+    overrides: []
+- endpoint: removeItemFromWishlistUsingGET
+  overrides: []
+  parameter-annotations:
+  - parameter: removeItemFromWishlistUsingGET_orderItemId_REQ_PARAM
+    input: *Input_extracted_orderItemId_in_wishlist
+    overrides: []
+- endpoint: removeUsingGET
+  overrides: []
+  parameter-annotations:
+  - parameter: removeUsingGET_productId_REQ_PARAM
+    input: *Input_extracted_productId_in_cart
+    overrides: []
+  - parameter: removeUsingGET_orderItemId_REQ_PARAM
+    input: *Input_extracted_orderItemId_in_cart
+    overrides: []
+- endpoint: saveSingleShipUsingPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: saveSingleShipUsingPOST_a_postalCode_REQ_PARAM
+    input: *Input_saveSingleShipUsingPOST_a_postalCode_REQ_PARAM
+    overrides: []
+  - parameter: saveSingleShipUsingPOST_a_fullName_REQ_PARAM
+    input: *Input_saveSingleShipUsingPOST_a_fullName_REQ_PARAM
+    overrides: []
+  - parameter: saveSingleShipUsingPOST_csrfToken_REQ_PARAM
+    input: *Input_extracted_csrfToken
+    overrides: []
+  - parameter: saveSingleShipUsingPOST_a_city_REQ_PARAM
+    input: *Input_saveSingleShipUsingPOST_a_city_REQ_PARAM
+    overrides: []
+  - parameter: saveSingleShipUsingPOST_a_stateProvinceRegion_REQ_PARAM
+    input: *Input_saveSingleShipUsingPOST_a_stateProvinceRegion_REQ_PARAM
+    overrides: []
+  - parameter: saveSingleShipUsingPOST_a_addressLine1_REQ_PARAM
+    input: *Input_saveSingleShipUsingPOST_a_addressLine1_REQ_PARAM
+    overrides: []
+  - parameter: saveSingleShipUsingPOST_a_isoCountryAlpha2_REQ_PARAM
+    input: *Input_saveSingleShipUsingPOST_a_isoCountryAlpha2_REQ_PARAM
+    overrides: []
+  - parameter: saveSingleShipUsingPOST_fulfillmentOptionId_REQ_PARAM
+    input: *Input_saveSingleShipUsingPOST_fulfillmentOptionId_REQ_PARAM
+    overrides: []
+- endpoint: searchUsingGET
+  overrides: []
+  parameter-annotations:
+  - parameter: searchUsingGET_q_REQ_PARAM
+    input: *Input_searchUsingGET_q_REQ_PARAM
+    overrides: []
+- endpoint: updateQuantityFromWishlistUsingPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: updateQuantityFromWishlistUsingPOST_csrfToken_REQ_PARAM
+    input: *Input_extracted_csrfToken
+    overrides: []
+  - parameter: updateQuantityFromWishlistUsingPOST_quantity_REQ_PARAM
+    input: *Input_updateQuantityFromWishlistUsingPOST_quantity_REQ_PARAM
+    overrides: []
+  - parameter: updateQuantityFromWishlistUsingPOST_productId_REQ_PARAM
+    input: *Input_updateQuantityFromWishlistUsingPOST_productId_REQ_PARAM
+    overrides: []
+  - parameter: updateQuantityFromWishlistUsingPOST_orderItemId_REQ_PARAM
+    input: *Input_extracted_orderItemId_in_wishlist
+    overrides: []
+  - parameter: updateQuantityFromWishlistUsingPOST_skuId_REQ_PARAM
+    input: *Input_updateQuantityFromWishlistUsingPOST_skuId_REQ_PARAM
+    overrides: []
+- endpoint: updateQuantityUsingPOST
+  overrides: []
+  parameter-annotations:
+  - parameter: updateQuantityUsingPOST_csrfToken_REQ_PARAM
+    input: *Input_extracted_csrfToken
+    overrides: []
+  - parameter: updateQuantityUsingPOST_quantity_REQ_PARAM
+    input: *Input_updateQuantityUsingPOST_quantity_REQ_PARAM
+    overrides: []
+  - parameter: updateQuantityUsingPOST_productId_REQ_PARAM
+    input: *Input_extracted_productId_in_cart
+    overrides: []
+  - parameter: updateQuantityUsingPOST_orderItemId_REQ_PARAM
+    input: *Input_extracted_orderItemId_in_cart
+    overrides: []
+  - parameter: updateQuantityUsingPOST_skuId_REQ_PARAM
+    input: *Input_extracted_skuId_in_cart
+    overrides: []
+- endpoint: viewAccountWishlistUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: viewChangePasswordUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: viewCustomerAddressesUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: viewCustomerPaymentsUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: viewOrderDetailsUsingGET
+  overrides: []
+  parameter-annotations:
+  - parameter: viewOrderDetailsUsingGET_orderNumber_URL_PART
+    input: *Input_viewOrderDetailsUsingGET_orderNumber_URL_PART
+    overrides: []
+- endpoint: viewOrderHistoryUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: viewUpdateAccountUsingGET
+  overrides: []
+  parameter-annotations: []
+- endpoint: womensUsingGET
+  overrides: []
+  parameter-annotations: []
