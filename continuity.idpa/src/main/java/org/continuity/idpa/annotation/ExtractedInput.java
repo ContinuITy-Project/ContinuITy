@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author Henning Schulz
  *
  */
-@JsonPropertyOrder({ "fallback", "extractions" })
+@JsonPropertyOrder({ "initial", "extractions" })
 public class ExtractedInput extends AbstractIdpaElement implements Input {
 
 	@JsonProperty(value = "extractions")
