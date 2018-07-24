@@ -7,6 +7,16 @@ dependencyManagement {
 	}
 }
 
+repositories {
+    maven {
+          url "https://repository.novatec-gmbh.de/content/repositories/diagnoseIT/"
+    }
+    
+    maven {
+          url "https://repository.novatec-gmbh.de/content/repositories/novatec/"
+    }
+}
+
 dependencies {
 	compile project(':continuity.api')
 	compile project(':continuity.commons')
@@ -22,17 +32,19 @@ dependencies {
 	compile("io.springfox:springfox-swagger2:2.7.0")
 	compile("io.springfox:springfox-swagger-ui:2.7.0")
 	
-	// Needed for OpenXtrace Deserialization (not pretty). 
-	compile("org.codehaus.jackson:jackson-core-asl:1.9.13")
-	compile("org.codehaus.jackson:jackson-mapper-asl:1.9.13")
-	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 	
 	// Required for Eclipse
 	compile("org.codehaus.groovy:groovy-all:2.4.7")
 	
-	compile fileTree(dir: 'lib', include: ['*.jar'])
-
+	// Needed for OpenXtrace Deserialization (not pretty). 
+	compile("org.codehaus.jackson:jackson-core-asl:1.9.13")
+	compile("org.codehaus.jackson:jackson-mapper-asl:1.9.13")
+	
+	compile("org.spec.research:open.xtrace.api:0.2.2")
+	compile("org.spec.research:open.xtrace.default.impl:0.2.2")
+	
+	compile("rocks.inspectit:shared-all:1.9.1")
 }
 
 group = 'continuityproject'
