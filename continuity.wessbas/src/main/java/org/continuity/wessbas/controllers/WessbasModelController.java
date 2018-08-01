@@ -3,29 +3,26 @@ package org.continuity.wessbas.controllers;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.ROOT;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_ANNOTATION;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_APPLICATION;
-import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_WORKLOAD;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.OVERVIEW;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.PERSIST;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.REMOVE;
-import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.RESERVE;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.continuity.api.rest.RestApi;
+import org.continuity.commons.storage.MemoryStorage;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
+import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WorkloadModelPack;
-import org.continuity.wessbas.entities.WorkloadModelStorageEntry;
-import org.continuity.wessbas.storage.SimpleModelStorage;
 import org.continuity.wessbas.transform.annotation.AnnotationFromWessbasExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,6 +48,9 @@ public class WessbasModelController {
 
 	private final ConcurrentMap<String, ApplicationAnnotation> annotationBuffer = new ConcurrentHashMap<>();
 
+	@Autowired
+	private MemoryStorage<WessbasBundle> storage;
+
 	@Value("${spring.application.name}")
 	private String applicationName;
 
@@ -66,32 +66,14 @@ public class WessbasModelController {
 	 */
 	@RequestMapping(path = OVERVIEW, method = RequestMethod.GET)
 	public ResponseEntity<WorkloadModelPack> getOverview(@PathVariable String id) {
-		WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
-		if (entry == null) {
+		WessbasBundle workloadModel = storage.get(id);
+		if (workloadModel == null) {
 			return ResponseEntity.notFound().build();
 		}
 
 		String tag = id.substring(0, id.lastIndexOf("-"));
 
 		return ResponseEntity.ok(new WorkloadModelPack(applicationName, id, tag));
-	}
-
-	/**
-	 * Gets properties of the model with the passed id.
-	 *
-	 * @param id
-	 *            The id of the stored model.
-	 * @return The stored model or a 404 (Not Found) if there is no such model.
-	 */
-	@RequestMapping(path = GET_WORKLOAD, method = RequestMethod.GET)
-	public ResponseEntity<WorkloadModelStorageEntry> getModel(@PathVariable String id) {
-		WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
-
-		if (entry == null) {
-			return ResponseEntity.notFound().build();
-		} else {
-			return ResponseEntity.ok(entry);
-		}
 	}
 
 	/**
@@ -103,7 +85,7 @@ public class WessbasModelController {
 	 */
 	@RequestMapping(path = REMOVE, method = RequestMethod.DELETE)
 	public ResponseEntity<?> removeModel(@PathVariable String id) {
-		boolean succ = SimpleModelStorage.instance().remove(id);
+		boolean succ = storage.remove(id);
 
 		if (succ) {
 			return ResponseEntity.ok().build();
@@ -155,18 +137,18 @@ public class WessbasModelController {
 		ApplicationAnnotation annotation = annotationBuffer.get(id);
 
 		if ((systemModel == null) || (annotation == null)) {
-			WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
+			WessbasBundle bundle = storage.get(id);
 
-			if (entry == null) {
+			if (bundle == null) {
 				return Pair.of(null, null);
 			}
 
 			AnnotationFromWessbasExtractor annotationExtractor = new AnnotationFromWessbasExtractor();
-			annotationExtractor.init(entry.getWorkloadModel(), id);
+			annotationExtractor.init(bundle.getWorkloadModel(), id);
 
 			systemModel = annotationExtractor.extractSystemModel();
-			if (entry.getDataTimestamp() != null) {
-				systemModel.setTimestamp(entry.getDataTimestamp());
+			if (bundle.getTimestamp() != null) {
+				systemModel.setTimestamp(bundle.getTimestamp());
 			}
 
 			annotation = annotationExtractor.extractInitialAnnotation();
@@ -178,24 +160,6 @@ public class WessbasModelController {
 	}
 
 	/**
-	 * Reserves a workload model entry in the storage.
-	 *
-	 * @param tag
-	 *            The tag of the workload model.
-	 * @return A response entity holding a link to the workload model that will be created. The link
-	 *         is invalid until the creation is finished.
-	 */
-	@RequestMapping(path = RESERVE, method = RequestMethod.GET)
-	public ResponseEntity<String> reserveModelLink(@PathVariable String tag) {
-		String storageId = SimpleModelStorage.instance().reserve(tag);
-		String link = applicationName + RestApi.Wessbas.Model.OVERVIEW.path(storageId);
-
-		LOGGER.info("Reserved workload model entry {}", storageId);
-
-		return ResponseEntity.created(URI.create(link)).body(link);
-	}
-
-	/**
 	 * Persists the model with the passed id to the file system.
 	 *
 	 * @param id
@@ -204,11 +168,11 @@ public class WessbasModelController {
 	 * @throws IOException
 	 *             If an error during persisting occurs.
 	 */
-	@RequestMapping(path = PERSIST, method = RequestMethod.GET)
+	@RequestMapping(path = PERSIST, method = RequestMethod.POST)
 	public ResponseEntity<String> persist(@PathVariable String id) throws IOException {
-		WorkloadModelStorageEntry entry = SimpleModelStorage.instance().get(id);
+		WessbasBundle workloadModel = storage.get(id);
 
-		if (entry == null) {
+		if (workloadModel == null) {
 			LOGGER.warn("Could not persist model {}. This model does not exist!", id);
 			return ResponseEntity.notFound().build();
 		} else {
@@ -217,7 +181,7 @@ public class WessbasModelController {
 			dir.toFile().mkdirs();
 			Path path = dir.resolve(file);
 
-			XmiEcoreHandler.getInstance().ecoreToXMI(entry.getWorkloadModel(), path.toString());
+			XmiEcoreHandler.getInstance().ecoreToXMI(workloadModel.getWorkloadModel(), path.toString());
 
 			LOGGER.warn("Persisted model {} to {}", id, path);
 			return ResponseEntity.ok(path.toAbsolutePath().toString());

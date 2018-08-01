@@ -8,7 +8,7 @@ services:
 env:
   global:
     - GIT_MAJOR_VERSION=1
-    - GIT_MINOR_VERSION=0
+    - GIT_MINOR_VERSION=1
 after_success:
   - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
 
@@ -39,10 +39,10 @@ after_success:
     docker tag continuityproject/jmeter continuityproject/jmeter:latest;
     docker push continuityproject/jmeter:latest;
 
-    docker tag continuityproject/frontend continuityproject/frontend:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker push continuityproject/frontend:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker tag continuityproject/frontend continuityproject/frontend:latest;
-    docker push continuityproject/frontend:latest;
+    docker tag continuityproject/orchestrator continuityproject/orchestrator:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/orchestrator:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/orchestrator continuityproject/orchestrator:latest;
+    docker push continuityproject/orchestrator:latest;
 
     docker tag continuityproject/eureka continuityproject/eureka:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/eureka:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;

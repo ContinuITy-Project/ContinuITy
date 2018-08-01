@@ -2,21 +2,20 @@ package org.continuity.wessbas.managers;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.Properties;
-import java.util.function.Consumer;
 
-import org.continuity.api.entities.config.WorkloadModelReservedConfig;
-import org.continuity.api.rest.RestApi.SessionLogs;
+import org.continuity.api.entities.artifact.SessionLogs;
+import org.continuity.commons.utils.WebUtils;
+import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import m4jdsl.WorkloadModel;
@@ -35,20 +34,14 @@ public class WessbasPipelineManager {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WessbasPipelineManager.class);
 
-	private final Consumer<WorkloadModel> onModelCreatedCallback;
-
 	private RestTemplate restTemplate;
 
 	private final Path workingDir;
 
 	/**
 	 * Constructor.
-	 *
-	 * @param onModelCreatedCallback
-	 *            The function to be called when the model was created.
 	 */
-	public WessbasPipelineManager(Consumer<WorkloadModel> onModelCreatedCallback, RestTemplate restTemplate) {
-		this.onModelCreatedCallback = onModelCreatedCallback;
+	public WessbasPipelineManager(RestTemplate restTemplate) {
 		this.restTemplate = restTemplate;
 
 		Path tmpDir;
@@ -69,27 +62,33 @@ public class WessbasPipelineManager {
 	 * Runs the pipeline and calls the callback when the model was created.
 	 *
 	 *
-	 * @param data
-	 *            Input monitoring data to be transformed into a WESSBAS DSL
-	 *            instance.
+	 * @param task
+	 *            Input monitoring data to be transformed into a WESSBAS DSL instance.
+	 *
+	 * @return The generated workload model.
 	 */
-	public void runPipeline(WorkloadModelReservedConfig data) {
-		if ("dummy".equals(data.getDataLink())) {
-			onModelCreatedCallback.accept(WessbasDslInstance.DVDSTORE_PARSED.get());
-			return;
+	public WessbasBundle runPipeline(String sessionLogsLink) {
+		if ("dummy".equals(sessionLogsLink)) {
+			WessbasDslInstance.DVDSTORE_PARSED.get();
 		}
 
-		String sessionLog = getSessionLog(data);
+		SessionLogs sessionLog;
+		try {
+			sessionLog = restTemplate.getForObject(WebUtils.addProtocolIfMissing(sessionLogsLink), SessionLogs.class);
+		} catch (RestClientException e) {
+			LOGGER.error("Error when retrieving the session logs!", e);
+			return null;
+		}
 		WorkloadModel workloadModel;
 
 		try {
-			workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog);
+			workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog.getLogs());
 		} catch (Exception e) {
 			LOGGER.error("Could not create a WESSBAS workload model!", e);
 			workloadModel = null;
 		}
 
-		onModelCreatedCallback.accept(workloadModel);
+		return new WessbasBundle(sessionLog.getDataTimestamp(), workloadModel);
 	}
 
 	/**
@@ -141,54 +140,6 @@ public class WessbasPipelineManager {
 		final String sessionDatFilePath = workingDir.resolve("sessions.dat").toString();
 
 		return generator.generateWorkloadModel(workloadIntensityProperties, behaviorModelsProperties, null, sessionDatFilePath, false);
-	}
-
-	/**
-	 * Sends request to Session Logs webservice and gets Session Log
-	 *
-	 * @param data
-	 * @return
-	 */
-	public String getSessionLog(WorkloadModelReservedConfig data) {
-		String link;
-		try {
-			link = URLEncoder.encode(data.getDataLink(), "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			LOGGER.error("Error during URL encoding!", e);
-			return null;
-		}
-
-		String tag = extractTag(data.getStorageLink());
-
-		String sessionLog = this.restTemplate.getForObject(SessionLogs.GET.requestUrl().withQuery("link", link).withQuery("tag", tag).get(), String.class);
-
-		LOGGER.debug("Got session logs: {}", sessionLog);
-
-		return sessionLog;
-	}
-
-	private String extractTag(String storageLink) {
-		String storageId = extractStorageId(storageLink);
-
-		if (storageId == null) {
-			return null;
-		} else {
-			return storageId.substring(0, storageId.lastIndexOf("-"));
-		}
-	}
-
-	private String extractStorageId(String storageLink) {
-		String[] tokens = storageLink.split("/");
-
-		if (tokens.length != 3) {
-			LOGGER.error("Illegal storage link format: {}", storageLink);
-			return null;
-		} else if (!tokens[2].matches(".+-\\d+")) {
-			LOGGER.error("Illegal storage link format: {}", storageLink);
-			return null;
-		} else {
-			return tokens[2];
-		}
 	}
 
 }

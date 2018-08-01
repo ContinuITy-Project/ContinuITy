@@ -2,66 +2,43 @@ package org.continuity.session.logs.controllers;
 
 import static org.continuity.api.rest.RestApi.SessionLogs.Paths.GET;
 
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLDecoder;
-
-import org.continuity.session.logs.managers.SessionLogsPipelineManager;
+import org.continuity.api.entities.artifact.SessionLogs;
+import org.continuity.api.rest.RestApi;
+import org.continuity.commons.storage.MemoryStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 /**
  *
  * @author Alper Hi
+ * @author Henning Schulz
  *
  */
-@RestController
+@RestController()
+@RequestMapping(RestApi.SessionLogs.ROOT)
 public class SessionLogsController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SessionLogsController.class);
 
 	@Autowired
-	@Qualifier("plainRestTemplate")
-	private RestTemplate plainRestTemplate;
+	private MemoryStorage<SessionLogs> storage;
 
-	@Autowired
-	private RestTemplate eurekaRestTemplate;
-
-	/**
-	 * @param link
-	 * @return
-	 */
 	@RequestMapping(value = GET, method = RequestMethod.GET)
-	public ResponseEntity<String> getSessionLogsFromLink(@RequestParam String link, @RequestParam(required = false) String tag) {
-		try {
-			link = URLDecoder.decode(link, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			LOGGER.error("Could not decode URL!", e);
+	public ResponseEntity<SessionLogs> getSessionLogsFromLink(@PathVariable String id) {
+		SessionLogs sessionLogs = storage.get(id);
+
+		if (sessionLogs == null) {
+			LOGGER.warn("Could not find session logs for id {}!", id);
+			return ResponseEntity.notFound().build();
+		} else {
+			LOGGER.info("Returned session logs for id {}!", id);
+			return ResponseEntity.ok(sessionLogs);
 		}
-
-		LOGGER.info("Creating session logs for tag {} from data {}", tag, link);
-
-		try {
-			new URL(link);
-		} catch (MalformedURLException e) {
-			LOGGER.error("Received malformed URL!", e);
-			return ResponseEntity.badRequest().body("Malformed URL: " + link);
-		}
-
-		SessionLogsPipelineManager manager = new SessionLogsPipelineManager(link, tag, plainRestTemplate, eurekaRestTemplate);
-
-		String sessionLog = manager.runPipeline();
-
-		LOGGER.info("Session logs created for tag {} from data {}", tag, link);
-		return ResponseEntity.ok(sessionLog);
 	}
 }

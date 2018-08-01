@@ -8,9 +8,9 @@ services:
       - continuity-network
     ports:
       - '8761:8761'
-  frontend:
-    image: continuityproject/frontend
-    hostname: frontend
+  orchestrator:
+    image: continuityproject/orchestrator
+    hostname: orchestrator
     networks:
       - continuity-network
     ports:

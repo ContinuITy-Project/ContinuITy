@@ -4,7 +4,7 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 
-import org.continuity.api.rest.RestApi.Frontend.Idpa;
+import org.continuity.api.rest.RestApi.Orchestrator.Idpa;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.commons.idpa.AnnotationExtractor;
 import org.continuity.commons.utils.WebUtils;

@@ -143,36 +143,6 @@ public interface RoutingKeyFormatter {
 	}
 
 	/**
-	 * Use a workload type and a workload link as routing key, e.g., {@code wessbas} and
-	 * {@code wessbas/model/my-app-1}.
-	 *
-	 * @author Henning Schulz
-	 *
-	 */
-	public static class WorkloadTypeAndLink implements RoutingKeyFormatter {
-
-		public static WorkloadTypeAndLink INSTANCE = new WorkloadTypeAndLink();
-
-		private WorkloadTypeAndLink() {
-		}
-
-		/**
-		 * Use a workload type and a workload link as routing key, e.g., {@code wessbas} and
-		 * {@code wessbas/model/my-app-1}.
-		 *
-		 * @param workloadType
-		 *            The workload type.
-		 * @param workloadLink
-		 *            The workload link.
-		 * @return The formatted routing key.
-		 */
-		public String of(String workloadType, String workloadLink) {
-			return workloadType + "." + workloadLink;
-		}
-
-	}
-
-	/**
 	 * Use the service name as routing key, e.g., {@code frontend}.
 	 *
 	 * @author Henning Schulz
@@ -194,6 +164,32 @@ public interface RoutingKeyFormatter {
 		 */
 		public String of(String serviceName) {
 			return serviceName;
+		}
+
+	}
+
+	/**
+	 * Use the recipe ID as routing key.
+	 *
+	 * @author Henning Schulz
+	 *
+	 */
+	public static class RecipeId implements RoutingKeyFormatter {
+
+		public static RecipeId INSTANCE = new RecipeId();
+
+		private RecipeId() {
+		}
+
+		/**
+		 * Use the recipe ID as routing key.
+		 *
+		 * @param recipeId
+		 *            The recipe ID.
+		 * @return The formatted recipe ID.
+		 */
+		public String of(String recipeId) {
+			return recipeId;
 		}
 
 	}

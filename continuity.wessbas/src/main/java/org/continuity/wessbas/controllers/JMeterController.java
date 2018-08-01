@@ -4,8 +4,8 @@ import static org.continuity.api.rest.RestApi.Wessbas.JMeter.ROOT;
 import static org.continuity.api.rest.RestApi.Wessbas.JMeter.Paths.CREATE;
 
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
-import org.continuity.wessbas.entities.WorkloadModelStorageEntry;
-import org.continuity.wessbas.storage.SimpleModelStorage;
+import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.transform.jmeter.WessbasToJmeterConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import m4jdsl.WorkloadModel;
 
 /**
  * @author Henning Schulz
@@ -28,6 +26,9 @@ public class JMeterController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JMeterController.class);
 
 	@Autowired
+	private MemoryStorage<WessbasBundle> storage;
+
+	@Autowired
 	private WessbasToJmeterConverter jmeterConverter;
 
 	@RequestMapping(value = CREATE, method = RequestMethod.GET)
@@ -36,15 +37,13 @@ public class JMeterController {
 			throw new IllegalArgumentException("The workload model id is null!");
 		}
 
-		WorkloadModelStorageEntry workloadModelEntry = SimpleModelStorage.instance().get(workloadModelId);
+		WessbasBundle workloadModel = storage.get(workloadModelId);
 
-		if (workloadModelEntry == null) {
+		if (workloadModel == null) {
 			throw new IllegalArgumentException("There is no workload model with id " + workloadModelId + "!");
 		}
 
-		WorkloadModel workloadModel = workloadModelEntry.getWorkloadModel();
-
-		JMeterTestPlanBundle testPlanPack = jmeterConverter.convertToLoadTest(workloadModel);
+		JMeterTestPlanBundle testPlanPack = jmeterConverter.convertToLoadTest(workloadModel.getWorkloadModel());
 
 		LOGGER.info("Created JMeter test plan with id {}.", workloadModelId);
 

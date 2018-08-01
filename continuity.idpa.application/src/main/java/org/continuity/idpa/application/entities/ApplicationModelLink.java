@@ -13,8 +13,9 @@ import org.continuity.api.rest.RestApi;
 public class ApplicationModelLink extends LinkExchangeModel {
 
 	public ApplicationModelLink(String applicationName, String tag, Date beforeDate) {
-		setApplicationLink(RestApi.IdpaApplication.Application.GET.requestUrl(tag).withHost(applicationName).withoutProtocol().get());
-		setDeltaLink(RestApi.IdpaApplication.Application.GET_DELTA.requestUrl(tag).withHost(applicationName).withQuery("since", ApiFormats.DATE_FORMAT.format(beforeDate)).withoutProtocol().get());
+		getIdpaLinks().setApplicationLink(RestApi.IdpaApplication.Application.GET.requestUrl(tag).withHost(applicationName).withoutProtocol().get());
+		getIdpaLinks().setApplicationDeltaLink(
+				RestApi.IdpaApplication.Application.GET_DELTA.requestUrl(tag).withHost(applicationName).withQuery("since", ApiFormats.DATE_FORMAT.format(beforeDate)).withoutProtocol().get());
 		setTag(tag);
 	}
 

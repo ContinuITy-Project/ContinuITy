@@ -10,9 +10,9 @@ public class QueueDeclarationTest {
 	@Test
 	public void test() {
 		assertThat(RabbitMqConfig.WORKLOAD_MODEL_CREATED_QUEUE_NAME).as("The defined queue name sould be equal to the derived one.")
-				.isEqualTo(AmqpApi.Workload.MODEL_CREATED.deriveQueueName(RabbitMqConfig.SERVICE_NAME));
+				.isEqualTo(AmqpApi.WorkloadModel.EVENT_CREATED.deriveQueueName(RabbitMqConfig.SERVICE_NAME));
 		assertThat(RabbitMqConfig.IDPA_APPLICATION_CHANGED_QUEUE_NAME).as("The defined queue name sould be equal to the derived one.")
-				.isEqualTo(AmqpApi.IdpaApplication.APPLICATION_CHANGED.deriveQueueName(RabbitMqConfig.SERVICE_NAME));
+				.isEqualTo(AmqpApi.IdpaApplication.EVENT_CHANGED.deriveQueueName(RabbitMqConfig.SERVICE_NAME));
 	}
 
 }

@@ -3,7 +3,6 @@ package org.continuity.api.rest;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.continuity.api.rest.RestApi.JMeter.TestPlan;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
@@ -23,20 +22,56 @@ public class RestApi {
 	}
 
 	/**
-	 * REST API of the frontend service.
+	 * REST API of the orchestrator service.
 	 *
 	 * @author Henning Schulz
 	 *
 	 */
-	public static class Frontend {
+	public static class Orchestrator {
 
-		public static final String SERVICE_NAME = "frontend";
+		public static final String SERVICE_NAME = "orchestrator";
 
-		private Frontend() {
+		private Orchestrator() {
 		}
 
 		/**
-		 * IDPA API of the frontend service.
+		 * Orchestration API of the orchestration service.
+		 *
+		 * @author Henning Schulz
+		 *
+		 */
+		public static class Orchestration {
+
+			public static final String ROOT = "/order";
+
+			/** {@value #ROOT}/{id}/result */
+			public static final RestEndpoint RESULT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.RESULT, RequestMethod.GET);
+
+			/** {@value #ROOT}/{id}/wait */
+			public static final RestEndpoint WAIT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.WAIT, RequestMethod.GET);
+
+			/** {@value #ROOT}/submit */
+			public static final RestEndpoint SUBMIT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.SUBMIT, RequestMethod.GET);
+
+			private Orchestration() {
+			}
+
+			public static class Paths {
+
+				public static final String RESULT = "/{id}/result";
+
+				public static final String WAIT = "/{id}/wait";
+
+				public static final String SUBMIT = "/submit";
+
+				private Paths() {
+				}
+			}
+
+		}
+
+		/**
+		 * IDPA API of the orchestration service.
 		 *
 		 * @author Henning Schulz
 		 *
@@ -95,28 +130,51 @@ public class RestApi {
 
 			public static final String ROOT = "/loadtest";
 
-			/** {@value #ROOT}/{type}/createandexecute */
-			public static final RestEndpoint CREATE_AND_EXECUTE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE_AND_EXECUTE, RequestMethod.POST);
+			/** {@value #ROOT}/{type}/test/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
-			/** {@value #ROOT}/{type}/execute */
-			public static final RestEndpoint EXECUTE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.EXECUTE, RequestMethod.POST);
+			/** {@value #ROOT}/{type}/report/{id} */
+			public static final RestEndpoint REPORT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.REPORT, RequestMethod.GET);
 
-			/** {@value #ROOT}/{lt-type}/{wm-type}/model/{id}/create */
-			public static final RestEndpoint CREATE_AND_GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE_AND_GET, RequestMethod.GET);
-
-			/** {@value #ROOT}/report */
-			public static final RestEndpoint REPORT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.REPORT_PATH, RequestMethod.GET);
-
+			/** {@value #ROOT}/{type}/report/{id} */
+			public static final RestEndpoint DELETE_REPORT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.DELETE_REPORT, RequestMethod.DELETE);
 
 			private Loadtest() {
 			}
 
 			public static class Paths {
 
-				public static final String CREATE_AND_EXECUTE = "/{type}/createandexecute";
-				public static final String EXECUTE = "/{type}/execute";
-				public static final String CREATE_AND_GET = "/{lt-type}/{wm-type}/model/{id}/create";
-				public static final String REPORT_PATH = "/report";
+				public static final String GET = "/{type}/test/{id}";
+
+				public static final String REPORT = "/{type}/report/{id}";
+
+				public static final String DELETE_REPORT = "/{type}/test/{id}";
+
+				private Paths() {
+				}
+			}
+
+		}
+
+		/**
+		 * Session logs API of the orchestration service.
+		 *
+		 * @author Henning Schulz
+		 *
+		 */
+		public static class SessionLogs {
+
+			public static final String ROOT = "/sessions";
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			private SessionLogs() {
+			}
+
+			public static class Paths {
+
+				public static final String GET = "/{id}";
 
 				private Paths() {
 				}
@@ -134,27 +192,19 @@ public class RestApi {
 
 			public static final String ROOT = "/workloadmodel";
 
-			/** {@value #ROOT}/{type}/create */
-			public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.GET);
-
-			/** {@value #ROOT}/wait/{type}/model/{id} */
-			public static final RestEndpoint WAIT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.WAIT, RequestMethod.GET);
-
-			/** {@value #ROOT}/get/{type}/model/{id} */
+			/** {@value #ROOT}/{type}/model/{id} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
-			/** {@value #ROOT}/get/{type}/model/{id} */
-			public static final RestEndpoint PERSIST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PERSIST, RequestMethod.GET);
+			/** {@value #ROOT}/{type}/model/{id}/persist */
+			public static final RestEndpoint PERSIST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PERSIST, RequestMethod.POST);
 
 			private WorkloadModel() {
 			}
 
 			public static class Paths {
 
-				public static final String CREATE = "/{type}/create";
-				public static final String WAIT = "/wait/{type}/model/{id}";
-				public static final String GET = "/get/{type}/model/{id}";
-				public static final String PERSIST = "/persist/{type}/model/{id}";
+				public static final String GET = "/{type}/model/{id}";
+				public static final String PERSIST = "/{type}/model/{id}/persist";
 
 				private Paths() {
 				}
@@ -349,15 +399,45 @@ public class RestApi {
 
 			public static final String ROOT = "/loadtest";
 
-			/** {@value #ROOT}/{type}/model/{id}/create */
-			public static final RestEndpoint CREATE_AND_GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE_AND_GET, RequestMethod.GET);
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
 			private TestPlan() {
 			}
 
 			public static class Paths {
 
-				public static final String CREATE_AND_GET = "/{type}/model/{id}/create";
+				public static final String GET = "/{id}";
+
+				private Paths() {
+				}
+			}
+		}
+
+		/**
+		 * Report API of the JMeter service.
+		 *
+		 * @author Henning Schulz
+		 *
+		 */
+		public static class Report {
+
+			public static final String ROOT = "/report";
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint DELETE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.DELETE, RequestMethod.DELETE);
+
+			private Report() {
+			}
+
+			public static class Paths {
+
+				public static final String GET = "/{id}";
+
+				public static final String DELETE = "/{id}";
 
 				private Paths() {
 				}
@@ -376,9 +456,9 @@ public class RestApi {
 
 		public static final String SERVICE_NAME = "session-logs";
 
-		public static final String ROOT = "/";
+		public static final String ROOT = "/sessions";
 
-		/** / */
+		/** {@value #ROOT}/{id} */
 		public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
 		private SessionLogs() {
@@ -386,7 +466,7 @@ public class RestApi {
 
 		public static class Paths {
 
-			public static final String GET = "/";
+			public static final String GET = "/{id}";
 
 			private Paths() {
 			}
@@ -446,9 +526,6 @@ public class RestApi {
 			/** {@value #ROOT}/{id} */
 			public static final RestEndpoint OVERVIEW = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.OVERVIEW, RequestMethod.GET);
 
-			/** {@value #ROOT}/{id}/workload */
-			public static final RestEndpoint GET_WORKLOAD = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_WORKLOAD, RequestMethod.GET);
-
 			/** {@value #ROOT}/{id} */
 			public static final RestEndpoint REMOVE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.REMOVE, RequestMethod.DELETE);
 
@@ -458,11 +535,8 @@ public class RestApi {
 			/** {@value #ROOT}/{id}/annotation */
 			public static final RestEndpoint GET_ANNOTATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_ANNOTATION, RequestMethod.GET);
 
-			/** {@value #ROOT}/reserve/{tag} */
-			public static final RestEndpoint RESERVE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.RESERVE, RequestMethod.GET);
-
 			/** {@value #ROOT}/{id}/persist */
-			public static final RestEndpoint PERSIST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PERSIST, RequestMethod.GET);
+			public static final RestEndpoint PERSIST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PERSIST, RequestMethod.POST);
 
 			private Model() {
 			}
@@ -470,11 +544,9 @@ public class RestApi {
 			public static class Paths {
 
 				public static final String OVERVIEW = "/{id}";
-				public static final String GET_WORKLOAD = "/{id}/workload";
 				public static final String REMOVE = "/{id}";
 				public static final String GET_APPLICATION = "/{id}/application";
 				public static final String GET_ANNOTATION = "/{id}/annotation";
-				public static final String RESERVE = "/reserve/{tag}";
 				public static final String PERSIST = "/{id}/persist";
 
 				private Paths() {
@@ -487,34 +559,59 @@ public class RestApi {
 
 	/**
 	 * Generic, abstract REST endpoints. The implementing endpoints can be retrieved via the
-	 * {@link Map#get(Object)} method, e.g., the JMeter {@link TestPlan#CREATE_AND_GET} via
-	 * {@link Generic#GET_AND_CREATE_LOAD_TEST}<code>.get("jmeter")</code>.
+	 * {@link Map#get(Object)} method, e.g., the JMeter {@link Model#OVERVIEW} via
+	 * {@link Generic#WORKLOAD_MODEL_LINK}<code>.get("jmeter")</code>.
 	 *
 	 * @author Henning Schulz
 	 *
 	 */
 	public static class Generic {
 
-		/** [loadtest-type]/{type}/model/{id}/create */
-		public static final Map<String, RestEndpoint> GET_AND_CREATE_LOAD_TEST = new HashMap<>();
-
-		/** [workload-model-type]/model/{id} */
+		/**
+		 * [workload-model-type]/model/{id}
+		 *
+		 * @see RestApi.Wessbas.Model#OVERVIEW
+		 */
 		public static final Map<String, RestEndpoint> WORKLOAD_MODEL_LINK = new HashMap<>();
 
-		/** [workload-model-type]/{tag}/reserve */
-		public static final Map<String, RestEndpoint> RESERVE_WORKLOAD_MODEL = new HashMap<>();
-
-		/** [workload-model-type]/model/{id}/persist */
+		/**
+		 * [workload-model-type]/model/{id}/persist
+		 *
+		 * @see RestApi.Wessbas.Model#PERSIST
+		 */
 		public static final Map<String, RestEndpoint> PERSIST_WORKLOAD_MODEL = new HashMap<>();
 
-		static {
-			GET_AND_CREATE_LOAD_TEST.put("jmeter", JMeter.TestPlan.CREATE_AND_GET);
+		/**
+		 * [load-test-type]/loadtest/{id}
+		 *
+		 * @see RestApi.JMeter.TestPlan#GET
+		 */
+		public static final Map<String, RestEndpoint> GET_LOAD_TEST = new HashMap<>();
 
+		/**
+		 * [load-test-type]/report/{id}
+		 *
+		 * @see RestApi.JMeter.Report#GET
+		 */
+		public static final Map<String, RestEndpoint> GET_LOAD_TEST_REPORT = new HashMap<>();
+
+		/**
+		 * [load-test-type]/report/{id}
+		 *
+		 * @see RestApi.JMeter.Report#DELETE
+		 */
+		public static final Map<String, RestEndpoint> DELETE_LOAD_TEST_REPORT = new HashMap<>();
+
+		static {
 			WORKLOAD_MODEL_LINK.put("wessbas", Wessbas.Model.OVERVIEW);
 
-			RESERVE_WORKLOAD_MODEL.put("wessbas", Wessbas.Model.RESERVE);
-
 			PERSIST_WORKLOAD_MODEL.put("wessbas", Wessbas.Model.PERSIST);
+
+			GET_LOAD_TEST.put("jmeter", JMeter.TestPlan.GET);
+
+			GET_LOAD_TEST_REPORT.put("jmeter", JMeter.Report.GET);
+
+			DELETE_LOAD_TEST_REPORT.put("jmeter", JMeter.Report.DELETE);
 		}
 
 		private Generic() {

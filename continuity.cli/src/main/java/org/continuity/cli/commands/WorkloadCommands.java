@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.continuity.api.entities.ApiFormats;
-import org.continuity.api.rest.RestApi.Frontend.WorkloadModel;
+import org.continuity.api.rest.RestApi.Orchestrator.WorkloadModel;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.commons.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
