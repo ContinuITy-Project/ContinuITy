@@ -1,7 +1,10 @@
 package org.continuity.api.entities.links;
 
+import java.lang.reflect.Field;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,96 +17,79 @@ public class LinkExchangeModel {
 	@JsonInclude(Include.NON_NULL)
 	private String tag;
 
-	@JsonProperty(value = "application-link", required = false)
-	@JsonInclude(Include.NON_NULL)
-	private String applicationLink;
+	@JsonProperty(value = "idpa", required = false)
+	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
+	@JsonManagedReference
+	private final IdpaLinks idpaLinks = new IdpaLinks(this);
 
-	@JsonProperty(value = "delta-link", required = false)
-	@JsonInclude(Include.NON_NULL)
-	private String deltaLink;
+	@JsonProperty(value = "external-data", required = false)
+	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
+	@JsonManagedReference
+	private final ExternalDataLinks externalDataLinks = new ExternalDataLinks(this);
 
-	@JsonProperty(value = "initial-annotation-link", required = false)
-	@JsonInclude(Include.NON_NULL)
-	private String initialAnnotationLink;
+	@JsonProperty(value = "session-logs", required = false)
+	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
+	@JsonManagedReference
+	private final SessionLogsLinks sessionLogsLinks = new SessionLogsLinks(this);
 
-	@JsonProperty(value = "workload-type", required = false)
-	@JsonInclude(Include.NON_NULL)
-	private String workloadType;
+	@JsonProperty(value = "workload-model", required = false)
+	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
+	@JsonManagedReference
+	private final WorkloadModelLinks workloadModelLinks = new WorkloadModelLinks(this);
 
-	@JsonProperty(value = "workload-link", required = false)
-	@JsonInclude(Include.NON_NULL)
-	private String workloadLink;
-
-	@JsonProperty(value = "jmeter-link", required = false)
-	@JsonInclude(Include.NON_NULL)
-	private String jmeterLink;
-
-	@JsonProperty(value = "error", required = false)
-	@JsonInclude(Include.NON_NULL)
-	private Boolean error;
+	@JsonProperty(value = "load-test", required = false)
+	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
+	@JsonManagedReference
+	private final LoadTestLinks loadTestLinks = new LoadTestLinks(this);
 
 	public String getTag() {
 		return tag;
 	}
 
-	public void setTag(String tag) {
+	public LinkExchangeModel setTag(String tag) {
 		this.tag = tag;
+		return this;
 	}
 
-	public String getApplicationLink() {
-		return applicationLink;
+	public IdpaLinks getIdpaLinks() {
+		return idpaLinks;
 	}
 
-	public void setApplicationLink(String applicationLink) {
-		this.applicationLink = applicationLink;
+	public ExternalDataLinks getExternalDataLinks() {
+		return externalDataLinks;
 	}
 
-	public String getDeltaLink() {
-		return deltaLink;
+	public SessionLogsLinks getSessionLogsLinks() {
+		return sessionLogsLinks;
 	}
 
-	public void setDeltaLink(String deltaLink) {
-		this.deltaLink = deltaLink;
+	public WorkloadModelLinks getWorkloadModelLinks() {
+		return workloadModelLinks;
 	}
 
-	public String getWorkloadType() {
-		return workloadType;
+	public LoadTestLinks getLoadTestLinks() {
+		return loadTestLinks;
 	}
 
-	public void setWorkloadType(String workloadType) {
-		this.workloadType = workloadType;
+	public void merge(LinkExchangeModel other) {
+		if (this.getTag() == null) {
+			this.setTag(other.getTag());
+		}
+
+		for (Field field : LinkExchangeModel.class.getDeclaredFields()) {
+			if (AbstractLinks.class.isAssignableFrom(field.getType())) {
+				try {
+					mergeLinks(field, other);
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
-	public String getWorkloadLink() {
-		return workloadLink;
-	}
-
-	public void setWorkloadLink(String workloadLink) {
-		this.workloadLink = workloadLink;
-	}
-
-	public String getJmeterLink() {
-		return jmeterLink;
-	}
-
-	public void setJmeterLink(String jmeterLink) {
-		this.jmeterLink = jmeterLink;
-	}
-
-	public String getInitialAnnotationLink() {
-		return initialAnnotationLink;
-	}
-
-	public void setInitialAnnotationLink(String initialAnnotationLink) {
-		this.initialAnnotationLink = initialAnnotationLink;
-	}
-
-	public Boolean isError() {
-		return error;
-	}
-
-	public void setError(boolean error) {
-		this.error = error;
+	@SuppressWarnings("unchecked")
+	private <T extends AbstractLinks<T>> void mergeLinks(Field field, LinkExchangeModel other) throws IllegalArgumentException, IllegalAccessException {
+		((T) field.get(this)).merge((T) field.get(other));
 	}
 
 	@Override

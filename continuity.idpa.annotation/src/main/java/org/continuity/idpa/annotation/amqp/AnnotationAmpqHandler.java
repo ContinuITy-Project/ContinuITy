@@ -48,7 +48,7 @@ public class AnnotationAmpqHandler {
 
 		ResponseEntity<ApplicationAnnotation> annResponse;
 		try {
-			annResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getInitialAnnotationLink()), ApplicationAnnotation.class);
+			annResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getWorkloadModelLinks().getInitialAnnotationLink()), ApplicationAnnotation.class);
 		} catch (RestClientResponseException e) {
 			LOGGER.error("Received error response! Ignoring the new annotation.", e);
 			return;
@@ -69,7 +69,7 @@ public class AnnotationAmpqHandler {
 
 		ResponseEntity<Application> systemResponse;
 		try {
-			systemResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getApplicationLink()), Application.class);
+			systemResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getIdpaLinks().getApplicationLink()), Application.class);
 		} catch (RestClientResponseException e) {
 			LOGGER.error("Received error response! Ignoring the new system model.", e);
 			return;
@@ -78,7 +78,7 @@ public class AnnotationAmpqHandler {
 		ResponseEntity<AnnotationValidityReport> reportResponse;
 		AnnotationValidityReport report;
 		try {
-			reportResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getDeltaLink()), AnnotationValidityReport.class);
+			reportResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getIdpaLinks().getApplicationDeltaLink()), AnnotationValidityReport.class);
 			report = reportResponse.getBody();
 		} catch (RestClientResponseException e) {
 			LOGGER.error("Received error response! Assuming there is no difference in the system models.", e);
@@ -95,7 +95,7 @@ public class AnnotationAmpqHandler {
 
 		if (!report.isOk()) {
 			LOGGER.warn("Updating the annotation for tag {} resulted in a {} annotation.", link.getTag(), (report.isBreaking() ? "broken" : "warning"));
-			amqpTemplate.convertAndSend(AmqpApi.IdpaAnnotation.MESSAGE_AVAILABLE.name(), AmqpApi.IdpaAnnotation.MESSAGE_AVAILABLE.formatRoutingKey().of("report"), report);
+			amqpTemplate.convertAndSend(AmqpApi.IdpaAnnotation.EVENT_MESSAGE.name(), AmqpApi.IdpaAnnotation.EVENT_MESSAGE.formatRoutingKey().of("report"), report);
 		} else {
 			LOGGER.info("Updated the annotation for tag {} without warnings or errors.", link.getTag());
 		}

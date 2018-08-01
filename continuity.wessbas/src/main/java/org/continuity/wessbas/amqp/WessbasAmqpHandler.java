@@ -1,15 +1,15 @@
 package org.continuity.wessbas.amqp;
 
-import java.util.Date;
-
 import org.continuity.api.amqp.AmqpApi;
-import org.continuity.api.entities.config.WorkloadModelReservedConfig;
-import org.continuity.api.rest.RestApi;
+import org.continuity.api.entities.config.TaskDescription;
+import org.continuity.api.entities.report.TaskError;
+import org.continuity.api.entities.report.TaskReport;
+import org.continuity.commons.storage.MemoryStorage;
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.controllers.WessbasModelController;
+import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WorkloadModelPack;
 import org.continuity.wessbas.managers.WessbasPipelineManager;
-import org.continuity.wessbas.storage.SimpleModelStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -18,8 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
-import m4jdsl.WorkloadModel;
 
 /**
  * Handles received monitoring data in order to create WESSBAS models.
@@ -38,64 +36,51 @@ public class WessbasAmqpHandler {
 	@Autowired
 	private RestTemplate restTemplate;
 
+	@Autowired
+	private MemoryStorage<WessbasBundle> storage;
+
 	@Value("${spring.application.name}")
 	private String applicationName;
 
 	/**
-	 * Listener to the RabbitMQ {@link RabbitMqConfig#MONITORING_DATA_AVAILABLE_QUEUE_NAME}. Creates
-	 * a new WESSBAS model based on the specified monitoring data.
+	 * Listener to the RabbitMQ {@link RabbitMqConfig#TASK_CREATE_QUEUE_NAME}. Creates a new WESSBAS
+	 * model based on the specified monitoring data.
 	 *
-	 * @param data
-	 *            The data to be transformed into a WESSBAS model.
+	 * @param task
+	 *            The description of the task to be done.
 	 * @return The id that can be used to retrieve the created model later on.
 	 * @see WessbasModelController
 	 */
-	@RabbitListener(queues = RabbitMqConfig.MONITORING_DATA_AVAILABLE_QUEUE_NAME)
-	public void onMonitoringDataAvailable(WorkloadModelReservedConfig data) {
-		LOGGER.info("Received new monitoring data '{}' to be processed for '{}'", data.getDataLink(), data.getStorageLink());
+	@RabbitListener(queues = RabbitMqConfig.TASK_CREATE_QUEUE_NAME)
+	public void onMonitoringDataAvailable(TaskDescription task) {
+		LOGGER.info("Task {}: Received new task to be processed for tag '{}'", task.getTaskId(), task.getTag());
 
-		String storageId = extractStorageId(data.getStorageLink());
+		TaskReport report;
 
-		if (storageId == null) {
-			LOGGER.error("Storage link {} was not properly formed! Aborting.", data.getStorageLink());
-		}
-
-		WessbasPipelineManager pipelineManager = new WessbasPipelineManager(model -> handleModelCreated(storageId, model, data.getTimestamp()), restTemplate);
-		pipelineManager.runPipeline(data);
-
-		LOGGER.info("Created a new workload model with id '{}'.", storageId);
-	}
-
-	private void handleModelCreated(String storageId, WorkloadModel workloadModel, Date timestamp) {
-		WorkloadModelPack responsePack;
-		String tag = extractTag(storageId);
-
-		if (workloadModel == null) {
-			responsePack = WorkloadModelPack.asError(applicationName, storageId, tag);
+		if (task.getSource().getSessionLogsLinks().getLink() == null) {
+			LOGGER.error("Task {}: Session logs link is missing for tag {}!", task.getTaskId(), task.getTag());
+			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {
-			SimpleModelStorage.instance().put(storageId, timestamp, workloadModel);
-			responsePack = new WorkloadModelPack(applicationName, storageId, tag);
+			WessbasPipelineManager pipelineManager = new WessbasPipelineManager(restTemplate);
+			WessbasBundle workloadModel = pipelineManager.runPipeline(task.getSource().getSessionLogsLinks().getLink());
+
+			if (workloadModel == null) {
+				LOGGER.info("Task {}: Could not create a new workload model for tag '{}'.", task.getTaskId(), task.getTag());
+
+				report = TaskReport.error(task.getTaskId(), TaskError.INTERNAL_ERROR);
+			} else {
+				String storageId = storage.put(workloadModel, task.getTag());
+
+				LOGGER.info("Task {}: Created a new workload model with id '{}'.", task.getTaskId(), storageId);
+
+				WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getTag());
+				report = TaskReport.successful(task.getTaskId(), responsePack);
+
+				amqpTemplate.convertAndSend(AmqpApi.WorkloadModel.EVENT_CREATED.name(), AmqpApi.WorkloadModel.EVENT_CREATED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), responsePack);
+			}
 		}
 
-		// The second part of the routing key is the link to the model
-		String routingKey = AmqpApi.Workload.MODEL_CREATED.formatRoutingKey().of("wessbas", "wessbas" + RestApi.Wessbas.Model.OVERVIEW.path(storageId));
-		amqpTemplate.convertAndSend(AmqpApi.Workload.MODEL_CREATED.name(), routingKey, responsePack);
-	}
-
-	private String extractStorageId(String storageLink) {
-		String[] tokens = storageLink.split("/");
-
-		if (tokens.length != 3) {
-			return null;
-		} else if (!tokens[2].matches(".+-\\d+")) {
-			return null;
-		} else {
-			return tokens[2];
-		}
-	}
-
-	private String extractTag(String storageId) {
-		return storageId.substring(0, storageId.lastIndexOf("-"));
+		amqpTemplate.convertAndSend(AmqpApi.Global.EVENT_FINISHED.name(), AmqpApi.Global.EVENT_FINISHED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), report);
 	}
 
 }

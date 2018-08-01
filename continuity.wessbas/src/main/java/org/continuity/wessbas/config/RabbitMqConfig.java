@@ -26,9 +26,9 @@ public class RabbitMqConfig {
 
 	public static final String SERVICE_NAME = "wessbas";
 
-	public static final String MONITORING_DATA_AVAILABLE_QUEUE_NAME = "continuity.wessbas.frontend.data.available";
+	public static final String TASK_CREATE_QUEUE_NAME = "continuity.wessbas.task.workloadmodel.create";
 
-	private static final String MONITORING_DATA_AVAILABLE_ROUTING_KEY = AmqpApi.Frontend.DATA_AVAILABLE.formatRoutingKey().of("wessbas");
+	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.WorkloadModel.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME);
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -66,24 +66,29 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
-	TopicExchange workloadModelCreatedExchange() {
-		return AmqpApi.Workload.MODEL_CREATED.create();
+	TopicExchange taskCreateExchange() {
+		return AmqpApi.WorkloadModel.TASK_CREATE.create();
 	}
 
 	@Bean
-	TopicExchange monitoringDataAvailableExchange() {
-		return AmqpApi.Frontend.DATA_AVAILABLE.create();
-	}
-
-	@Bean
-	Queue monitoringDataAvailableQueue() {
-		return QueueBuilder.nonDurable(MONITORING_DATA_AVAILABLE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+	Queue taskCreateQueue() {
+		return QueueBuilder.nonDurable(TASK_CREATE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
-	Binding monitoringDataAvailableBinding() {
-		return BindingBuilder.bind(monitoringDataAvailableQueue()).to(monitoringDataAvailableExchange()).with(MONITORING_DATA_AVAILABLE_ROUTING_KEY);
+	Binding taskCreateBinding() {
+		return BindingBuilder.bind(taskCreateQueue()).to(taskCreateExchange()).with(TASK_CREATE_ROUTING_KEY);
+	}
+
+	@Bean
+	TopicExchange eventCreatedExchange() {
+		return AmqpApi.WorkloadModel.EVENT_CREATED.create();
+	}
+
+	@Bean
+	TopicExchange finishedExchange() {
+		return AmqpApi.Global.EVENT_FINISHED.create();
 	}
 
 	// Dead letter exchange and queue

@@ -46,6 +46,10 @@ public class RestEndpoint {
 	 * @return The new RestEndpoint instance.
 	 */
 	protected static RestEndpoint of(String serviceName, String root, String path, RequestMethod method) {
+		if (path.startsWith("/")) {
+			path = path.substring(1);
+		}
+
 		String[] pathElements = path.split("\\/");
 		List<StringOrPar> elements = new ArrayList<>();
 
@@ -106,6 +110,59 @@ public class RestEndpoint {
 	 */
 	public RequestMethod method() {
 		return method;
+	}
+
+	/**
+	 * Checks if the link matches the endpoint and parses the path variables.
+	 *
+	 * @param link
+	 *            The link to be parsed
+	 * @return The path variables or {@code null} if the link does not match the endpoint.
+	 */
+	public List<String> parsePathParameters(String link) {
+		String[] linkElements = normalizeLink(link).split("\\/");
+
+		// Endpoint is serviceName/root/elements
+		if (linkElements.length != (elements.size() + 2)) {
+			return null;
+		}
+
+		if (!root.equals(linkElements[1]) && !root.equals("/" + linkElements[1])) {
+			return null;
+		}
+
+		List<String> params = new ArrayList<>();
+		int i = 2;
+
+		for (StringOrPar stringOrPar : elements) {
+			if (stringOrPar.isPar()) {
+				params.add(linkElements[i]);
+			} else if (!stringOrPar.toString().equals(linkElements[i])) {
+				return null;
+			}
+
+			i++;
+		}
+
+		return params;
+	}
+
+	private String normalizeLink(String link) {
+		if (link.startsWith("http://")) {
+			link = link.substring(7);
+		} else if (link.startsWith("https://")) {
+			link = link.substring(8);
+		}
+
+		if (link.startsWith("/")) {
+			link = link.substring(1);
+		}
+
+		if (link.endsWith("/")) {
+			link = link.substring(0, link.length() - 1);
+		}
+
+		return link;
 	}
 
 	/**

@@ -29,8 +29,12 @@ public class ExchangeDefinition<F extends RoutingKeyFormatter> {
 		this.routingKeyFormatter = routingKeyFormatter;
 	}
 
-	protected static ExchangeBuilder of(String scope, String target, String event) {
-		return new ExchangeBuilder(scope + "." + target + "." + event);
+	protected static ExchangeBuilder event(String scope, String event) {
+		return new ExchangeBuilder("event." + scope + "." + event);
+	}
+
+	protected static ExchangeBuilder task(String scope, String task) {
+		return new ExchangeBuilder("task." + scope + "." + task);
 	}
 
 	/**
@@ -73,7 +77,7 @@ public class ExchangeDefinition<F extends RoutingKeyFormatter> {
 
 	@Override
 	public String toString() {
-		return name;
+		return name();
 	}
 
 }

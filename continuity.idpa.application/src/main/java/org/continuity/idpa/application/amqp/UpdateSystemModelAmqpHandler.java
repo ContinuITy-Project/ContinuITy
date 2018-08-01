@@ -61,16 +61,16 @@ public class UpdateSystemModelAmqpHandler {
 	public void onModelCreated(LinkExchangeModel link) {
 		LOGGER.info("Received workload model link: {}", link);
 
-		if ("INVALID".equals(link.getApplicationLink())) {
+		if ("INVALID".equals(link.getWorkloadModelLinks().getApplicationLink())) {
 			LOGGER.error("Received invalid system model link: {}", link);
 			return;
 		}
 
 		ResponseEntity<Application> systemResponse;
 		try {
-			systemResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getApplicationLink()), Application.class);
+			systemResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getWorkloadModelLinks().getApplicationLink()), Application.class);
 		} catch (HttpStatusCodeException e) {
-			LOGGER.error("Could not retrieve the system model from {}. Got response code {}!", link.getApplicationLink(), e.getStatusCode());
+			LOGGER.error("Could not retrieve the system model from {}. Got response code {}!", link.getWorkloadModelLinks().getApplicationLink(), e.getStatusCode());
 			LOGGER.error("Exception:", e);
 			return;
 		}
@@ -84,10 +84,10 @@ public class UpdateSystemModelAmqpHandler {
 
 		if (report.changed()) {
 			try {
-				amqpTemplate.convertAndSend(AmqpApi.IdpaApplication.APPLICATION_CHANGED.name(), AmqpApi.IdpaApplication.APPLICATION_CHANGED.formatRoutingKey().of(link.getTag()),
+				amqpTemplate.convertAndSend(AmqpApi.IdpaApplication.EVENT_CHANGED.name(), AmqpApi.IdpaApplication.EVENT_CHANGED.formatRoutingKey().of(link.getTag()),
 						new ApplicationModelLink(applicationName, link.getTag(), report.getBeforeChange()));
 			} catch (AmqpException e) {
-				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", link.getTag(), AmqpApi.IdpaApplication.APPLICATION_CHANGED.name());
+				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", link.getTag(), AmqpApi.IdpaApplication.EVENT_CHANGED.name());
 				LOGGER.error("Exception:", e);
 			}
 		} else {

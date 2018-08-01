@@ -138,10 +138,10 @@ public class ApplicationController {
 
 		if (report.changed()) {
 			try {
-				amqpTemplate.convertAndSend(AmqpApi.IdpaApplication.APPLICATION_CHANGED.name(), AmqpApi.IdpaApplication.APPLICATION_CHANGED.formatRoutingKey().of(tag),
+				amqpTemplate.convertAndSend(AmqpApi.IdpaApplication.EVENT_CHANGED.name(), AmqpApi.IdpaApplication.EVENT_CHANGED.formatRoutingKey().of(tag),
 						new ApplicationModelLink(applicationName, tag, report.getBeforeChange()));
 			} catch (AmqpException e) {
-				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", tag, AmqpApi.IdpaApplication.APPLICATION_CHANGED.name());
+				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", tag, AmqpApi.IdpaApplication.EVENT_CHANGED.name());
 				LOGGER.error("Exception:", e);
 			}
 		}

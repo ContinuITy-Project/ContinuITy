@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
-import org.continuity.api.rest.RestApi.Frontend.Loadtest;
+import org.continuity.api.rest.RestApi.Orchestrator.Loadtest;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.process.JMeterProcess;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;

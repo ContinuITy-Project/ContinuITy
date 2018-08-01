@@ -26,13 +26,13 @@ public class RabbitMqConfig {
 
 	public static final String SERVICE_NAME = "jmeter";
 
-	public static final String LOAD_TEST_EXECUTION_REQUIRED_QUEUE_NAME = "continuity.jmeter.frontend.loadtestexecution.required";
+	public static final String TASK_CREATE_QUEUE_NAME = "continuity.jmeter.task.loadtest.create";
 
-	public static final String LOAD_TEST_EXECUTION_REQUIRED_ROUTING_KEY = AmqpApi.Frontend.LOADTESTEXECUTION_REQUIRED.formatRoutingKey().of("jmeter");
+	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME);
 
-	public static final String LOAD_TEST_CREATION_AND_EXECUTION_REQUIRED_QUEUE_NAME = "continuity.jmeter.frontend.loadtestcreationandexecution.required";
+	public static final String TASK_EXECUTE_QUEUE_NAME = "continuity.jmeter.task.loadtest.execute";
 
-	public static final String LOAD_TEST_CREATION_AND_EXECUTION_REQUIRED_ROUTING_KEY = AmqpApi.Frontend.LOADTESTCREATIONANDEXECUTION_REQUIRED.formatRoutingKey().of("*", "jmeter");
+	public static final String TASK_EXECUTE_ROUTING_KEY = AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME);
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -70,40 +70,40 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
-	TopicExchange provideReportExchange() {
-		return AmqpApi.LoadTest.REPORT_AVAILABLE.create();
+	TopicExchange taskCreateExchange() {
+		return AmqpApi.LoadTest.TASK_CREATE.create();
 	}
 
 	@Bean
-	TopicExchange loadTestExecutionRequiredExchange() {
-		return AmqpApi.Frontend.LOADTESTEXECUTION_REQUIRED.create();
-	}
-
-	@Bean
-	Queue loadTestExecutionRequiredQueue() {
-		return QueueBuilder.nonDurable(LOAD_TEST_EXECUTION_REQUIRED_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+	Queue taskCreateQueue() {
+		return QueueBuilder.nonDurable(TASK_CREATE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
-	Binding loadTestExecutionRequiredBinding() {
-		return BindingBuilder.bind(loadTestExecutionRequiredQueue()).to(loadTestExecutionRequiredExchange()).with(LOAD_TEST_EXECUTION_REQUIRED_ROUTING_KEY);
+	Binding taskCreateBinding() {
+		return BindingBuilder.bind(taskCreateQueue()).to(taskCreateExchange()).with(TASK_CREATE_ROUTING_KEY);
 	}
 
 	@Bean
-	TopicExchange loadTestCreationAndExecutionRequiredExchange() {
-		return AmqpApi.Frontend.LOADTESTCREATIONANDEXECUTION_REQUIRED.create();
+	TopicExchange taskExecuteExchange() {
+		return AmqpApi.LoadTest.TASK_EXECUTE.create();
 	}
 
 	@Bean
-	Queue loadTestCreationAndExecutionRequiredQueue() {
-		return QueueBuilder.nonDurable(LOAD_TEST_CREATION_AND_EXECUTION_REQUIRED_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+	Queue taskExecuteQueue() {
+		return QueueBuilder.nonDurable(TASK_EXECUTE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
-	Binding loadTestCreationAndExecutionRequiredBinding() {
-		return BindingBuilder.bind(loadTestCreationAndExecutionRequiredQueue()).to(loadTestCreationAndExecutionRequiredExchange()).with(LOAD_TEST_CREATION_AND_EXECUTION_REQUIRED_ROUTING_KEY);
+	Binding taskExecuteBinding() {
+		return BindingBuilder.bind(taskExecuteQueue()).to(taskExecuteExchange()).with(TASK_CREATE_ROUTING_KEY);
+	}
+
+	@Bean
+	TopicExchange finishedExchange() {
+		return AmqpApi.Global.EVENT_FINISHED.create();
 	}
 
 	// Dead letter exchange and queue
