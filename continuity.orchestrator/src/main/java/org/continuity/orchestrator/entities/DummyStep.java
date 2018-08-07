@@ -8,16 +8,18 @@ import org.continuity.orchestrator.config.RabbitMqConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public class DummyStep implements RecipeStep {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DummyStep.class);
 
-	@Autowired
-	private AmqpTemplate amqpTemplate;
+	private final AmqpTemplate amqpTemplate;
 
 	private TaskDescription task;
+
+	public DummyStep(AmqpTemplate amqpTemplate) {
+		this.amqpTemplate = amqpTemplate;
+	}
 
 	@Override
 	public void execute() {

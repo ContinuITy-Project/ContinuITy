@@ -38,7 +38,7 @@ public class IdpaCommands {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	@ShellMethod(key = { "download-idpa" }, value = "Downloads and opens the IDPA with the specified tag.")
+	@ShellMethod(key = { "idpa-download" }, value = "Downloads and opens the IDPA with the specified tag.")
 	public String downloadIdpa(String tag) throws JsonGenerationException, JsonMappingException, IOException {
 		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
 
@@ -66,7 +66,7 @@ public class IdpaCommands {
 		return "Downloaded and opened the IDPA with tag " + tag + " from " + workingDir;
 	}
 
-	@ShellMethod(key = { "open-idpa" }, value = "Opens an already downloaded IDPA with the specified tag.")
+	@ShellMethod(key = { "idpa-open" }, value = "Opens an already downloaded IDPA with the specified tag.")
 	public String openIdpa(String tag) throws IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
@@ -78,7 +78,7 @@ public class IdpaCommands {
 		return "Opened the IDPA with tag " + tag + " from " + workingDir;
 	}
 
-	@ShellMethod(key = { "upload-annotation", "upload-ann" }, value = "Uploads the annotation with the specified tag.")
+	@ShellMethod(key = { "idpa-ann-upload" }, value = "Uploads the annotation with the specified tag.")
 	public String uploadAnnotation(String tag) throws JsonParseException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		IdpaYamlSerializer<ApplicationAnnotation> serializer = new IdpaYamlSerializer<>(ApplicationAnnotation.class);
@@ -99,7 +99,7 @@ public class IdpaCommands {
 		}
 	}
 
-	@ShellMethod(key = { "upload-application", "upload-app" }, value = "Handle with care! Uploads the application model with the specified tag. Can break the online stored annotation!")
+	@ShellMethod(key = { "idpa-app-upload" }, value = "Handle with care! Uploads the application model with the specified tag. Can break the online stored annotation!")
 	public String uploadApplication(String tag) throws JsonParseException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		IdpaYamlSerializer<Application> serializer = new IdpaYamlSerializer<>(Application.class);
@@ -120,7 +120,7 @@ public class IdpaCommands {
 		}
 	}
 
-	@ShellMethod(key = { "init-annotation", "init-ann" }, value = "Initializes an annotation for the stored application model with the specified tag.")
+	@ShellMethod(key = { "idpa-ann-init" }, value = "Initializes an annotation for the stored application model with the specified tag.")
 	public String initAnnotation(String tag) throws JsonParseException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File systemFile = new File(workingDir + "/application-" + tag + ".yml");

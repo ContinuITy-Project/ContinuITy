@@ -3,14 +3,17 @@ package org.continuity.cli.commands;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
+import org.continuity.api.entities.config.LoadTestType;
+import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.rest.RestApi.Orchestrator.Loadtest;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.process.JMeterProcess;
+import org.continuity.cli.storage.OrderStorage;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.jmeter.TestPlanWriter;
-import org.continuity.commons.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.shell.standard.ShellComponent;
@@ -29,11 +32,16 @@ public class JMeterCommands {
 
 	private static final String KEY_JMETER_CONFIG = "jmeter.configuration";
 
+	private static final String DEFAULT_LINK = "DEFAULT";
+
 	@Autowired
 	private PropertiesProvider propertiesProvider;
 
 	@Autowired
 	private RestTemplate restTemplate;
+
+	@Autowired
+	private OrderStorage storage;
 
 	private TestPlanWriter testPlanWriter;
 
@@ -54,9 +62,8 @@ public class JMeterCommands {
 		return old == null ? "Set JMeter config dir." : "Replaced old JMeter config dir: " + old;
 	}
 
-	@ShellMethod(key = { "create-jmeter-test" }, value = "Creates a load test with a tag from a workload model specified by a link.")
-	public String createLoadTest(String tag, String workloadLink, @ShellOption(defaultValue = "1") int users, @ShellOption(defaultValue = "60") int duration,
-			@ShellOption(defaultValue = "1") int rampup) throws IOException {
+	@ShellMethod(key = { "jmeter-download" }, value = "Downloads and opens a JMeter load test specified by a link.")
+	public String downloadLoadTest(@ShellOption(defaultValue = DEFAULT_LINK) String loadTestLink) throws IOException {
 		String jmeterHome = propertiesProvider.get().getProperty(KEY_JMETER_HOME);
 
 		if (testPlanWriter == null) {
@@ -71,34 +78,36 @@ public class JMeterCommands {
 			return "Please set the jmeter home path first (call 'jmeter-home [path]')";
 		}
 
-		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
-		String[] linkElements = workloadLink.split("\\/");
-		String workloadType = linkElements[0];
-		String workloadId = linkElements[linkElements.length - 1];
-		ResponseEntity<JMeterTestPlanBundle> response = restTemplate.getForEntity(Loadtest.CREATE_AND_GET.requestUrl("jmeter", workloadType, workloadId).withQuery("tag", tag).withHost(url).get(),
-				JMeterTestPlanBundle.class);
+		if (DEFAULT_LINK.equals(loadTestLink)) {
+			OrderReport report = storage.getReport(OrderStorage.ID_LATEST);
+
+			if ((report == null) || (report.getCreatedArtifacts() == null) || (report.getCreatedArtifacts().getLoadTestLinks().getLink() == null)) {
+				return "Cannot download the JMeter test of the latest order. The link is missing!";
+			} else if (report.getCreatedArtifacts().getLoadTestLinks().getType() != LoadTestType.JMETER) {
+				return "Cannot download the JMeter test of the latest order. The link points to a " + report.getCreatedArtifacts().getLoadTestLinks().getType().toPrettyString() + " test!";
+			} else {
+				loadTestLink = report.getCreatedArtifacts().getLoadTestLinks().getLink();
+			}
+		}
+
+		ResponseEntity<JMeterTestPlanBundle> response = restTemplate.getForEntity(loadTestLink, JMeterTestPlanBundle.class);
 
 		if (!response.getStatusCode().is2xxSuccessful()) {
 			return response.toString();
 		}
 
-		Path testPlanDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), extractTempDirPrefix(workloadLink));
+		List<String> params = Loadtest.GET.parsePathParameters(loadTestLink);
+		Path testPlanDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), params.get(1));
 		testPlanDir.toFile().mkdirs();
 
 		JMeterTestPlanBundle testPlanBundle = response.getBody();
 		propertiesCorrector.correctPaths(testPlanBundle.getTestPlan(), testPlanDir.toAbsolutePath());
 		propertiesCorrector.configureResultFile(testPlanBundle.getTestPlan(), testPlanDir.resolve("results.csv").toAbsolutePath());
 		propertiesCorrector.prepareForHeadlessExecution(testPlanBundle.getTestPlan());
-		propertiesCorrector.setRuntimeProperties(testPlanBundle.getTestPlan(), users, duration, rampup);
 		Path testPlanPath = testPlanWriter.write(testPlanBundle.getTestPlan(), testPlanBundle.getBehaviors(), testPlanDir);
 		new JMeterProcess(jmeterHome).run(testPlanPath);
 
 		return "Stored and opened JMeter test plan at " + testPlanPath;
-	}
-
-	private String extractTempDirPrefix(String workloadLink) {
-		String[] tokens = workloadLink.split("/");
-		return "jmeter-" + tokens[0] + "-" + tokens[2];
 	}
 
 }

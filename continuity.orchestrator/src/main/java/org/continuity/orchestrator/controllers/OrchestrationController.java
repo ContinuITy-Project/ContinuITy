@@ -7,11 +7,13 @@ import static org.continuity.api.rest.RestApi.Orchestrator.Orchestration.Paths.W
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -21,6 +23,9 @@ import org.continuity.api.entities.config.Order;
 import org.continuity.api.entities.config.OrderGoal;
 import org.continuity.api.entities.config.WorkloadModelType;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.links.LoadTestLinks;
+import org.continuity.api.entities.links.SessionLogsLinks;
+import org.continuity.api.entities.links.WorkloadModelLinks;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MemoryStorage;
@@ -35,7 +40,6 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,11 +67,8 @@ public class OrchestrationController {
 	@Autowired
 	private ConnectionFactory connectionFactory;
 
-	@Value("${spring.application.name}")
-	private String applicationName;
-
 	@RequestMapping(path = SUBMIT, method = RequestMethod.POST)
-	public ResponseEntity<Map<String, String>> submitOrder(@RequestBody Order order) {
+	public ResponseEntity<Map<String, String>> submitOrder(@RequestBody Order order, HttpServletRequest servletRequest) {
 		Optional<OrderGoal> goal = Optional.ofNullable(order.getGoal());
 		List<RecipeStep> recipeSteps = new ArrayList<>();
 
@@ -91,8 +92,9 @@ public class OrchestrationController {
 			storage.putToReserved(recipeId, recipe);
 			recipe.next().execute();
 
-			responseMap.put("result-link", RestApi.Orchestrator.Orchestration.RESULT.requestUrl(recipeId).withHost(applicationName).get());
-			responseMap.put("wait-link", RestApi.Orchestrator.Orchestration.WAIT.requestUrl(recipeId).withHost(applicationName).get());
+			String host = servletRequest.getServerName() + ":" + servletRequest.getServerPort();
+			responseMap.put("result-link", RestApi.Orchestrator.Orchestration.RESULT.requestUrl(recipeId).withHost(host).get());
+			responseMap.put("wait-link", RestApi.Orchestrator.Orchestration.WAIT.requestUrl(recipeId).withHost(host).get());
 
 			return ResponseEntity.accepted().body(responseMap);
 		} else {
@@ -130,6 +132,19 @@ public class OrchestrationController {
 		}
 	}
 
+	private <S, T> Function<LinkExchangeModel, Boolean> isPresent(Function<LinkExchangeModel, S> getLinksObject, Function<S, T> getLink) {
+		return getLinksObject.andThen(getLink).andThen(x -> x != null);
+	}
+
+	private <S, T> Function<LinkExchangeModel, Boolean> isEqual(Function<LinkExchangeModel, S> getLinksObject, Function<S, T> getLink, T value) {
+		return getLinksObject.andThen(getLink).andThen(value::equals);
+	}
+
+	@SafeVarargs
+	private final Function<LinkExchangeModel, Boolean> all(Function<LinkExchangeModel, Boolean>... functions) {
+		return links -> Arrays.stream(functions).map(f -> f.apply(links)).reduce((a, b) -> a && b).get();
+	}
+
 	@RequestMapping(path = RESULT, method = RequestMethod.GET)
 	public ResponseEntity<OrderReport> getResultWithoutWaiting(@PathVariable("id") String orderId, HttpServletRequest servletRequest) {
 		LOGGER.info("Trying to get result for order {} without waiting...", orderId);
@@ -142,7 +157,8 @@ public class OrchestrationController {
 
 		switch (goal) {
 		case CREATE_SESSION_LOGS:
-			step = new CreationStep(stepName, amqpTemplate, AmqpApi.SessionLogs.TASK_CREATE, AmqpApi.SessionLogs.TASK_CREATE.formatRoutingKey().of(order.getTag()));
+			step = new CreationStep(stepName, amqpTemplate, AmqpApi.SessionLogs.TASK_CREATE, AmqpApi.SessionLogs.TASK_CREATE.formatRoutingKey().of(order.getTag()),
+					isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getLink));
 			break;
 		case CREATE_WORKLOAD_MODEL:
 			WorkloadModelType workloadType;
@@ -152,7 +168,10 @@ public class OrchestrationController {
 				workloadType = order.getOptions().getWorkloadModelType();
 			}
 
-			step = new CreationStep(stepName, amqpTemplate, AmqpApi.WorkloadModel.TASK_CREATE, AmqpApi.WorkloadModel.TASK_CREATE.formatRoutingKey().of(workloadType.toPrettyString()));
+			Function<LinkExchangeModel, Boolean> check = all(isPresent(LinkExchangeModel::getWorkloadModelLinks, WorkloadModelLinks::getLink),
+					isEqual(LinkExchangeModel::getWorkloadModelLinks, WorkloadModelLinks::getType, workloadType));
+
+			step = new CreationStep(stepName, amqpTemplate, AmqpApi.WorkloadModel.TASK_CREATE, AmqpApi.WorkloadModel.TASK_CREATE.formatRoutingKey().of(workloadType.toPrettyString()), check);
 			break;
 		case CREATE_LOAD_TEST:
 			LoadTestType loadTestType;
@@ -163,7 +182,10 @@ public class OrchestrationController {
 				loadTestType = order.getOptions().getLoadTestType();
 			}
 
-			step = new CreationStep(stepName, amqpTemplate, AmqpApi.LoadTest.TASK_CREATE, AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(loadTestType.toPrettyString()));
+			check = all(isPresent(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getLink),
+					isEqual(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getType, loadTestType));
+
+			step = new CreationStep(stepName, amqpTemplate, AmqpApi.LoadTest.TASK_CREATE, AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(loadTestType.toPrettyString()), check);
 			break;
 		case EXECUTE_LOAD_TEST:
 			loadTestType = order.getOptions().getLoadTestType();
@@ -173,16 +195,16 @@ public class OrchestrationController {
 			}
 
 			if (loadTestType.canExecute()) {
-				step = new CreationStep(stepName, amqpTemplate, AmqpApi.LoadTest.TASK_EXECUTE, AmqpApi.LoadTest.TASK_EXECUTE.formatRoutingKey().of(loadTestType.toPrettyString()));
+				step = new CreationStep(stepName, amqpTemplate, AmqpApi.LoadTest.TASK_EXECUTE, AmqpApi.LoadTest.TASK_EXECUTE.formatRoutingKey().of(loadTestType.toPrettyString()), links -> false);
 			} else {
 				LOGGER.error("Cannot execute {} tests!", loadTestType);
-				step = new DummyStep();
+				step = new DummyStep(amqpTemplate);
 			}
 
 			break;
 		default:
 			LOGGER.error("Cannot create {} step. Unknown goal!", order.getGoal());
-			step = new DummyStep();
+			step = new DummyStep(amqpTemplate);
 			break;
 
 		}
