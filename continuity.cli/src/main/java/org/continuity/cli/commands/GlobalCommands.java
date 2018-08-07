@@ -22,7 +22,7 @@ public class GlobalCommands {
 	@Autowired
 	private PropertiesProvider propertiesProvider;
 
-	@ShellMethod(key = { "properties", "props" }, value = "Loads a properties file or shows the current content.")
+	@ShellMethod(key = { "props" }, value = "Loads a properties file or shows the current content.")
 	public String loadProperties(@ShellOption(help = "If not set, the current content is printed.", defaultValue = DEFAULT_VALUE) String path) throws FileNotFoundException, IOException {
 		if (DEFAULT_VALUE.equals(path)) {
 			return "Properties at " + propertiesProvider.getPath() + ":\n" + propertiesProvider.get().toString();
@@ -33,7 +33,7 @@ public class GlobalCommands {
 		}
 	}
 
-	@ShellMethod(key = { "store-properties", "save-properties", "store-props", "save-props" }, value = "Stores the current properties to a file. Will be automatically done when exiting with \"exit\"")
+	@ShellMethod(key = { "props-store", "props-save" }, value = "Stores the current properties to a file. Will be automatically done when exiting with \"exit\"")
 	public String storeProperties() throws FileNotFoundException, IOException {
 		propertiesProvider.save();
 		return "Successfully stored the properties.";

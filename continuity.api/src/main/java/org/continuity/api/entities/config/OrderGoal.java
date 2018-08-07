@@ -1,5 +1,7 @@
 package org.continuity.api.entities.config;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -8,6 +10,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum OrderGoal {
 
 	CREATE_SESSION_LOGS, CREATE_WORKLOAD_MODEL(CREATE_SESSION_LOGS), CREATE_LOAD_TEST(CREATE_WORKLOAD_MODEL), EXECUTE_LOAD_TEST(CREATE_LOAD_TEST);
+
+	private static final Map<String, OrderGoal> prettyStringToGoal = new HashMap<>();
+
+	static {
+		for (OrderGoal goal : values()) {
+			prettyStringToGoal.put(goal.toPrettyString(), goal);
+		}
+	}
 
 	private final Optional<OrderGoal> required;
 
@@ -25,7 +35,7 @@ public enum OrderGoal {
 
 	@JsonCreator
 	public static OrderGoal fromPrettyString(String key) {
-		return key == null ? null : OrderGoal.valueOf(key.toUpperCase().replace("-", "_"));
+		return prettyStringToGoal.get(key);
 	}
 
 	@JsonValue
