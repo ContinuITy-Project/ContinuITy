@@ -31,7 +31,7 @@ group = 'continuityproject'
 apply plugin: 'com.palantir.docker'
 
 docker {
-    name "${project.group}/frontend"
+    name "${project.group}/orchestrator"
     files jar.archivePath
     buildArgs(['JAR_FILE': "${jar.archiveName}"])
 }
