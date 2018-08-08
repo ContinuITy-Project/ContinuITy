@@ -39,4 +39,9 @@ public class DummyStep implements RecipeStep {
 		return "dummy";
 	}
 
+	@Override
+	public boolean checkData(LinkExchangeModel source) {
+		return false;
+	}
+
 }

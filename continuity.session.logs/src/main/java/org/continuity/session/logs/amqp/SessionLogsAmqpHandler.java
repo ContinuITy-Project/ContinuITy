@@ -9,7 +9,7 @@ import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
-import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
 import org.continuity.session.logs.config.RabbitMqConfig;
 import org.continuity.session.logs.managers.SessionLogsPipelineManager;
 import org.slf4j.Logger;
@@ -37,7 +37,7 @@ public class SessionLogsAmqpHandler {
 	private AmqpTemplate amqpTemplate;
 
 	@Autowired
-	private MemoryStorage<SessionLogs> storage;
+	private MixedStorage<SessionLogs> storage;
 
 	@RabbitListener(queues = RabbitMqConfig.TASK_CREATE_QUEUE_NAME)
 	public void createSessionLogs(TaskDescription task) {
@@ -55,7 +55,7 @@ public class SessionLogsAmqpHandler {
 			SessionLogsPipelineManager manager = new SessionLogsPipelineManager(link, tag, plainRestTemplate, eurekaRestTemplate);
 
 			String sessionLog = manager.runPipeline();
-			String id = storage.put(new SessionLogs(task.getSource().getExternalDataLinks().getTimestamp(), sessionLog), tag);
+			String id = storage.put(new SessionLogs(task.getSource().getExternalDataLinks().getTimestamp(), sessionLog), tag, task.isLongTermUse());
 			String sessionLink = RestApi.SessionLogs.GET.requestUrl(id).withoutProtocol().get();
 
 			report = TaskReport.successful(task.getTaskId(), new LinkExchangeModel().getSessionLogsLinks().setLink(sessionLink).parent());

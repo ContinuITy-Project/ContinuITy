@@ -13,7 +13,7 @@ import org.continuity.api.rest.RestApi;
 import org.continuity.api.rest.RestApi.IdpaAnnotation;
 import org.continuity.api.rest.RestApi.IdpaApplication;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
-import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
@@ -40,7 +40,7 @@ public class TestPlanCreationAmqpHandler {
 	private AmqpTemplate amqpTemplate;
 
 	@Autowired
-	private MemoryStorage<JMeterTestPlanBundle> storage;
+	private MixedStorage<JMeterTestPlanBundle> storage;
 
 	private JMeterPropertiesCorrector jmeterPropertiesCorrector = new JMeterPropertiesCorrector();
 
@@ -64,7 +64,7 @@ public class TestPlanCreationAmqpHandler {
 			} else {
 				JMeterTestPlanBundle bundle = createAndGetLoadTest(workloadLinks, task.getTag(), task.getProperties());
 
-				String id = storage.put(bundle, task.getTag());
+				String id = storage.put(bundle, task.getTag(), task.isLongTermUse());
 				LOGGER.info("Task {}: Created a load test from {}.", task.getTaskId(), workloadModelLink);
 
 				report = TaskReport.successful(task.getTaskId(),

@@ -23,6 +23,7 @@ import org.continuity.api.rest.RestApi;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.jmeter.TestPlanWriter;
 import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.utils.JMeterUtils;
 import org.continuity.jmeter.config.RabbitMqConfig;
 import org.slf4j.Logger;
@@ -51,7 +52,7 @@ public class TestPlanExecutionAmqpHandler {
 
 	@Autowired
 	@Qualifier("testPlanStorage")
-	private MemoryStorage<JMeterTestPlanBundle> testplanStorage;
+	private MixedStorage<JMeterTestPlanBundle> testplanStorage;
 
 	@Autowired
 	@Qualifier("reportStorage")

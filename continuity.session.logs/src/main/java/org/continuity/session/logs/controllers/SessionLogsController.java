@@ -4,7 +4,7 @@ import static org.continuity.api.rest.RestApi.SessionLogs.Paths.GET;
 
 import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.rest.RestApi;
-import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ public class SessionLogsController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SessionLogsController.class);
 
 	@Autowired
-	private MemoryStorage<SessionLogs> storage;
+	private MixedStorage<SessionLogs> storage;
 
 	@RequestMapping(value = GET, method = RequestMethod.GET)
 	public ResponseEntity<SessionLogs> getSessionLogsFromLink(@PathVariable String id) {

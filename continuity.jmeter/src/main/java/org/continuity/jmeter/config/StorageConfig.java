@@ -1,7 +1,11 @@
 package org.continuity.jmeter.config;
 
+import java.nio.file.Paths;
+
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -11,8 +15,8 @@ public class StorageConfig {
 
 	@Bean
 	@Primary
-	public MemoryStorage<JMeterTestPlanBundle> testPlanStorage() {
-		return new MemoryStorage<>(JMeterTestPlanBundle.class);
+	public MixedStorage<JMeterTestPlanBundle> testPlanStorage(@Value("${storage.path:storage}") String storagePath) {
+		return new MixedStorage<>(Paths.get(storagePath), new JMeterTestPlanBundle());
 	}
 
 	@Bean

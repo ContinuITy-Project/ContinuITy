@@ -4,7 +4,7 @@ import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
-import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.controllers.WessbasModelController;
 import org.continuity.wessbas.entities.WessbasBundle;
@@ -37,7 +37,7 @@ public class WessbasAmqpHandler {
 	private RestTemplate restTemplate;
 
 	@Autowired
-	private MemoryStorage<WessbasBundle> storage;
+	private MixedStorage<WessbasBundle> storage;
 
 	@Value("${spring.application.name}")
 	private String applicationName;
@@ -69,7 +69,7 @@ public class WessbasAmqpHandler {
 
 				report = TaskReport.error(task.getTaskId(), TaskError.INTERNAL_ERROR);
 			} else {
-				String storageId = storage.put(workloadModel, task.getTag());
+				String storageId = storage.put(workloadModel, task.getTag(), task.isLongTermUse());
 
 				LOGGER.info("Task {}: Created a new workload model with id '{}'.", task.getTaskId(), storageId);
 

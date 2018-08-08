@@ -20,7 +20,7 @@ public class PropertySpecification {
 		return numUsers;
 	}
 
-	public PropertySpecification setNumUsers(int numUsers) {
+	public PropertySpecification setNumUsers(Integer numUsers) {
 		this.numUsers = numUsers;
 		return this;
 	}
@@ -29,7 +29,7 @@ public class PropertySpecification {
 		return duration;
 	}
 
-	public PropertySpecification setDuration(long duration) {
+	public PropertySpecification setDuration(Long duration) {
 		this.duration = duration;
 		return this;
 	}
@@ -38,7 +38,7 @@ public class PropertySpecification {
 		return rampup;
 	}
 
-	public PropertySpecification setRampup(int rampup) {
+	public PropertySpecification setRampup(Integer rampup) {
 		this.rampup = rampup;
 		return this;
 	}

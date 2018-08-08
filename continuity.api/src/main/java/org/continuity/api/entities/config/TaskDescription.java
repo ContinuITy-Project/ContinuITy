@@ -4,6 +4,7 @@ import org.continuity.api.entities.links.LinkExchangeModel;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TaskDescription {
 
@@ -18,6 +19,9 @@ public class TaskDescription {
 
 	@JsonInclude(Include.NON_NULL)
 	private PropertySpecification properties;
+
+	@JsonProperty("long-term-use")
+	private boolean longTermUse;
 
 	public String getTaskId() {
 		return taskId;
@@ -49,6 +53,14 @@ public class TaskDescription {
 
 	public void setProperties(PropertySpecification properties) {
 		this.properties = properties;
+	}
+
+	public boolean isLongTermUse() {
+		return longTermUse;
+	}
+
+	public void setLongTermUse(boolean longTermUse) {
+		this.longTermUse = longTermUse;
 	}
 
 }
