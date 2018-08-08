@@ -1,16 +1,20 @@
 package org.continuity.orchestrator.amqp;
 
+import java.io.IOException;
+
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.commons.storage.MemoryStorage;
 import org.continuity.orchestrator.config.RabbitMqConfig;
 import org.continuity.orchestrator.entities.Recipe;
+import org.continuity.orchestrator.storage.TestingContextStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,6 +24,10 @@ public class OrchestrationAmqpHandler {
 
 	@Autowired
 	private MemoryStorage<Recipe> storage;
+
+	@Autowired
+	@Qualifier("testingContextStorage")
+	private TestingContextStorage testingContextStorage;
 
 	@Autowired
 	private AmqpTemplate amqpTemplate;
@@ -47,7 +55,9 @@ public class OrchestrationAmqpHandler {
 		if (recipe.hasNext()) {
 			recipe.next().execute();
 		} else {
-			finishRecipe(OrderReport.asSuccessful(recipe.getRecipeId(), recipe.getSource()));
+			OrderReport orderReport = OrderReport.asSuccessful(recipe.getOrderId(), recipe.getTestingContext(), recipe.getSource());
+			storeToTestingContext(orderReport, recipe.getTag());
+			finishRecipe(orderReport);
 		}
 	}
 
@@ -57,6 +67,16 @@ public class OrchestrationAmqpHandler {
 		storage.remove(report.getOrderId());
 
 		LOGGER.info("Sent recipe {} to finished queue.", report.getOrderId());
+	}
+
+	private void storeToTestingContext(OrderReport report, String tag) {
+		if ((report.getTestingContext() != null) && !report.getTestingContext().isEmpty()) {
+			try {
+				testingContextStorage.store(tag, report.getTestingContext(), report.getInternalArtifacts());
+			} catch (IOException e) {
+				LOGGER.error("Error when storing the testing context!", e);
+			}
+		}
 	}
 
 }

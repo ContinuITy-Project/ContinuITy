@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.continuity.wessbas.entities.WessbasBundle;
@@ -49,7 +49,7 @@ public class WessbasModelController {
 	private final ConcurrentMap<String, ApplicationAnnotation> annotationBuffer = new ConcurrentHashMap<>();
 
 	@Autowired
-	private MemoryStorage<WessbasBundle> storage;
+	private MixedStorage<WessbasBundle> storage;
 
 	@Value("${spring.application.name}")
 	private String applicationName;
@@ -169,6 +169,7 @@ public class WessbasModelController {
 	 *             If an error during persisting occurs.
 	 */
 	@RequestMapping(path = PERSIST, method = RequestMethod.POST)
+	@Deprecated
 	public ResponseEntity<String> persist(@PathVariable String id) throws IOException {
 		WessbasBundle workloadModel = storage.get(id);
 

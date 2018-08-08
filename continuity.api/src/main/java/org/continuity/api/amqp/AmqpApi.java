@@ -51,7 +51,7 @@ public class AmqpApi {
 
 		private static final String SCOPE = "orchestrator";
 
-		public static final ExchangeDefinition<RecipeId> EVENT_FINISHED = ExchangeDefinition.event(SCOPE, "finished").nonDurable().autoDelete().withRoutingKey(RecipeId.INSTANCE);
+		public static final ExchangeDefinition<RecipeId> EVENT_FINISHED = ExchangeDefinition.event(SCOPE, "finished").nonDurable().nonAutoDelete().withRoutingKey(RecipeId.INSTANCE);
 
 		private Orchestrator() {
 		}

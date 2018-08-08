@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.FileUtils;
 import org.continuity.api.entities.config.Order;
 import org.continuity.api.entities.report.OrderReport;
+import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.cli.config.PropertiesProvider;
-import org.continuity.cli.entities.OrderLinks;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -63,19 +63,19 @@ public class OrderStorage {
 		}
 	}
 
-	public void storeLinks(String id, OrderLinks links) throws JsonGenerationException, JsonMappingException, IOException {
+	public void storeLinks(String id, OrderResponse links) throws JsonGenerationException, JsonMappingException, IOException {
 		id = resolveLatest(id);
 		File linksFile = getOrderDir(id).resolve(LINKS_FILE).toFile();
 
 		mapper.writeValue(linksFile, links);
 	}
 
-	public OrderLinks getLinks(String id) {
+	public OrderResponse getLinks(String id) {
 		id = resolveLatest(id);
 		File linksFile = getOrderDir(id).resolve(LINKS_FILE).toFile();
 
 		try {
-			return mapper.readValue(linksFile, OrderLinks.class);
+			return mapper.readValue(linksFile, OrderResponse.class);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;

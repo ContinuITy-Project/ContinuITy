@@ -1,7 +1,10 @@
 package org.continuity.session.logs.config;
 
+import java.nio.file.Paths;
+
 import org.continuity.api.entities.artifact.SessionLogs;
-import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,8 +12,8 @@ import org.springframework.context.annotation.Configuration;
 public class StorageConfig {
 
 	@Bean
-	public MemoryStorage<SessionLogs> sessionLogStorage() {
-		return new MemoryStorage<>(SessionLogs.class);
+	public MixedStorage<SessionLogs> sessionLogStorage(@Value("${storage.path:storage}") String storagePath) {
+		return new MixedStorage<>(Paths.get(storagePath), new SessionLogs());
 	}
 
 }

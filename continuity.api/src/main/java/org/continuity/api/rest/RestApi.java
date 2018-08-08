@@ -495,7 +495,7 @@ public class RestApi {
 		 */
 		public static class JMeter {
 
-			public static final String ROOT = "/loadtest/jmeter";
+			public static final String ROOT = "/jmeter";
 
 			/** {@value #ROOT}/{id}/create */
 			public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.GET);
@@ -505,7 +505,7 @@ public class RestApi {
 
 			public static class Paths {
 
-				public static final String CREATE = "/{id}/create";
+				public static final String CREATE = "/{id}";
 
 				private Paths() {
 				}

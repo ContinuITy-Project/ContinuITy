@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 
 import org.continuity.api.entities.config.LoadTestType;
@@ -15,9 +16,9 @@ import org.continuity.api.entities.config.OrderOptions;
 import org.continuity.api.entities.config.WorkloadModelType;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.OrderReport;
+import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.api.rest.RestApi;
 import org.continuity.cli.config.PropertiesProvider;
-import org.continuity.cli.entities.OrderLinks;
 import org.continuity.cli.storage.OrderStorage;
 import org.continuity.commons.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,9 +95,9 @@ public class OrderCommands {
 		Order order = mapper.readValue(orderDir.toFile(), Order.class);
 
 		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
-		ResponseEntity<OrderLinks> response;
+		ResponseEntity<OrderResponse> response;
 		try {
-			response = restTemplate.postForEntity(RestApi.Orchestrator.Orchestration.SUBMIT.requestUrl().withHost(url).get(), order, OrderLinks.class);
+			response = restTemplate.postForEntity(RestApi.Orchestrator.Orchestration.SUBMIT.requestUrl().withHost(url).get(), order, OrderResponse.class);
 		} catch (HttpStatusCodeException e) {
 			return e.getResponseBodyAsString();
 		}
@@ -104,12 +105,19 @@ public class OrderCommands {
 		String storageId = storage.newOrder(order);
 		storage.storeLinks(storageId, response.getBody());
 
-		return "Submitted the order. For further actions:\n  ID: " + storageId + "\n  wait link: " + response.getBody().getWaitLink() + "\n  result link: " + response.getBody().getResultLink();
+		StringBuilder message = new StringBuilder();
+
+		message.append("Submitted the order, storage ID is ");
+		message.append(storageId);
+		message.append(". For further actions:\n");
+		message.append(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody()));
+
+		return message.toString();
 	}
 
 	@ShellMethod(key = { "order-wait" }, value = "Waits for an order to be finished.")
 	public String waitForOrder(String timeout, @ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws IOException {
-		OrderLinks tuple = storage.getLinks(id);
+		OrderResponse tuple = storage.getLinks(id);
 
 		if (tuple == null) {
 			return "Please create and submit an order before waiting!";
@@ -153,6 +161,7 @@ public class OrderCommands {
 		Order order = new Order();
 
 		order.setTag("TAG");
+		order.setTestingContext(Collections.singleton("CONTEXT"));
 
 		OrderOptions options = new OrderOptions();
 		options.setDuration(60);

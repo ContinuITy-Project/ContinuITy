@@ -1,7 +1,11 @@
 package org.continuity.wessbas.config;
 
-import org.continuity.commons.storage.MemoryStorage;
+import java.nio.file.Paths;
+
+import org.continuity.commons.storage.MixedStorage;
 import org.continuity.wessbas.entities.WessbasBundle;
+import org.continuity.wessbas.storage.WessbasFileStorage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,8 +13,8 @@ import org.springframework.context.annotation.Configuration;
 public class StorageConfig {
 
 	@Bean
-	public MemoryStorage<WessbasBundle> sessionLogStorage() {
-		return new MemoryStorage<>(WessbasBundle.class);
+	public MixedStorage<WessbasBundle> wessbasStorage(@Value("${storage.path:storage}") String storagePath) {
+		return new MixedStorage<>(WessbasBundle.class, new WessbasFileStorage(Paths.get(storagePath)));
 	}
 
 }

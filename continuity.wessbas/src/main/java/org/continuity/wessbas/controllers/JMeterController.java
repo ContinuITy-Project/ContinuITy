@@ -4,7 +4,7 @@ import static org.continuity.api.rest.RestApi.Wessbas.JMeter.ROOT;
 import static org.continuity.api.rest.RestApi.Wessbas.JMeter.Paths.CREATE;
 
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
-import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.transform.jmeter.WessbasToJmeterConverter;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ public class JMeterController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JMeterController.class);
 
 	@Autowired
-	private MemoryStorage<WessbasBundle> storage;
+	private MixedStorage<WessbasBundle> storage;
 
 	@Autowired
 	private WessbasToJmeterConverter jmeterConverter;

@@ -4,7 +4,7 @@ import static org.continuity.api.rest.RestApi.JMeter.TestPlan.ROOT;
 import static org.continuity.api.rest.RestApi.JMeter.TestPlan.Paths.GET;
 
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
-import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.storage.MixedStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ public class TestPlanController {
 
 	@Autowired
 	@Qualifier("testPlanStorage")
-	private MemoryStorage<JMeterTestPlanBundle> storage;
+	private MixedStorage<JMeterTestPlanBundle> storage;
 
 	/**
 	 * Returns the test plan that is stored with the specified ID.
