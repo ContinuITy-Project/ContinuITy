@@ -544,6 +544,7 @@ public class RestApi {
 			public static class Paths {
 
 				public static final String OVERVIEW = "/{id}";
+				public static final String UPLOAD = "/{tag}";
 				public static final String REMOVE = "/{id}";
 				public static final String GET_APPLICATION = "/{id}/application";
 				public static final String GET_ANNOTATION = "/{id}/annotation";

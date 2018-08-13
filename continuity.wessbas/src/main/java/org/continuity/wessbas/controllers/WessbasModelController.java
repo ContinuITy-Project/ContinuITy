@@ -4,17 +4,22 @@ import static org.continuity.api.rest.RestApi.Wessbas.Model.ROOT;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_ANNOTATION;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_APPLICATION;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.OVERVIEW;
+import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.UPLOAD;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.PERSIST;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.REMOVE;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.commons.storage.MixedStorage;
+import org.continuity.commons.wessbas.WessbasModelParser;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.continuity.wessbas.entities.WessbasBundle;
@@ -26,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -74,6 +80,36 @@ public class WessbasModelController {
 		String tag = id.substring(0, id.lastIndexOf("-"));
 
 		return ResponseEntity.ok(new WorkloadModelPack(applicationName, id, tag));
+	}
+	
+	/**
+	 * Stores the provided workload model with the defined tag.
+	 * 
+	 * @param tag 
+	 * 				The tag of the stored model.
+	 * @param wessbasModel
+	 * 				The workload model.
+	 * @return The new stored model.
+	 */
+	@RequestMapping(path = UPLOAD, method = RequestMethod.PUT)
+	public ResponseEntity<WorkloadModelPack> uploadModel(@PathVariable String tag, @RequestBody String workloadModel) {
+		
+	    InputStream inputStream = new ByteArrayInputStream(workloadModel.getBytes());
+		
+		WessbasModelParser parser = new WessbasModelParser();
+		
+		m4jdsl.WorkloadModel wessbasModel;
+		try {
+			wessbasModel = parser.readWorkloadModel(inputStream);
+		} catch (IOException e) {
+			LOGGER.error("Exception while reading workload model with tag " + tag, e);
+			throw new IllegalArgumentException("Exception while reading workload model! Content is not allowed.", e);
+		}
+		
+		WessbasBundle bundle = new WessbasBundle(new Date(), wessbasModel);
+		String storedItemId = storage.put(bundle, tag);
+
+		return ResponseEntity.ok(new WorkloadModelPack(applicationName, storedItemId, tag));
 	}
 
 	/**
