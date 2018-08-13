@@ -19,6 +19,7 @@ import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.entities.ApplicationModelLink;
 import org.continuity.idpa.application.repository.ApplicationModelRepositoryManager;
+import org.continuity.idpa.yaml.IdpaYamlSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
@@ -33,6 +34,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import io.swagger.annotations.ApiParam;
 
 /**
  * Offers a REST API for controlling the stored system models.
@@ -143,6 +146,64 @@ public class ApplicationController {
 			} catch (AmqpException e) {
 				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", tag, AmqpApi.IdpaApplication.EVENT_CHANGED.name());
 				LOGGER.error("Exception:", e);
+			}
+		}
+
+		return ResponseEntity.ok().body(report.toString());
+	}
+	
+	/**
+	 * Stores a new application model if it differs from existing ones, possibly ignoring specific
+	 * change types.
+	 *
+	 * @param tag
+	 *            The tag of the application model.
+	 * @param system
+	 *            The application model in YAML format.
+	 * @param ignoreInterfaceChanged
+	 *            Ignore {@link ApplicationChangeType#ENDPOINT_CHANGED}.
+	 * @param ignoreInterfaceRemoved
+	 *            Ignore {@link ApplicationChangeType#ENDPOINT_REMOVED}.
+	 * @param ignoreInterfaceAdded
+	 *            Ignore {@link ApplicationChangeType#ENDPOINT_ADDED}.
+	 * @param ignoreParameterRemoved
+	 *            Ignore {@link ApplicationChangeType#PARAMETER_REMOVED}.
+	 * @param ignoreParameterAdded
+	 *            Ignore {@link ApplicationChangeType#PARAMETER_ADDED}.
+	 * @return A report holding the differences between the passed model and the next older one.
+	 */
+	@RequestMapping(path = UPDATE, method = RequestMethod.PUT)
+	public ResponseEntity<String> updateApplication(@PathVariable String tag, 
+			@ApiParam(value = "The application model in YAML format.", required = true) @RequestBody String application,
+			@RequestParam(name = "ignore-interface-changed", defaultValue = "false") boolean ignoreInterfaceChanged,
+			@RequestParam(name = "ignore-interface-removed", defaultValue = "false") boolean ignoreInterfaceRemoved,
+			@RequestParam(name = "ignore-interface-added", defaultValue = "false") boolean ignoreInterfaceAdded,
+			@RequestParam(name = "ignore-parameter-changed", defaultValue = "false") boolean ignoreParameterChanged,
+			@RequestParam(name = "ignore-parameter-removed", defaultValue = "false") boolean ignoreParameterRemoved,
+			@RequestParam(name = "ignore-parameter-added", defaultValue = "false") boolean ignoreParameterAdded) {
+		
+		EnumSet<ApplicationChangeType> ignoredChangeTypes = changeTypesFromBooleans(ignoreInterfaceChanged, ignoreInterfaceRemoved, ignoreInterfaceAdded, ignoreParameterChanged, ignoreParameterRemoved,
+				ignoreParameterAdded);
+
+		IdpaYamlSerializer<Application> serializer = new IdpaYamlSerializer<>(Application.class);
+		Application system;
+		try {
+			system = serializer.readFromYamlString(application);
+		} catch (IOException e) {
+			LOGGER.error("Exception during reading application model with tag {}!", tag);
+			LOGGER.error("Exception: " , e);
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		ApplicationChangeReport report = manager.saveOrUpdate(tag, system, ignoredChangeTypes);
+
+		if (report.changed()) {
+			try {
+				amqpTemplate.convertAndSend(AmqpApi.IdpaApplication.EVENT_CHANGED.name(), AmqpApi.IdpaApplication.EVENT_CHANGED.formatRoutingKey().of(tag),
+						new ApplicationModelLink(applicationName, tag, report.getBeforeChange()));
+			} catch (AmqpException e) {
+				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", tag, AmqpApi.IdpaApplication.EVENT_CHANGED.name());
+				LOGGER.error("Exception: ", e);
 			}
 		}
 

@@ -257,6 +257,7 @@ public class RestApi {
 				public static final String GET = "/{tag}";
 				public static final String GET_BASE = "/{tag}/base";
 				public static final String UPDATE = "/{tag}";
+				public static final String UPLOAD = "/{tag}";
 				public static final String LEGACY_UPDATE = "/legacy/{tag}/update";
 
 				private Paths() {

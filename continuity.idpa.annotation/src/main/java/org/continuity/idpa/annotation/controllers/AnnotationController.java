@@ -5,6 +5,7 @@ import static org.continuity.api.rest.RestApi.IdpaAnnotation.Annotation.Paths.GE
 import static org.continuity.api.rest.RestApi.IdpaAnnotation.Annotation.Paths.GET_BASE;
 import static org.continuity.api.rest.RestApi.IdpaAnnotation.Annotation.Paths.LEGACY_UPDATE;
 import static org.continuity.api.rest.RestApi.IdpaAnnotation.Annotation.Paths.UPDATE;
+import static org.continuity.api.rest.RestApi.IdpaAnnotation.Annotation.Paths.UPLOAD;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.api.rest.RestApi;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.storage.AnnotationStorageManager;
+import org.continuity.idpa.yaml.IdpaYamlSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import io.swagger.annotations.ApiParam;
 
 /**
  * @author Henning Schulz
@@ -135,6 +139,46 @@ public class AnnotationController {
 		}
 	}
 
+	/**
+	 * Updates the annotation stored with the specified tag. If the annotation is invalid with
+	 * respect to the system model, it is rejected.
+	 *
+	 * @param tag
+	 * 				Tag of the annotation.
+	 * @param annotation
+	 * 				The annotation model in YAML format.
+	 * @return
+	 */
+	@RequestMapping(path = UPLOAD, method = RequestMethod.PUT)
+	public ResponseEntity<String> uploadAnnotation(@PathVariable("tag") String tag, 
+			@ApiParam(value = "The annotation model in YAML format.", required = true) @RequestBody String annotation) {
+		AnnotationValidityReport report = null;
+
+		IdpaYamlSerializer<ApplicationAnnotation> serializer = new IdpaYamlSerializer<>(ApplicationAnnotation.class);
+		ApplicationAnnotation idpaAnnotation;
+		try {
+			idpaAnnotation = serializer.readFromYamlString(annotation);
+		} catch (IOException e) {
+			LOGGER.error("Exception during reading annotation model with tag {}!", tag);
+			LOGGER.error("Exception: " , e);
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		try {
+			report = storageManager.updateAnnotation(tag, idpaAnnotation);
+		} catch (IOException e) {
+			LOGGER.error("Error during updating annotation with tag {}!", tag);
+			LOGGER.error("Exception: " , e);
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		if (report.isBreaking()) {
+			return new ResponseEntity<>(report.toString(), HttpStatus.CONFLICT);
+		} else {
+			return new ResponseEntity<>(report.toString(), HttpStatus.CREATED);
+		}
+	}
+	
 	/**
 	 * Updates a legacy IDPA.
 	 *
