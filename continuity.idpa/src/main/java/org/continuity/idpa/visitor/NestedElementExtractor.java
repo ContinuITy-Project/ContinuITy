@@ -13,6 +13,7 @@ import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.CounterInput;
 import org.continuity.idpa.annotation.EndpointAnnotation;
 import org.continuity.idpa.annotation.ExtractedInput;
+import org.continuity.idpa.annotation.JsonInput;
 import org.continuity.idpa.annotation.JsonPathExtraction;
 import org.continuity.idpa.annotation.ListInput;
 import org.continuity.idpa.annotation.ParameterAnnotation;
@@ -86,7 +87,7 @@ public enum NestedElementExtractor {
 	/**
 	 * For all other elements that do not have nested elements.
 	 */
-	EMPTY(Parameter.class, ParameterAnnotation.class, ListInput.class, CounterInput.class, RegExExtraction.class, JsonPathExtraction.class) {
+	EMPTY(Parameter.class, ParameterAnnotation.class, ListInput.class, CounterInput.class, RegExExtraction.class, JsonPathExtraction.class, JsonInput.class) {
 		@Override
 		protected Collection<IdpaElement> extractNestedElements(IdpaElement element) {
 			return Collections.emptyList();

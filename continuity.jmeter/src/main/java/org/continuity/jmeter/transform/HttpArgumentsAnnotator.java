@@ -7,18 +7,28 @@ import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jmeter.protocol.http.util.HTTPArgument;
 import org.apache.jmeter.testelement.property.JMeterProperty;
 import org.apache.jmeter.testelement.property.PropertyIterator;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.CounterInput;
+import org.continuity.idpa.annotation.DataType;
 import org.continuity.idpa.annotation.DirectListInput;
+import org.continuity.idpa.annotation.EndpointAnnotation;
 import org.continuity.idpa.annotation.ExtractedInput;
 import org.continuity.idpa.annotation.Input;
-import org.continuity.idpa.annotation.EndpointAnnotation;
+import org.continuity.idpa.annotation.JsonInput;
 import org.continuity.idpa.annotation.ParameterAnnotation;
 import org.continuity.idpa.annotation.PropertyOverride;
 import org.continuity.idpa.annotation.PropertyOverrideKey;
-import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpParameter;
 import org.continuity.idpa.application.Parameter;
-import org.continuity.idpa.application.Application;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.util.RawValue;
 
 /**
  * @author Henning Schulz
@@ -35,8 +45,7 @@ public class HttpArgumentsAnnotator {
 
 	private final EndpointAnnotation interfAnnotation;
 
-	public HttpArgumentsAnnotator(Application system, ApplicationAnnotation systemAnnotation,
-			EndpointAnnotation interfAnnotation) {
+	public HttpArgumentsAnnotator(Application system, ApplicationAnnotation systemAnnotation, EndpointAnnotation interfAnnotation) {
 		this.system = system;
 		this.systemAnnotation = systemAnnotation;
 		this.interfAnnotation = interfAnnotation;
@@ -79,7 +88,6 @@ public class HttpArgumentsAnnotator {
 	private void annotateArg(HTTPArgument arg) {
 		overrideProperties(arg, systemAnnotation.getOverrides());
 		overrideProperties(arg, interfAnnotation.getOverrides());
-
 		ParameterAnnotation paramAnnotation = findAnnotationForParameterName(arg.getName());
 
 		if (paramAnnotation != null) {
@@ -108,8 +116,7 @@ public class HttpArgumentsAnnotator {
 		return null;
 	}
 
-	private <T extends PropertyOverrideKey.Any> void overrideProperties(HTTPArgument arg,
-			List<PropertyOverride<T>> overrides) {
+	private <T extends PropertyOverrideKey.Any> void overrideProperties(HTTPArgument arg, List<PropertyOverride<T>> overrides) {
 		for (PropertyOverride<?> override : overrides) {
 			if (override.getKey().isInScope(PropertyOverrideKey.HttpParameter.class)) {
 				switch ((PropertyOverrideKey.HttpParameter) override.getKey()) {
@@ -125,7 +132,15 @@ public class HttpArgumentsAnnotator {
 		}
 	}
 
+	/**
+	 * Serializes input into a jmeter compatible string.
+	 * 
+	 * @param input
+	 *            The input, which has to be serialized
+	 * @return input string
+	 */
 	private String getInputString(Input input) {
+		ObjectMapper mapper = new ObjectMapper();
 		if ((input instanceof ExtractedInput) || (input instanceof CounterInput)) {
 			return "${" + input.getId() + "}";
 		} else if (input instanceof DirectListInput) {
@@ -138,9 +153,61 @@ public class HttpArgumentsAnnotator {
 			} else {
 				return "";
 			}
+		} else if (input instanceof JsonInput) {
+			JsonInput jsonInput = (JsonInput) input;
+
+			JsonNodeFactory factory = JsonNodeFactory.instance;
+			switch (jsonInput.getType()) {
+			case STRING:
+				return getInputString(jsonInput.getInput());
+			case NUMBER:
+				return getInputString(jsonInput.getInput());
+			case OBJECT:
+				ObjectNode jsonObject = factory.objectNode();
+				if (null != jsonInput.getItems()) {
+					for (JsonInput nestedInput : jsonInput.getItems()) {
+						if (nestedInput.getType().equals(DataType.STRING)) {
+							// Value is added with quotes
+							jsonObject.set(nestedInput.getName(), new TextNode(getInputString(nestedInput)));
+						} else {
+							// Value is added without quotes
+							jsonObject.putRawValue(nestedInput.getName(), new RawValue(getInputString(nestedInput)));
+						}
+					}
+				}
+				try {
+					return mapper.writeValueAsString(jsonObject);
+				} catch (JsonProcessingException e) {
+					e.printStackTrace();
+				}
+				return null;
+			case ARRAY:
+				ArrayNode arrayNode = factory.arrayNode();
+				if (null != jsonInput.getItems()) {
+					for (JsonInput nestedInput : jsonInput.getItems()) {
+						if (nestedInput.getType().equals(DataType.STRING)) {
+							// Value is added with quotes
+							arrayNode.add(getInputString(nestedInput));
+						} else {
+							// Value is added without quotes
+							arrayNode.addRawValue(new RawValue(getInputString(nestedInput)));
+						}
+					}
+				}
+				try {
+					return mapper.writeValueAsString(arrayNode);
+				} catch (JsonProcessingException e) {
+					e.printStackTrace();
+				}
+				return null;
+			default:
+				return null;
+
+			}
+
 		} else {
-			throw new RuntimeException(
-					"Input " + input.getClass().getSimpleName() + " is not implemented for JMeter yet!");
+
+			throw new RuntimeException("Input " + input.getClass().getSimpleName() + " is not implemented for JMeter yet!");
 		}
 	}
 
