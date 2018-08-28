@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.config.LoadTestType;
+import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.entities.config.Order;
 import org.continuity.api.entities.config.OrderGoal;
 import org.continuity.api.entities.config.OrderMode;
@@ -105,14 +106,14 @@ public class OrchestrationController {
 
 			for (Map.Entry<Set<String>, Set<LinkExchangeModel>> entry : sources.entrySet()) {
 				for (LinkExchangeModel source : entry.getValue()) {
-					createAndSubmitRecipe(orderId, order.getTag(), order.getGoal(), order.getMode(), order.getOptions(), entry.getKey(), source);
+					createAndSubmitRecipe(orderId, order.getTag(), order.getGoal(), order.getMode(), order.getOptions(), entry.getKey(), source, order.getModularizationOptions());
 				}
 			}
 		} else {
 			declareResponseQueue(orderId);
 			orderCounterStorage.putToReserved(orderId, new OrderReportCounter(orderId, 1));
 
-			createAndSubmitRecipe(orderId, order.getTag(), order.getGoal(), order.getMode(), order.getOptions(), order.getTestingContext(), order.getSource());
+			createAndSubmitRecipe(orderId, order.getTag(), order.getGoal(), order.getMode(), order.getOptions(), order.getTestingContext(), order.getSource(), order.getModularizationOptions());
 		}
 
 		OrderResponse response = new OrderResponse();
@@ -124,7 +125,7 @@ public class OrchestrationController {
 		return ResponseEntity.accepted().body(response);
 	}
 
-	private void createAndSubmitRecipe(String orderId, String tag, OrderGoal goal, OrderMode mode, OrderOptions options, Set<String> testingContext, LinkExchangeModel source) {
+	private void createAndSubmitRecipe(String orderId, String tag, OrderGoal goal, OrderMode mode, OrderOptions options, Set<String> testingContext, LinkExchangeModel source, ModularizationOptions modularizationOptions) {
 		boolean useTestingContext = ((testingContext != null) && !testingContext.isEmpty());
 
 		if (useTestingContext) {
@@ -155,7 +156,7 @@ public class OrchestrationController {
 		String recipeId = recipeStorage.reserve(tag);
 		LOGGER.info("Processing new recipe {} for order {} with goal {}...", recipeId, orderId, goal);
 
-		Recipe recipe = new Recipe(orderId, recipeId, tag, recipeSteps, source, useTestingContext, testingContext, options);
+		Recipe recipe = new Recipe(orderId, recipeId, tag, recipeSteps, source, useTestingContext, testingContext, options, modularizationOptions);
 
 		if (recipe.hasNext()) {
 			recipeStorage.putToReserved(recipeId, recipe);

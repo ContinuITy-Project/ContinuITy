@@ -5,9 +5,9 @@ import java.util.Collection;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
+import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.DirectListInput;
 import org.continuity.idpa.annotation.ExtractedInput;
-import org.continuity.idpa.annotation.ApplicationAnnotation;
 
 /**
  * @author Henning Schulz
@@ -33,7 +33,6 @@ public class UserDefinedVarsAnnotator {
 
 		// Only one iteration!
 		for (Arguments args : search.getSearchResults()) {
-			args.getArguments().clear();
 			addDirectDataInputs(args);
 			addExtractedInputsInitialValues(args);
 		}

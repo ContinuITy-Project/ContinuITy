@@ -3,9 +3,11 @@ package org.continuity.session.logs.managers;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.continuity.rest.InspectITRestClient;
 import org.continuity.session.logs.extractor.InspectITSessionLogsExtractor;
+import org.continuity.session.logs.extractor.ModularizedOPENxtraceSessionLogsExtractor;
 import org.continuity.session.logs.extractor.OPENxtraceSessionLogsExtractor;
 import org.json.JSONArray;
 import org.spec.research.open.xtrace.api.core.Trace;
@@ -27,8 +29,6 @@ import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 public class SessionLogsPipelineManager {
 
 	private String cmrConfig;
-	private static final boolean USEOPENxtrace = Boolean.valueOf(System.getProperty("USE_OPEN_XTRACE", "true"));
-
 	private String link;
 	private String tag;
 
@@ -50,11 +50,26 @@ public class SessionLogsPipelineManager {
 	 *
 	 * @return
 	 */
-	public String runPipeline() {
-		if (USEOPENxtrace) {
+	public String runPipeline(boolean useOpenXtrace) {
+		if (useOpenXtrace) {
 			return new OPENxtraceSessionLogsExtractor(tag, eurekaRestTemplate).getSessionLogs(getOPENxtraces());
 		} else {
 			return new InspectITSessionLogsExtractor(tag, eurekaRestTemplate, cmrConfig).getSessionLogs(getInvocationSequences());
+		}
+	}
+
+	/**
+	 * Runs the pipeline using the session logs modularization. Based on the environment variable,
+	 * different input data is used.
+	 * 
+	 *
+	 * @return
+	 */
+	public String runPipeline(boolean useOpenXtrace, Map<String, String> hostnames) {
+		if (useOpenXtrace) {
+			return new ModularizedOPENxtraceSessionLogsExtractor(tag, eurekaRestTemplate, hostnames).getSessionLogs(getOPENxtraces());
+		} else {
+			throw new UnsupportedOperationException("Modularization of the session logs is currently only supported with open.XTRACE as source");
 		}
 	}
 
@@ -92,6 +107,5 @@ public class SessionLogsPipelineManager {
 		}
 		return ((Iterable<Trace>) traces);
 	};
-
 
 }

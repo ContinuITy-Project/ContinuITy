@@ -27,6 +27,7 @@ import org.continuity.idpa.application.Application;
 public class HttpArgumentsAnnotator {
 
 	private static final String KEY_URL_PART = "URL_PART_";
+	private static final String BODY = "_BODY";
 
 	private final Application system;
 
@@ -34,7 +35,8 @@ public class HttpArgumentsAnnotator {
 
 	private final EndpointAnnotation interfAnnotation;
 
-	public HttpArgumentsAnnotator(Application system, ApplicationAnnotation systemAnnotation, EndpointAnnotation interfAnnotation) {
+	public HttpArgumentsAnnotator(Application system, ApplicationAnnotation systemAnnotation,
+			EndpointAnnotation interfAnnotation) {
 		this.system = system;
 		this.systemAnnotation = systemAnnotation;
 		this.interfAnnotation = interfAnnotation;
@@ -51,6 +53,10 @@ public class HttpArgumentsAnnotator {
 
 				if (arg.getName().startsWith(KEY_URL_PART)) {
 					urlPartArguments.add(arg);
+				} else if (arg.getName().startsWith(BODY)) {
+					sampler.setPostBodyRaw(true);
+					arg.setName("body");
+					annotateArg(arg);
 				} else {
 					annotateArg(arg);
 				}
@@ -102,7 +108,8 @@ public class HttpArgumentsAnnotator {
 		return null;
 	}
 
-	private <T extends PropertyOverrideKey.Any> void overrideProperties(HTTPArgument arg, List<PropertyOverride<T>> overrides) {
+	private <T extends PropertyOverrideKey.Any> void overrideProperties(HTTPArgument arg,
+			List<PropertyOverride<T>> overrides) {
 		for (PropertyOverride<?> override : overrides) {
 			if (override.getKey().isInScope(PropertyOverrideKey.HttpParameter.class)) {
 				switch ((PropertyOverrideKey.HttpParameter) override.getKey()) {
@@ -132,7 +139,8 @@ public class HttpArgumentsAnnotator {
 				return "";
 			}
 		} else {
-			throw new RuntimeException("Input " + input.getClass().getSimpleName() + " is not implemented for JMeter yet!");
+			throw new RuntimeException(
+					"Input " + input.getClass().getSimpleName() + " is not implemented for JMeter yet!");
 		}
 	}
 

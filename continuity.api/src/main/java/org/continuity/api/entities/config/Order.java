@@ -29,6 +29,10 @@ public class Order {
 	@JsonInclude(Include.NON_NULL)
 	private OrderOptions options;
 
+	@JsonProperty("modularization")
+	@JsonInclude(Include.NON_NULL)
+	private ModularizationOptions modularizationOptions;
+
 	public String getTag() {
 		return tag;
 	}
@@ -75,6 +79,14 @@ public class Order {
 
 	public void setOptions(OrderOptions options) {
 		this.options = options;
+	}
+
+	public ModularizationOptions getModularizationOptions() {
+		return modularizationOptions;
+	}
+
+	public void setModularizationOptions(ModularizationOptions modularizationOptions) {
+		this.modularizationOptions = modularizationOptions;
 	}
 
 }

@@ -45,7 +45,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	public String getSessionLogs(Iterable<Trace> data) {
 		List<HTTPRequestProcessingImpl> httpCallables = extractHttpRequestCallables(data);
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(httpCallables);
-		Application applicationModel = retrieveApplicationModel();
+		Application applicationModel = retrieveApplicationModel(tag);
 		HashMap<Long, Pair<String, String>> businessTransactions;
 
 		if (applicationModel == null) {
@@ -66,7 +66,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 * @return Map of session logs and the corresponding requests, which are represented as
 	 *         {@link HTTPRequestProcessingImpl}
 	 */
-	private HashMap<String, List<HTTPRequestData>> sortBySessionAndTimestamp(List<HTTPRequestProcessingImpl> sortedHTTPInvocCallables) {
+	protected HashMap<String, List<HTTPRequestData>> sortBySessionAndTimestamp(List<HTTPRequestProcessingImpl> sortedHTTPInvocCallables) {
 		Collections.sort(sortedHTTPInvocCallables, new Comparator<HTTPRequestProcessingImpl>() {
 
 			@Override
@@ -105,7 +105,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 * @param traces
 	 * @param sortedHTTPInvocCallables
 	 */
-	private List<HTTPRequestProcessingImpl> extractHttpRequestCallables(Iterable<Trace> traces) {
+	protected List<HTTPRequestProcessingImpl> extractHttpRequestCallables(Iterable<Trace> traces) {
 		List<HTTPRequestProcessingImpl> httpCallables = new ArrayList<HTTPRequestProcessingImpl>();
 		for (Trace trace : traces) {
 			if (null != trace.getRoot() && null != trace.getRoot().getRoot()) {
@@ -123,7 +123,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 *            The root callable
 	 * @return List of {@link HTTPRequestProcessingImpl}
 	 */
-	private List<HTTPRequestProcessingImpl> diveForHTTPRequestProcessingCallable(Callable callable) {
+	protected List<HTTPRequestProcessingImpl> diveForHTTPRequestProcessingCallable(Callable callable) {
 		List<HTTPRequestProcessingImpl> httpRequestProcessingCallables = new ArrayList<HTTPRequestProcessingImpl>();
 		if (null != callable) {
 			LinkedBlockingQueue<Callable> callables = new LinkedBlockingQueue<Callable>();
@@ -153,7 +153,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 * 
 	 * @return all existing business transactions
 	 */
-	private HashMap<Long, Pair<String, String>> getBusinessTransactionsFromOPENxtraces(Iterable<HTTPRequestProcessingImpl> httpCallables) {
+	protected HashMap<Long, Pair<String, String>> getBusinessTransactionsFromOPENxtraces(Iterable<HTTPRequestProcessingImpl> httpCallables) {
 		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<Long, Pair<String, String>>();
 		
 		for (HTTPRequestProcessingImpl httpCallable : httpCallables) {
@@ -179,7 +179,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 *            the {@link HTTPRequestProcessingImpl} callables
 	 * @return
 	 */
-	private HashMap<Long, Pair<String, String>> getBusinessTransactionsFromApplicationModel(Application application, Iterable<HTTPRequestProcessingImpl> httpCallables) {
+	protected HashMap<Long, Pair<String, String>> getBusinessTransactionsFromApplicationModel(Application application, Iterable<HTTPRequestProcessingImpl> httpCallables) {
 		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<Long, Pair<String, String>>();
 		RequestUriMapper uriMapper = new RequestUriMapper(application);
 

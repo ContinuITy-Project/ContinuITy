@@ -287,7 +287,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 	 * 
 	 * @return
 	 */
-	protected Application retrieveApplicationModel() {
+	protected Application retrieveApplicationModel(String tag) {
 		if (tag == null) {
 			LOGGER.warn("Cannot retrieve the system model for naming the Session Logs. The tag is nulL!");
 			return null;

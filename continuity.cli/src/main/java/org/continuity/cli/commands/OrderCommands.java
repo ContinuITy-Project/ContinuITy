@@ -8,13 +8,17 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 
 import org.continuity.api.entities.config.LoadTestType;
+import org.continuity.api.entities.config.ModularizationApproach;
+import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.entities.config.Order;
 import org.continuity.api.entities.config.OrderGoal;
 import org.continuity.api.entities.config.OrderMode;
 import org.continuity.api.entities.config.OrderOptions;
 import org.continuity.api.entities.config.WorkloadModelType;
+import org.continuity.api.entities.links.ExternalDataLinkType;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
@@ -174,8 +178,15 @@ public class OrderCommands {
 		options.setWorkloadModelType(WorkloadModelType.WESSBAS);
 		order.setOptions(options);
 
+		ModularizationOptions modularizationOptions = new ModularizationOptions();
+		HashMap<String, String> services = new HashMap<String, String>();
+		services.put("TAG1", "HOSTNAME1");
+		services.put("TAG2", "HOSTNAME2");
+		modularizationOptions.setServices(services);
+		modularizationOptions.setModularizationApproach(ModularizationApproach.SESSION_LOGS);
+		order.setModularizationOptions(modularizationOptions);
 		LinkExchangeModel links = new LinkExchangeModel();
-		links.getExternalDataLinks().setLink("LINK_TO_DATA").setTimestamp(new Date(0));
+		links.getExternalDataLinks().setLink("LINK_TO_DATA").setTimestamp(new Date(0)).setLinkType(ExternalDataLinkType.OPEN_XTRACE);
 		links.getSessionLogsLinks().setLink("SESSION_LOGS_LINK");
 		links.getWorkloadModelLinks().setType(WorkloadModelType.WESSBAS).setLink("WORKLOAD_MODEL_LINK");
 		links.getLoadTestLinks().setType(LoadTestType.JMETER).setLink("LOADTEST_LINK");

@@ -18,6 +18,9 @@ public class ExternalDataLinks extends AbstractLinks<ExternalDataLinks> {
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH-mm-ss-SSSX")
 	@JsonInclude(Include.NON_NULL)
 	private Date timestamp;
+	
+	@JsonProperty("type")
+	private ExternalDataLinkType linkType;
 
 	public ExternalDataLinks(LinkExchangeModel parent) {
 		super(parent);
@@ -44,6 +47,15 @@ public class ExternalDataLinks extends AbstractLinks<ExternalDataLinks> {
 		this.timestamp = externalDataTimestamp;
 		return this;
 	}
+	
+	public ExternalDataLinkType getLinkType() {
+		return linkType;
+	}
+
+	public void setLinkType(ExternalDataLinkType linkType) {
+		this.linkType = linkType;
+	}
+
 
 	@Override
 	public boolean isEmpty() {

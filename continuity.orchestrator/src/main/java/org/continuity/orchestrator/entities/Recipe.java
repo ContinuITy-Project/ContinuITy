@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.entities.config.OrderOptions;
 import org.continuity.api.entities.config.PropertySpecification;
 import org.continuity.api.entities.config.TaskDescription;
@@ -30,7 +31,10 @@ public class Recipe {
 
 	private final Set<String> testingContext;
 
-	public Recipe(String orderId, String recipeId, String tag, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse, Set<String> testingContext, OrderOptions options) {
+	private ModularizationOptions modularizationOptions;
+
+	public Recipe(String orderId, String recipeId, String tag, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse, Set<String> testingContext, OrderOptions options,
+			ModularizationOptions modularizationOptions) {
 		this.orderId = orderId;
 		this.recipeId = recipeId;
 		this.iterator = steps.listIterator(steps.size());
@@ -38,7 +42,7 @@ public class Recipe {
 		this.source = source;
 		this.longTermUse = longTermUse;
 		this.testingContext = testingContext;
-
+		this.modularizationOptions = modularizationOptions;
 		initIterator(source);
 
 		if (options != null) {
@@ -80,6 +84,7 @@ public class Recipe {
 		task.setSource(source);
 		task.setProperties(properties);
 		task.setLongTermUse(longTermUse);
+		task.setModularizationOptions(modularizationOptions);
 
 		nextStep.setTask(task);
 

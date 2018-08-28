@@ -109,18 +109,18 @@ public class InspectITHttpRequestData implements HTTPRequestData {
 	private Map<String, String[]> convertToParameterMap(String queryString) {
 		HashMap<String, List<String>> parameters = new HashMap<String, List<String>>();
 		StringTokenizer tokenizer = new StringTokenizer(queryString, "&");
-		while(tokenizer.hasMoreTokens()) {
+		while (tokenizer.hasMoreTokens()) {
 			String[] keyValuePair = tokenizer.nextToken().split("=");
 			String key = keyValuePair[0];
 			String value = keyValuePair[1];
-			if(parameters.containsKey(key)) {
+			if (parameters.containsKey(key)) {
 				parameters.get(key).add(value);
 			} else {
 				parameters.put(key, new ArrayList<String>(Arrays.asList(value)));
 			}
 		}
-		return parameters.entrySet().stream()
-				.map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), e.getValue().toArray(new String[e.getValue().size()]))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		return parameters.entrySet().stream().map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), e.getValue().toArray(new String[e.getValue().size()])))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 
 }

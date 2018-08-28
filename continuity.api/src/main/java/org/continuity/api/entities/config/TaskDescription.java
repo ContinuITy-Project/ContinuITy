@@ -23,6 +23,9 @@ public class TaskDescription {
 	@JsonProperty("long-term-use")
 	private boolean longTermUse;
 
+	@JsonProperty("modularization-options")
+	private ModularizationOptions modularizationOptions;
+
 	public String getTaskId() {
 		return taskId;
 	}
@@ -61,6 +64,14 @@ public class TaskDescription {
 
 	public void setLongTermUse(boolean longTermUse) {
 		this.longTermUse = longTermUse;
+	}
+
+	public ModularizationOptions getModularizationOptions() {
+		return modularizationOptions;
+	}
+
+	public void setModularizationOptions(ModularizationOptions modularizationOptions) {
+		this.modularizationOptions = modularizationOptions;
 	}
 
 }

@@ -50,7 +50,6 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 		this.cmrConfig = cmrConfig;
 	}
 
-
 	/**
 	 * Converts the specified invocation sequences to session logs, naming it as specified in the
 	 * business transactions.
@@ -66,7 +65,7 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(invocationSequences);
 
-		Application systemModel = retrieveApplicationModel();
+		Application systemModel = retrieveApplicationModel(tag);
 		HashMap<Long, Pair<String, String>> businessTransactions;
 
 		if (systemModel == null) {
