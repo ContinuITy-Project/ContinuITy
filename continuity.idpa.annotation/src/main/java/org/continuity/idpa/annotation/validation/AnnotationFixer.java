@@ -10,7 +10,7 @@ import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.EndpointAnnotation;
 import org.continuity.idpa.annotation.ExtractedInput;
-import org.continuity.idpa.annotation.RegExExtraction;
+import org.continuity.idpa.annotation.ValueExtraction;
 import org.continuity.idpa.visitor.IdpaByClassSearcher;
 
 /**
@@ -73,7 +73,7 @@ public class AnnotationFixer {
 	private void addExtracedInputIfNoReferenceRemoved(ExtractedInput input, ApplicationAnnotation fixedAnnotation, Set<String> removedInterfaces) {
 		boolean broken = false;
 
-		for (RegExExtraction extraction : input.getExtractions()) {
+		for (ValueExtraction extraction : input.getExtractions()) {
 			if (removedInterfaces.contains(extraction.getFrom().getId())) {
 				broken = true;
 				break;

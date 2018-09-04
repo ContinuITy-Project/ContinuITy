@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Properties;
 
 import org.continuity.api.entities.artifact.SessionLogs;
@@ -69,7 +70,7 @@ public class WessbasPipelineManager {
 	 */
 	public WessbasBundle runPipeline(String sessionLogsLink) {
 		if ("dummy".equals(sessionLogsLink)) {
-			WessbasDslInstance.DVDSTORE_PARSED.get();
+			return new WessbasBundle(new Date(), WessbasDslInstance.DVDSTORE_PARSED.get());
 		}
 
 		SessionLogs sessionLog;
