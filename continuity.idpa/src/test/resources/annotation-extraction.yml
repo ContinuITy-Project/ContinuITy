@@ -1,0 +1,16 @@
+---
+overrides: []
+inputs:
+- !<extracted>
+  &Input_extracted extractions:
+  - from: foo
+    json-path: $.id
+  - from: bar
+    pattern: id=(.*)
+endpoint-annotations:
+- endpoint: foo
+  overrides: []
+  parameter-annotations:
+  - parameter: param
+    input: *Input_extracted
+    overrides: []
