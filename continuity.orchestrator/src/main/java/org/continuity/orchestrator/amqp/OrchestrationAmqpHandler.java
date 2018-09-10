@@ -3,6 +3,7 @@ package org.continuity.orchestrator.amqp;
 import java.io.IOException;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.commons.storage.MemoryStorage;
@@ -13,8 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -59,6 +62,34 @@ public class OrchestrationAmqpHandler {
 			storeToTestingContext(orderReport, recipe.getTag());
 			finishRecipe(orderReport);
 		}
+	}
+
+	@RabbitListener(queues = RabbitMqConfig.EVENT_FAILED_QUEUE_NAME)
+	public void onTaskFailed(TaskDescription description, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey) {
+		if (RabbitMqConfig.SERVICE_NAME.equals(routingKey)) {
+			return;
+		}
+
+		LOGGER.warn("Received failed task {}.", description.getTaskId());
+
+		String recipeId = description.getTaskId().split("\\.")[0];
+		Recipe recipe = storage.get(recipeId);
+
+		if (recipe == null) {
+			LOGGER.error("There is no recipe with ID {}!", description.getTaskId());
+			return;
+		}
+
+		String error;
+
+		if (routingKey == null) {
+			error = "Unknown service failed.";
+		} else {
+			error = "Service " + routingKey + " failed.";
+		}
+
+		finishRecipe(OrderReport.asError(recipeId, recipe.getSource(), error));
+		LOGGER.info("Finished failed recipe {}.", recipeId);
 	}
 
 	private void finishRecipe(OrderReport report) {

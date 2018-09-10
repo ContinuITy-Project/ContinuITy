@@ -32,6 +32,8 @@ public class RabbitMqConfig {
 
 	public static final String IDPA_ANNOTATION_MESSAGE_AVAILABLE_ROUTING_KEY = AmqpApi.IdpaAnnotation.EVENT_MESSAGE.formatRoutingKey().of("report");
 
+	public static final String EVENT_FAILED_QUEUE_NAME = "continuity.orchestrator.event.global.failed";
+
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
 	@Bean
@@ -91,6 +93,17 @@ public class RabbitMqConfig {
 	@Bean
 	TopicExchange eventRecipeFinishedExchange() {
 		return AmqpApi.Orchestrator.EVENT_FINISHED.create();
+	}
+
+	@Bean
+	Queue eventFailedQueue() {
+		return QueueBuilder.nonDurable(EVENT_FAILED_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
+	}
+
+	@Bean
+	Binding eventFailedBinding() {
+		return BindingBuilder.bind(eventFailedQueue()).to(deadLetterExchange()).with("#");
 	}
 
 	// Dead letter exchange and queue
