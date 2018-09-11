@@ -12,6 +12,7 @@ import java.util.Date;
 import org.continuity.api.entities.config.LoadTestType;
 import org.continuity.api.entities.config.Order;
 import org.continuity.api.entities.config.OrderGoal;
+import org.continuity.api.entities.config.OrderMode;
 import org.continuity.api.entities.config.OrderOptions;
 import org.continuity.api.entities.config.WorkloadModelType;
 import org.continuity.api.entities.links.LinkExchangeModel;
@@ -159,6 +160,8 @@ public class OrderCommands {
 
 	private Order initializeOrder() {
 		Order order = new Order();
+
+		order.setMode(OrderMode.PAST_WORKLOAD);
 
 		order.setTag("TAG");
 		order.setTestingContext(Collections.singleton("CONTEXT"));

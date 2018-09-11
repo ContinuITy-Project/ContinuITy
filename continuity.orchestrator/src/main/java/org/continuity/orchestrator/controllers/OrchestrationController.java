@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -21,6 +20,7 @@ import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.config.LoadTestType;
 import org.continuity.api.entities.config.Order;
 import org.continuity.api.entities.config.OrderGoal;
+import org.continuity.api.entities.config.OrderMode;
 import org.continuity.api.entities.config.OrderOptions;
 import org.continuity.api.entities.config.WorkloadModelType;
 import org.continuity.api.entities.links.LinkExchangeModel;
@@ -36,6 +36,7 @@ import org.continuity.orchestrator.entities.DummyStep;
 import org.continuity.orchestrator.entities.OrderReportCounter;
 import org.continuity.orchestrator.entities.Recipe;
 import org.continuity.orchestrator.entities.RecipeStep;
+import org.continuity.orchestrator.orders.OrderCycleManager;
 import org.continuity.orchestrator.storage.TestingContextStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.common.collect.Lists;
 import com.rabbitmq.client.Channel;
 
 @RestController
@@ -63,7 +63,7 @@ public class OrchestrationController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(OrchestrationController.class);
 
-	private MemoryStorage<OrderReportCounter> orderCounterStorage = new MemoryStorage<>(OrderReportCounter.class);
+	private final MemoryStorage<OrderReportCounter> orderCounterStorage = new MemoryStorage<>(OrderReportCounter.class);
 
 	@Autowired
 	private MemoryStorage<Recipe> recipeStorage;
@@ -71,6 +71,8 @@ public class OrchestrationController {
 	@Autowired
 	@Qualifier("testingContextStorage")
 	private TestingContextStorage testingContextStorage;
+
+	private final OrderCycleManager orderCycleManager = new OrderCycleManager();
 
 	@Autowired
 	private AmqpTemplate amqpTemplate;
@@ -103,14 +105,14 @@ public class OrchestrationController {
 
 			for (Map.Entry<Set<String>, Set<LinkExchangeModel>> entry : sources.entrySet()) {
 				for (LinkExchangeModel source : entry.getValue()) {
-					createAndSubmitRecipe(orderId, order.getTag(), order.getGoal(), order.getOptions(), entry.getKey(), source);
+					createAndSubmitRecipe(orderId, order.getTag(), order.getGoal(), order.getMode(), order.getOptions(), entry.getKey(), source);
 				}
 			}
 		} else {
 			declareResponseQueue(orderId);
 			orderCounterStorage.putToReserved(orderId, new OrderReportCounter(orderId, 1));
 
-			createAndSubmitRecipe(orderId, order.getTag(), order.getGoal(), order.getOptions(), order.getTestingContext(), order.getSource());
+			createAndSubmitRecipe(orderId, order.getTag(), order.getGoal(), order.getMode(), order.getOptions(), order.getTestingContext(), order.getSource());
 		}
 
 		OrderResponse response = new OrderResponse();
@@ -122,23 +124,33 @@ public class OrchestrationController {
 		return ResponseEntity.accepted().body(response);
 	}
 
-	private void createAndSubmitRecipe(String orderId, String tag, OrderGoal goal, OrderOptions options, Set<String> testingContext, LinkExchangeModel source) {
+	private void createAndSubmitRecipe(String orderId, String tag, OrderGoal goal, OrderMode mode, OrderOptions options, Set<String> testingContext, LinkExchangeModel source) {
 		boolean useTestingContext = ((testingContext != null) && !testingContext.isEmpty());
 
 		if (useTestingContext) {
 			LOGGER.info("Order {}: Using testing-context {}.", orderId, testingContext);
 		}
 
-		List<RecipeStep> recipeSteps = new ArrayList<>();
+		if (mode == null) {
+			List<OrderMode> modes = orderCycleManager.getModesContainingGoal(goal);
 
-		Optional<OrderGoal> goalOptional = Optional.ofNullable(goal);
+			if (modes.size() == 1) {
+				mode = modes.get(0);
+			} else {
+				LOGGER.error("Order {} is ambiguous! The goal {} is contained in the modes {}.", orderId, goal, modes);
 
-		while (goalOptional.isPresent()) {
-			recipeSteps.add(createRecipeStep(tag, goalOptional.get(), options));
-			goalOptional = goalOptional.get().getRequired();
+				amqpTemplate.convertAndSend(AmqpApi.Orchestrator.EVENT_FINISHED.name(), AmqpApi.Orchestrator.EVENT_FINISHED.formatRoutingKey().of(orderId),
+						OrderReport.asError(orderId, source, "The order goal is ambiguous: there are " + modes.size() + " possible modes " + modes));
+
+				return;
+			}
 		}
 
-		recipeSteps = Lists.reverse(recipeSteps);
+		List<RecipeStep> recipeSteps = new ArrayList<>();
+
+		for (OrderGoal subGoal : orderCycleManager.getCycle(mode, goal)) {
+			recipeSteps.add(createRecipeStep(tag, subGoal, options));
+		}
 
 		String recipeId = recipeStorage.reserve(tag);
 		LOGGER.info("Processing new recipe {} for order {} with goal {}...", recipeId, orderId, goal);

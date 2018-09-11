@@ -9,12 +9,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "goal", "tag", "testing-context", "options", "source" })
+@JsonPropertyOrder({ "goal", "mode", "tag", "testing-context", "options", "source" })
 public class Order {
 
 	private String tag;
 
 	private OrderGoal goal;
+
+	@JsonInclude(Include.NON_NULL)
+	private OrderMode mode;
 
 	@JsonProperty("testing-context")
 	@JsonInclude(Include.NON_EMPTY)
@@ -40,6 +43,14 @@ public class Order {
 
 	public void setGoal(OrderGoal goal) {
 		this.goal = goal;
+	}
+
+	public OrderMode getMode() {
+		return mode;
+	}
+
+	public void setMode(OrderMode mode) {
+		this.mode = mode;
 	}
 
 	public Set<String> getTestingContext() {
