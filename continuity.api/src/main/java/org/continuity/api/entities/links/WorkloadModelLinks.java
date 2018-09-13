@@ -21,6 +21,10 @@ public class WorkloadModelLinks extends AbstractLinks<WorkloadModelLinks> {
 	@JsonProperty(value = "jmeter-link", required = false)
 	@JsonInclude(Include.NON_NULL)
 	private String jmeterLink;
+	
+	@JsonProperty(value = "behavior-link", required = false)
+	@JsonInclude(Include.NON_NULL)
+	private String behaviorLink;
 
 	@JsonProperty(value = "application-link", required = false)
 	@JsonInclude(Include.NON_NULL)
@@ -62,6 +66,15 @@ public class WorkloadModelLinks extends AbstractLinks<WorkloadModelLinks> {
 
 	public WorkloadModelLinks setJmeterLink(String jmeterLink) {
 		this.jmeterLink = jmeterLink;
+		return this;
+	}
+	
+	public String getBehaviorLink() {
+		return behaviorLink;
+	}
+	
+	public WorkloadModelLinks setBehaviorLink(String behaviorLink) {
+		this.behaviorLink = behaviorLink;
 		return this;
 	}
 

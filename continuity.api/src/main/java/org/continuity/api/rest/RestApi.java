@@ -446,6 +446,75 @@ public class RestApi {
 		}
 
 	}
+	
+	/**
+	 * REST API of the BenchFlow service.
+	 *
+	 * @author Manuel Palenga
+	 *
+	 */
+	public static class BenchFlow {
+
+		public static final String SERVICE_NAME = "benchflow";
+
+		private BenchFlow() {
+		}
+
+		/**
+		 * DSL API of the BenchFlow service.
+		 *
+		 * @author Manuel Palenga
+		 *
+		 */
+		public static class DSL {
+
+			public static final String ROOT = "/loadtest";
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			private DSL() {
+			}
+
+			public static class Paths {
+
+				public static final String GET = "/{id}";
+
+				private Paths() {
+				}
+			}
+		}
+		
+		/**
+		 * Report API of the BenchFlow service.
+		 *
+		 * @author Manuel Palenga
+		 *
+		 */
+		public static class Report {
+
+			public static final String ROOT = "/report";
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint DELETE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.DELETE, RequestMethod.DELETE);
+
+			private Report() {
+			}
+
+			public static class Paths {
+
+				public static final String GET = "/{id}";
+
+				public static final String DELETE = "/{id}";
+
+				private Paths() {
+				}
+			}
+		}
+	}
 
 	/**
 	 * REST API of the Session Logs service.
@@ -502,6 +571,32 @@ public class RestApi {
 			public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.GET);
 
 			private JMeter() {
+			}
+
+			public static class Paths {
+
+				public static final String CREATE = "/{id}";
+
+				private Paths() {
+				}
+			}
+
+		}
+		
+		/**
+		 * BehaviorModel API of the WESSBAS service.
+		 *
+		 * @author Manuel Palenga
+		 *
+		 */
+		public static class BehaviorModel {
+
+			public static final String ROOT = "/behavior";
+
+			/** {@value #ROOT}/{id}/create */
+			public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.GET);
+
+			private BehaviorModel() {
 			}
 
 			public static class Paths {
@@ -610,8 +705,10 @@ public class RestApi {
 			PERSIST_WORKLOAD_MODEL.put("wessbas", Wessbas.Model.PERSIST);
 
 			GET_LOAD_TEST.put("jmeter", JMeter.TestPlan.GET);
+			GET_LOAD_TEST.put("benchflow", BenchFlow.DSL.GET);
 
 			GET_LOAD_TEST_REPORT.put("jmeter", JMeter.Report.GET);
+			GET_LOAD_TEST_REPORT.put("benchflow", BenchFlow.Report.GET);
 
 			DELETE_LOAD_TEST_REPORT.put("jmeter", JMeter.Report.DELETE);
 		}

@@ -1,0 +1,50 @@
+--- 
+&application-test-2 timestamp: 2018-09-01T15-30-00-000Z
+endpoints: 
+- !<http> 
+  &loginUsingPOST domain: 172.12.145.67 
+  port: 8080 
+  path: /login_post.htm 
+  method: GET 
+  headers: 
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' 
+  - 'Content-Type: application/x-www-form-urlencoded' 
+  parameters: 
+  - &loginUsingPOST_csrfToken_REQ_PARAM name: csrfToken 
+    parameter-type: REQ_PARAM 
+  - &loginUsingPOST_password_REQ_PARAM name: password 
+    parameter-type: REQ_PARAM 
+  protocol: http 
+- !<http> 
+  &buyUsingGET domain: 172.123.45.67 
+  port: 8080 
+  path: /cart/mini 
+  method: GET 
+  headers: 
+  - 'Accept: application/json' 
+  - 'Content-Type: application/json' 
+  - 'X-Requested-With: XMLHttpRequest' 
+  protocol: http 
+- !<http> 
+  &searchUsingGET domain: 172.123.45.67 
+  port: 8080 
+  path: /search 
+  method: GET 
+  headers: 
+  - 'Accept: application/json' 
+  - 'Content-Type: application/json' 
+  parameters: 
+  - &searchUsingGET_color_REQ_PARAM name: color 
+    parameter-type: REQ_PARAM 
+  protocol: http
+- !<http> 
+  &shopUsingGET domain: 172.123.45.67 
+  port: 8080 
+  path: /shop-products/{category} 
+  method: GET 
+  headers: 
+  - 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' 
+  parameters: 
+  - &shopUsingGET_category_URL_PART name: category 
+    parameter-type: URL_PART 
+  protocol: http

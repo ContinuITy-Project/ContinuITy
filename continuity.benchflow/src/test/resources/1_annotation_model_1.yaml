@@ -1,0 +1,64 @@
+--- 
+overrides: [] 
+inputs: 
+- !<counter> 
+ &Input_loginUsingPOST_username_REQ_PARAM format: user-#@test'.'com 
+ scope: GLOBAL 
+ start: 1 
+ increment: 1 
+ maximum: 200 
+- !<direct> 
+ &Input_loginUsingPOST_password_REQ_PARAM data: 
+ - 1234567890 
+ - passw0rd 
+ - qwertz1234 
+- !<extracted> 
+ &Input_extracted_csrfToken extractions: 
+ - from: searchUsingGET 
+   pattern: <input name="csrfToken" type="hidden" value="(.*)"/></form> 
+- !<extracted> 
+ &Input_extracted_lastProductId extractions: 
+ - from: searchUsingGET 
+   pattern: <input type="hidden" name="productId" value="([0-9]+)"/> 
+   match-number: 0 
+ initial: 3 
+- !<direct> 
+ &Input_searchUsingGET_item_REQ_PARAM data: 
+ - bike 
+ - car 
+ - bus 
+ - train 
+ - aircraft
+- !<direct> 
+ &Input_shopUsingGET_category_URL_PART data: 
+ - Java 
+ - Scala 
+ - JavaScript 
+endpoint-annotations: 
+- endpoint: loginUsingPOST 
+  overrides: [] 
+  parameter-annotations: 
+  - parameter: loginUsingPOST_csrfToken_REQ_PARAM 
+    input: *Input_extracted_csrfToken 
+    overrides: [] 
+  - parameter: loginUsingPOST_password_REQ_PARAM 
+    input: *Input_loginUsingPOST_password_REQ_PARAM 
+    overrides: [] 
+  - parameter: loginUsingPOST_username_REQ_PARAM 
+    input: *Input_loginUsingPOST_username_REQ_PARAM 
+    overrides: [] 
+- endpoint: buyUsingGET 
+  overrides: [] 
+  parameter-annotations: [] 
+- endpoint: searchUsingGET 
+  overrides: [] 
+  parameter-annotations: 
+  - parameter: searchUsingGET_item_REQ_PARAM 
+    input: *Input_searchUsingGET_item_REQ_PARAM
+    overrides: [] 
+- endpoint: shopUsingGET 
+  overrides: [] 
+  parameter-annotations: 
+  - parameter: shopUsingGET_category_URL_PART 
+    input: *Input_shopUsingGET_category_URL_PART 
+    overrides: []

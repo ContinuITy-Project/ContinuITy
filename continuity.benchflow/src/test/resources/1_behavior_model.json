@@ -1,0 +1,208 @@
+{ 
+  "behaviors": [ 
+    { 
+      "name": "behavior_model0", 
+      "initialState": "loginUsingPOST", 
+      "probability": 0.48, 
+      "markov-states": [ 
+        { 
+          "id": "loginUsingPOST", 
+          "transitions": [ 
+            { 
+              "targetState": "buyUsingGET", 
+              "probability": 0.9, 
+              "think-time-mean": 4055, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        }, 
+        { 
+          "id": "buyUsingGET", 
+          "transitions": [ 
+            { 
+              "targetState": "searchUsingGET", 
+              "probability": 0.5, 
+              "think-time-mean": 0, 
+              "think-time-deviation": 0 
+            }, 
+            { 
+              "targetState": "shopUsingGET", 
+              "probability": 0.2, 
+              "think-time-mean": 0, 
+              "think-time-deviation": 0 
+            }, 
+            { 
+              "targetState": "loginUsingPOST", 
+              "probability": 0.3, 
+              "think-time-mean": 0, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        }, 
+        { 
+          "id": "searchUsingGET", 
+          "transitions": [ 
+            { 
+              "targetState": "searchUsingGET", 
+              "probability": 0.7, 
+              "think-time-mean": 1095, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        }, 
+        { 
+          "id": "shopUsingGET", 
+          "transitions": [ 
+            { 
+              "targetState": "shopUsingGET", 
+              "probability": 0.7, 
+              "think-time-mean": 543, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        } 
+      ] 
+    }, 
+    { 
+      "name": "behavior_model1", 
+      "initialState": "loginUsingPOST", 
+      "probability": 0.27, 
+      "markov-states": [ 
+        { 
+          "id": "buyUsingGET", 
+          "transitions": [ 
+            { 
+              "targetState": "searchUsingGET", 
+              "probability": 0.75, 
+              "think-time-mean": 2157, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        }, 
+        { 
+          "id": "loginUsingPOST", 
+          "transitions": [ 
+            { 
+              "targetState": "buyUsingGET", 
+              "probability": 0.3, 
+              "think-time-mean": 0, 
+              "think-time-deviation": 0 
+            }, 
+            { 
+              "targetState": "shopUsingGET", 
+              "probability": 0.7, 
+              "think-time-mean": 0, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        }, 
+        { 
+          "id": "searchUsingGET", 
+          "transitions": [ 
+            { 
+              "targetState": "buyUsingGET", 
+              "probability": 0.7, 
+              "think-time-mean": 2124, 
+              "think-time-deviation": 127 
+            }, 
+            { 
+              "targetState": "searchUsingGET", 
+              "probability": 0.2, 
+              "think-time-mean": 3210, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        }, 
+        { 
+          "id": "shopUsingGET" 
+        } 
+      ] 
+    }, 
+    { 
+      "name": "behavior_model2", 
+      "initialState": "INITIAL", 
+      "probability": 0.25, 
+      "markov-states": [ 
+        { 
+          "id": "INITIAL", 
+          "transitions": [ 
+            { 
+              "targetState": "searchUsingGET", 
+              "probability": 0.6, 
+              "think-time-mean": 2157, 
+              "think-time-deviation": 0 
+            }, 
+            { 
+              "targetState": "shopUsingGET", 
+              "probability": 0.2, 
+              "think-time-mean": 150, 
+              "think-time-deviation": 0 
+            }, 
+            { 
+              "targetState": "loginUsingPOST", 
+              "probability": 0.1, 
+              "think-time-mean": 250, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        }, 
+        { 
+          "id": "buyUsingGET", 
+          "transitions": [ 
+            { 
+              "targetState": "searchUsingGET", 
+              "probability": 0.6, 
+              "think-time-mean": 2157, 
+              "think-time-deviation": 0 
+            }, 
+            { 
+              "targetState": "shopUsingGET", 
+              "probability": 0.2, 
+              "think-time-mean": 150, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        }, 
+        { 
+          "id": "loginUsingPOST", 
+          "transitions": [ 
+            { 
+              "targetState": "shopUsingGET", 
+              "probability": 0.6, 
+              "think-time-mean": 0, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        }, 
+        { 
+          "id": "searchUsingGET", 
+          "transitions": [ 
+            { 
+              "targetState": "shopUsingGET", 
+              "probability": 0.7, 
+              "think-time-mean": 650, 
+              "think-time-deviation": 120 
+            }
+          ] 
+        }, 
+        { 
+          "id": "shopUsingGET", 
+          "transitions": [ 
+            { 
+              "targetState": "buyUsingGET", 
+              "probability": 0.4, 
+              "think-time-mean": 0, 
+              "think-time-deviation": 0 
+            }, 
+            { 
+              "targetState": "searchUsingGET", 
+              "probability": 0.2, 
+              "think-time-mean": 450, 
+              "think-time-deviation": 0 
+            } 
+          ] 
+        } 
+      ] 
+    } 
+  ] 
+}
