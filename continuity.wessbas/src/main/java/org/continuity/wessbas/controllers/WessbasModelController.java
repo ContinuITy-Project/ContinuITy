@@ -77,7 +77,7 @@ public class WessbasModelController {
 			return ResponseEntity.notFound().build();
 		}
 
-		String tag = id.substring(0, id.lastIndexOf("-"));
+		String tag = storage.getTagForId(id);
 
 		return ResponseEntity.ok(new WorkloadModelPack(applicationName, id, tag));
 	}

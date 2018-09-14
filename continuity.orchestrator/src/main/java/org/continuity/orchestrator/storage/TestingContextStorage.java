@@ -129,7 +129,7 @@ public class TestingContextStorage {
 	private boolean overlap(LinkExchangeModel first, LinkExchangeModel second) {
 		boolean overlap = false;
 
-		overlap |= (first.getExternalDataLinks().getLink() != null) && Objects.equals(first.getExternalDataLinks().getLink(), second.getExternalDataLinks().getLink());
+		overlap |= (first.getMeasurementDataLinks().getLink() != null) && Objects.equals(first.getMeasurementDataLinks().getLink(), second.getMeasurementDataLinks().getLink());
 		overlap |= (first.getSessionLogsLinks().getLink() != null) && Objects.equals(first.getSessionLogsLinks().getLink(), second.getSessionLogsLinks().getLink());
 		overlap |= (first.getWorkloadModelLinks().getLink() != null) && Objects.equals(first.getWorkloadModelLinks().getLink(), second.getWorkloadModelLinks().getLink());
 		overlap |= (first.getLoadTestLinks().getLink() != null) && Objects.equals(first.getLoadTestLinks().getLink(), second.getLoadTestLinks().getLink());

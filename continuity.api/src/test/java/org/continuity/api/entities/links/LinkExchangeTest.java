@@ -40,13 +40,13 @@ public class LinkExchangeTest {
 		String json1 = mapper.writeValueAsString(model);
 		LinkExchangeModel read = mapper.readValue(json1, LinkExchangeModel.class);
 
-		assertThat(read.getExternalDataLinks()).isNotNull();
+		assertThat(read.getMeasurementDataLinks()).isNotNull();
 		assertThat(read.getIdpaLinks()).isNotNull();
 		assertThat(read.getLoadTestLinks()).isNotNull();
 		assertThat(read.getSessionLogsLinks()).isNotNull();
 		assertThat(read.getWorkloadModelLinks()).isNotNull();
 
-		assertThat(read.getExternalDataLinks().parent()).isEqualTo(read).as("The parent has to be the actual parent!");
+		assertThat(read.getMeasurementDataLinks().parent()).isEqualTo(read).as("The parent has to be the actual parent!");
 		assertThat(read.getIdpaLinks().parent()).isEqualTo(read).as("The parent has to be the actual parent!");
 		assertThat(read.getLoadTestLinks().parent()).isEqualTo(read).as("The parent has to be the actual parent!");
 		assertThat(read.getSessionLogsLinks().parent()).isEqualTo(read).as("The parent has to be the actual parent!");

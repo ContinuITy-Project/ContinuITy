@@ -118,6 +118,31 @@ services:
       - --spring.rabbitmq.host=rabbitmq
       - --eureka.uri=http://eureka:8761/eureka
 
+  request-rates:
+    image: continuityproject/request-rates
+    hostname: request-rates
+    networks:
+      - continuity-network
+    ports:
+      - '8085:80'
+      - '5005:5000'
+
+    depends_on:
+      - rabbitmq
+      - eureka
+
+    entrypoint:
+      - java
+      - -Xdebug
+      - -Xnoagent
+      - -Djava.compiler=NONE
+      - -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5000
+      - -jar
+      - /app.jar
+      - --port=80
+      - --spring.rabbitmq.host=rabbitmq
+      - --eureka.uri=http://eureka:8761/eureka
+
   jmeter:
     image: continuityproject/jmeter
     hostname: jmeter

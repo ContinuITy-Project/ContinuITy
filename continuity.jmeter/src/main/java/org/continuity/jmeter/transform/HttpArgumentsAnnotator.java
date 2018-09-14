@@ -1,12 +1,12 @@
 package org.continuity.jmeter.transform;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
+import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jmeter.protocol.http.util.HTTPArgument;
-import org.apache.jmeter.testelement.property.JMeterProperty;
-import org.apache.jmeter.testelement.property.PropertyIterator;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.CounterInput;
 import org.continuity.idpa.annotation.DataType;
@@ -18,9 +18,12 @@ import org.continuity.idpa.annotation.JsonInput;
 import org.continuity.idpa.annotation.ParameterAnnotation;
 import org.continuity.idpa.annotation.PropertyOverride;
 import org.continuity.idpa.annotation.PropertyOverrideKey;
-import org.continuity.idpa.application.Application;
+import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.HttpParameter;
+import org.continuity.idpa.application.HttpParameterType;
 import org.continuity.idpa.application.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,84 +39,126 @@ import com.fasterxml.jackson.databind.util.RawValue;
  */
 public class HttpArgumentsAnnotator {
 
-	private static final String KEY_URL_PART = "URL_PART_";
-	private static final String BODY = "_BODY";
+	private static final Logger LOGGER = LoggerFactory.getLogger(HttpArgumentsAnnotator.class);
 
-	private final Application system;
+	private final HttpEndpoint endpoint;
 
 	private final ApplicationAnnotation systemAnnotation;
 
-	private final EndpointAnnotation interfAnnotation;
+	private final EndpointAnnotation endpointAnn;
 
-	public HttpArgumentsAnnotator(Application system, ApplicationAnnotation systemAnnotation, EndpointAnnotation interfAnnotation) {
-		this.system = system;
+	public HttpArgumentsAnnotator(HttpEndpoint endpoint, ApplicationAnnotation systemAnnotation, EndpointAnnotation interfAnnotation) {
+		this.endpoint = endpoint;
 		this.systemAnnotation = systemAnnotation;
-		this.interfAnnotation = interfAnnotation;
+		this.endpointAnn = interfAnnotation;
 	}
 
 	public void annotateArguments(HTTPSamplerProxy sampler) {
-		PropertyIterator it = sampler.getArguments().getArguments().iterator();
-		List<HTTPArgument> urlPartArguments = new ArrayList<>();
+		Arguments arguments = sampler.getArguments();
+		arguments.clear();
 
-		while (it.hasNext()) {
-			JMeterProperty prop = it.next();
-			if ((prop.getObjectValue() instanceof HTTPArgument)) {
-				HTTPArgument arg = (HTTPArgument) prop.getObjectValue();
+		List<HTTPArgument> bodyArgs = createArguments(HttpParameterType.BODY);
+		List<HTTPArgument> formArgs = createArguments(HttpParameterType.FORM);
+		List<HTTPArgument> queryArgs = createArguments(HttpParameterType.REQ_PARAM);
 
-				if (arg.getName().startsWith(KEY_URL_PART)) {
-					urlPartArguments.add(arg);
-				} else if (arg.getName().startsWith(BODY)) {
-					sampler.setPostBodyRaw(true);
-					arg.setName("body");
-					annotateArg(arg);
-				} else {
-					annotateArg(arg);
-				}
-			}
+		annotateArguments(bodyArgs);
+		annotateArguments(formArgs);
+		annotateArguments(queryArgs);
+
+		if (bodyArgs.size() > 1) {
+			LOGGER.error("There are {} bodies for endpoint {}! Only using the first!", bodyArgs.size(), endpoint.getId());
 		}
 
+		if (bodyArgs.size() >= 1) {
+			if (formArgs.size() > 0) {
+				LOGGER.error("Cannot define body and form parameters at the same time! Ignoring form parameters {}.", formArgs.stream().map(HTTPArgument::getName).collect(Collectors.toList()));
+			}
+
+			sampler.setPostBodyRaw(true);
+			arguments.addArgument(bodyArgs.get(0));
+
+			addArgumentsToPath(sampler, queryArgs);
+		} else if (formArgs.size() > 0) {
+			sampler.setPostBodyRaw(false);
+			sampler.setDoMultipartPost(true);
+
+			formArgs.forEach(arguments::addArgument);
+
+			addArgumentsToPath(sampler, queryArgs);
+		} else {
+			sampler.setPostBodyRaw(false);
+			sampler.setDoMultipartPost(false);
+
+			queryArgs.forEach(arguments::addArgument);
+		}
+
+		setUrlParameters(sampler);
+	}
+
+	private List<HTTPArgument> createArguments(HttpParameterType type) {
+		return endpoint.getParameters().stream().filter(param -> type == param.getParameterType()).map(this::createArgument).collect(Collectors.toList());
+	}
+
+	private HTTPArgument createArgument(HttpParameter param) {
+		HTTPArgument arg = new HTTPArgument();
+
+		arg.setName(param.getName());
+
+		return arg;
+	}
+
+	private void annotateArguments(List<HTTPArgument> arguments) {
+		for (ParameterAnnotation paramAnn : endpointAnn.getParameterAnnotations()) {
+			Parameter param = paramAnn.getAnnotatedParameter().resolve(endpoint);
+
+			if (param instanceof HttpParameter) {
+				String paramName = ((HttpParameter) param).getName();
+
+				arguments.stream().filter(arg -> Objects.equals(arg.getName(), paramName)).forEach(arg -> annotateArg(arg, paramAnn));
+			} else {
+				LOGGER.error("Cannot annotate parameter {} of type {}!", param.getId(), param.getClass());
+			}
+		}
+	}
+
+	private void annotateArg(HTTPArgument arg, ParameterAnnotation paramAnnotation) {
+		overrideProperties(arg, systemAnnotation.getOverrides());
+		overrideProperties(arg, endpointAnn.getOverrides());
+		overrideProperties(arg, paramAnnotation.getOverrides());
+
+		arg.setValue(getInputString(paramAnnotation.getInput()));
+	}
+
+	private void addArgumentsToPath(HTTPSamplerProxy sampler, List<HTTPArgument> arguments) {
+		if (arguments.size() > 0) {
+			StringBuilder builder = new StringBuilder();
+
+			arguments.forEach(arg -> {
+				builder.append("&");
+				builder.append(arg.getName());
+				builder.append("=");
+				builder.append(arg.getValue());
+			});
+
+			builder.replace(0, 1, "?");
+
+			sampler.setPath(sampler.getPath() + builder.toString());
+		}
+	}
+
+	private void setUrlParameters(HTTPSamplerProxy sampler) {
 		String path = sampler.getPath();
 
-		for (HTTPArgument arg : urlPartArguments) {
-			sampler.getArguments().removeArgument(arg);
+		for (ParameterAnnotation paramAnn : endpointAnn.getParameterAnnotations()) {
+			Parameter param = paramAnn.getAnnotatedParameter().resolve(endpoint);
 
-			String paramName = arg.getName().substring(KEY_URL_PART.length());
-			ParameterAnnotation paramAnnotation = findAnnotationForParameterName(paramName);
-			path = path.replace("{" + paramName + "}", getInputString(paramAnnotation.getInput()));
+			if ((param instanceof HttpParameter) && (((HttpParameter) param).getParameterType() == HttpParameterType.URL_PART)) {
+				String paramName = ((HttpParameter) param).getName();
+				path = path.replace("{" + paramName + "}", getInputString(paramAnn.getInput()));
+			}
 		}
 
 		sampler.setPath(path);
-	}
-
-	private void annotateArg(HTTPArgument arg) {
-		overrideProperties(arg, systemAnnotation.getOverrides());
-		overrideProperties(arg, interfAnnotation.getOverrides());
-		ParameterAnnotation paramAnnotation = findAnnotationForParameterName(arg.getName());
-
-		if (paramAnnotation != null) {
-			overrideProperties(arg, paramAnnotation.getOverrides());
-
-			// TODO: clear all arguments and create all from scratch based on
-			// ParameterAnnotations and overrides
-			arg.setValue(getInputString(paramAnnotation.getInput()));
-		}
-	}
-
-	private ParameterAnnotation findAnnotationForParameterName(String paramName) {
-		for (ParameterAnnotation paramAnnotation : interfAnnotation.getParameterAnnotations()) {
-			Parameter param = paramAnnotation.getAnnotatedParameter().resolve(system);
-			if (!(param instanceof HttpParameter)) {
-				continue;
-			}
-
-			HttpParameter httpParam = (HttpParameter) param;
-
-			if (paramName.equals(httpParam.getName())) {
-				return paramAnnotation;
-			}
-		}
-
-		return null;
 	}
 
 	private <T extends PropertyOverrideKey.Any> void overrideProperties(HTTPArgument arg, List<PropertyOverride<T>> overrides) {
@@ -134,7 +179,7 @@ public class HttpArgumentsAnnotator {
 
 	/**
 	 * Serializes input into a jmeter compatible string.
-	 * 
+	 *
 	 * @param input
 	 *            The input, which has to be serialized
 	 * @return input string

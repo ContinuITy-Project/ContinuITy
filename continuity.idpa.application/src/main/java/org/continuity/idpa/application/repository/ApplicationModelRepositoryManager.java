@@ -15,7 +15,7 @@ import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.Parameter;
 import org.continuity.idpa.application.changes.ApplicationChangeDetector;
 import org.continuity.idpa.legacy.IdpaFromOldAnnotationConverter;
-import org.continuity.idpa.visitor.FindById;
+import org.continuity.idpa.visitor.FindBy;
 import org.continuity.idpa.visitor.IdpaByClassSearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,8 +120,8 @@ public class ApplicationModelRepositoryManager {
 				newModel.getEndpoints().removeIf(interf -> interf.getId().equals(change.getChangedElement().getId()));
 				break;
 			case ENDPOINT_CHANGED:
-				Endpoint<?> oldInterf = FindById.find(change.getChangedElement().getId(), Endpoint.GENERIC_TYPE).in(oldModel).getFound();
-				Endpoint<?> newInterf = FindById.find(change.getChangedElement().getId(), Endpoint.GENERIC_TYPE).in(newModel).getFound();
+				Endpoint<?> oldInterf = FindBy.findById(change.getChangedElement().getId(), Endpoint.GENERIC_TYPE).in(oldModel).getFound();
+				Endpoint<?> newInterf = FindBy.findById(change.getChangedElement().getId(), Endpoint.GENERIC_TYPE).in(newModel).getFound();
 
 				if ((oldInterf == null) || (newInterf == null)) {
 					LOGGER.error("There is a change {}, but I could not find the interface in both application versions! Ignoring the change.", change);
@@ -141,7 +141,7 @@ public class ApplicationModelRepositoryManager {
 				final DataHolder<Parameter> paramHolder = new DataHolder<>();
 
 				new IdpaByClassSearcher<>(Endpoint.GENERIC_TYPE, interf -> {
-					final Parameter param = FindById.find(change.getChangedElement().getId(), Parameter.class).in(interf).getFound();
+					final Parameter param = FindBy.findById(change.getChangedElement().getId(), Parameter.class).in(interf).getFound();
 
 					if (param != null) {
 						idHolder.set(interf.getId());
@@ -149,7 +149,7 @@ public class ApplicationModelRepositoryManager {
 					}
 				}).visit(oldModel);
 
-				Endpoint<?> newInterface = FindById.find(idHolder.get(), Endpoint.GENERIC_TYPE).in(newModel).getFound();
+				Endpoint<?> newInterface = FindBy.findById(idHolder.get(), Endpoint.GENERIC_TYPE).in(newModel).getFound();
 
 				if (newInterface != null) {
 					addParameter(paramHolder.get(), newInterface);

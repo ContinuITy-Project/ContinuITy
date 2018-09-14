@@ -1,7 +1,9 @@
 package org.continuity.commons.idpa;
 
-import org.continuity.idpa.application.HttpEndpoint;
+import java.util.Objects;
+
 import org.continuity.idpa.application.Application;
+import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.visitor.IdpaByClassSearcher;
 
 /**
@@ -113,7 +115,7 @@ public class RequestUriMapper {
 		}
 
 		public void testExactly(HttpEndpoint interf) {
-			if ((found == null) && method.equals(interf.getMethod()) && uri.equals(normalizeUri(interf.getPath()))) {
+			if ((found == null) && Objects.equals(method, interf.getMethod()) && Objects.equals(uri, normalizeUri(interf.getPath()))) {
 				found = interf;
 			}
 		}

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ExternalDataLinkType {
-	OPEN_XTRACE, INSPECTIT;
+	OPEN_XTRACE, INSPECTIT, CSV;
 
 	private static final Map<String, ExternalDataLinkType> prettyStringToApproach = new HashMap<>();
 

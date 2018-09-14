@@ -138,7 +138,7 @@ public class RestApi {
 
 			/** {@value #ROOT}/{type}/report/{id} */
 			public static final RestEndpoint DELETE_REPORT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.DELETE_REPORT, RequestMethod.DELETE);
-			
+
 			/** {@value #ROOT}"/{type}/test/upload/{tag} */
 			public static final RestEndpoint POST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.POST, RequestMethod.POST);
 
@@ -152,7 +152,7 @@ public class RestApi {
 				public static final String REPORT = "/{type}/report/{id}";
 
 				public static final String DELETE_REPORT = "/{type}/test/{id}";
-				
+
 				public static final String POST = "/{type}/test/upload/{tag}";
 
 				private Paths() {
@@ -407,7 +407,7 @@ public class RestApi {
 
 			/** {@value #ROOT}/{id} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
-			
+
 			/** {@value #ROOT}/upload/{tag} */
 			public static final RestEndpoint POST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.POST, RequestMethod.POST);
 
@@ -417,7 +417,7 @@ public class RestApi {
 			public static class Paths {
 
 				public static final String GET = "/{id}";
-				
+
 				public static final String POST = "/upload/{tag}";
 
 				private Paths() {
@@ -456,7 +456,7 @@ public class RestApi {
 		}
 
 	}
-	
+
 	/**
 	 * REST API of the BenchFlow service.
 	 *
@@ -494,7 +494,7 @@ public class RestApi {
 				}
 			}
 		}
-		
+
 		/**
 		 * Report API of the BenchFlow service.
 		 *
@@ -524,6 +524,119 @@ public class RestApi {
 				}
 			}
 		}
+	}
+
+	/**
+	 * REST API of the request rates service.
+	 *
+	 * @author Henning Schulz
+	 *
+	 */
+	public static class RequestRates {
+
+		public static final String SERVICE_NAME = "request-rates";
+
+		private RequestRates() {
+		}
+
+		/**
+		 * JMeter API of the request rates service.
+		 *
+		 * @author Henning Schulz
+		 *
+		 */
+		public static class JMeter {
+
+			public static final String ROOT = "/jmeter";
+
+			/** {@value #ROOT}/{id}/create */
+			public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.GET);
+
+			private JMeter() {
+			}
+
+			public static class Paths {
+
+				public static final String CREATE = "/{id}";
+
+				private Paths() {
+				}
+			}
+
+		}
+
+		/**
+		 * Workload model API of the request rates service.
+		 *
+		 * @author Henning Schulz
+		 *
+		 */
+		public static class Model {
+
+			public static final String ROOT = "/model";
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint OVERVIEW = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.OVERVIEW, RequestMethod.GET);
+
+			/** {@value #ROOT}/{id}/model */
+			public static final RestEndpoint GET_MODEL = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_MODEL, RequestMethod.GET);
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint REMOVE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.REMOVE, RequestMethod.DELETE);
+
+			/** {@value #ROOT}/{id}/application */
+			public static final RestEndpoint GET_APPLICATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_APPLICATION, RequestMethod.GET);
+
+			/** {@value #ROOT}/{id}/annotation */
+			public static final RestEndpoint GET_ANNOTATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_ANNOTATION, RequestMethod.GET);
+
+			private Model() {
+			}
+
+			public static class Paths {
+
+				public static final String OVERVIEW = "/{id}";
+				public static final String GET_MODEL = "/{id}/model";
+				public static final String REMOVE = "/{id}";
+				public static final String GET_APPLICATION = "/{id}/application";
+				public static final String GET_ANNOTATION = "/{id}/annotation";
+
+				private Paths() {
+				}
+			}
+
+		}
+
+		/**
+		 * Request logs API of the request rates service.
+		 *
+		 * @author Henning Schulz
+		 *
+		 */
+		public static class RequestLogs {
+
+			public static final String ROOT = "/requestlogs";
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			/** {@value #ROOT}/ */
+			public static final RestEndpoint UPLOAD = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPLOAD, RequestMethod.POST);
+
+			private RequestLogs() {
+			}
+
+			public static class Paths {
+
+				public static final String GET = "/{id}";
+				public static final String UPLOAD = "/";
+
+				private Paths() {
+				}
+			}
+
+		}
+
 	}
 
 	/**
@@ -592,7 +705,7 @@ public class RestApi {
 			}
 
 		}
-		
+
 		/**
 		 * BehaviorModel API of the WESSBAS service.
 		 *
@@ -694,7 +807,7 @@ public class RestApi {
 		 * @see RestApi.JMeter.TestPlan#GET
 		 */
 		public static final Map<String, RestEndpoint> GET_LOAD_TEST = new HashMap<>();
-		
+
 		/**
 		 * [load-test-type]/upload/{tag}
 		 *
@@ -717,19 +830,21 @@ public class RestApi {
 		public static final Map<String, RestEndpoint> DELETE_LOAD_TEST_REPORT = new HashMap<>();
 
 		static {
-			WORKLOAD_MODEL_LINK.put("wessbas", Wessbas.Model.OVERVIEW);
+			WORKLOAD_MODEL_LINK.put(Wessbas.SERVICE_NAME, Wessbas.Model.OVERVIEW);
+			WORKLOAD_MODEL_LINK.put(RequestRates.SERVICE_NAME, RequestRates.Model.OVERVIEW);
 
-			PERSIST_WORKLOAD_MODEL.put("wessbas", Wessbas.Model.PERSIST);
+			PERSIST_WORKLOAD_MODEL.put(Wessbas.SERVICE_NAME, Wessbas.Model.PERSIST);
 
-			GET_LOAD_TEST.put("jmeter", JMeter.TestPlan.GET);
-			GET_LOAD_TEST.put("benchflow", BenchFlow.DSL.GET);
-			
-			UPLOAD_LOAD_TEST.put("jmeter", JMeter.TestPlan.POST);
 
-			GET_LOAD_TEST_REPORT.put("jmeter", JMeter.Report.GET);
-			GET_LOAD_TEST_REPORT.put("benchflow", BenchFlow.Report.GET);
+			GET_LOAD_TEST.put(JMeter.SERVICE_NAME, JMeter.TestPlan.GET);
+			GET_LOAD_TEST.put(BenchFlow.SERVICE_NAME, BenchFlow.DSL.GET);
 
-			DELETE_LOAD_TEST_REPORT.put("jmeter", JMeter.Report.DELETE);
+			UPLOAD_LOAD_TEST.put(JMeter.SERVICE_NAME, JMeter.TestPlan.POST);
+
+			GET_LOAD_TEST_REPORT.put(JMeter.SERVICE_NAME, JMeter.Report.GET);
+			GET_LOAD_TEST_REPORT.put(BenchFlow.SERVICE_NAME, BenchFlow.Report.GET);
+
+			DELETE_LOAD_TEST_REPORT.put(JMeter.SERVICE_NAME, JMeter.Report.DELETE);
 		}
 
 		private Generic() {

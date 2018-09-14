@@ -42,3 +42,4 @@ continuity.session.logs/storage
 continuity.jmeter/storage
 continuity.orchestrator/storage
 continuity.wessbas/storage
+continuity.request.rates/request-logs

@@ -165,7 +165,7 @@ public class OrderCommands {
 	private Order initializeOrder() {
 		Order order = new Order();
 
-		order.setMode(OrderMode.PAST_WORKLOAD);
+		order.setMode(OrderMode.PAST_SESSIONS);
 
 		order.setTag("TAG");
 		order.setTestingContext(Collections.singleton("CONTEXT"));
@@ -186,7 +186,7 @@ public class OrderCommands {
 		modularizationOptions.setModularizationApproach(ModularizationApproach.SESSION_LOGS);
 		order.setModularizationOptions(modularizationOptions);
 		LinkExchangeModel links = new LinkExchangeModel();
-		links.getExternalDataLinks().setLink("LINK_TO_DATA").setTimestamp(new Date(0)).setLinkType(ExternalDataLinkType.OPEN_XTRACE);
+		links.getMeasurementDataLinks().setLink("LINK_TO_DATA").setTimestamp(new Date(0)).setLinkType(ExternalDataLinkType.OPEN_XTRACE);
 		links.getSessionLogsLinks().setLink("SESSION_LOGS_LINK");
 		links.getWorkloadModelLinks().setType(WorkloadModelType.WESSBAS).setLink("WORKLOAD_MODEL_LINK");
 		links.getLoadTestLinks().setType(LoadTestType.JMETER).setLink("LOADTEST_LINK");

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ExternalDataLinks extends AbstractLinks<ExternalDataLinks> {
+public class MeasurementDataLinks extends AbstractLinks<MeasurementDataLinks> {
 
 	@JsonProperty(value = "link", required = false)
 	@JsonInclude(Include.NON_NULL)
@@ -22,11 +22,11 @@ public class ExternalDataLinks extends AbstractLinks<ExternalDataLinks> {
 	@JsonProperty("type")
 	private ExternalDataLinkType linkType;
 
-	public ExternalDataLinks(LinkExchangeModel parent) {
+	public MeasurementDataLinks(LinkExchangeModel parent) {
 		super(parent);
 	}
 
-	public ExternalDataLinks() {
+	public MeasurementDataLinks() {
 		this(null);
 	}
 
@@ -34,7 +34,7 @@ public class ExternalDataLinks extends AbstractLinks<ExternalDataLinks> {
 		return link;
 	}
 
-	public ExternalDataLinks setLink(String externalDataLink) {
+	public MeasurementDataLinks setLink(String externalDataLink) {
 		this.link = externalDataLink;
 		return this;
 	}
@@ -43,7 +43,7 @@ public class ExternalDataLinks extends AbstractLinks<ExternalDataLinks> {
 		return timestamp;
 	}
 
-	public ExternalDataLinks setTimestamp(Date externalDataTimestamp) {
+	public MeasurementDataLinks setTimestamp(Date externalDataTimestamp) {
 		this.timestamp = externalDataTimestamp;
 		return this;
 	}
@@ -59,7 +59,7 @@ public class ExternalDataLinks extends AbstractLinks<ExternalDataLinks> {
 
 	@Override
 	public boolean isEmpty() {
-		for (Field field : ExternalDataLinks.class.getDeclaredFields()) {
+		for (Field field : MeasurementDataLinks.class.getDeclaredFields()) {
 			try {
 				if ((field.getName() != "parent") && (field.get(this) != null)) {
 					return false;
@@ -73,8 +73,8 @@ public class ExternalDataLinks extends AbstractLinks<ExternalDataLinks> {
 	}
 
 	@Override
-	public void merge(ExternalDataLinks other) throws IllegalArgumentException, IllegalAccessException {
-		for (Field field : ExternalDataLinks.class.getDeclaredFields()) {
+	public void merge(MeasurementDataLinks other) throws IllegalArgumentException, IllegalAccessException {
+		for (Field field : MeasurementDataLinks.class.getDeclaredFields()) {
 			if ((field.getName() != "parent") && (field.get(this) == null)) {
 				field.set(this, field.get(other));
 			}
