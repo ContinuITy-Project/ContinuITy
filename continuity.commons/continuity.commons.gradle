@@ -25,4 +25,7 @@ dependencies {
 	}
 	
 	compile group: 'commons-cli', name: 'commons-cli', version: '1.4'
+	
+	// CSV parsing
+	compile group: 'com.univocity', name: 'univocity-parsers', version: '2.7.5'
 }

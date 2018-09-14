@@ -55,6 +55,16 @@ services:
     depends_on:
       - rabbitmq
       - eureka
+  request-rates:
+    image: continuityproject/request-rates
+    hostname: request-rates
+    networks:
+      - continuity-network
+    ports:
+      - '8085:80'
+    depends_on:
+      - rabbitmq
+      - eureka
   jmeter:
     image: continuityproject/jmeter
     hostname: jmeter

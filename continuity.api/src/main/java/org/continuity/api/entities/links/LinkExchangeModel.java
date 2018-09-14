@@ -22,10 +22,10 @@ public class LinkExchangeModel {
 	@JsonManagedReference
 	private final IdpaLinks idpaLinks = new IdpaLinks(this);
 
-	@JsonProperty(value = "external-data", required = false)
+	@JsonProperty(value = "measurement-data", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
 	@JsonManagedReference
-	private final ExternalDataLinks externalDataLinks = new ExternalDataLinks(this);
+	private final MeasurementDataLinks measurementDataLinks = new MeasurementDataLinks(this);
 
 	@JsonProperty(value = "session-logs", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
@@ -55,8 +55,8 @@ public class LinkExchangeModel {
 		return idpaLinks;
 	}
 
-	public ExternalDataLinks getExternalDataLinks() {
-		return externalDataLinks;
+	public MeasurementDataLinks getMeasurementDataLinks() {
+		return measurementDataLinks;
 	}
 
 	public SessionLogsLinks getSessionLogsLinks() {

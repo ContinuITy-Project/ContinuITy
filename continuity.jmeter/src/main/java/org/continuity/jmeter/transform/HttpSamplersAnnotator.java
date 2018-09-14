@@ -1,25 +1,17 @@
 package org.continuity.jmeter.transform;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 
-import org.apache.jmeter.extractor.RegexExtractor;
-import org.apache.jmeter.extractor.gui.RegexExtractorGui;
-import org.apache.jmeter.extractor.json.jsonpath.JSONPostProcessor;
-import org.apache.jmeter.extractor.json.jsonpath.gui.JSONPostProcessorGui;
 import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jorphan.collections.HashTree;
-import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.idpa.IdpaElement;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.EndpointAnnotation;
-import org.continuity.idpa.annotation.ExtractedInput;
-import org.continuity.idpa.annotation.JsonPathExtraction;
 import org.continuity.idpa.annotation.PropertyOverride;
 import org.continuity.idpa.annotation.PropertyOverrideKey;
-import org.continuity.idpa.annotation.RegExExtraction;
-import org.continuity.idpa.annotation.ValueExtraction;
 import org.continuity.idpa.application.Application;
-import org.continuity.idpa.visitor.IdpaByClassSearcher;
+import org.continuity.idpa.application.HttpEndpoint;
 
 /**
  * @author Henning Schulz
@@ -32,70 +24,35 @@ public class HttpSamplersAnnotator extends AbstractSamplerAnnotator {
 	}
 
 	@Override
-	protected void annotateHttpSamplerBySystemAnnotation(HTTPSamplerProxy sampler, ApplicationAnnotation annotation, HashTree samplerTree) {
-		overrideHttpInterfaceProperties(sampler, annotation.getOverrides());
+	protected void annotateHttpSampler(HTTPSamplerProxy sampler, HttpEndpoint endpoint, EndpointAnnotation annotation, HashTree samplerTree) {
+		updateSamplerProperties(sampler, endpoint);
+
+		overrideSamplerProperties(sampler, getAnnotation().getOverrides());
+		overrideSamplerProperties(sampler, annotation.getOverrides());
+
+		annotateParameters(sampler, endpoint, annotation);
 	}
 
-	@Override
-	protected void annotateHttpSamplerByInterfaceAnnotation(HTTPSamplerProxy sampler, EndpointAnnotation annotation, HashTree samplerTree) {
-		overrideHttpInterfaceProperties(sampler, annotation.getOverrides());
+	private void updateSamplerProperties(HTTPSamplerProxy sampler, HttpEndpoint endpoint) {
+		sampler.setName(endpoint.getId());
 
-		addRegExExtractions(annotation, samplerTree.getTree(sampler));
-		new HttpArgumentsAnnotator(getSystem(), getAnnotation(), annotation).annotateArguments(sampler);
-	}
+		setIfNotNull(sampler::setDomain, endpoint.getDomain());
+		sampler.setPort(endpoint.getPort() == null ? 80 : Integer.parseInt(endpoint.getPort()));
+		setIfNotNull(sampler::setProtocol, endpoint.getProtocol());
+		setIfNotNull(sampler::setMethod, endpoint.getMethod());
+		setIfNotNull(sampler::setPath, endpoint.getPath());
 
-	private void addRegExExtractions(EndpointAnnotation annotation, HashTree samplerTree) {
-		IdpaByClassSearcher<ExtractedInput> searcher = new IdpaByClassSearcher<>(ExtractedInput.class, e -> onExtractionFound(annotation, samplerTree, e));
-		searcher.visit(getAnnotation());
-	}
-
-	private void onExtractionFound(EndpointAnnotation annotation, HashTree samplerTree, IdpaElement element) {
-		ExtractedInput input = (ExtractedInput) element;
-
-		for (ValueExtraction extraction : input.getExtractions()) {
-			if (extraction.getFrom().getId().equals(annotation.getAnnotatedEndpoint().getId())) {
-				String id = input.getId();
-
-				if (extraction instanceof RegExExtraction) {
-					samplerTree.add(new ListedHashTree(createRegexExtractor((RegExExtraction) extraction, id)));
-				} else if (extraction instanceof JsonPathExtraction) {
-					samplerTree.add(new ListedHashTree(createJsonPostProcessor((JsonPathExtraction) extraction, id)));
-				}
-			}
+		if (!Objects.equals(HttpEndpoint.DEFAULT_ENCODING, endpoint.getEncoding())) {
+			setIfNotNull(sampler::setContentEncoding, endpoint.getEncoding());
 		}
 
+		sampler.setAutoRedirects(false);
+		sampler.setFollowRedirects(true);
+		sampler.setUseKeepAlive(true);
+		sampler.setDoBrowserCompatibleMultipart(false);
 	}
 
-	private RegexExtractor createRegexExtractor(RegExExtraction extraction, String id) {
-		RegexExtractorGui gui = new RegexExtractorGui();
-		RegexExtractor extractor = (RegexExtractor) gui.createTestElement();
-
-		extractor.setRefName(id);
-		extractor.setRegex(extraction.getPattern());
-
-		// JMeter uses $1$ for marking the first group
-		extractor.setTemplate(extraction.getTemplate().replace("(", "$").replace(")", "$"));
-		extractor.setMatchNumber(extraction.getMatchNumber());
-		extractor.setDefaultValue(extraction.getFallbackValue());
-
-		return extractor;
-	}
-
-	private JSONPostProcessor createJsonPostProcessor(JsonPathExtraction extraction, String id) {
-		JSONPostProcessorGui gui = new JSONPostProcessorGui();
-		JSONPostProcessor processor = (JSONPostProcessor) gui.createTestElement();
-
-		processor.setRefNames(id);
-		processor.setJsonPathExpressions(extraction.getJsonPath());
-		processor.setMatchNumbers(Integer.toString(extraction.getMatchNumber()));
-		processor.setDefaultValues(extraction.getFallbackValue());
-
-		processor.setComputeConcatenation(false);
-
-		return processor;
-	}
-
-	private <T extends PropertyOverrideKey.Any> void overrideHttpInterfaceProperties(HTTPSamplerProxy sampler, List<PropertyOverride<T>> overrides) {
+	private <T extends PropertyOverrideKey.Any> void overrideSamplerProperties(HTTPSamplerProxy sampler, List<PropertyOverride<T>> overrides) {
 		for (PropertyOverride<?> override : overrides) {
 			if (override.getKey().isInScope(PropertyOverrideKey.HttpEndpoint.class)) {
 				switch ((PropertyOverrideKey.HttpEndpoint) override.getKey()) {
@@ -116,6 +73,16 @@ public class HttpSamplersAnnotator extends AbstractSamplerAnnotator {
 					break;
 				}
 			}
+		}
+	}
+
+	private void annotateParameters(HTTPSamplerProxy sampler, HttpEndpoint endpoint, EndpointAnnotation annotation) {
+		new HttpArgumentsAnnotator(endpoint, getAnnotation(), annotation).annotateArguments(sampler);
+	}
+
+	private <T> void setIfNotNull(Consumer<T> setter, T value) {
+		if (value != null) {
+			setter.accept(value);
 		}
 	}
 

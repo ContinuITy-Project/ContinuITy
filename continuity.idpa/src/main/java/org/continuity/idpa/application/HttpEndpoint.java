@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({ "domain", "port", "path", "method", "encoding", "headers", "parameters" })
 public class HttpEndpoint extends AbstractIdpaElement implements Endpoint<HttpParameter> {
 
-	private static final String DEFAULT_ENCODING = "<no-encoding>";
+	public static final String DEFAULT_ENCODING = "<no-encoding>";
 
 	private String domain;
 

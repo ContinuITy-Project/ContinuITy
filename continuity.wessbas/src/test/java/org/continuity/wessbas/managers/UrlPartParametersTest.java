@@ -11,7 +11,7 @@ import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.HttpParameter;
 import org.continuity.idpa.application.HttpParameterType;
-import org.continuity.idpa.visitor.FindById;
+import org.continuity.idpa.visitor.FindBy;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.transform.annotation.AnnotationFromWessbasExtractor;
 import org.junit.Before;
@@ -52,7 +52,7 @@ public class UrlPartParametersTest {
 		assertThat(systemModel.getEndpoints()).extracting(interf -> (HttpEndpoint) interf).flatExtracting(HttpEndpoint::getParameters).extracting(HttpParameter::getParameterType)
 		.containsExactlyInAnyOrder(HttpParameterType.URL_PART, HttpParameterType.REQ_PARAM);
 
-		DirectListInput input = FindById.find("Input_fooRequest_bar_URL_PART", DirectListInput.class).in(annotation).getFound();
+		DirectListInput input = FindBy.findById("Input_fooRequest_bar_URL_PART", DirectListInput.class).in(annotation).getFound();
 
 		assertThat(input.getData()).containsExactlyInAnyOrder("hi", "hello");
 	}

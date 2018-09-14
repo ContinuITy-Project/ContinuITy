@@ -10,6 +10,7 @@ include "continuity.idpa.annotation"
 include "continuity.idpa.application"
 include "continuity.jmeter"
 include "continuity.orchestrator"
+include "continuity.request.rates"
 include "continuity.session.logs"
 include "continuity.wessbas"
 

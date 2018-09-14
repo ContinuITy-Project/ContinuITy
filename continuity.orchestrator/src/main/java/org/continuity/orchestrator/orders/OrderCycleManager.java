@@ -27,7 +27,8 @@ public class OrderCycleManager {
 	 * Initializes the manager by defining the possible cycles.
 	 */
 	public OrderCycleManager() {
-		cycle(OrderMode.PAST_WORKLOAD, OrderGoal.CREATE_SESSION_LOGS, OrderGoal.CREATE_WORKLOAD_MODEL, OrderGoal.CREATE_LOAD_TEST, OrderGoal.EXECUTE_LOAD_TEST);
+		cycle(OrderMode.PAST_SESSIONS, OrderGoal.CREATE_SESSION_LOGS, OrderGoal.CREATE_WORKLOAD_MODEL, OrderGoal.CREATE_LOAD_TEST, OrderGoal.EXECUTE_LOAD_TEST);
+		cycle(OrderMode.PAST_REQUESTS, OrderGoal.CREATE_WORKLOAD_MODEL, OrderGoal.CREATE_LOAD_TEST, OrderGoal.EXECUTE_LOAD_TEST);
 	}
 
 	/**
@@ -60,7 +61,7 @@ public class OrderCycleManager {
 		for (OrderCycle cycle : cycles.get(mode)) {
 			int idx = cycle.getGoals().indexOf(goal);
 
-			if (idx > 0) {
+			if (idx >= 0) {
 				return cycle.getGoals().subList(0, idx + 1);
 			}
 		}

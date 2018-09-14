@@ -8,7 +8,7 @@ services:
 env:
   global:
     - GIT_MAJOR_VERSION=1
-    - GIT_MINOR_VERSION=2
+    - GIT_MINOR_VERSION=3
 after_success:
   - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
 
@@ -28,6 +28,11 @@ after_success:
     docker push continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker tag continuityproject/wessbas continuityproject/wessbas:latest;
     docker push continuityproject/wessbas:latest;
+
+    docker tag continuityproject/request-rates continuityproject/request-rates:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/request-rates:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/request-rates continuityproject/request-rates:latest;
+    docker push continuityproject/request-rates:latest;
 
     docker tag continuityproject/session-logs continuityproject/session-logs:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/session-logs:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
