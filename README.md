@@ -1,4 +1,5 @@
 # ![logo](/images/infinity-small.png) ContinuITy
+[![Build Status](https://travis-ci.org/ContinuITy-Project/ContinuITy.svg?branch=master)](https://travis-ci.org/ContinuITy-Project/ContinuITy)
 
 ContinuITy is a research project on “Automated Performance Testing in Continuous Software Engineering”, launched by [NovaTec Consulting GmbH](https://www.novatec-gmbh.de/) and the [University of Stuttgart](https://www.uni-stuttgart.de/) ([Reliable Software Systems Group](https://www.iste.uni-stuttgart.de/rss/)). ContinuITy started in September 2017 with a duration of two years. It is funded by the [German Federal Ministry of Education and Research (BMBF)](https://www.bmbf.de/). For details about the research project, please refer to our [Web site](https://continuity-project.github.io/).
 
