@@ -190,7 +190,34 @@ services:
       - -jar
       - /app.jar
       - --port=80
+      - --spring.rabbitmq.host=rabbitmq
       - --eureka.uri=http://eureka:8761/eureka
+
+  forecast:
+    image: continuityproject/forecast
+    hostname: forecast
+    networks:
+      - continuity-network
+    ports:
+      - '8087:80'
+      - '5007:5000'
+
+    depends_on:
+      - rabbitmq
+      - eureka
+
+    entrypoint:
+      - java
+      - -Xdebug
+      - -Xnoagent
+      - -Djava.compiler=NONE
+      - -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5000
+      - -jar
+      - /app.jar
+      - --port=80
+      - --spring.rabbitmq.host=rabbitmq
+      - --eureka.uri=http://eureka:8761/eureka
+
 
 networks:
   continuity-network:

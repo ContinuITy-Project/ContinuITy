@@ -1,0 +1,13 @@
+
+        ..ooo..                       ..ooo..           
+    .oOOOOOOOOOOo.                .oOOOOOOOOOOo.                
+  .oOOOO°      °OOOOo          oOOOO°      °OOOOo.         _____            _   _             _____ _______
+ .OOOO            °OOOOo.  .oOOOO°            OOOO.       / ____|          | | (_)           |_   _|__   __|
+ oOOO               °OOOOOOOOOO°               OOOo      | |     ___  _ __ | |_ _ _ __  _   _  | |    | |_   _
+ OOOO                  -OOOO-                  OOOO      | |    / _ \| '_ \| __| | '_ \| | | | | |    | | | | |
+ °OOO              .oOOOOOOOOOOo.              OOO°      | |___| (_) | | | | |_| | | | | |_| |_| |_   | | |_| |
+  °OOOO         .oOOOO°      °OOOOo.         OOOO°        \_____\___/|_| |_|\__|_|_| |_|\__,_|_____|  |_|\__, |
+    °OOOOOOOOOOOOOO              OOOOOOOOOOOOOO°             ============================================ __/ |===
+      °°OOOOOO°°                   °°OOOOOO°°                                Forecast Service             |___/     
+
+  :: Spring Boot :: v${spring-boot.version} ::

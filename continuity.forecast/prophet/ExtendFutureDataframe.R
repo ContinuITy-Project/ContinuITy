@@ -1,0 +1,1 @@
+future[[covarname]] <- values

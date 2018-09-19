@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @author Henning Schulz
+ * @author Henning Schulz, Alper Hidiroglu
  *
  */
 @Configuration
@@ -27,8 +27,12 @@ public class RabbitMqConfig {
 	public static final String SERVICE_NAME = "wessbas";
 
 	public static final String TASK_CREATE_QUEUE_NAME = "continuity.wessbas.task.workloadmodel.create";
+	
+	public static final String MIX_CREATE_QUEUE_NAME = "continuity.wessbas.task.behaviormix.createmix";
 
 	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.WorkloadModel.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME);
+	
+	public static final String MIX_CREATE_ROUTING_KEY = AmqpApi.WorkloadModel.MIX_CREATE.formatRoutingKey().of(SERVICE_NAME);
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -69,16 +73,32 @@ public class RabbitMqConfig {
 	TopicExchange taskCreateExchange() {
 		return AmqpApi.WorkloadModel.TASK_CREATE.create();
 	}
+	
+	@Bean
+	TopicExchange mixCreateExchange() {
+		return AmqpApi.WorkloadModel.MIX_CREATE.create();
+	}
 
 	@Bean
 	Queue taskCreateQueue() {
 		return QueueBuilder.nonDurable(TASK_CREATE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
+	
+	@Bean
+	Queue mixCreateQueue() {
+		return QueueBuilder.nonDurable(MIX_CREATE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
+	}
 
 	@Bean
 	Binding taskCreateBinding() {
 		return BindingBuilder.bind(taskCreateQueue()).to(taskCreateExchange()).with(TASK_CREATE_ROUTING_KEY);
+	}
+	
+	@Bean
+	Binding mixCreateBinding() {
+		return BindingBuilder.bind(mixCreateQueue()).to(mixCreateExchange()).with(MIX_CREATE_ROUTING_KEY);
 	}
 
 	@Bean

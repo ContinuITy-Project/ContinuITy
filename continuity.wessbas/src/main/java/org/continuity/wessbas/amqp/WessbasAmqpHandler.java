@@ -1,15 +1,21 @@
 package org.continuity.wessbas.amqp;
 
+import java.nio.file.Path;
+import java.util.List;
+
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
+import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.controllers.WessbasModelController;
+import org.continuity.wessbas.entities.BehaviorModelPack;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WorkloadModelPack;
 import org.continuity.wessbas.managers.WessbasPipelineManager;
+import org.continuity.wessbas.managers.WorkloadModelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -38,6 +44,9 @@ public class WessbasAmqpHandler {
 
 	@Autowired
 	private MixedStorage<WessbasBundle> storage;
+	
+	@Autowired
+	private MixedStorage<BehaviorModelPack> storageBehav;
 
 	@Value("${spring.application.name}")
 	private String applicationName;
@@ -57,13 +66,23 @@ public class WessbasAmqpHandler {
 
 		TaskReport report;
 
-		if (task.getSource().getSessionLogsLinks().getLink() == null) {
-			LOGGER.error("Task {}: Session logs link is missing for tag {}!", task.getTaskId(), task.getTag());
+		if (task.getSource().getSessionLogsLinks().getLink() == null && task.getSource().getForecastLinks().getLink() == null) {
+			LOGGER.error("Task {}: Session logs link and forecast link is missing for tag {}!", task.getTaskId(), task.getTag());
 			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {
-			WessbasPipelineManager pipelineManager = new WessbasPipelineManager(restTemplate);
-			WessbasBundle workloadModel = pipelineManager.runPipeline(task.getSource().getSessionLogsLinks().getLink());
-
+			WessbasBundle workloadModel = null;
+			if(task.getSource().getForecastLinks().getLink() != null) {
+				WorkloadModelManager modelManager = new WorkloadModelManager(restTemplate);
+				
+				List<String> pathParams = RestApi.Wessbas.SessionsBundles.GET.parsePathParameters(task.getSource().getSessionsBundlesLinks().getLink());
+				BehaviorModelPack behaviorModelPack = storageBehav.get(pathParams.get(0));
+				Path pathToBehaviorFiles = behaviorModelPack.getPathToBehaviorModelFiles();
+				
+				workloadModel = modelManager.runPipeline(task.getSource().getForecastLinks().getLink(), pathToBehaviorFiles);
+			} else {
+				WessbasPipelineManager pipelineManager = new WessbasPipelineManager(restTemplate);
+				workloadModel = pipelineManager.runPipeline(task.getSource().getSessionLogsLinks().getLink());
+			}
 			if (workloadModel == null) {
 				LOGGER.info("Task {}: Could not create a new workload model for tag '{}'.", task.getTaskId(), task.getTag());
 

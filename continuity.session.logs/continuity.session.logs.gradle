@@ -45,6 +45,9 @@ dependencies {
 	compile("org.spec.research:open.xtrace.default.impl:0.2.2")
 	
 	compile("rocks.inspectit:shared-all:1.9.1")
+	
+	// CSV mapper
+	compile("com.univocity:univocity-parsers:2.7.5")
 }
 
 group = 'continuityproject'

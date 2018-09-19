@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum OrderGoal {
 
-	CREATE_SESSION_LOGS, CREATE_WORKLOAD_MODEL, CREATE_LOAD_TEST, EXECUTE_LOAD_TEST;
+	CREATE_SESSION_LOGS, CREATE_BEHAVIOR_MIX, CREATE_FORECAST, CREATE_WORKLOAD_MODEL, CREATE_LOAD_TEST, EXECUTE_LOAD_TEST;
 
 	private static final Map<String, OrderGoal> prettyStringToGoal = new HashMap<>();
 

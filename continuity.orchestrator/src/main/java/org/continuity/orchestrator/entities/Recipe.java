@@ -10,6 +10,7 @@ import org.continuity.api.entities.config.PropertySpecification;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.TaskReport;
+import org.continuity.dsl.description.ForecastInput;
 
 public class Recipe {
 
@@ -26,6 +27,8 @@ public class Recipe {
 	private LinkExchangeModel source;
 
 	private PropertySpecification properties;
+	
+	private ForecastInput forecastInput;
 
 	private final boolean longTermUse;
 
@@ -34,7 +37,7 @@ public class Recipe {
 	private ModularizationOptions modularizationOptions;
 
 	public Recipe(String orderId, String recipeId, String tag, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse, Set<String> testingContext, OrderOptions options,
-			ModularizationOptions modularizationOptions) {
+			ModularizationOptions modularizationOptions, ForecastInput forecastInput) {
 		this.orderId = orderId;
 		this.recipeId = recipeId;
 		this.iterator = steps.listIterator(steps.size());
@@ -43,6 +46,7 @@ public class Recipe {
 		this.longTermUse = longTermUse;
 		this.testingContext = testingContext;
 		this.modularizationOptions = modularizationOptions;
+		this.setForecastInput(forecastInput);
 		initIterator(source);
 
 		if (options != null) {
@@ -83,6 +87,7 @@ public class Recipe {
 		task.setTag(tag);
 		task.setSource(source);
 		task.setProperties(properties);
+		task.setForecastInput(forecastInput);
 		task.setLongTermUse(longTermUse);
 		task.setModularizationOptions(modularizationOptions);
 
@@ -107,6 +112,14 @@ public class Recipe {
 				return;
 			}
 		}
+	}
+	
+	public ForecastInput getForecastInput() {
+		return forecastInput;
+	}
+
+	public void setForecastInput(ForecastInput forecastInput) {
+		this.forecastInput = forecastInput;
 	}
 
 }

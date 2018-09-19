@@ -85,9 +85,16 @@ services:
     depends_on:
       - rabbitmq
       - eureka
-    environment:
-    - "JAVA_OPTS=-DUSE_OPEN_XTRACE=false"
-
+  forecast:
+    image: continuityproject/forecast
+    hostname: forecast
+    networks:
+      - continuity-network
+    ports:
+      - '8087:80'
+    depends_on:
+      - rabbitmq
+      - eureka
 networks:
   continuity-network:
     driver: bridge
