@@ -131,7 +131,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 			while (!callables.isEmpty()) {
 				Callable currentCallable = callables.poll();
 				if (currentCallable instanceof HTTPRequestProcessingImpl) {
-					httpRequestProcessingCallables.add((HTTPRequestProcessingImpl) callable);
+					httpRequestProcessingCallables.add((HTTPRequestProcessingImpl) currentCallable);
 				} else if (currentCallable instanceof NestingCallable && httpRequestProcessingCallables.isEmpty()) {
 					callables.addAll(((NestingCallable) currentCallable).getCallees());
 				} else if (currentCallable instanceof RemoteInvocationImpl && ((RemoteInvocationImpl) currentCallable).getTargetSubTrace().isPresent()
