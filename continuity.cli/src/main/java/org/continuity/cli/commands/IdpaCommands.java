@@ -2,7 +2,10 @@ package org.continuity.cli.commands;
 
 import java.awt.Desktop;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.continuity.api.rest.RestApi.Orchestrator.Idpa;
 import org.continuity.cli.config.PropertiesProvider;
@@ -79,45 +82,62 @@ public class IdpaCommands {
 	}
 
 	@ShellMethod(key = { "idpa-ann-upload" }, value = "Uploads the annotation with the specified tag.")
-	public String uploadAnnotation(String tag) throws JsonParseException, JsonMappingException, IOException {
+	public String uploadAnnotation(String pattern) throws JsonParseException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		IdpaYamlSerializer<ApplicationAnnotation> serializer = new IdpaYamlSerializer<>(ApplicationAnnotation.class);
-		ApplicationAnnotation annotation = serializer.readFromYaml(workingDir + "/annotation-" + tag + ".yml");
+		List<String> tags = new ArrayList<String>();
 
-		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
-		ResponseEntity<String> response;
-		try {
-			response = restTemplate.postForEntity(Idpa.UPDATE_ANNOTATION.requestUrl(tag).withHost(url).get(), annotation, String.class);
-		} catch (HttpStatusCodeException e) {
-			response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
+		for (File file : getMatchingFiles(new File(workingDir), "annotation-", pattern)) {
+			ApplicationAnnotation annotation = serializer.readFromYaml(file);
+			String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
+			String tag = file.getName().substring("annotation-".length(), file.getName().length() - ".yml".length());
+			tags.add(tag);
+			ResponseEntity<String> response;
+			try {
+				response = restTemplate.postForEntity(Idpa.UPDATE_ANNOTATION.requestUrl(tag).withHost(url).get(), annotation, String.class);
+			} catch (HttpStatusCodeException e) {
+				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
+			}
+			if (!response.getStatusCode().is2xxSuccessful()) {
+				return "Error during upload: " + response;
+			}
 		}
+		return "Successfully uploaded annotations for tags '" + tags + "'.";
 
-		if (!response.getStatusCode().is2xxSuccessful()) {
-			return "Error during upload: " + response;
-		} else {
-			return "Successfully uploaded the annotation with tag " + tag + ". Report is: " + response.getBody();
-		}
+	}
+
+	private File[] getMatchingFiles(File dir, String prefix, String pattern) {
+		File[] files = dir.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.matches(prefix + pattern);
+			}
+		});
+		return files;
 	}
 
 	@ShellMethod(key = { "idpa-app-upload" }, value = "Handle with care! Uploads the application model with the specified tag. Can break the online stored annotation!")
-	public String uploadApplication(String tag) throws JsonParseException, JsonMappingException, IOException {
+	public String uploadApplication(String pattern) throws JsonParseException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		IdpaYamlSerializer<Application> serializer = new IdpaYamlSerializer<>(Application.class);
-		Application application = serializer.readFromYaml(workingDir + "/application-" + tag + ".yml");
-
-		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
 		ResponseEntity<String> response;
-		try {
-			response = restTemplate.postForEntity(Idpa.UPDATE_APPLICATION.requestUrl(tag).withHost(url).get(), application, String.class);
-		} catch (HttpStatusCodeException e) {
-			response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
+		List<String> tags = new ArrayList<String>();
+		for (File file : getMatchingFiles(new File(workingDir), "application-", pattern)) {
+			Application application = serializer.readFromYaml(file);
+			String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
+			String tag = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
+			tags.add(tag);
+			try {
+				response = restTemplate.postForEntity(Idpa.UPDATE_APPLICATION.requestUrl(tag).withHost(url).get(), application, String.class);
+			} catch (HttpStatusCodeException e) {
+				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
+			}
+			if (!response.getStatusCode().is2xxSuccessful()) {
+				return "Error during upload: " + response;
+			}
 		}
+		return "Successfully uploaded annotations for tags '" + tags + "'.";
 
-		if (!response.getStatusCode().is2xxSuccessful()) {
-			return "Error during upload: " + response;
-		} else {
-			return "Successfully uploaded the application with tag " + tag + ". Report is: " + response.getBody();
-		}
 	}
 
 	@ShellMethod(key = { "idpa-ann-init" }, value = "Initializes an annotation for the stored application model with the specified tag.")
