@@ -15,3 +15,20 @@ eureka:
   instance:
     statusPageUrlPath: /swagger-ui.html
     preferIpAddress: true
+endpoints:
+  prometheus:
+    enabled: true
+  web:
+    exposure:
+      include=*
+
+endpoint:
+  metrics:
+    enabled=true
+
+metrics:
+  export:
+    prometheus:
+      enabled=true
+  
+

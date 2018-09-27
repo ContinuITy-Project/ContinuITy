@@ -16,13 +16,18 @@ dependencies {
 	compile("org.springframework.boot:spring-boot-starter-web")
 	compile("org.springframework.boot:spring-boot-starter-amqp")
 	compile("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
-	
+	compile ("org.springframework.boot:spring-boot-starter-actuator")
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 
 	// Swagger
 	
 	compile("io.springfox:springfox-swagger2:2.7.0")
 	compile("io.springfox:springfox-swagger-ui:2.7.0")
+	
+	// Micrometer
+    compile group: 'io.micrometer', name: 'micrometer-core', version: '1.0.6'
+    compile group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.0.6'
+	
 	
 	// JMeter launcher
 	
