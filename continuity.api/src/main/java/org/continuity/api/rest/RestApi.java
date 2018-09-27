@@ -138,6 +138,9 @@ public class RestApi {
 
 			/** {@value #ROOT}/{type}/report/{id} */
 			public static final RestEndpoint DELETE_REPORT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.DELETE_REPORT, RequestMethod.DELETE);
+			
+			/** {@value #ROOT}"/{type}/test/upload/{tag} */
+			public static final RestEndpoint POST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.POST, RequestMethod.POST);
 
 			private Loadtest() {
 			}
@@ -149,6 +152,8 @@ public class RestApi {
 				public static final String REPORT = "/{type}/report/{id}";
 
 				public static final String DELETE_REPORT = "/{type}/test/{id}";
+				
+				public static final String POST = "/{type}/test/upload/{tag}";
 
 				private Paths() {
 				}
@@ -402,6 +407,9 @@ public class RestApi {
 
 			/** {@value #ROOT}/{id} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+			
+			/** {@value #ROOT}/upload/{tag} */
+			public static final RestEndpoint POST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.POST, RequestMethod.POST);
 
 			private TestPlan() {
 			}
@@ -409,6 +417,8 @@ public class RestApi {
 			public static class Paths {
 
 				public static final String GET = "/{id}";
+				
+				public static final String POST = "/upload/{tag}";
 
 				private Paths() {
 				}
@@ -684,6 +694,13 @@ public class RestApi {
 		 * @see RestApi.JMeter.TestPlan#GET
 		 */
 		public static final Map<String, RestEndpoint> GET_LOAD_TEST = new HashMap<>();
+		
+		/**
+		 * [load-test-type]/upload/{tag}
+		 *
+		 * @see RestApi.JMeter.TestPlan#POST
+		 */
+		public static final Map<String, RestEndpoint> UPLOAD_LOAD_TEST = new HashMap<>();
 
 		/**
 		 * [load-test-type]/report/{id}
@@ -706,6 +723,8 @@ public class RestApi {
 
 			GET_LOAD_TEST.put("jmeter", JMeter.TestPlan.GET);
 			GET_LOAD_TEST.put("benchflow", BenchFlow.DSL.GET);
+			
+			UPLOAD_LOAD_TEST.put("jmeter", JMeter.TestPlan.POST);
 
 			GET_LOAD_TEST_REPORT.put("jmeter", JMeter.Report.GET);
 			GET_LOAD_TEST_REPORT.put("benchflow", BenchFlow.Report.GET);

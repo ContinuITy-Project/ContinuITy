@@ -84,6 +84,15 @@ public class RequestBuilder {
 	}
 
 	/**
+	 * Omits the host and the protocol at the beginning of the request.
+	 *
+	 * @return URI
+	 */
+	public String getURI() {
+		return path + queryString;
+	}
+	
+	/**
 	 * Omits the {@code http://} at the beginning of the request.
 	 *
 	 * @return The builder for further request modifications.

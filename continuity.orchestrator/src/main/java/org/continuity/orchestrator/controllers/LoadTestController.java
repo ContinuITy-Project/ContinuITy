@@ -3,20 +3,24 @@ package org.continuity.orchestrator.controllers;
 import static org.continuity.api.rest.RestApi.Orchestrator.Loadtest.ROOT;
 import static org.continuity.api.rest.RestApi.Orchestrator.Loadtest.Paths.DELETE_REPORT;
 import static org.continuity.api.rest.RestApi.Orchestrator.Loadtest.Paths.GET;
+import static org.continuity.api.rest.RestApi.Orchestrator.Loadtest.Paths.POST;
 import static org.continuity.api.rest.RestApi.Orchestrator.Loadtest.Paths.REPORT;
 
+import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.rest.RestApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @RestController
 @RequestMapping(ROOT)
@@ -82,5 +86,27 @@ public class LoadTestController {
 
 		restTemplate.delete(link);
 	}
+
+	/**
+	 * Uploads a test configuration and returns the corresponding link
+	 *
+	 * @param type
+	 *            The type of the load test (e.g., jmeter).
+	 * @param testConfiguration
+	 *            the testConfiguration
+	 * @param tag
+	 *            the corresponding tag
+	 * @return Returns a {@link LinkExchangeModel} containing a link to the test configuration
+	 */
+	@RequestMapping(path = POST, method = RequestMethod.POST)
+	public ResponseEntity<LinkExchangeModel> uploadTestPlan(@PathVariable String type, @RequestBody ObjectNode testConfiguration, @PathVariable String tag) {
+		String link = RestApi.Generic.UPLOAD_LOAD_TEST.get(type).requestUrl(tag).get();
+
+		LOGGER.info("Trying to upload the test configuration at {}", link);
+
+		return restTemplate.postForEntity(link, testConfiguration, LinkExchangeModel.class);
+	}
+	
+	
 
 }
