@@ -13,7 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
 import org.continuity.api.amqp.AmqpApi;
@@ -32,6 +35,7 @@ import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.commons.utils.WebUtils;
 import org.continuity.orchestrator.entities.CreationStep;
 import org.continuity.orchestrator.entities.DummyStep;
 import org.continuity.orchestrator.entities.OrderReportCounter;
@@ -43,10 +47,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpIOException;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitManagementTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -80,6 +87,18 @@ public class OrchestrationController {
 
 	@Autowired
 	private ConnectionFactory connectionFactory;
+
+	@Value("${spring.rabbitmq.host}")
+	private String rabbitHost;
+
+	@Value("${rabbitmq.management.port:15672}")
+	private String rabbitPort;
+
+	@Value("${rabbitmq.management.user:guest}")
+	private String rabbitUser;
+
+	@Value("${rabbitmq.management.password:guest}")
+	private String rabbitPassword;
 
 	@RequestMapping(path = SUBMIT, method = RequestMethod.POST)
 	public ResponseEntity<Object> submitOrder(@RequestBody Order order, HttpServletRequest servletRequest) throws IOException {
@@ -284,6 +303,22 @@ public class OrchestrationController {
 		}
 
 		return step;
+	}
+
+	@PostConstruct
+	private void clearResponseQueues() {
+		RabbitManagementTemplate template = new RabbitManagementTemplate(WebUtils.buildUrl(rabbitHost, rabbitPort, "/api/"), rabbitUser, rabbitPassword);
+		String regex = AmqpApi.Orchestrator.EVENT_FINISHED.deriveQueueName("(.+)");
+
+		for (Queue queue : template.getQueues()) {
+			Matcher matcher = Pattern.compile(regex).matcher(queue.getName());
+
+			if (matcher.matches()) {
+				LOGGER.info("Deleting finished queue for old order {}.", matcher.group(1));
+
+				template.deleteQueue(queue);
+			}
+		}
 	}
 
 	private void declareResponseQueue(String orderId) {
