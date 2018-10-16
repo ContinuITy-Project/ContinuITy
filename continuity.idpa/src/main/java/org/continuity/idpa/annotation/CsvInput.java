@@ -40,7 +40,7 @@ public class CsvInput extends ListInput {
 	/**
 	 * Sets the filename of the CSV file.
 	 *
-	 * @param name
+	 * @param filename
 	 *            The filename.
 	 */
 	public void setFilename(String filename) {

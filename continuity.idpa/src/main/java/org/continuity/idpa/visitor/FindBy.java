@@ -50,7 +50,7 @@ public class FindBy<T extends IdpaElement> implements Consumer<T> {
 	 *            The id of the element to be found.
 	 * @param type
 	 *            The type of the element to be found.
-	 * @return A created instance of {@link FindById}.
+	 * @return A created instance of {@link FindBy}.
 	 */
 	public static <T extends IdpaElement> FindBy<T> findById(String id, Class<T> type) {
 		return new FindBy<>(elem -> Objects.equals(id, elem.getId()), type);
@@ -62,7 +62,7 @@ public class FindBy<T extends IdpaElement> implements Consumer<T> {
 	 *
 	 * @param element
 	 *            The model element to search in.
-	 * @return The same instance of {@link FindById}.
+	 * @return The same instance of {@link FindBy}.
 	 */
 	public FindBy<T> in(IdpaElement element) {
 		IdpaByClassSearcher<T> searcher = new IdpaByClassSearcher<>(type, this::accept);

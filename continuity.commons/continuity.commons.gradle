@@ -1,3 +1,8 @@
+/** Required plugins */
+plugins {
+	id "io.codearte.nexus-staging" version "0.8.0"
+}
+
 dependencies {
 	compile project(':continuity.idpa')
 	
@@ -29,3 +34,111 @@ dependencies {
 	// CSV parsing
 	compile group: 'com.univocity', name: 'univocity-parsers', version: '2.7.5'
 }
+
+/**
+ * Creates jar with sources.
+ */
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+/**
+ * Creates jar with javadocs.
+ */
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+/**
+ * Pushing to maven centeral.
+ */
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: 'io.codearte.nexus-staging'
+/**
+  * When uploading the archives it has to be done using the full task name:
+  * > gradle :continuity.commons:uploadArchives
+  */
+if (gradle.startParameter.getTaskNames().contains(":continuity.commons:uploadArchives")) {
+	// Artifacts to build
+	artifacts {
+		archives sourcesJar, javadocJar
+	}
+	// Sign the artifacts
+	signing {
+		sign configurations.archives
+	}
+	group = "com.github.continuity-project"
+	archivesBaseName = "continuity.commons"
+	// Uploads the signed artifacts
+	uploadArchives {
+		repositories {
+			mavenDeployer {
+				// check if necessary parameter exists
+				if (!project.hasProperty('sonatype.username') || !project.hasProperty('sonatype.password')) {
+					throw new GradleException('Credentials for Sonytype are missing.')
+				}
+				if (System.getProperty('RELEASE_VERSION') == null) {
+					throw new GradleException('The version of the library has to be specified. (Specified by "RELEASE_VERSION")')
+				}
+				
+				beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+					authentication(userName: project.property('sonatype.username'), password: project.property('sonatype.password'))
+				}
+				snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+					authentication(userName: project.property('sonatype.username'), password: project.property('sonatype.password'))
+				}
+				version = System.getProperty('RELEASE_VERSION')
+				pom.project {
+					name 'continuity.commons'
+					packaging 'jar'
+					description 'Commons library of ContinuITy. Provides common functionalities.'
+					url 'https://continuity-project.github.io/'
+					scm {
+						url "https://github.com/ContinuITy-Project/ContinuITy"
+						connection "scm:git:https://github.com/ContinuITy-Project/ContinuITy.git"
+						developerConnection "scm:git:git@github.com:ContinuITy-Project/ContinuITy.git"
+					}
+					issueManagement {
+						system 'jira'
+						url 'https://continuity-project.atlassian.net'
+					}
+					licenses {
+						license {
+							name 'The Apache Software License, Version 2.0'
+							url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+							distribution 'repo'
+						}
+					}
+					developers {
+						developer {
+							id 'ContinuITy-team'
+							name 'The ContinuITy Research Team'
+							organizationUrl 'https://continuity-project.github.io/'
+						}
+					}
+				}
+			}
+		}
+	}
+}
+/**
+  * When closing or releasing the staging repository it has to be done using the full task name:
+  * > gradle :continuity.commons.java.sdk:<TASK>
+  *
+  * Note: Always use the 'closeAndReleaseRepository' in the Jenkins build process.
+  */
+if (gradle.startParameter.getTaskNames().contains(":continuity.commons:closeAndReleaseRepository")
+	|| gradle.startParameter.getTaskNames().contains(":continuity.commons:closeRepository")
+	|| gradle.startParameter.getTaskNames().contains(":continuity.commons:releaseRepository")) {
+	nexusStaging {
+		// check if necessary parameter exists
+		if (!project.hasProperty('sonatype.username') || !project.hasProperty('sonatype.password')) {
+			throw new GradleException('Credentials for Sonytype are missing.')
+		}
+		username = project.property('sonatype.username')
+		password = project.property('sonatype.password')
+		packageGroup = "com.github.continuity-project"
+	}
+} 

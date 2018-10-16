@@ -63,8 +63,8 @@ public class RequestUriMapper {
 
 	/**
 	 * Maps the specified URI to an {@link HttpEndpoint} that has the same URI. First, the URI is
-	 * tested for exact similarity (by calling {@link #mapExactly(String)} and then, if there is not
-	 * exact match, wildcards are respected (by calling {@link #mapRespectingWildcards(String)}.
+	 * tested for exact similarity (by calling {@link #mapExactly(String, String)} and then, if there is not
+	 * exact match, wildcards are respected (by calling {@link #mapRespectingWildcards(String, String)}.
 	 *
 	 * @param uri
 	 *            The URI to be mapped.

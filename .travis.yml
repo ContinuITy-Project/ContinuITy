@@ -1,21 +1,17 @@
 language: java
-
 jdk:
-  - oraclejdk8
-
+- oraclejdk8
 branches:
   only:
   - master
-
 services:
-  - docker
+- docker
 env:
   global:
-    - GIT_MAJOR_VERSION=1
-    - GIT_MINOR_VERSION=3
+  - GIT_MAJOR_VERSION=1
+  - GIT_MINOR_VERSION=3
 after_success:
-  - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
-
+- if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD;
 
     docker tag continuityproject/idpa-annotation continuityproject/idpa-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
@@ -57,7 +53,16 @@ after_success:
     docker push continuityproject/eureka:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker tag continuityproject/eureka continuityproject/eureka:latest;
     docker push continuityproject/eureka:latest;
-    fi
 
+  ./gradlew -Psigning.keyId=$KEY_ID -Psigning.password=$SIGNING_PASSWORD -Psigning.secretKeyRingFile=../secring.gpg -Psonatype.username=$SONATYPE_USERNAME -Psonatype.password=$SONATYPE_PASSWORD -DRELEASE_VERSION=$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER :continuity.api:uploadArchives :continuity.api:closeAndReleaseRepository;
+  ./gradlew -Psigning.keyId=$KEY_ID -Psigning.password=$SIGNING_PASSWORD -Psigning.secretKeyRingFile=../secring.gpg -Psonatype.username=$SONATYPE_USERNAME -Psonatype.password=$SONATYPE_PASSWORD -DRELEASE_VERSION=$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER :continuity.idpa:uploadArchives :continuity.idpa:closeAndReleaseRepository;
+  ./gradlew -Psigning.keyId=$KEY_ID -Psigning.password=$SIGNING_PASSWORD -Psigning.secretKeyRingFile=../secring.gpg -Psonatype.username=$SONATYPE_USERNAME -Psonatype.password=$SONATYPE_PASSWORD -DRELEASE_VERSION=$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER :continuity.commons:uploadArchives :continuity.commons:closeAndReleaseRepository;
+  fi
 script:
-- ./gradlew build docker
+- "./gradlew build docker"
+secring:
+  gpg:
+    secure: gxZ/tlbcZujjzu0JEMOn8E/fLfXEXKWEtbIYQoetLnjwsFI0GLak2gxH/X21HJwztbjrTCuBktKkKCDuDV4iWexQiHMo08rV4p5pMCvIiiEZ7uzJXuUKnD4jNCpGOsv5y4wtQklo+l6ZEm2c8yPSWROe9481Aklk7F44tFEmxXkH7sGnINVxh3i7mnxa/m095+WaGNh9PVP9CJI5tNXOSC5nHDr7FDP1Ay+qxv7+3A0rSlpuby+ws+5G7+6EhYlzRKkohCLfomZpm8VFFqqnfSawg/qYM26yANqGiZ25McESyBfNykWWlhvtttIngVVVdwYskBtUqlWhJxsvcj6gQIWFRoY8l1D+v/JuZHiZDDoe6tO1RwLojPjIpjWmUqQeg4FvWV7Th9GMwU2C3H1hNDbY8w3Ie+kp+Hy0ZM6fXI1wuqOFLLdA0LNRPBjValjc/CA13Q6hGYActKo+1YPFYxMhvYsEea2i8VFcZSw5aW6N0BGsMJTfqtkxXitTdRHRP+nH0yrQ+3WR739Oqf5ZzvC9hPKnxZ0LbOM35+mWdrMy+fQsXEo0BEDy2QFtEyaolyZLC5QWAa4+U8VVRHm2I4TkrQny6JDBhSVqpiOjIdX2TeheTUoTzj1SXqbmkAB2Q3/fzdb7jEWvabcpHqSHeHKCEkfzTZoiMPr5BUl3TCg=
+before_install:
+- openssl aes-256-cbc -K $encrypted_2a73fd4d5098_key -iv $encrypted_2a73fd4d5098_iv
+  -in secring.gpg.enc -out secring.gpg -d

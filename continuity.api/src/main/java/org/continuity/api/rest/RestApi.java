@@ -779,7 +779,7 @@ public class RestApi {
 
 	/**
 	 * Generic, abstract REST endpoints. The implementing endpoints can be retrieved via the
-	 * {@link Map#get(Object)} method, e.g., the JMeter {@link Model#OVERVIEW} via
+	 * {@link Map#get(Object)} method, e.g., the JMeter {@link RestApi.Wessbas.Model#OVERVIEW} via
 	 * {@link Generic#WORKLOAD_MODEL_LINK}<code>.get("jmeter")</code>.
 	 *
 	 * @author Henning Schulz

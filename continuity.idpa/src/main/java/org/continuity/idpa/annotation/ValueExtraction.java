@@ -17,7 +17,7 @@ public interface ValueExtraction extends IdpaElement {
 	 * Gets the key. Can be used to specify a specific response, e.g., the header or body of an HTTP
 	 * response.
 	 *
-	 * @return {@link #key} The key.
+	 * @return The key.
 	 */
 	String getResponseKey();
 

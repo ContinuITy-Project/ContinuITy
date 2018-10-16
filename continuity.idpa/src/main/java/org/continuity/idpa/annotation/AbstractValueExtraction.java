@@ -44,7 +44,7 @@ public class AbstractValueExtraction extends AbstractIdpaElement implements Valu
 	/**
 	 * Sets the interface from which the value is extracted.
 	 *
-	 * @param extracted
+	 * @param from
 	 *            The extracted interface.
 	 */
 	public void setFrom(WeakReference<Endpoint<?>> from) {
@@ -55,7 +55,7 @@ public class AbstractValueExtraction extends AbstractIdpaElement implements Valu
 	 * Gets the key. Can be used to specify a specific response, e.g., the header or body of an HTTP
 	 * response.
 	 *
-	 * @return {@link #key} The key.
+	 * @return {@link #responseKey} The key.
 	 */
 	@Override
 	public String getResponseKey() {
@@ -66,7 +66,7 @@ public class AbstractValueExtraction extends AbstractIdpaElement implements Valu
 	 * Sets the key. Can be used to specify a specific response, e.g., the header or body of an HTTP
 	 * response.
 	 *
-	 * @param key
+	 * @param responseKey
 	 *            The key.
 	 */
 	public void setResponseKey(String responseKey) {

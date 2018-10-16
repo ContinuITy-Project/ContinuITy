@@ -10,7 +10,7 @@ import org.continuity.idpa.AbstractIdpaElement;
  *
  * @author Henning Schulz
  *
- * @param <A>
+ * @param <T>
  *            Annotated type.
  */
 public class OverrideableAnnotation<T extends PropertyOverrideKey.Any> extends AbstractIdpaElement {

@@ -70,8 +70,6 @@ public class PropertyOverrideKey {
 	 *
 	 * @author Henning Schulz
 	 *
-	 * @param <T>
-	 *            The type of element holding the overridden value.
 	 */
 	@JsonTypeInfo(use = Id.NAME, include = As.PROPERTY)
 	@JsonSubTypes({ @Type(value = HttpEndpoint.class), @Type(value = HttpParameter.class) })
