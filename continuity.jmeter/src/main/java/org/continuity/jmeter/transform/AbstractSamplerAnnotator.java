@@ -51,8 +51,15 @@ public abstract class AbstractSamplerAnnotator {
 			HashTree samplerTree = search.getSubTree(sampler);
 
 			String endpointId = extractRequestName(sampler.getName());
-
-			EndpointAnnotation ann = FindBy.find(a -> Objects.equals(a.getAnnotatedEndpoint().getId(), endpointId), EndpointAnnotation.class).in(getAnnotation()).getFound();
+			
+			EndpointAnnotation ann = null;
+			
+			// remove prefix
+			if(endpointId.contains("#")) {
+				ann = FindBy.find(a -> Objects.equals(a.getAnnotatedEndpoint().getId(), endpointId.split("#")[1]), EndpointAnnotation.class).in(getAnnotation()).getFound();
+			} else {
+				ann = FindBy.find(a -> Objects.equals(a.getAnnotatedEndpoint().getId(), endpointId), EndpointAnnotation.class).in(getAnnotation()).getFound();
+			}
 
 			if (ann == null) {
 				LOGGER.warn("No endpoint annotation found for endpoint {}!", endpointId);

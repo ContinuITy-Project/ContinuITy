@@ -20,7 +20,8 @@ dependencies {
 	compile group: 'org.eclipse.emf', name: 'org.eclipse.emf.ecore.xmi', version: '2.12.0'
 	
 	compile group: 'net.sf.markov4jmeter', name: 'testplangenerator', version: '1.0.1'
-	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20170921'
+	// Used version also considers thinktimes to the exit state
+	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20181115'
 	
 	// JMeter 
 	

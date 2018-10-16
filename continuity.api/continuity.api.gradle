@@ -23,4 +23,11 @@ dependencies {
 	compile (group: 'org.apache.jmeter', name: 'ApacheJMeter_http', version: '3.1') {
 		exclude group: 'org.mongodb', module: 'mongo-java-driver'
 	}
+	
+	// Needed for OpenXtrace Deserialization (not pretty). 
+	compile("org.codehaus.jackson:jackson-core-asl:1.9.13")
+	compile("org.codehaus.jackson:jackson-mapper-asl:1.9.13")
+	
+	compile("org.spec.research:open.xtrace.api:0.2.2")
+	compile("org.spec.research:open.xtrace.default.impl:0.2.2")
 }

@@ -33,13 +33,13 @@ import wessbas.commons.parser.ParseException;
  *
  */
 public class BehaviorMixManager {
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(BehaviorMixManager.class);
 
 	private RestTemplate restTemplate;
 
 	private final Path workingDir;
-	
+
 	public Path getWorkingDir() {
 		return workingDir;
 	}
@@ -65,6 +65,14 @@ public class BehaviorMixManager {
 	}
 	
 	/**
+	 * Constructor.
+	 */
+	public BehaviorMixManager(RestTemplate restTemplate, Path workingDir) {
+		this.restTemplate = restTemplate;
+		this.workingDir = workingDir;
+	}
+
+	/**
 	 * Runs the pipeline and returns a SessionsBundlePack that holds a list of SessionBundles.
 	 *
 	 *
@@ -88,7 +96,31 @@ public class BehaviorMixManager {
 		try {
 			mix = convertSessionLogIntoBehaviorMix(sessionLog.getLogs());
 			sessionsBundles = extractSessions(sessionLog.getDataTimestamp(), mix);
-			
+
+		} catch (Exception e) {
+			LOGGER.error("Could not create the Behavior Mix!", e);
+			mix = null;
+			sessionsBundles = null;
+		}
+
+		return sessionsBundles;
+	}
+
+	/**
+	 * Runs the pipeline and returns a SessionsBundlePack that holds a list of SessionBundles.
+	 * 
+	 * @param sessionLogs
+	 *            the {@link SessionLogs}
+	 * @return the session logs
+	 */
+	public SessionsBundlePack runPipeline(SessionLogs sessionLogs) {
+		BehaviorMix mix;
+		SessionsBundlePack sessionsBundles;
+
+		try {
+			mix = convertSessionLogIntoBehaviorMix(sessionLogs.getLogs());
+			sessionsBundles = extractSessions(sessionLogs.getDataTimestamp(), mix);
+
 		} catch (Exception e) {
 			LOGGER.error("Could not create the Behavior Mix!", e);
 			mix = null;
@@ -123,9 +155,10 @@ public class BehaviorMixManager {
 		Files.write(sessionLogsPath, Collections.singletonList(sessionLog), StandardOpenOption.CREATE);
 		return sessionLogsPath;
 	}
-	
+
 	/**
 	 * Creates the Behavior Mix and writes the corresponding files.
+	 * 
 	 * @param sessionLogsPath
 	 * @return
 	 * @throws IOException
@@ -139,7 +172,7 @@ public class BehaviorMixManager {
 		BehaviorModelExtractor extractor = new BehaviorModelExtractor();
 		extractor.init(null, null, 0);
 		BehaviorMix mix = extractor.extractBehaviorMix(sessionLogsPath.toString(), outputDir.toString());
-		
+
 		extractor.writeIntoFiles(mix, outputDir.toString());
 
 		return mix;
@@ -152,9 +185,9 @@ public class BehaviorMixManager {
 	 */
 	private SessionsBundlePack extractSessions(Date timestamp, BehaviorMix mix) {
 		SessionsBundlePack sessionsBundles = new SessionsBundlePack(timestamp, new LinkedList<SessionsBundle>());
-		for(int i = 0; i < mix.getEntries().size(); i++) {
+		for (int i = 0; i < mix.getEntries().size(); i++) {
 			List<SimplifiedSession> simplifiedSessions = new LinkedList<SimplifiedSession>();
-			for(Session session: mix.getEntries().get(i).getSessions()) {
+			for (Session session : mix.getEntries().get(i).getSessions()) {
 				SimplifiedSession simpleSession = new SimplifiedSession(session.getId(), session.getStartTime(), session.getEndTime());
 				simplifiedSessions.add(simpleSession);
 			}
@@ -163,5 +196,5 @@ public class BehaviorMixManager {
 		}
 		return sessionsBundles;
 	}
-	
+
 }

@@ -81,7 +81,7 @@ public class WessbasAmqpHandler {
 				workloadModel = modelManager.runPipeline(task.getSource().getForecastLinks().getLink(), pathToBehaviorFiles);
 			} else {
 				WessbasPipelineManager pipelineManager = new WessbasPipelineManager(restTemplate);
-				workloadModel = pipelineManager.runPipeline(task.getSource().getSessionLogsLinks().getLink(), task.getProperties().getIntensityCalculationInterval());
+				workloadModel = pipelineManager.runPipeline(task, task.getProperties().getIntensityCalculationInterval());
 			}
 			if (workloadModel == null) {
 				LOGGER.info("Task {}: Could not create a new workload model for tag '{}'.", task.getTaskId(), task.getTag());
@@ -92,7 +92,7 @@ public class WessbasAmqpHandler {
 
 				LOGGER.info("Task {}: Created a new workload model with id '{}'.", task.getTaskId(), storageId);
 
-				WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getTag());
+				WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getTag(), task.getModularizationOptions() != null);
 				report = TaskReport.successful(task.getTaskId(), responsePack);
 
 				amqpTemplate.convertAndSend(AmqpApi.WorkloadModel.EVENT_CREATED.name(), AmqpApi.WorkloadModel.EVENT_CREATED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), responsePack);

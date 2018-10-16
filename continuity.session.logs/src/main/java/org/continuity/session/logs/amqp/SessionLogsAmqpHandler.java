@@ -52,7 +52,7 @@ public class SessionLogsAmqpHandler {
 
 		if (null != task.getModularizationOptions()) {
 			ModularizationOptions modularizationOptions = task.getModularizationOptions();
-			applyModularization = modularizationOptions.getModularizationApproach().equals(ModularizationApproach.SESSION_LOGS) ? true : false;
+			applyModularization = modularizationOptions.getModularizationApproach().equals(ModularizationApproach.SESSION_LOGS);
 		}
 		Date timestamp = task.getSource().getMeasurementDataLinks().getTimestamp();
 

@@ -17,8 +17,12 @@ import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.artifact.SimplifiedSession;
 import org.continuity.commons.utils.IntensityCalculationUtils;
 import org.continuity.commons.utils.SimplifiedSessionLogsDeserializer;
+import org.continuity.api.entities.artifact.SessionsBundlePack;
+import org.continuity.api.entities.config.ModularizationApproach;
+import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.dsl.description.IntensityCalculationInterval;
+import org.continuity.wessbas.entities.BehaviorModelPack;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.slf4j.Logger;
@@ -75,7 +79,8 @@ public class WessbasPipelineManager {
 	 *
 	 * @return The generated workload model.
 	 */
-	public WessbasBundle runPipeline(String sessionLogsLink, IntensityCalculationInterval interval) {
+	public WessbasBundle runPipeline(TaskDescription task, IntensityCalculationInterval interval) {
+		String sessionLogsLink = task.getSource().getSessionLogsLinks().getLink();
 		if ("dummy".equals(sessionLogsLink)) {
 			return new WessbasBundle(new Date(), WessbasDslInstance.DVDSTORE_PARSED.get());
 		}
@@ -88,9 +93,17 @@ public class WessbasPipelineManager {
 			return null;
 		}
 		WorkloadModel workloadModel;
-
+		
+		boolean applyModularization = task.getModularizationOptions()!= null && task.getModularizationOptions().getModularizationApproach().equals(ModularizationApproach.WORKLOAD_MODEL);
+		
 		try {
-			workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog.getLogs(), interval);
+			if(applyModularization) {
+				workloadModel = convertSessionLogIntoWessbasDSLInstanceUsingModularization(sessionLog, task, interval);
+
+			} else {
+				workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog.getLogs(), interval);
+
+			}
 		} catch (Exception e) {
 			LOGGER.error("Could not create a WESSBAS workload model!", e);
 			workloadModel = null;
@@ -110,9 +123,36 @@ public class WessbasPipelineManager {
 	private WorkloadModel convertSessionLogIntoWessbasDSLInstance(String sessionLog, IntensityCalculationInterval interval) throws IOException, SecurityException, GeneratorException {
 		Path sessionLogsPath = writeSessionLogIntoFile(sessionLog);
 		// number of users is calculated based on the given sessions
-		Properties intensityProps = createWorkloadIntensity(calculateIntensity(sessionLog, interval));
+		Properties intensityProps = createWorkloadIntensity(sessionLog, interval);
 		Properties behaviorProps = createBehaviorModel(sessionLogsPath);
 		return generateWessbasModel(intensityProps, behaviorProps);
+	}
+	
+	/**
+	 * This method converts a session log into a Wessbas DSL instance.
+	 *
+	 * @param sessionLog
+	 * @throws IOException
+	 * @throws GeneratorException
+	 * @throws SecurityException
+	 */
+	private WorkloadModel convertSessionLogIntoWessbasDSLInstanceUsingModularization(SessionLogs sessionLogs, TaskDescription task, IntensityCalculationInterval interval) throws IOException, SecurityException, GeneratorException {
+		// set 1 as default and configure actual number on demand
+		Properties intensityProps = createWorkloadIntensity(sessionLogs.getLogs(), interval);
+		
+		//Apply Behavior Mix generation
+		BehaviorMixManager behaviorManager = new BehaviorMixManager(restTemplate, workingDir);
+		SessionsBundlePack sessionsBundles = behaviorManager.runPipeline(sessionLogs);
+		
+		// Apply Modularization
+		WorkloadModularizationManager modularizationManager = new WorkloadModularizationManager(restTemplate);
+		BehaviorModelPack behaviorModelPack = new BehaviorModelPack(sessionsBundles, workingDir);
+		modularizationManager.runPipeline(task.getTag(), task.getSource(), behaviorModelPack, task.getModularizationOptions().getServices());
+		
+		Properties behaviorProperties = new Properties();
+		behaviorProperties.load(Files.newInputStream(workingDir.resolve("behaviormodelextractor").resolve("behaviormix.txt")));
+
+		return generateWessbasModel(intensityProps, behaviorProperties);
 	}
 
 	private Path writeSessionLogIntoFile(String sessionLog) throws IOException {
@@ -121,11 +161,11 @@ public class WessbasPipelineManager {
 		return sessionLogsPath;
 	}
 
-	private Properties createWorkloadIntensity(Integer numberOfUsers) throws IOException {
+	private Properties createWorkloadIntensity(String sessionLogs,IntensityCalculationInterval interval) throws IOException {
 		Properties properties = new Properties();
 		properties.put("workloadIntensity.type", "constant");
 		
-		properties.put("wl.type.value", Integer.toString(numberOfUsers));
+		properties.put("wl.type.value", Integer.toString(calculateIntensity(sessionLogs, interval)));
 
 		properties.store(Files.newOutputStream(workingDir.resolve("workloadIntensity.properties"), StandardOpenOption.CREATE), null);
 

@@ -6,6 +6,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
 import org.continuity.api.entities.artifact.SessionLogs;
+import org.continuity.api.entities.config.TaskDescription;
+import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +35,11 @@ public class WessbasPipelineTest {
 
 	@Test
 	public void test() {
-		WessbasBundle bundle = pipelineManager.runPipeline("", null);
+		TaskDescription task = new TaskDescription();
+		LinkExchangeModel  source = new LinkExchangeModel();
+		source.getSessionLogsLinks().setLink("");
+		task.setSource(source);
+		WessbasBundle bundle = pipelineManager.runPipeline(task, null);
 
 		WorkloadModel workloadModel = bundle.getWorkloadModel();
 

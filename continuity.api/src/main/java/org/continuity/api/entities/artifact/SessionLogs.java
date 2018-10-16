@@ -1,6 +1,7 @@
 package org.continuity.api.entities.artifact;
 
 import java.util.Date;
+import java.util.Properties;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,5 +37,4 @@ public class SessionLogs {
 	public void setLogs(String logs) {
 		this.logs = logs;
 	}
-
 }

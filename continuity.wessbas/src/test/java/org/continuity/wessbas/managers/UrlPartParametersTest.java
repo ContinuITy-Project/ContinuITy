@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Date;
 
 import org.continuity.api.entities.artifact.SessionLogs;
+import org.continuity.api.entities.config.TaskDescription;
+import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.DirectListInput;
 import org.continuity.idpa.application.Application;
@@ -38,7 +40,11 @@ public class UrlPartParametersTest {
 
 	@Test
 	public void testTransformationFromSessionLog() {
-		WessbasBundle bundle = manager.runPipeline("", null);
+		TaskDescription task = new TaskDescription();
+		LinkExchangeModel  source = new LinkExchangeModel();
+		source.getSessionLogsLinks().setLink("");
+		task.setSource(source);
+		WessbasBundle bundle = manager.runPipeline(task, null);
 
 		AnnotationFromWessbasExtractor extractor = new AnnotationFromWessbasExtractor(bundle.getWorkloadModel());
 		Application systemModel = extractor.extractSystemModel();
