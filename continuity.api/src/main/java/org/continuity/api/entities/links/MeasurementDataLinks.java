@@ -20,7 +20,7 @@ public class MeasurementDataLinks extends AbstractLinks<MeasurementDataLinks> {
 	private Date timestamp;
 	
 	@JsonProperty("type")
-	private ExternalDataLinkType linkType;
+	private MeasurementDataLinkType linkType;
 
 	public MeasurementDataLinks(LinkExchangeModel parent) {
 		super(parent);
@@ -48,11 +48,11 @@ public class MeasurementDataLinks extends AbstractLinks<MeasurementDataLinks> {
 		return this;
 	}
 	
-	public ExternalDataLinkType getLinkType() {
+	public MeasurementDataLinkType getLinkType() {
 		return linkType;
 	}
 
-	public void setLinkType(ExternalDataLinkType linkType) {
+	public void setLinkType(MeasurementDataLinkType linkType) {
 		this.linkType = linkType;
 	}
 

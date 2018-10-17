@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.ExternalDataLinkType;
+import org.continuity.api.entities.links.MeasurementDataLinkType;
 import org.continuity.api.entities.links.MeasurementDataLinks;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
@@ -65,7 +65,7 @@ public class RequestRatesAmqpHandler {
 		TaskReport report;
 		MeasurementDataLinks link = task.getSource().getMeasurementDataLinks();
 
-		if (link.getLinkType() != ExternalDataLinkType.CSV) {
+		if (link.getLinkType() != MeasurementDataLinkType.CSV) {
 			LOGGER.error("Task {}: Cannot process measurement data of type {}!", task.getTaskId(), link.getLinkType());
 			report = TaskReport.error(task.getTaskId(), TaskError.ILLEGAL_TYPE);
 		} else {

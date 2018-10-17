@@ -18,7 +18,7 @@ import org.continuity.api.entities.config.OrderGoal;
 import org.continuity.api.entities.config.OrderMode;
 import org.continuity.api.entities.config.OrderOptions;
 import org.continuity.api.entities.config.WorkloadModelType;
-import org.continuity.api.entities.links.ExternalDataLinkType;
+import org.continuity.api.entities.links.MeasurementDataLinkType;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
@@ -186,7 +186,7 @@ public class OrderCommands {
 		modularizationOptions.setModularizationApproach(ModularizationApproach.SESSION_LOGS);
 		order.setModularizationOptions(modularizationOptions);
 		LinkExchangeModel links = new LinkExchangeModel();
-		links.getMeasurementDataLinks().setLink("LINK_TO_DATA").setTimestamp(new Date(0)).setLinkType(ExternalDataLinkType.OPEN_XTRACE);
+		links.getMeasurementDataLinks().setLink("LINK_TO_DATA").setTimestamp(new Date(0)).setLinkType(MeasurementDataLinkType.OPEN_XTRACE);
 		links.getSessionLogsLinks().setLink("SESSION_LOGS_LINK");
 		links.getWorkloadModelLinks().setType(WorkloadModelType.WESSBAS).setLink("WORKLOAD_MODEL_LINK");
 		links.getLoadTestLinks().setType(LoadTestType.JMETER).setLink("LOADTEST_LINK");

@@ -156,8 +156,6 @@ public class HttpArgumentsAnnotator {
 				case ENCODED:
 					arg.setAlwaysEncoded(true);
 					break;
-				case TYPE:
-					throw new RuntimeException("Overriding the parameter type in JMeter is not yet implemented!");
 				default:
 					break;
 				}

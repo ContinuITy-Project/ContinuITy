@@ -27,8 +27,8 @@ public class HttpSamplersAnnotator extends AbstractSamplerAnnotator {
 	protected void annotateHttpSampler(HTTPSamplerProxy sampler, HttpEndpoint endpoint, EndpointAnnotation annotation, HashTree samplerTree) {
 		updateSamplerProperties(sampler, endpoint);
 
-		overrideSamplerProperties(sampler, getAnnotation().getOverrides());
-		overrideSamplerProperties(sampler, annotation.getOverrides());
+		overrideSamplerProperties(sampler, endpoint, getAnnotation().getOverrides());
+		overrideSamplerProperties(sampler, endpoint, annotation.getOverrides());
 
 		annotateParameters(sampler, endpoint, annotation);
 	}
@@ -52,21 +52,24 @@ public class HttpSamplersAnnotator extends AbstractSamplerAnnotator {
 		sampler.setDoBrowserCompatibleMultipart(false);
 	}
 
-	private <T extends PropertyOverrideKey.Any> void overrideSamplerProperties(HTTPSamplerProxy sampler, List<PropertyOverride<T>> overrides) {
+	private <T extends PropertyOverrideKey.Any> void overrideSamplerProperties(HTTPSamplerProxy sampler, HttpEndpoint endpoint, List<PropertyOverride<T>> overrides) {
 		for (PropertyOverride<?> override : overrides) {
 			if (override.getKey().isInScope(PropertyOverrideKey.HttpEndpoint.class)) {
 				switch ((PropertyOverrideKey.HttpEndpoint) override.getKey()) {
 				case DOMAIN:
-					sampler.setDomain(override.getValue());
+					sampler.setDomain(override.resultingValue(endpoint));
 					break;
 				case ENCODING:
-					sampler.setContentEncoding(override.getValue());
+					sampler.setContentEncoding(override.resultingValue(endpoint));
 					break;
 				case PORT:
-					sampler.setPort(Integer.parseInt(override.getValue()));
+					sampler.setPort(Integer.parseInt(override.resultingValue(endpoint)));
 					break;
 				case PROTOCOL:
-					sampler.setProtocol(override.getValue());
+					sampler.setProtocol(override.resultingValue(endpoint));
+					break;
+				case BASE_PATH:
+					sampler.setPath(override.resultingValue(endpoint));
 					break;
 				default:
 					// do nothing
