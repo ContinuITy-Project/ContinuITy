@@ -1,7 +1,8 @@
 package org.continuity.idpa.annotation;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.continuity.idpa.IdpaElement;
 
@@ -78,44 +79,16 @@ public class PropertyOverrideKey {
 	public static interface Any {
 
 		/**
-		 * Gets the value for the represented key from an instance of T.
+		 * Returns the value that results from overriding an original value.
 		 *
-		 * @param instance
-		 *            The instance object.
-		 * @return The value of the instance for the key.
+		 * @param overridden
+		 *            The elements containing the original value.
+		 * @param override
+		 *            The override value.
+		 * @return The resulting value.
 		 */
-		default String getFromInstance(IdpaElement instance) {
-			Object result = null;
-
-			try {
-				Method getter = instance.getClass().getMethod("get" + formatName(name(), "", true));
-				result = getter.invoke(instance);
-			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				e.printStackTrace();
-			}
-
-			if (result == null) {
-				return null;
-			} else {
-				return result.toString();
-			}
-		}
-
-		/**
-		 * Sets the value for the represented key to an instance of T.
-		 *
-		 * @param instance
-		 *            The instance object.
-		 * @param value
-		 *            The value to be set.
-		 */
-		default void setToInstance(IdpaElement instance, String value) {
-			try {
-				Method setter = instance.getClass().getMethod("set" + formatName(name(), "", true), String.class);
-				setter.invoke(instance, value);
-			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				e.printStackTrace();
-			}
+		default String resultingValue(IdpaElement overridden, String override) {
+			return override;
 		}
 
 		/**
@@ -150,7 +123,48 @@ public class PropertyOverrideKey {
 	 */
 	public static enum HttpEndpoint implements EndpointLevel {
 
-		DOMAIN, PORT, ENCODING, PROTOCOL, HEADER;
+		DOMAIN, PORT, ENCODING, PROTOCOL, HEADER, BASE_PATH((overridden, override) -> {
+			if ((overridden == null) || !(overridden instanceof org.continuity.idpa.application.HttpEndpoint)) {
+				return null;
+			}
+
+			String path = ((org.continuity.idpa.application.HttpEndpoint) overridden).getPath();
+
+			if (path == null) {
+				return null;
+			} else if (override == null) {
+				return path;
+			} else if (!override.matches("\\d+\\/.*")) {
+				return path;
+			}
+
+			int firstSlash = override.indexOf("/");
+			int numReplaced = Integer.parseInt(override.substring(0, firstSlash));
+			String replacement = override.substring(firstSlash);
+
+			Matcher matcher = Pattern.compile("(\\/[^\\/]+){" + numReplaced + "}(.*)").matcher(path);
+
+			if (matcher.matches()) {
+				return replacement + matcher.group(2);
+			} else {
+				return path;
+			}
+		});
+
+		private final BiFunction<IdpaElement, String, String> resultingValueCreator;
+
+		private HttpEndpoint() {
+			this.resultingValueCreator = EndpointLevel.super::resultingValue;
+		}
+
+		private HttpEndpoint(BiFunction<IdpaElement, String, String> resultingValueCreator) {
+			this.resultingValueCreator = resultingValueCreator;
+		}
+
+		@Override
+		public String resultingValue(IdpaElement overridden, String override) {
+			return resultingValueCreator.apply(overridden, override);
+		}
 
 		/**
 		 * {@inheritDoc}
@@ -170,7 +184,7 @@ public class PropertyOverrideKey {
 	 */
 	public static enum HttpParameter implements ParameterLevel {
 
-		TYPE, ENCODED;
+		ENCODED;
 
 		/**
 		 * {@inheritDoc}

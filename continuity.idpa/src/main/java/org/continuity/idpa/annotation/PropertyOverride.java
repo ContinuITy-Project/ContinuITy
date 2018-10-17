@@ -1,5 +1,9 @@
 package org.continuity.idpa.annotation;
 
+import org.continuity.idpa.IdpaElement;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * States to override a specific property with a new value.
  *
@@ -56,6 +60,18 @@ public class PropertyOverride<T extends PropertyOverrideKey.Any> {
 	 */
 	public void setValue(String value) {
 		this.value = value;
+	}
+
+	/**
+	 * Returns the value that results from overriding an original value.
+	 *
+	 * @param overridden
+	 *            The elements containing the original value.
+	 * @return The resulting value.
+	 */
+	@JsonIgnore
+	public String resultingValue(IdpaElement overridden) {
+		return key.resultingValue(overridden, value);
 	}
 
 	/**

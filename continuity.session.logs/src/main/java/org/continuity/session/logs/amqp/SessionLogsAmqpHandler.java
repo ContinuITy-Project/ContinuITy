@@ -8,7 +8,7 @@ import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.config.ModularizationApproach;
 import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.ExternalDataLinkType;
+import org.continuity.api.entities.links.MeasurementDataLinkType;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
@@ -48,7 +48,7 @@ public class SessionLogsAmqpHandler {
 		TaskReport report;
 		String tag = task.getTag();
 		String link = task.getSource().getMeasurementDataLinks().getLink();
-		boolean useOpenXtrace = task.getSource().getMeasurementDataLinks().getLinkType().equals(ExternalDataLinkType.OPEN_XTRACE) ? true : false;
+		boolean useOpenXtrace = task.getSource().getMeasurementDataLinks().getLinkType().equals(MeasurementDataLinkType.OPEN_XTRACE) ? true : false;
 		boolean applyModularization = false;
 
 		if (null != task.getModularizationOptions()) {
@@ -57,7 +57,7 @@ public class SessionLogsAmqpHandler {
 		}
 		Date timestamp = task.getSource().getMeasurementDataLinks().getTimestamp();
 
-		if (!EnumSet.of(ExternalDataLinkType.OPEN_XTRACE, ExternalDataLinkType.INSPECTIT).contains(task.getSource().getMeasurementDataLinks().getLinkType())) {
+		if (!EnumSet.of(MeasurementDataLinkType.OPEN_XTRACE, MeasurementDataLinkType.INSPECTIT).contains(task.getSource().getMeasurementDataLinks().getLinkType())) {
 			LOGGER.error("Task {}: cannot create session logs for tag {}, link {}, and timestamp {}. External data type {} is not supported!", task.getTaskId(), tag, link, timestamp,
 					task.getSource().getMeasurementDataLinks().getLinkType());
 			report = TaskReport.error(task.getTaskId(), TaskError.ILLEGAL_TYPE);

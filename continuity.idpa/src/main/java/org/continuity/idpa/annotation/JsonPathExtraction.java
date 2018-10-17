@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author Henning Schulz
  *
  */
-@JsonPropertyOrder({ "from", "json-path", "response-key", "template", "match-number", "fallback" })
+@JsonPropertyOrder({ "from", "json-path", "response-key", "match-number", "fallback" })
 public class JsonPathExtraction extends AbstractValueExtraction {
 
 	@JsonProperty(value = "json-path")
@@ -26,7 +26,7 @@ public class JsonPathExtraction extends AbstractValueExtraction {
 
 	/**
 	 * Sets the JSON path, e.g., {@code $.foo.bar}.
-	 * 
+	 *
 	 * @param jsonPath
 	 *            The JSON path.
 	 */
