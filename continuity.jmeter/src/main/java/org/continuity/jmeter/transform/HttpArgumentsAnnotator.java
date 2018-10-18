@@ -27,6 +27,8 @@ public class HttpArgumentsAnnotator {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(HttpArgumentsAnnotator.class);
 
+	private static final String KEY_ID = "Continuity.id";
+
 	private final HttpEndpoint endpoint;
 
 	private final ApplicationAnnotation systemAnnotation;
@@ -90,7 +92,15 @@ public class HttpArgumentsAnnotator {
 	private HTTPArgument createArgument(HttpParameter param) {
 		HTTPArgument arg = new HTTPArgument();
 
-		arg.setName(param.getName());
+		if ((param.getParameterType() == HttpParameterType.BODY) && (param.getName() == null)) {
+			arg.setName("body");
+		} else if (param.getName() == null) {
+			arg.setName("UNDEFINED");
+		} else {
+			arg.setName(param.getName());
+		}
+
+		arg.setProperty(KEY_ID, param.getId());
 
 		return arg;
 	}
@@ -100,9 +110,7 @@ public class HttpArgumentsAnnotator {
 			Parameter param = paramAnn.getAnnotatedParameter().resolve(endpoint);
 
 			if (param instanceof HttpParameter) {
-				String paramName = ((HttpParameter) param).getName();
-
-				arguments.stream().filter(arg -> Objects.equals(arg.getName(), paramName)).forEach(arg -> annotateArg(arg, paramAnn));
+				arguments.stream().filter(arg -> Objects.equals(arg.getProperty(KEY_ID).getStringValue(), param.getId())).forEach(arg -> annotateArg(arg, paramAnn));
 			} else {
 				LOGGER.error("Cannot annotate parameter {} of type {}!", param.getId(), param.getClass());
 			}
