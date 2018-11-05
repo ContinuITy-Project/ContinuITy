@@ -18,14 +18,14 @@ public interface HTTPRequestData {
 	public long getIdentifier();
 
 	/**
-	 * Returns timestamp
+	 * Returns timestamp in nanos
 	 * 
 	 * @return timestamp
 	 */
 	public long getTimestamp();
 
 	/**
-	 * Returns response time in millis
+	 * Returns response time in nanos
 	 * 
 	 * @return response time
 	 */

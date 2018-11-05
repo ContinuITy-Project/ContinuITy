@@ -51,12 +51,12 @@ public class InspectITHttpRequestData implements HTTPRequestData {
 
 	@Override
 	public long getTimestamp() {
-		return httpTimerData.getTimeStamp().getTime();
+		return httpTimerData.getTimeStamp().getTime()*1000000;
 	}
 
 	@Override
 	public long getResponseTime() {
-		return (long) httpTimerData.getDuration();
+		return (long) httpTimerData.getDuration()*1000000;
 	}
 
 	@Override

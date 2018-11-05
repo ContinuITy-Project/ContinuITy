@@ -29,7 +29,7 @@ public class OPENxtraceHttpRequestData implements HTTPRequestData {
 
 	@Override
 	public long getTimestamp() {
-		return callable.getTimestamp();
+		return callable.getTimestamp()*1000000;
 	}
 
 	@Override

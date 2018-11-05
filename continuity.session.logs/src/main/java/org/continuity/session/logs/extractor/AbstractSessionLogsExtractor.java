@@ -92,8 +92,8 @@ public abstract class AbstractSessionLogsExtractor<T> {
 
 				if ((bt != null)) {
 					if (!lastIsRedirect) {
-						entry.append(";\"").append(bt.getLeft()).append("\":").append(httpRequest.getTimestamp() * 1000000).append(":")
-								.append((httpRequest.getTimestamp() * 1000000) + ((long) httpRequest.getResponseTime()));
+						entry.append(";\"").append(bt.getLeft()).append("\":").append(httpRequest.getTimestamp()).append(":")
+								.append(httpRequest.getTimestamp() + ((long) httpRequest.getResponseTime()));
 
 						appendHTTPInfo(entry, httpRequest, bt.getRight());
 						empty = false;
