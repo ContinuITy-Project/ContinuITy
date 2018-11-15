@@ -80,6 +80,8 @@ public class HttpArgumentsAnnotator {
 			sampler.setDoMultipartPost(false);
 
 			queryArgs.forEach(arguments::addArgument);
+			queryArgs.forEach(argument -> argument.setUseEquals(true));
+
 		}
 
 		setUrlParameters(sampler);
