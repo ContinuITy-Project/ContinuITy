@@ -5,7 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.continuity.api.entities.links.MeasurementDataLinkType;
 import org.continuity.rest.InspectITRestClient;
+import org.continuity.session.logs.converter.SessionConverterCSVData;
+import org.continuity.session.logs.csv.ReadCSV;
+import org.continuity.session.logs.entities.RowObject;
 import org.continuity.session.logs.extractor.InspectITSessionLogsExtractor;
 import org.continuity.session.logs.extractor.ModularizedOPENxtraceSessionLogsExtractor;
 import org.continuity.session.logs.extractor.OPENxtraceSessionLogsExtractor;
@@ -15,6 +19,7 @@ import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceDeseriali
 import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializationFactory;
 import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializationFormat;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -39,8 +44,10 @@ public class SessionLogsPipelineManager {
 	public SessionLogsPipelineManager(String link, String tag, RestTemplate plainRestTemplate, RestTemplate eurekaRestTemplate) {
 		this.link = link;
 		this.tag = tag;
-		UriComponents uri = UriComponentsBuilder.fromHttpUrl(link).build();
-		cmrConfig = uri.getHost() + ":" + uri.getPort();
+		if(ResourceUtils.isUrl(link)) {
+			UriComponents uri = UriComponentsBuilder.fromHttpUrl(link).build();
+			cmrConfig = uri.getHost() + ":" + uri.getPort();
+		}
 		this.eurekaRestTemplate = eurekaRestTemplate;
 		this.plainRestTemplate = plainRestTemplate;
 	}
@@ -50,12 +57,30 @@ public class SessionLogsPipelineManager {
 	 *
 	 * @return
 	 */
-	public String runPipeline(boolean useOpenXtrace) {
-		if (useOpenXtrace) {
-			return new OPENxtraceSessionLogsExtractor(tag, eurekaRestTemplate).getSessionLogs(getOPENxtraces());
-		} else {
+	public String runPipeline(MeasurementDataLinkType measurementType) {
+		switch(measurementType) {
+		case INSPECTIT:
 			return new InspectITSessionLogsExtractor(tag, eurekaRestTemplate, cmrConfig).getSessionLogs(getInvocationSequences());
+		case OPEN_XTRACE:
+			return new OPENxtraceSessionLogsExtractor(tag, eurekaRestTemplate).getSessionLogs(getOPENxtraces());
+		case CSV:
+			return getSessionLogsFromCSV(this.link);
+		default:
+			throw new RuntimeException("The given measurement cannot be resolved!");
 		}
+	}
+	
+	/**
+	 * Generates session logs from CSV file.
+	 * @param link
+	 * @return
+	 */
+	private String getSessionLogsFromCSV(String link) {	
+		ReadCSV rcsv = new ReadCSV();
+		ArrayList<RowObject> dataList = rcsv.readDataFromCSV(link);
+		SessionConverterCSVData csvsc = new SessionConverterCSVData();
+		String sessionLogs = csvsc.createSessionLogsFromCSV(dataList);
+		return sessionLogs;
 	}
 
 	/**
@@ -65,8 +90,8 @@ public class SessionLogsPipelineManager {
 	 *
 	 * @return
 	 */
-	public String runPipeline(boolean useOpenXtrace, Map<String, String> hostnames) {
-		if (useOpenXtrace) {
+	public String runPipeline(MeasurementDataLinkType measurementType, Map<String, String> hostnames) {
+		if (measurementType.equals(MeasurementDataLinkType.OPEN_XTRACE)) {
 			return new ModularizedOPENxtraceSessionLogsExtractor(tag, eurekaRestTemplate, hostnames).getSessionLogs(getOPENxtraces());
 		} else {
 			throw new UnsupportedOperationException("Modularization of the session logs is currently only supported with open.XTRACE as source");

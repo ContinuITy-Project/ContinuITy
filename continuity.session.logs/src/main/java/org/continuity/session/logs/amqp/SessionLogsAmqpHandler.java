@@ -48,7 +48,6 @@ public class SessionLogsAmqpHandler {
 		TaskReport report;
 		String tag = task.getTag();
 		String link = task.getSource().getMeasurementDataLinks().getLink();
-		boolean useOpenXtrace = task.getSource().getMeasurementDataLinks().getLinkType().equals(MeasurementDataLinkType.OPEN_XTRACE) ? true : false;
 		boolean applyModularization = false;
 
 		if (null != task.getModularizationOptions()) {
@@ -73,10 +72,10 @@ public class SessionLogsAmqpHandler {
 
 			if (applyModularization) {
 				LOGGER.info("Task {}: Creating modularized session logs for tags {} from data {} ...", task.getTaskId(), task.getModularizationOptions().getServices().keySet(), link);
-				sessionLog = manager.runPipeline(useOpenXtrace, task.getModularizationOptions().getServices());
+				sessionLog = manager.runPipeline(task.getSource().getMeasurementDataLinks().getLinkType(), task.getModularizationOptions().getServices());
 			} else {
 				LOGGER.info("Task {}: Creating session logs for tag {} from data {} ...", task.getTaskId(), tag, link);
-				sessionLog = manager.runPipeline(useOpenXtrace);
+				sessionLog = manager.runPipeline(task.getSource().getMeasurementDataLinks().getLinkType());
 			}
 			String id = storage.put(new SessionLogs(task.getSource().getMeasurementDataLinks().getTimestamp(), sessionLog), tag);
 			String sessionLink = RestApi.SessionLogs.GET.requestUrl(id).withoutProtocol().get();

@@ -78,7 +78,7 @@ public class AmqpApi {
 	/**
 	 * AMQP API of the workload model services, e.g., wessbas.
 	 *
-	 * @author Henning Schulz
+	 * @author Henning Schulz, Alper Hidiroglu
 	 *
 	 */
 	public static class WorkloadModel {
@@ -86,6 +86,8 @@ public class AmqpApi {
 		private static final String SCOPE = "workloadmodel";
 
 		public static final ExchangeDefinition<WorkloadType> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(WorkloadType.INSTANCE);
+		
+		public static final ExchangeDefinition<WorkloadType> MIX_CREATE = ExchangeDefinition.task(SCOPE, "createmix").nonDurable().autoDelete().withRoutingKey(WorkloadType.INSTANCE);
 
 		public static final ExchangeDefinition<WorkloadType> EVENT_CREATED = ExchangeDefinition.event(SCOPE, "created").nonDurable().autoDelete().withRoutingKey(WorkloadType.INSTANCE);
 
@@ -143,6 +145,23 @@ public class AmqpApi {
 		public static final ExchangeDefinition<Tag> EVENT_CHANGED = ExchangeDefinition.event(SCOPE, "changed").nonDurable().autoDelete().withRoutingKey(Tag.INSTANCE);
 
 		private IdpaApplication() {
+		}
+
+	}
+	
+	/**
+	 * AMQP API of the forecast service.
+	 *
+	 * @author Alper Hidiroglu
+	 *
+	 */
+	public static class Forecast {
+
+		private static final String SCOPE = "forecast";
+
+		public static final ExchangeDefinition<ServiceName> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(ServiceName.INSTANCE);
+		
+		private Forecast() {
 		}
 
 	}

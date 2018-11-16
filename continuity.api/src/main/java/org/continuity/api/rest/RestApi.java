@@ -666,6 +666,49 @@ public class RestApi {
 		}
 
 	}
+	
+	/**
+	 * REST API of the Forecast service.
+	 *
+	 * @author Alper Hidiroglu
+	 *
+	 */
+	public static class Forecast {
+		
+		public static final String SERVICE_NAME = "forecast";
+		
+		private Forecast() {
+		}
+		
+		public static class ForecastResult {
+			public static final String ROOT = "/forecastbundle";
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			public static class Paths {
+
+				public static final String GET = "/{id}";
+
+				private Paths() {
+				}	
+			}
+		}
+		public static class Context {
+			public static final String ROOT = "/context";
+			
+			/** {@value #ROOT}/submit */
+			public static final RestEndpoint SUBMIT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.SUBMIT, RequestMethod.GET);
+			
+			public static class Paths {
+				
+				public static final String SUBMIT = "/submit";
+
+				private Paths() {
+				}	
+			}
+		}
+	}
 
 	/**
 	 * REST API of the WESSBAS service.
@@ -772,9 +815,32 @@ public class RestApi {
 				private Paths() {
 				}
 			}
-
 		}
+		
+		/**
+		 * Sessions Bundles API of the WESSBAS service.
+		 *
+		 * @author Alper Hidiroglu
+		 *
+		 */
+		public static class SessionsBundles {
 
+			public static final String ROOT = "/sessionsbundles";
+
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			private SessionsBundles() {
+			}
+
+			public static class Paths {
+
+				public static final String GET = "/{id}";
+
+				private Paths() {
+				}
+			}
+		}
 	}
 
 	/**
