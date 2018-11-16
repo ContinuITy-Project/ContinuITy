@@ -57,6 +57,16 @@ after_success:
     docker push continuityproject/eureka:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker tag continuityproject/eureka continuityproject/eureka:latest;
     docker push continuityproject/eureka:latest;
+
+    docker tag continuityproject/benchflow continuityproject/benchflow:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/benchflow:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/benchflow continuityproject/benchflow:latest;
+    docker push continuityproject/benchflow:latest;
+
+    docker tag continuityproject/forecast continuityproject/forecast:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/forecast:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/forecast continuityproject/forecast:latest;
+    docker push continuityproject/forecast:latest;
     fi
 
 script:
