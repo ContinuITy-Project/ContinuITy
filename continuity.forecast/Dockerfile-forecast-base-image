@@ -1,0 +1,15 @@
+FROM rocker/r-base:latest
+VOLUME /tmp
+VOLUME /storage
+
+## Install Java 
+RUN apt-get update \
+    && apt-get install -y openjdk-8-jdk r-cran-rjava libcurl4-openssl-dev\
+    && R CMD javareconf
+
+ENV LD_LIBRARY_PATH /usr/lib/R/site-library/rJava/jri/
+ENV R_HOME=/usr/lib/R
+
+## Install R packages
+RUN mkdir /r-library
+RUN R -e "install.packages(c('xgboost', 'cluster', 'forecast', 'e1071', 'prophet'), repos='https://ftp.fau.de/cran/')"
