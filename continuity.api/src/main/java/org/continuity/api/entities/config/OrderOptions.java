@@ -1,5 +1,7 @@
 package org.continuity.api.entities.config;
 
+import org.continuity.dsl.description.IntensityCalculationInterval;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,6 +25,10 @@ public class OrderOptions {
 
 	@JsonInclude(Include.NON_NULL)
 	private Integer rampup;
+	
+	@JsonProperty("intensity-calculation-interval")
+	@JsonInclude(Include.NON_NULL)
+	private IntensityCalculationInterval intensityCalculationInterval;
 
 	public WorkloadModelType getWorkloadModelType() {
 		return workloadModelType;
@@ -64,12 +70,21 @@ public class OrderOptions {
 		this.rampup = rampup;
 	}
 
+	public IntensityCalculationInterval getIntensityCalculationInterval() {
+		return intensityCalculationInterval;
+	}
+
+	public void setIntensityCalculationInterval(IntensityCalculationInterval intensityCalculationInterval) {
+		this.intensityCalculationInterval = intensityCalculationInterval;
+	}
+
 	public PropertySpecification toProperties() {
 		PropertySpecification props = new PropertySpecification();
 
 		props.setDuration(duration);
 		props.setNumUsers(numUsers);
 		props.setRampup(rampup);
+		props.setIntensityCalculationInterval(intensityCalculationInterval);
 
 		return props;
 	}

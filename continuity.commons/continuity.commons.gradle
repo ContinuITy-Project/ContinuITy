@@ -1,5 +1,15 @@
+apply plugin: 'io.spring.dependency-management'
+
+dependencyManagement {
+	imports {
+		mavenBom 'org.springframework.cloud:spring-cloud-starter-parent:Finchley.M4'
+	}
+}
+
 dependencies {
 	compile project(':continuity.idpa')
+	compile project(':continuity.api')
+	
 	
 	compile group: 'net.sf.markov4jmeter', name: 'm4jdsl', version: '1.0.0'
 	
@@ -9,7 +19,7 @@ dependencies {
 	compile group: 'org.eclipse.emf', name: 'org.eclipse.emf.ecore', version: '2.12.0'
 	compile group: 'org.eclipse.emf', name: 'org.eclipse.emf.ecore.xmi', version: '2.12.0'
 	
-	compile group: 'net.sf.markov4jmeter', name: 'testplangenerator', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'testplangenerator', version: '1.0.1'
 	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20170921'
 	
 	// JMeter 

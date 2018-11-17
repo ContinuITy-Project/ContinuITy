@@ -32,6 +32,7 @@ import org.continuity.commons.utils.WebUtils;
 import org.continuity.dsl.description.ForecastInput;
 import org.continuity.dsl.description.ContextParameter;
 import org.continuity.dsl.description.ForecastOptions;
+import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.dsl.description.Measurement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -183,12 +184,13 @@ public class OrderCommands {
 		options.setRampup(1);
 		options.setLoadTestType(LoadTestType.JMETER);
 		options.setWorkloadModelType(WorkloadModelType.WESSBAS);
+		options.setIntensityCalculationInterval(IntensityCalculationInterval.MINUTE);
 		order.setOptions(options);
 		
 		Measurement measurement = new Measurement("Name of measurement containing contextual data");
 		List<ContextParameter> covariates = new LinkedList<ContextParameter>();
 		covariates.add(measurement);
-		ForecastOptions forecastOpt = new ForecastOptions("2019/01/01 00:00:00", "daily, hourly, minutely or secondly", "telescope or prophet", "http://localhost:8086");
+		ForecastOptions forecastOpt = new ForecastOptions("2019/01/01 00:00:00", IntensityCalculationInterval.HOUR, "telescope or prophet", "http://localhost:8086");
 		ForecastInput forecastInput = new ForecastInput(covariates, forecastOpt);
 		order.setForecastInput(forecastInput);
 

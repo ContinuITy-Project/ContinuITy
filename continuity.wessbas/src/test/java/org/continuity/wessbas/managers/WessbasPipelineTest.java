@@ -33,7 +33,7 @@ public class WessbasPipelineTest {
 
 	@Test
 	public void test() {
-		WessbasBundle bundle = pipelineManager.runPipeline("");
+		WessbasBundle bundle = pipelineManager.runPipeline("", null);
 
 		WorkloadModel workloadModel = bundle.getWorkloadModel();
 

@@ -6,12 +6,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.lang3.Range;
 import org.continuity.api.entities.artifact.SessionLogs;
+import org.continuity.api.entities.artifact.SimplifiedSession;
+import org.continuity.commons.utils.IntensityCalculationUtils;
+import org.continuity.commons.utils.SimplifiedSessionLogsDeserializer;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.slf4j.Logger;
@@ -68,7 +75,7 @@ public class WessbasPipelineManager {
 	 *
 	 * @return The generated workload model.
 	 */
-	public WessbasBundle runPipeline(String sessionLogsLink) {
+	public WessbasBundle runPipeline(String sessionLogsLink, IntensityCalculationInterval interval) {
 		if ("dummy".equals(sessionLogsLink)) {
 			return new WessbasBundle(new Date(), WessbasDslInstance.DVDSTORE_PARSED.get());
 		}
@@ -83,7 +90,7 @@ public class WessbasPipelineManager {
 		WorkloadModel workloadModel;
 
 		try {
-			workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog.getLogs());
+			workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog.getLogs(), interval);
 		} catch (Exception e) {
 			LOGGER.error("Could not create a WESSBAS workload model!", e);
 			workloadModel = null;
@@ -100,10 +107,10 @@ public class WessbasPipelineManager {
 	 * @throws GeneratorException
 	 * @throws SecurityException
 	 */
-	private WorkloadModel convertSessionLogIntoWessbasDSLInstance(String sessionLog) throws IOException, SecurityException, GeneratorException {
+	private WorkloadModel convertSessionLogIntoWessbasDSLInstance(String sessionLog, IntensityCalculationInterval interval) throws IOException, SecurityException, GeneratorException {
 		Path sessionLogsPath = writeSessionLogIntoFile(sessionLog);
-		// set 1 as default and configure actual number on demand
-		Properties intensityProps = createWorkloadIntensity(1);
+		// number of users is calculated based on the given sessions
+		Properties intensityProps = createWorkloadIntensity(calculateIntensity(sessionLog, interval));
 		Properties behaviorProps = createBehaviorModel(sessionLogsPath);
 		return generateWessbasModel(intensityProps, behaviorProps);
 	}
@@ -114,9 +121,10 @@ public class WessbasPipelineManager {
 		return sessionLogsPath;
 	}
 
-	private Properties createWorkloadIntensity(int numberOfUsers) throws IOException {
+	private Properties createWorkloadIntensity(Integer numberOfUsers) throws IOException {
 		Properties properties = new Properties();
 		properties.put("workloadIntensity.type", "constant");
+		
 		properties.put("wl.type.value", Integer.toString(numberOfUsers));
 
 		properties.store(Files.newOutputStream(workingDir.resolve("workloadIntensity.properties"), StandardOpenOption.CREATE), null);
@@ -141,6 +149,77 @@ public class WessbasPipelineManager {
 		final String sessionDatFilePath = workingDir.resolve("sessions.dat").toString();
 
 		return generator.generateWorkloadModel(workloadIntensityProperties, behaviorModelsProperties, null, sessionDatFilePath, false);
+	}
+	
+	/**
+	 * Calculate intensity based on the parallel session logs. 
+	 * @param sessions the session logs
+	 * @param interval the used interval/ resolution
+	 * @return the intensity which represents the number of users.
+	 */
+	private int calculateIntensity(String sessionLogsString, IntensityCalculationInterval interval) {
+		List<SimplifiedSession> sessions = SimplifiedSessionLogsDeserializer.parse(sessionLogsString);
+		IntensityCalculationUtils.sortSessions(sessions);
+		long startTime = sessions.get(0).getStartTime();
+		
+		// The time range for which an intensity will be calculated
+		long rangeLength;
+		
+		if (null == interval) {
+			interval = IntensityCalculationInterval.SECOND;
+		}
+		
+		rangeLength = interval.asNumber();
+		
+		long highestEndTime = 0;
+		
+		for(SimplifiedSession session: sessions) {
+			if(session.getEndTime() > highestEndTime) {
+				highestEndTime = session.getEndTime();
+			}
+		}
+		// Check if overall session logs duration is shorter than a single range
+		if(rangeLength > (highestEndTime-startTime)) {
+			LOGGER.info("The intensity of the given session logs cannot be calculated, because the used range '"+ interval.name()+"' is longer than the overall duration of the session logs. As default numOfthreads is set to 1!");
+			return 1;
+		}
+		
+		// rounds highest end time up
+		long roundedHighestEndTime = highestEndTime;
+		if (highestEndTime % rangeLength != 0) {
+			roundedHighestEndTime = (highestEndTime - highestEndTime % rangeLength) + rangeLength;
+		}
+		
+		long completePeriod = roundedHighestEndTime - startTime;
+		long amountOfRanges = completePeriod / rangeLength;
+		
+		ArrayList<Range<Long>> listOfRanges = IntensityCalculationUtils.calculateRanges(startTime, amountOfRanges, rangeLength);
+		
+		// Remove first and last range from list if necessary
+		if(listOfRanges.get(0).getMinimum() != startTime) {
+			listOfRanges.remove(0);
+		}
+		
+		if(listOfRanges.get(listOfRanges.size() - 1).getMaximum() != highestEndTime) {
+			listOfRanges.remove(listOfRanges.size() - 1);
+		}
+		
+		// This map is used to hold necessary information which will be saved into DB
+		List<Integer> intensities = new ArrayList<Integer>();
+		
+		for(Range<Long> range: listOfRanges) {
+			ArrayList<SimplifiedSession> sessionsInRange = new ArrayList<SimplifiedSession>();
+			for(SimplifiedSession session: sessions) {
+				Range<Long> sessionRange = Range.between(session.getStartTime(), session.getEndTime());
+				if(sessionRange.containsRange(range) || range.contains(session.getStartTime()) 
+						|| range.contains(session.getEndTime())) {
+					sessionsInRange.add(session);
+				}
+			}
+			int intensityOfRange = (int) IntensityCalculationUtils.calculateIntensityForRange(range, sessionsInRange, rangeLength);		
+			intensities.add(intensityOfRange);
+		}
+		return Math.toIntExact(Math.round(intensities.stream().mapToDouble(a -> a).average().getAsDouble()));
 	}
 
 }

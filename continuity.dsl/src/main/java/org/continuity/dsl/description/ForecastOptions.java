@@ -23,7 +23,7 @@ public class ForecastOptions {
 	@JsonSerialize(converter=ForecastDateConverter.class)
 	private Date forecastDate;
 	
-	private String interval;
+	private IntensityCalculationInterval interval;
 	
 	private String forecaster;
 	
@@ -34,7 +34,7 @@ public class ForecastOptions {
 	SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 	
 	@JsonCreator
-    public ForecastOptions(@JsonProperty(value = "forecast-date", required = true) String forecastPeriod, @JsonProperty(value = "interval", required = true) String interval
+    public ForecastOptions(@JsonProperty(value = "forecast-date", required = true) String forecastPeriod, @JsonProperty(value = "interval", required = true) IntensityCalculationInterval interval
     		,@JsonProperty(value = "forecaster", required = true) String forecaster, @JsonProperty(value = "influx-link", required = true) String influxLink) {
     	this.forecastDate = null;
     	try {
@@ -47,11 +47,11 @@ public class ForecastOptions {
     	this.influxLink = influxLink;
     }
 
-	public String getInterval() {
+	public IntensityCalculationInterval getInterval() {
 		return interval;
 	}
 
-	public void setInterval(String interval) {
+	public void setInterval(IntensityCalculationInterval interval) {
 		this.interval = interval;
 	}
 

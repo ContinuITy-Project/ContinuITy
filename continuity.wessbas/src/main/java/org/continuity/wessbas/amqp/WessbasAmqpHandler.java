@@ -81,7 +81,7 @@ public class WessbasAmqpHandler {
 				workloadModel = modelManager.runPipeline(task.getSource().getForecastLinks().getLink(), pathToBehaviorFiles);
 			} else {
 				WessbasPipelineManager pipelineManager = new WessbasPipelineManager(restTemplate);
-				workloadModel = pipelineManager.runPipeline(task.getSource().getSessionLogsLinks().getLink());
+				workloadModel = pipelineManager.runPipeline(task.getSource().getSessionLogsLinks().getLink(), task.getProperties().getIntensityCalculationInterval());
 			}
 			if (workloadModel == null) {
 				LOGGER.info("Task {}: Could not create a new workload model for tag '{}'.", task.getTaskId(), task.getTag());

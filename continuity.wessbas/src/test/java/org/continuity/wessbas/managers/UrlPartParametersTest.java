@@ -38,7 +38,7 @@ public class UrlPartParametersTest {
 
 	@Test
 	public void testTransformationFromSessionLog() {
-		WessbasBundle bundle = manager.runPipeline("");
+		WessbasBundle bundle = manager.runPipeline("", null);
 
 		AnnotationFromWessbasExtractor extractor = new AnnotationFromWessbasExtractor(bundle.getWorkloadModel());
 		Application systemModel = extractor.extractSystemModel();
