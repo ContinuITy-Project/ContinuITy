@@ -1,4 +1,4 @@
-package org.continuity.idpa.yaml;
+package org.continuity.idpa.serialization.yaml;
 
 import java.io.IOException;
 

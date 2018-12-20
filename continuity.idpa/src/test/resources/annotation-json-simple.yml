@@ -1,0 +1,10 @@
+---
+inputs:
+- !<direct>
+  &Input_foo data: [ foo ]
+- !<json>
+  &Input_json_item_1 type: string
+  name: bar
+  input: *Input_foo
+
+endpoint-annotations: []

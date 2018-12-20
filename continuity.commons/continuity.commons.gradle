@@ -39,4 +39,7 @@ dependencies {
 	
 	// CSV parsing
 	compile group: 'com.univocity', name: 'univocity-parsers', version: '2.7.5'
+	
+	// Required for Eclipse
+	compile("org.codehaus.groovy:groovy-all:2.4.7")
 }

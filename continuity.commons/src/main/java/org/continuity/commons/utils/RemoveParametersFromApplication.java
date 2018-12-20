@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.continuity.idpa.visitor.IdpaByClassSearcher;
-import org.continuity.idpa.yaml.IdpaYamlSerializer;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;

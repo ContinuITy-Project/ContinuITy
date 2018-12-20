@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
+import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.continuity.idpa.test.IdpaTestInstance;
-import org.continuity.idpa.yaml.IdpaYamlSerializer;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -1,6 +1,6 @@
 package org.continuity.idpa;
 
-import org.continuity.idpa.json.WeakReferenceDeserializer;
+import org.continuity.idpa.serialization.WeakReferenceDeserializer;
 import org.continuity.idpa.visitor.IdpaVisitor;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;

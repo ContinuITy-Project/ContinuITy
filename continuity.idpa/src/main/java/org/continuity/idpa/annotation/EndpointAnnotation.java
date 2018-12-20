@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.continuity.idpa.WeakReference;
 import org.continuity.idpa.application.Endpoint;
-import org.continuity.idpa.json.ModelSanitizers;
+import org.continuity.idpa.serialization.ModelSanitizers;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
