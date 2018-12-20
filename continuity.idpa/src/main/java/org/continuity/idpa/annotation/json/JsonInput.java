@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  * {@code LegacyJsonInput}. For the {@code JsonInput}, the {@link #json} field is to be used. For
  * the {@code LegacyJsonInput}, the other fields are to be used.
  *
- * @author Henning Schulz
+ * @author Tobias Angerstein, Henning Schulz
  *
  */
 @JsonPropertyOrder({ "type", "name", "input", "items", "json" })
