@@ -12,7 +12,7 @@ import java.util.Date;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.SystemModelTestInstance;
-import org.continuity.idpa.yaml.IdpaYamlSerializer;
+import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;

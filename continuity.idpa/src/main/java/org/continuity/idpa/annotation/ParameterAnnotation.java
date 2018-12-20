@@ -4,7 +4,7 @@ package org.continuity.idpa.annotation;
 
 import org.continuity.idpa.WeakReference;
 import org.continuity.idpa.application.Parameter;
-import org.continuity.idpa.json.ModelSanitizers;
+import org.continuity.idpa.serialization.ModelSanitizers;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;

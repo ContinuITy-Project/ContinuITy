@@ -15,7 +15,7 @@ import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.api.rest.RestApi;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.storage.AnnotationStorageManager;
-import org.continuity.idpa.yaml.IdpaYamlSerializer;
+import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

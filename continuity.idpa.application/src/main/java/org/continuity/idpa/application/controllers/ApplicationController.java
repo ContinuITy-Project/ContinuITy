@@ -19,7 +19,7 @@ import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.entities.ApplicationModelLink;
 import org.continuity.idpa.application.repository.ApplicationModelRepositoryManager;
-import org.continuity.idpa.yaml.IdpaYamlSerializer;
+import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;

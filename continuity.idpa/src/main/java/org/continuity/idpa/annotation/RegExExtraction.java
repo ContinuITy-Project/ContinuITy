@@ -2,7 +2,7 @@
  */
 package org.continuity.idpa.annotation;
 
-import org.continuity.idpa.json.ModelSanitizers;
+import org.continuity.idpa.serialization.ModelSanitizers;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

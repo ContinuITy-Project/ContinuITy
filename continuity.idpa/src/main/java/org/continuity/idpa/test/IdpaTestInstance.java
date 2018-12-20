@@ -16,7 +16,7 @@ import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.HttpParameter;
 import org.continuity.idpa.application.HttpParameterType;
-import org.continuity.idpa.yaml.IdpaYamlSerializer;
+import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 
 /**
  * @author Henning Schulz

@@ -6,7 +6,7 @@ import java.net.URL;
 
 import org.continuity.api.entities.artifact.BehaviorModel;
 import org.continuity.idpa.IdpaElement;
-import org.continuity.idpa.yaml.IdpaYamlSerializer;
+import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.testng.Assert;
 import org.testng.reporters.Files;
 

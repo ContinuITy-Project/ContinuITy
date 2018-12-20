@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.continuity.idpa.AbstractIdpaElement;
-import org.continuity.idpa.json.ValueExtractionDeserializer;
+import org.continuity.idpa.serialization.ValueExtractionDeserializer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

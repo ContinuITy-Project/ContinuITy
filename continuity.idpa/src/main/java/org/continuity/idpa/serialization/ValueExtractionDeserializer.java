@@ -1,4 +1,4 @@
-package org.continuity.idpa.json;
+package org.continuity.idpa.serialization;
 
 import org.continuity.idpa.annotation.JsonPathExtraction;
 import org.continuity.idpa.annotation.RegExExtraction;
