@@ -25,5 +25,19 @@ inputs:
     myarray:
     - *Input_foo
     - *Input_foo
+- !<randnum>
+  &Input_random_number lower: 5
+  upper: 42
+- !<randstring>
+  &Input_random_string template: '[0-9A-D]{8}\-[0-9A-D]{4}\-[0-9A-D]{4}\-[0-9A-D]{4}\-[0-9A-D]{12}'
+- !<datetime>
+  &Input_datetime format: yyyy-MM-dd'T'hh-mm-ss
+  offset: P1D
+- !<combined>
+  &Input_combined format: '(1)-(2): (3)'
+  inputs:
+  - *Input_random_number
+  - *Input_foo
+  - *Input_random_string
 endpoint-annotations: []
 

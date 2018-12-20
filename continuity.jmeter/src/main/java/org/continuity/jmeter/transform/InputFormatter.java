@@ -1,12 +1,19 @@
 package org.continuity.jmeter.transform;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.continuity.idpa.annotation.CombinedInput;
 import org.continuity.idpa.annotation.CounterInput;
 import org.continuity.idpa.annotation.DataType;
+import org.continuity.idpa.annotation.DatetimeInput;
 import org.continuity.idpa.annotation.DirectListInput;
 import org.continuity.idpa.annotation.ExtractedInput;
 import org.continuity.idpa.annotation.Input;
+import org.continuity.idpa.annotation.RandomNumberInput;
+import org.continuity.idpa.annotation.RandomStringInput;
 import org.continuity.idpa.annotation.json.JsonInput;
 import org.continuity.idpa.annotation.json.JsonItem;
 import org.continuity.idpa.serialization.json.IdpaSerializationUtils;
@@ -22,6 +29,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 
+/**
+ *
+ * @author Tobias Angerstein, Henning Schulz
+ *
+ */
 public class InputFormatter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(InputFormatter.class);
@@ -54,9 +66,86 @@ public class InputFormatter {
 			} else {
 				return formatJsonInput(jsonInput);
 			}
+		} else if (input instanceof RandomNumberInput) {
+			RandomNumberInput randNumInput = (RandomNumberInput) input;
+
+			String lower;
+			if (randNumInput.lowerIsStatic()) {
+				lower = Integer.toString(randNumInput.getStaticLowerLimit());
+			} else {
+				lower = getInputString(randNumInput.getDerivedLowerLimit());
+			}
+
+			String upper;
+			if (randNumInput.upperIsStatic()) {
+				upper = Integer.toString(randNumInput.getStaticUpperLimit());
+			} else {
+				upper = getInputString(randNumInput.getDerivedUpperLimit());
+			}
+
+			return "${__Random(" + lower + "," + upper + ",)}";
+		} else if (input instanceof RandomStringInput) {
+			return formatRandomString((RandomStringInput) input);
+		} else if (input instanceof DatetimeInput) {
+			DatetimeInput datetimeInput = ((DatetimeInput) input);
+
+			if (datetimeInput.getOffset() != null) {
+				// If we switch to 3.3 or later, we can use
+				// ${__timeShift(datetimeInput.getFormat(),,datetimeInput.getOffset(),,)}
+				LOGGER.warn("Date offset ({}) is not supported in current JMeter version! Version 3.3 required.", datetimeInput.getOffset());
+			}
+
+			return "${__time(" + datetimeInput.getFormat() + ",)}";
+		} else if (input instanceof CombinedInput) {
+			CombinedInput combinedInput = (CombinedInput) input;
+			String inputString = combinedInput.getFormat();
+
+			int i = 1;
+			for (String part : combinedInput.getInputs().stream().map(this::getInputString).collect(Collectors.toList())) {
+				inputString = inputString.replace("(" + i + ")", part);
+				i++;
+			}
+
+			return inputString;
 		} else {
 			throw new RuntimeException("Input " + input.getClass().getSimpleName() + " is not implemented for JMeter yet!");
 		}
+	}
+
+	private String formatRandomString(RandomStringInput input) {
+		Matcher matcher = Pattern.compile("(\\[[^\\[\\]]*\\])\\{([0-9]+)\\}").matcher(input.getTemplate());
+
+		StringBuilder builder = new StringBuilder();
+
+		int lastEnd = 0;
+
+		while (matcher.find()) {
+			int start = matcher.start(0);
+
+			if (start > lastEnd) {
+				builder.append(input.getTemplate().substring(lastEnd, start).replace("\\", ""));
+			}
+
+			lastEnd = matcher.end(0);
+
+			builder.append("${__RandomString(");
+			builder.append(matcher.group(2));
+			builder.append(",");
+
+			for (char c = '!'; c <= '~'; c++) {
+				if (Character.toString(c).matches(matcher.group(1))) {
+					builder.append(c);
+				}
+			}
+
+			builder.append(",)}");
+		}
+
+		if (input.getTemplate().length() > lastEnd) {
+			builder.append(input.getTemplate().substring(lastEnd, input.getTemplate().length()).replace("\\", ""));
+		}
+
+		return builder.toString();
 	}
 
 	private String formatLegacyJsonInput(JsonInput jsonInput) {
