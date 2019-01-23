@@ -161,5 +161,31 @@ public class JMeterPropertiesCorrector {
 			}
 		}
 	}
+	
+	/**
+	 * Sets the duration and the ramp up time.
+	 *
+	 * @param durationSeconds
+	 *            The duration of the test in seconds.
+	 * @param rampupSeconds
+	 *            The ramp up time in seconds.
+	 */
+	public void setRuntimeProperties(ListedHashTree testPlan, long durationSeconds, int rampupSeconds) {
+		SearchByClass<ThreadGroup> search = new SearchByClass<>(ThreadGroup.class);
+		testPlan.traverse(search);
+
+		for (ThreadGroup group : search.getSearchResults()) {
+			group.setRampUp(rampupSeconds);
+			group.setScheduler(true);
+			group.setDuration(durationSeconds);
+
+			Controller mainController = group.getSamplerController();
+
+			if (mainController instanceof LoopController) {
+				// Sets Loop Count: Forever [CHECK]
+				((LoopController) mainController).setLoops(-1);
+			}
+		}
+	}
 
 }

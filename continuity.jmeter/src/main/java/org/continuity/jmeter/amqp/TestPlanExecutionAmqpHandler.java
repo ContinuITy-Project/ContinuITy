@@ -102,10 +102,12 @@ public class TestPlanExecutionAmqpHandler {
 		} else if ((properties.getNumUsers() != null) && (properties.getDuration() != null) && (properties.getRampup() != null)) {
 			jmeterPropertiesCorrector.setRuntimeProperties(testPlanBundle.getTestPlan(), properties.getNumUsers(), properties.getDuration(), properties.getRampup());
 			LOGGER.info("Task {}: Set JMeter properties num-users = {}, duration = {}, rampup = {}.", task.getTaskId(), properties.getNumUsers(), properties.getDuration(), properties.getRampup());
+		}  else if ((properties.getNumUsers() == null) && (properties.getDuration() != null) && (properties.getRampup() != null)) {
+			jmeterPropertiesCorrector.setRuntimeProperties(testPlanBundle.getTestPlan(), properties.getDuration(), properties.getRampup());
+			LOGGER.info("Task {}: Set JMeter properties duration = {}, rampup = {}.", task.getTaskId(), properties.getDuration(), properties.getRampup());
 		} else {
-			LOGGER.warn("Task {}: Could not set JMeter properties, as some of them are null: num-users = {}, duration = {}, rampup = {}.", task.getTaskId(), properties.getNumUsers(),
-					properties.getDuration(),
-					properties.getRampup());
+			LOGGER.warn("Task {}: Could not set JMeter properties, as some of them are null: duration = {}, rampup = {}.", task.getTaskId(),
+					properties.getDuration(), properties.getRampup());
 		}
 
 		Path tmpPath;
