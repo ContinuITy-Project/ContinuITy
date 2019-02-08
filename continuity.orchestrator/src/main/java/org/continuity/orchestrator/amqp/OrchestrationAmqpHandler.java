@@ -49,7 +49,7 @@ public class OrchestrationAmqpHandler {
 
 		if (!report.isSuccessful()) {
 			LOGGER.warn("The report for task {} is errorenous: {}", report.getTaskId(), report.getError());
-			finishRecipe(OrderReport.asError(recipeId, recipe.getSource(), report.getError().toString()));
+			finishRecipe(OrderReport.asError(recipe.getOrderId(), recipe.getSource(), report.getError().toString()));
 			return;
 		}
 
@@ -88,7 +88,7 @@ public class OrchestrationAmqpHandler {
 			error = "Service " + routingKey + " failed.";
 		}
 
-		finishRecipe(OrderReport.asError(recipeId, recipe.getSource(), error));
+		finishRecipe(OrderReport.asError(recipe.getOrderId(), recipe.getSource(), error));
 		LOGGER.info("Finished failed recipe {}.", recipeId);
 	}
 
