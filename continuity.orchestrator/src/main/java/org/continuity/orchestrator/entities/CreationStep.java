@@ -5,6 +5,7 @@ import java.util.function.Function;
 import org.continuity.api.amqp.ExchangeDefinition;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.orchestrator.util.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -21,12 +22,19 @@ public class CreationStep implements RecipeStep {
 
 	private final String name;
 
+	private final String orderId;
+
+	private final String recipeId;
+
 	private final Function<LinkExchangeModel, Boolean> dataAlreadyPresent;
 
 	private TaskDescription task;
 
-	public CreationStep(String name, AmqpTemplate amqpTemplate, ExchangeDefinition<?> exchange, String routingKey, Function<LinkExchangeModel, Boolean> dataAlreadyPresent) {
+	public CreationStep(String name, String orderId, String recipeId, AmqpTemplate amqpTemplate, ExchangeDefinition<?> exchange, String routingKey,
+			Function<LinkExchangeModel, Boolean> dataAlreadyPresent) {
 		this.name = name;
+		this.orderId = orderId;
+		this.recipeId = recipeId;
 		this.amqpTemplate = amqpTemplate;
 		this.exchange = exchange;
 		this.routingKey = routingKey;
@@ -38,9 +46,9 @@ public class CreationStep implements RecipeStep {
 		boolean dataPresent = (source != null) && dataAlreadyPresent.apply(source);
 
 		if (dataPresent) {
-			LOGGER.info("Task {}: The data is already present.", name);
+			LOGGER.info("{} Step {}: The data is already present.", LoggingUtils.formatPrefix(orderId, recipeId), name);
 		} else {
-			LOGGER.info("Task {}: The data is not present, yet.", name);
+			LOGGER.info("{} Step {}: The data is not present yet.", LoggingUtils.formatPrefix(orderId, recipeId), name);
 		}
 
 		return dataPresent;
@@ -48,7 +56,7 @@ public class CreationStep implements RecipeStep {
 
 	@Override
 	public void execute() {
-		LOGGER.info("Sending creation task with ID {} to {}", task.getTaskId(), exchange);
+		LOGGER.info("{} Sending creation task {}", LoggingUtils.formatPrefix(orderId, recipeId, task.getTaskId()), exchange);
 
 		amqpTemplate.convertAndSend(exchange.name(), routingKey, task);
 	}

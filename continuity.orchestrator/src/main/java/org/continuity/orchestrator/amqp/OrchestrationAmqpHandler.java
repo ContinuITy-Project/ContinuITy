@@ -10,6 +10,7 @@ import org.continuity.commons.storage.MemoryStorage;
 import org.continuity.orchestrator.config.RabbitMqConfig;
 import org.continuity.orchestrator.entities.Recipe;
 import org.continuity.orchestrator.storage.TestingContextStorage;
+import org.continuity.orchestrator.util.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -37,19 +38,19 @@ public class OrchestrationAmqpHandler {
 
 	@RabbitListener(queues = RabbitMqConfig.EVENT_FINISHED_QUEUE_NAME)
 	public void onTaskFinished(TaskReport report) {
-		LOGGER.info("Received finished task {}.", report.getTaskId());
+		LOGGER.info("Task [{}] Received finished task.", report.getTaskId());
 
 		String recipeId = report.getTaskId().split("\\.")[0];
 		Recipe recipe = storage.get(recipeId);
 
 		if (recipe == null) {
-			LOGGER.error("There is no recipe with ID {}!", report.getTaskId());
+			LOGGER.error("Task [{}] There is no such recipe!", report.getTaskId());
 			return;
 		}
 
 		if (!report.isSuccessful()) {
-			LOGGER.warn("The report for task {} is errorenous: {}", report.getTaskId(), report.getError());
-			finishRecipe(OrderReport.asError(recipe.getOrderId(), recipe.getSource(), report.getError().toString()));
+			LOGGER.warn("{} The report is errorenous: {}", LoggingUtils.formatPrefix(recipe.getOrderId(), recipeId), report.getError());
+			finishRecipe(OrderReport.asError(recipe.getOrderId(), recipe.getSource(), report.getError().toString()), recipeId);
 			return;
 		}
 
@@ -59,8 +60,8 @@ public class OrchestrationAmqpHandler {
 			recipe.next().execute();
 		} else {
 			OrderReport orderReport = OrderReport.asSuccessful(recipe.getOrderId(), recipe.getTestingContext(), recipe.getSource());
-			storeToTestingContext(orderReport, recipe.getTag());
-			finishRecipe(orderReport);
+			storeToTestingContext(orderReport, recipeId, recipe.getTag());
+			finishRecipe(orderReport, recipeId);
 		}
 	}
 
@@ -70,13 +71,13 @@ public class OrchestrationAmqpHandler {
 			return;
 		}
 
-		LOGGER.warn("Received failed task {}.", description.getTaskId());
+		LOGGER.warn("Task [{}] Received failed task.", description.getTaskId());
 
 		String recipeId = description.getTaskId().split("\\.")[0];
 		Recipe recipe = storage.get(recipeId);
 
 		if (recipe == null) {
-			LOGGER.error("There is no recipe with ID {}!", description.getTaskId());
+			LOGGER.error("Task [{}] There is no such recipe!", description.getTaskId());
 			return;
 		}
 
@@ -88,24 +89,24 @@ public class OrchestrationAmqpHandler {
 			error = "Service " + routingKey + " failed.";
 		}
 
-		finishRecipe(OrderReport.asError(recipe.getOrderId(), recipe.getSource(), error));
-		LOGGER.info("Finished failed recipe {}.", recipeId);
+		finishRecipe(OrderReport.asError(recipe.getOrderId(), recipe.getSource(), error), recipeId);
 	}
 
-	private void finishRecipe(OrderReport report) {
+	private void finishRecipe(OrderReport report, String recipeId) {
 		amqpTemplate.convertAndSend(AmqpApi.Orchestrator.EVENT_FINISHED.name(), AmqpApi.Orchestrator.EVENT_FINISHED.formatRoutingKey().of(report.getOrderId()), report);
 
 		storage.remove(report.getOrderId());
 
-		LOGGER.info("Sent recipe {} to finished queue.", report.getOrderId());
+		LOGGER.info("{} Sent recipe to finished queue.", LoggingUtils.formatPrefix(report.getOrderId(), recipeId));
 	}
 
-	private void storeToTestingContext(OrderReport report, String tag) {
+	private void storeToTestingContext(OrderReport report, String recipeId, String tag) {
 		if ((report.getTestingContext() != null) && !report.getTestingContext().isEmpty()) {
 			try {
 				testingContextStorage.store(tag, report.getTestingContext(), report.getInternalArtifacts());
 			} catch (IOException e) {
-				LOGGER.error("Error when storing the testing context!", e);
+				LOGGER.error("{} Error when storing the testing context!", LoggingUtils.formatPrefix(report.getOrderId(), recipeId));
+				LOGGER.error("Exception:", e);
 			}
 		}
 	}
