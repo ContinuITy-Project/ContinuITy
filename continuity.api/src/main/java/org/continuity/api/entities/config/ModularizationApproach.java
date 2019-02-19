@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ModularizationApproach {
-	SESSION_LOGS, WORKLOAD_MODEL;
+	SESSION_LOGS, WORKLOAD_MODEL, REQUESTS;
 
 	private static final Map<String, ModularizationApproach> prettyStringToApproach = new HashMap<>();
 

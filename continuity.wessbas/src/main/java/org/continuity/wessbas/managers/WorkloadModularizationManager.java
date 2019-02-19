@@ -12,13 +12,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,7 +58,7 @@ import open.xtrace.OPENxtraceUtils;
 
 /**
  * Manager which modularizes the Behavior Models
- * 
+ *
  * @author Tobias Angerstein
  *
  */
@@ -118,7 +116,7 @@ public class WorkloadModularizationManager {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param restTemplate
 	 *            Eureka rest template
 	 */
@@ -152,7 +150,7 @@ public class WorkloadModularizationManager {
 
 	/**
 	 * Modularizes a certain behavior model
-	 * 
+	 *
 	 * @param sessionBundle
 	 *            The session bundle which is modularized
 	 * @param services
@@ -164,7 +162,7 @@ public class WorkloadModularizationManager {
 		List<String> sessionIds = sessionBundle.getSessions().stream().map(SimplifiedSession::getId).collect(Collectors.toList());
 
 		// Filter callables, which match with the sessionIds
-		// Henning: Das was getan wird auslagern Methode auslagern 
+		// Henning: Das was getan wird auslagern Methode auslagern
 		List<HTTPRequestProcessingImpl> filteredCallables = httpCallables.stream()
 				.filter(p -> p.getHTTPHeaders().get().containsKey("cookie") && sessionIds.contains(OPENxtraceUtils.extractSessionIdFromCookies(p.getHTTPHeaders().get().get("cookie"))))
 				.collect(Collectors.toList());
@@ -184,6 +182,7 @@ public class WorkloadModularizationManager {
 		deleteNotOccurringEndpoints(application, markovStateNames);
 
 		// Get Replacing Requests per Markov chain
+		// TODO: !!! multiple traces with the same session ID will be put into the same session
 		Map<String, List<Trace>> requestsToReplaceMap = getReplacingRequests(filteredCallables, application, services);
 
 		// Get modularized Session logs for each markov state
@@ -219,7 +218,7 @@ public class WorkloadModularizationManager {
 
 	/**
 	 * Writes the modularized session logs in the existing session logs file
-	 * 
+	 *
 	 * @param modularizedSessionLogsMap
 	 *            the modularized session logs
 	 * @param path
@@ -263,7 +262,7 @@ public class WorkloadModularizationManager {
 
 	/**
 	 * Adds a prefix to each use case
-	 * 
+	 *
 	 * @param entry
 	 *            {@link Entry<String, SessionLogs>} containing the modularized session logs of a
 	 *            certain markov state.
@@ -295,7 +294,7 @@ public class WorkloadModularizationManager {
 
 	/**
 	 * Behavior model for the provided session log.
-	 * 
+	 *
 	 * @param sessionLogs
 	 *            the modularized session logs
 	 * @param markovChain
@@ -313,31 +312,36 @@ public class WorkloadModularizationManager {
 		modularizedSessionLogsPath = modularizedSessionLogsPath.resolve(markovChain);
 		modularizedSessionLogsPath.toFile().mkdir();
 
-		moveEachRequestToSeparateSessionLog(sessionLogs);
+		moveEachRequestToSeparateSessionLog(sessionLogs); // TODO: Why ???
 		BehaviorModelExtractor extractor = new BehaviorModelExtractor();
 		String[][] behaviorModel = null;
 		try {
 			Files.write(modularizedSessionLogsPath.resolve("sessions.dat"), Collections.singletonList(sessionLogs.getLogs()), StandardOpenOption.CREATE);
 			extractor.init(null, null, 0);
+			// TODO: The sessions will be clustered
 			extractor.createBehaviorModel(modularizedSessionLogsPath.resolve("sessions.dat").toString(), modularizedSessionLogsPath.toString());
+			// TODO: replace with
+			// extractor.extract(modularizedSessionLogsPath.resolve("sessions.dat").toString(),
+			// modularizedSessionLogsPath.toString(), "none");
 			behaviorModel = csvHandler.readValues(modularizedSessionLogsPath.resolve(FILENAME + "0" + FILE_EXT).toFile().toString());
 		} catch (NullPointerException | IOException | ExtractionException e) {
 			e.printStackTrace();
 		}
 		return behaviorModel;
 	}
-	
+
 	/**
 	 * Writes each request as separated session log.
 	 * @param sessionLogs
 	 */
 	private void moveEachRequestToSeparateSessionLog(SessionLogs sessionLogsContainer) {
-		ArrayList<String> separatedRequests = new ArrayList<String>(); 
+		ArrayList<String> separatedRequests = new ArrayList<String>();
 		String[] sessionLogs = sessionLogsContainer.getLogs().split("\n");
 		for (int i = 0; i < sessionLogs.length; i++) {
 			String[] requests = sessionLogs[i].split(";");
 			for (int j = 1; j < requests.length; j++) {
-				separatedRequests.add("fakeId"+i +j+";"+requests[j]);
+				// TODO: !!! conflicts, e.g., i=1, j=23 and i=12, j=3
+				separatedRequests.add("fakeId" + i + j + ";" + requests[j]);
 			}
 		}
 		sessionLogsContainer.setLogs(String.join("\n", separatedRequests.toArray(new String[separatedRequests.size()])));
@@ -345,7 +349,7 @@ public class WorkloadModularizationManager {
 
 	/**
 	 * Retrieves new session logs from session logs service
-	 * 
+	 *
 	 * @param traces
 	 *            the input traces
 	 * @param services
@@ -381,7 +385,7 @@ public class WorkloadModularizationManager {
 
 	/**
 	 * Returns all requests, which need to be replaced
-	 * 
+	 *
 	 * @param filteredCallables
 	 *            All Callables, which are part of a specific behavior model
 	 * @param application
@@ -411,7 +415,7 @@ public class WorkloadModularizationManager {
 
 	/**
 	 * Deletes all {@link Endpoint} objects, which do not occur in the current Markov chain.
-	 * 
+	 *
 	 * @param application
 	 *            the application model
 	 * @param markovStateNames

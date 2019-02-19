@@ -10,39 +10,26 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.commons.utils.StringUtils;
-import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.HttpParameter;
 import org.continuity.idpa.application.HttpParameterType;
-import org.continuity.idpa.visitor.FindBy;
 import org.continuity.request.rates.entities.RequestRecord;
 import org.continuity.request.rates.model.RequestFrequency;
 import org.continuity.request.rates.model.RequestRatesModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RequestRatesCalculator {
+public abstract class RequestRatesCalculator {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(RequestRatesCalculator.class);
 
 	private static final String UNKNOWN_ENDPOINT = "UNKNOWN";
 
-	private final Application application;
+	protected abstract HttpEndpoint mapToEndpoint(RequestRecord record);
 
-	private final RequestUriMapper uriMapper;
-
-	public RequestRatesCalculator() {
-		this.application = null;
-		this.uriMapper = null;
-	}
-
-	public RequestRatesCalculator(Application application) {
-		this.application = application;
-		this.uriMapper = new RequestUriMapper(application);
-	}
+	public abstract boolean useNames();
 
 	public RequestRatesModel calculate(List<RequestRecord> records) {
 		RequestRatesModel model = new RequestRatesModel();
@@ -51,7 +38,7 @@ public class RequestRatesCalculator {
 
 		List<RequestFrequency> mix;
 
-		if (application == null) {
+		if (useNames()) {
 			mix = calculateAbsoluteMixUsingNames(records);
 		} else {
 			mix = calculateAbsoluteMixUsingApplication(records);
@@ -106,20 +93,6 @@ public class RequestRatesCalculator {
 	private List<RequestFrequency> calculateAbsoluteMixUsingApplication(List<RequestRecord> records) {
 		return records.stream().map(this::mapToEndpoint).filter(Objects::nonNull).collect(Collectors.groupingBy(HttpEndpoint::getId)).entrySet().stream()
 				.map(entry -> new RequestFrequency(entry.getValue().size(), entry.getValue().get(0))).collect(Collectors.toList());
-	}
-
-	private HttpEndpoint mapToEndpoint(RequestRecord record) {
-		HttpEndpoint endpoint = null;
-
-		if (record.getName() != null) {
-			endpoint = FindBy.findById(record.getName(), HttpEndpoint.class).in(application).getFound();
-		}
-
-		if ((endpoint == null) && (record.getPath() != null)) {
-			endpoint = uriMapper.map(record.getPath(), record.getMethod());
-		}
-
-		return endpoint;
 	}
 
 	private List<RequestFrequency> calculateAbsoluteMixUsingNames(List<RequestRecord> records) {

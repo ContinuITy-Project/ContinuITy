@@ -8,23 +8,22 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.commons.idpa.RequestUriMapper;
+import org.continuity.commons.openxtrace.OpenXtraceTracer;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.spec.research.open.xtrace.api.core.Location;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.Callable;
-import org.spec.research.open.xtrace.api.core.callables.NestingCallable;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.RemoteInvocationImpl;
 import org.springframework.web.client.RestTemplate;
 
 /**
  * Extracts session logs from OPEN.xtraces
- * 
+ *
  * @author Tobias Angerstein
  *
  */
@@ -32,7 +31,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param tag
 	 *            tag of the application
 	 * @param eurekaRestTemplate
@@ -59,10 +58,10 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 
 	/**
 	 * Returns all {@link HTTPRequestProcessingImpl} of the traces sorted by session and timestamp
-	 * 
+	 *
 	 * @param sortedHTTPInvocCallables
 	 *            all httpRequestProcessingCallables
-	 * 
+	 *
 	 * @return Map of session logs and the corresponding requests, which are represented as
 	 *         {@link HTTPRequestProcessingImpl}
 	 */
@@ -101,14 +100,14 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 
 	/**
 	 * Extracts all httpRequestProcessingImpl callables
-	 * 
+	 *
 	 * @param traces
 	 * @param sortedHTTPInvocCallables
 	 */
 	protected List<HTTPRequestProcessingImpl> extractHttpRequestCallables(Iterable<Trace> traces) {
 		List<HTTPRequestProcessingImpl> httpCallables = new ArrayList<HTTPRequestProcessingImpl>();
 		for (Trace trace : traces) {
-			if (null != trace.getRoot() && null != trace.getRoot().getRoot()) {
+			if ((null != trace.getRoot()) && (null != trace.getRoot().getRoot())) {
 				httpCallables.addAll(diveForHTTPRequestProcessingCallable(trace.getRoot().getRoot()));
 			}
 		}
@@ -118,46 +117,30 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	/**
 	 * Returns the {@link HTTPRequestProcessingImpl} object of the corresponding
 	 * {@link RemoteInvocationImpl} which is on the highest level.
-	 * 
+	 *
 	 * @param callable
 	 *            The root callable
 	 * @return List of {@link HTTPRequestProcessingImpl}
 	 */
 	protected List<HTTPRequestProcessingImpl> diveForHTTPRequestProcessingCallable(Callable callable) {
-		List<HTTPRequestProcessingImpl> httpRequestProcessingCallables = new ArrayList<HTTPRequestProcessingImpl>();
-		if (null != callable) {
-			LinkedBlockingQueue<Callable> callables = new LinkedBlockingQueue<Callable>();
-			callables.add(callable);
-			while (!callables.isEmpty()) {
-				Callable currentCallable = callables.poll();
-				if (currentCallable instanceof HTTPRequestProcessingImpl) {
-					httpRequestProcessingCallables.add((HTTPRequestProcessingImpl) currentCallable);
-				} else if (currentCallable instanceof NestingCallable && httpRequestProcessingCallables.isEmpty()) {
-					callables.addAll(((NestingCallable) currentCallable).getCallees());
-				} else if (currentCallable instanceof RemoteInvocationImpl && ((RemoteInvocationImpl) currentCallable).getTargetSubTrace().isPresent()
-						&& null != ((RemoteInvocationImpl) currentCallable).getTargetSubTrace().get().getRoot()) {
-					callables.add(((RemoteInvocationImpl) currentCallable).getTargetSubTrace().get().getRoot());
-				}
-			}
-		}
-		return httpRequestProcessingCallables;
+		return OpenXtraceTracer.forRoot(callable).extractSubtraces();
 	}
 
 	/**
 	 * Extracts all different businessTransactions from the input traces Assumption: applicationName
 	 * and tag name are identical Assumption: Each Containing Subtrace of the first found
 	 * HTTPRequestProcessingCallable consists of business transaction information.
-	 * 
+	 *
 	 * @param traces
 	 *            input traces
-	 * 
+	 *
 	 * @return all existing business transactions
 	 */
 	protected HashMap<Long, Pair<String, String>> getBusinessTransactionsFromOPENxtraces(Iterable<HTTPRequestProcessingImpl> httpCallables) {
 		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<Long, Pair<String, String>>();
-		
+
 		for (HTTPRequestProcessingImpl httpCallable : httpCallables) {
-			if (httpCallable.getContainingSubTrace() != null && httpCallable.getContainingSubTrace().getLocation() != null) {
+			if ((httpCallable.getContainingSubTrace() != null) && (httpCallable.getContainingSubTrace().getLocation() != null)) {
 				Location traceLocation = httpCallable.getContainingSubTrace().getLocation();
 
 				if (traceLocation.getBusinessTransaction().isPresent() && !traceLocation.getBusinessTransaction().get().equals("unkown transaction")) {
@@ -172,7 +155,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	/**
 	 * Returns all business transactions of the application model, which are consisted in the
 	 * httpCallables.
-	 * 
+	 *
 	 * @param application
 	 *            the application model
 	 * @param httpCallables
