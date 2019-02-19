@@ -20,7 +20,7 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * Abstract class converting arbitrary data
- * 
+ *
  * @author Tobias Angerstein
  *
  * @param <T>
@@ -45,7 +45,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param tag
 	 *            tag of application
 	 * @param eurekaRestTemplate
@@ -58,7 +58,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 
 	/**
 	 * Extracts session logs from data.
-	 * 
+	 *
 	 * @param data
 	 * @return
 	 */
@@ -66,7 +66,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 
 	/**
 	 * Builds session logs
-	 * 
+	 *
 	 * @param sortedList
 	 *            Map of requests per session log
 	 * @param businessTransactions
@@ -88,12 +88,12 @@ public abstract class AbstractSessionLogsExtractor<T> {
 			boolean lastIsRedirect = false;
 
 			for (HTTPRequestData httpRequest : requestList) {
-				Pair<String, String> bt = businessTransactions.get((Long) httpRequest.getIdentifier());
+				Pair<String, String> bt = businessTransactions.get(httpRequest.getIdentifier());
 
 				if ((bt != null)) {
 					if (!lastIsRedirect) {
 						entry.append(";\"").append(bt.getLeft()).append("\":").append(httpRequest.getTimestamp()).append(":")
-								.append(httpRequest.getTimestamp() + ((long) httpRequest.getResponseTime()));
+								.append(httpRequest.getTimestamp() + (httpRequest.getResponseTime()));
 
 						appendHTTPInfo(entry, httpRequest, bt.getRight());
 						empty = false;
@@ -117,7 +117,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 
 	/**
 	 * Appends the HTTP info of the {@link HTTPRequestProcessingImpl} to the session log
-	 * 
+	 *
 	 * @param entry
 	 *            The session log
 	 * @param httpRequest
@@ -216,7 +216,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 
 	/**
 	 * Extracts the session id from cookies
-	 * 
+	 *
 	 * @param cookies
 	 *            the cookies of the request
 	 * @return the session id
@@ -251,7 +251,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 
 	/**
 	 * Encodes a map of parameters into a query string
-	 * 
+	 *
 	 * @param params
 	 * @return
 	 */
@@ -282,14 +282,9 @@ public abstract class AbstractSessionLogsExtractor<T> {
 		}
 	}
 
-	/**
-	 * Catches system model for certain
-	 * 
-	 * @return
-	 */
 	protected Application retrieveApplicationModel(String tag) {
 		if (tag == null) {
-			LOGGER.warn("Cannot retrieve the system model for naming the Session Logs. The tag is nulL!");
+			LOGGER.warn("Cannot retrieve the application model for naming the Session Logs. The tag is nulL!");
 			return null;
 		}
 

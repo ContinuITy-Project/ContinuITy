@@ -3,6 +3,7 @@ package org.continuity.session.logs.extractor;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -16,13 +17,14 @@ import org.apache.pdfbox.pdmodel.MissingResourceException;
 import org.continuity.api.entities.artifact.ModularizedSessionLogs;
 import org.continuity.api.entities.artifact.ProcessingTimeNormalDistributions;
 import org.continuity.commons.idpa.RequestUriMapper;
+import org.continuity.commons.openxtrace.OpenXtraceTracer;
+import org.continuity.commons.utils.ModularizationUtils;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.Callable;
 import org.spec.research.open.xtrace.api.core.callables.NestingCallable;
 import org.spec.research.open.xtrace.api.core.callables.RemoteInvocation;
-import org.spec.research.open.xtrace.dflt.impl.core.LocationImpl;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,7 +34,9 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	/**
 	 * The hostnames of the services, which have to be tested.
 	 */
-	private Map<String, String> services;
+	private final Map<String, String> services;
+
+	private final Collection<String> targetHostNames;
 
 	/**
 	 * The different application models per tag
@@ -41,7 +45,7 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param tag
 	 *            The tag of the application
 	 * @param eurekaRestTemplate
@@ -52,6 +56,7 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	public ModularizedOPENxtraceSessionLogsExtractor(String tag, RestTemplate eurekaRestTemplate, Map<String, String> services) {
 		super(tag, eurekaRestTemplate);
 		this.services = services;
+		this.targetHostNames = ModularizationUtils.getTargetHostNames(services, restTemplate);
 	}
 
 	@Override
@@ -74,7 +79,7 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 
 	/**
 	 * Extract thinktimes from traces
-	 * 
+	 *
 	 * @param traces
 	 *            the traces
 	 * @return thinktime distributions before and after the modularized callable is executed.
@@ -83,7 +88,7 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 		HashMap<String, List<Double>> preThinkTimes = new HashMap<String, List<Double>>();
 		HashMap<String, List<Double>> postThinkTimes = new HashMap<String, List<Double>>();
 		for (Trace trace : traces) {
-			if (null != trace.getRoot() && null != trace.getRoot().getRoot()) {
+			if ((null != trace.getRoot()) && (null != trace.getRoot().getRoot())) {
 				try {
 					Triple<String, Long, Long> thinktimes = getThinktimes(trace.getRoot().getRoot());
 
@@ -143,53 +148,19 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	 */
 	@Override
 	protected List<HTTPRequestProcessingImpl> diveForHTTPRequestProcessingCallable(Callable callable) {
-		List<HTTPRequestProcessingImpl> httpRequestProcessingCallables = new ArrayList<HTTPRequestProcessingImpl>();
-		if (null != callable) {
-			LinkedBlockingQueue<Callable> callables = new LinkedBlockingQueue<Callable>();
-			callables.add(callable);
-			String currentCookie = "";
-			while (!callables.isEmpty()) {
-				Callable currentCallable = callables.poll();
-				if (currentCallable instanceof HTTPRequestProcessingImpl) {
-					HTTPRequestProcessingImpl httpCallable = (HTTPRequestProcessingImpl) currentCallable;
-					// We assume here, that if the port is not provided, the standard port is used
-					if (httpCallable.getContainingSubTrace().getLocation().getPort() == -1 && httpCallable.getContainingSubTrace().getLocation() instanceof LocationImpl) {
-						((LocationImpl) httpCallable.getContainingSubTrace().getLocation()).setPort(80);
-					}
-
-					if (httpCallable.getHTTPHeaders().get().containsKey("cookie")) {
-						currentCookie = httpCallable.getHTTPHeaders().get().get("cookie");
-					}
-
-					try {
-						if (callableTargetsDedicatedHost(httpCallable)) {
-							httpCallable.getHTTPHeaders().get().put("cookie", currentCookie);
-							httpRequestProcessingCallables.add(httpCallable);
-						} else {
-							callables.addAll(httpCallable.getCallees());
-						}
-					} catch (MissingResourceException e) {
-						e.printStackTrace();
-					}
-				} else if (currentCallable instanceof NestingCallable) {
-					callables.addAll(((NestingCallable) currentCallable).getCallees());
-				} else if (currentCallable instanceof RemoteInvocation && ((RemoteInvocation) currentCallable).getTargetSubTrace().isPresent()
-						&& null != ((RemoteInvocation) currentCallable).getTargetSubTrace().get().getRoot()) {
-					callables.add(((RemoteInvocation) currentCallable).getTargetSubTrace().get().getRoot());
-				}
-			}
-		}
-		return httpRequestProcessingCallables;
+		return OpenXtraceTracer.forRootAndHosts(callable, targetHostNames).extractSubtraces();
 	}
 
 	/**
+	 * TODO: Only used by {@link #getThinktimes(Callable)}. To be replaced.
+	 *
 	 * Checks, whether the callable targets the dedicated host.
-	 * 
+	 *
 	 * @param httpCallable
 	 *            The {@link HTTPRequestProcessingImpl}, which is analyzed.
 	 * @return true, if it targets one of the dedicated hosts, else false
 	 * @throws MissingResourceException
-	 * 
+	 *
 	 */
 	private boolean callableTargetsDedicatedHost(HTTPRequestProcessingImpl httpCallable) throws MissingResourceException {
 		if (!services.values().contains("undefined")) {
@@ -203,7 +174,7 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 					RequestUriMapper uriMapper = new RequestUriMapper(applicationModel);
 					HttpEndpoint interf = uriMapper.map(httpCallable.getUri(), httpCallable.getRequestMethod().get().name());
 
-					if (interf != null && interf.getDomain().equals(httpCallable.getContainingSubTrace().getLocation().getHost())) {
+					if ((interf != null) && interf.getDomain().equals(httpCallable.getContainingSubTrace().getLocation().getHost())) {
 						return true;
 					}
 				}
@@ -218,7 +189,7 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	 * modularized callable has to be checked. This information can be later used to adapt the
 	 * thinktimes of the modularized behavior model. Same stands for the difference of the exit
 	 * times.
-	 * 
+	 *
 	 * @param callable
 	 *            the callable tree, which need to be scanned
 	 * @return a pair of pre thinktime and post thinktime in nano second
@@ -245,8 +216,8 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 				}
 				if (currentCallable instanceof NestingCallable) {
 					callables.addAll(((NestingCallable) currentCallable).getCallees());
-				} else if (currentCallable instanceof RemoteInvocation && ((RemoteInvocation) currentCallable).getTargetSubTrace().isPresent()
-						&& null != ((RemoteInvocation) currentCallable).getTargetSubTrace().get().getRoot()) {
+				} else if ((currentCallable instanceof RemoteInvocation) && ((RemoteInvocation) currentCallable).getTargetSubTrace().isPresent()
+						&& (null != ((RemoteInvocation) currentCallable).getTargetSubTrace().get().getRoot())) {
 					callables.add(((RemoteInvocation) currentCallable).getTargetSubTrace().get().getRoot());
 				}
 			}
@@ -256,7 +227,7 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 
 	/**
 	 * Returns a pair of the pre think time and the post think time
-	 * 
+	 *
 	 * @param rootHttpCallable
 	 *            the original http request
 	 * @param modularizedHttpCallable
@@ -265,9 +236,9 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	 */
 	private Triple<String, Long, Long> calculateThinktimes(HTTPRequestProcessingImpl rootHttpCallable, HTTPRequestProcessingImpl modularizedHttpCallable) {
 
-		if (null == rootHttpCallable && null == modularizedHttpCallable) {
+		if ((null == rootHttpCallable) && (null == modularizedHttpCallable)) {
 			return null;
-		} else if ((null != rootHttpCallable && null == modularizedHttpCallable)) {
+		} else if (((null != rootHttpCallable) && (null == modularizedHttpCallable))) {
 			// No modularized request, which targets the right system, was found. In this case, we
 			// need to provide the whole response time of the service
 			return Triple.of("root", rootHttpCallable.getResponseTime() / TO_MILLIS_DIVIDER /2, rootHttpCallable.getResponseTime() / TO_MILLIS_DIVIDER /2);
