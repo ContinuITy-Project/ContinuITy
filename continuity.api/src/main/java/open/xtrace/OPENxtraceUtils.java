@@ -2,7 +2,11 @@ package open.xtrace;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.continuity.api.entities.links.LinkExchangeModel;
@@ -18,6 +22,12 @@ import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializa
 import org.springframework.web.client.RestTemplate;
 
 public class OPENxtraceUtils {
+
+	private static final String JSESSIONID = "JSESSIONID";
+
+	private static final String MD_SID = "md.sid";
+
+	private static final String COOKIES_KEY = "cookie";
 
 	/**
 	 * Deserializes a given String into a list of traces
@@ -104,35 +114,65 @@ public class OPENxtraceUtils {
 	/**
 	 * Extracts the session id from cookies
 	 *
-	 * @param cookies
+	 * @param cookieString
 	 *            the cookies of the request
 	 * @return the session id
 	 */
-	public static String extractSessionIdFromCookies(String cookies) {
-		String sessionID = null;
-		if (cookies != null) {
-			int begin = -1;
+	public static String extractSessionIdFromCookies(String cookieString) {
+		Map<String, String> cookies = splitCookies(cookieString);
 
-			if (cookies.indexOf("JSESSIONID=") != -1) {
-				begin = cookies.indexOf("JSESSIONID=") + "JSESSIONID=".length();
-			} else if (cookies.indexOf("md.sid=") != -1) {
-				begin = cookies.indexOf("md.sid=") + "md.sid=".length();
-			} else {
-				return null;
-			}
+		String sessionId = cookies.get(JSESSIONID);
 
-			sessionID = "";
-
-			while (begin < cookies.length()) {
-				char c = cookies.charAt(begin);
-				if (c == ';') {
-					break;
-				}
-				sessionID += c;
-				begin++;
-			}
+		if (sessionId == null) {
+			sessionId = cookies.get(MD_SID);
 		}
 
-		return sessionID;
+		return sessionId;
 	}
+
+	public static void setSessionId(HTTPRequestProcessingImpl proc, String sessionId) {
+		if (!proc.getHTTPHeaders().isPresent()) {
+			proc.setHTTPHeaders(new HashMap<>());
+		}
+
+		if (proc.getHTTPHeaders().get().containsKey(COOKIES_KEY)) {
+			Map<String, String> cookies = splitCookies(proc.getHTTPHeaders().get().get(COOKIES_KEY));
+
+			if (cookies.containsKey(MD_SID)) {
+				cookies.put(MD_SID, sessionId);
+			} else {
+				cookies.put(JSESSIONID, sessionId);
+			}
+
+			proc.getHTTPHeaders().get().put(COOKIES_KEY, mergeCookies(cookies));
+		} else {
+			proc.getHTTPHeaders().get().put(COOKIES_KEY, JSESSIONID + "=" + sessionId);
+		}
+
+	}
+
+	private static Map<String, String> splitCookies(String cookieString) {
+		LinkedHashMap<String, String> cookies = new LinkedHashMap<>();
+		Arrays.stream(cookieString.split(";")).map(String::trim).map(s -> s.split("=")).forEach(s -> cookies.put(s[0], s.length > 1 ? s[1] : null));
+
+		return cookies;
+	}
+
+	private static String mergeCookies(Map<String, String> cookies) {
+		StringBuilder builder = new StringBuilder();
+
+		cookies.entrySet().forEach(entry -> {
+			builder.append(entry.getKey());
+
+			if (entry.getValue() != null) {
+				builder.append("=");
+				builder.append(entry.getValue());
+			}
+
+			builder.append(";");
+		});
+
+		return builder.substring(0, builder.length() - 1).toString();
+	}
+
 }

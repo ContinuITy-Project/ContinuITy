@@ -2,6 +2,7 @@ package org.continuity.wessbas.managers;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringReader;
@@ -9,41 +10,34 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
-import org.continuity.api.entities.artifact.BehaviorModel.Behavior;
-import org.continuity.api.entities.artifact.BehaviorModel.MarkovState;
-import org.continuity.api.entities.artifact.BehaviorModel.Transition;
-import org.continuity.api.entities.artifact.ModularizedSessionLogs;
 import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.artifact.SessionLogsInput;
 import org.continuity.api.entities.artifact.SessionsBundle;
 import org.continuity.api.entities.artifact.SimplifiedSession;
-import org.continuity.api.entities.deserialization.BehaviorModelSerializer;
+import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
+import org.continuity.api.entities.artifact.markovbehavior.MarkovChain;
+import org.continuity.api.entities.artifact.markovbehavior.NormalDistribution;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.rest.RestApi;
 import org.continuity.api.rest.RestApi.IdpaApplication;
 import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.idpa.application.Application;
-import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.wessbas.entities.BehaviorModelPack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spec.research.open.xtrace.api.core.SubTrace;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializationFactory;
@@ -55,11 +49,12 @@ import net.sf.markov4jmeter.behaviormodelextractor.BehaviorModelExtractor;
 import net.sf.markov4jmeter.behaviormodelextractor.extraction.ExtractionException;
 import net.sf.markov4jmeter.testplangenerator.util.CSVHandler;
 import open.xtrace.OPENxtraceUtils;
+import wessbas.commons.parser.ParseException;
 
 /**
  * Manager which modularizes the Behavior Models
  *
- * @author Tobias Angerstein
+ * @author Tobias Angerstein, Henning Schulz
  *
  */
 public class WorkloadModularizationManager {
@@ -93,6 +88,10 @@ public class WorkloadModularizationManager {
 	 * File extension
 	 */
 	private static final String FILE_EXT = ".csv";
+
+	private static final String SESSION_ID_PREFIX = "generated_";
+
+	private final AtomicLong sessionIdCounter = new AtomicLong(0);
 
 	/**
 	 * Eureka rest template
@@ -143,208 +142,127 @@ public class WorkloadModularizationManager {
 		List<SessionsBundle> sessionBundles = behaviorModelPack.getSessionsBundlePack().getSessionsBundles();
 		List<HTTPRequestProcessingImpl> httpCallables = OPENxtraceUtils.extractHttpRequestCallables(OPENxtraceUtils.getOPENxtraces(linkExchangeModel, plainRestTemplate));
 		Application application = eurekaRestTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(tag).get(), Application.class);
+
+		MarkovBehaviorModel behaviorModel = new MarkovBehaviorModel();
+
 		for (SessionsBundle sessionBundle : sessionBundles) {
-			modularizeUserGroup(application, sessionBundle, behaviorModelPack, services, httpCallables);
+			try {
+				behaviorModel.addMarkovChain(modularizeUserGroup(application, sessionBundle, behaviorModelPack, services, httpCallables));
+			} catch (IOException e) {
+				LOGGER.error("Could not modularize behavior model!", e);
+			}
+		}
+
+		behaviorModel.synchronizeMarkovChains();
+
+		for (MarkovChain chain : behaviorModel.getMarkovChains()) {
+			String behaviorFile = behaviorModelPack.getPathToBehaviorModelFiles().resolve("behaviormodelextractor").resolve(chain.getId() + FILE_EXT).toFile().toString();
+			LOGGER.info("Storing the modularized behavior model to {}...", behaviorFile);
+
+			try {
+				csvHandler.writeValues(behaviorFile, chain.toCsv());
+			} catch (SecurityException | NullPointerException | IOException e) {
+				LOGGER.error("Could not save the behavior model!", e);
+			}
 		}
 	}
 
 	/**
-	 * Modularizes a certain behavior model
+	 * Modularizes a certain behavior model. That is, each Markov state representing a request that
+	 * is not in the set of tested services is replaced by several other states representing the
+	 * behavior that this request causes at the target services.
 	 *
 	 * @param sessionBundle
 	 *            The session bundle which is modularized
 	 * @param services
 	 *            The targeted load test of the modularized services.
+	 * @return The modularized Markov chain.
+	 * @throws IOException
+	 * @throws NullPointerException
+	 * @throws FileNotFoundException
 	 */
-	private void modularizeUserGroup(Application application, SessionsBundle sessionBundle, BehaviorModelPack behaviorModelPack, Map<String, String> services,
-			List<HTTPRequestProcessingImpl> httpCallables) {
-		// Get all sessionIds
+	private MarkovChain modularizeUserGroup(Application application, SessionsBundle sessionBundle, BehaviorModelPack behaviorModelPack, Map<String, String> services,
+			List<HTTPRequestProcessingImpl> httpCallables) throws FileNotFoundException, IOException {
+		LOGGER.info("Modularizing behavior model {} at path {}...", sessionBundle.getBehaviorId(), behaviorModelPack.getPathToBehaviorModelFiles());
+
+		String behaviorFile = behaviorModelPack.getPathToBehaviorModelFiles().resolve("behaviormodelextractor").resolve(FILENAME + sessionBundle.getBehaviorId() + FILE_EXT).toFile().toString();
+		MarkovChain markovChain = MarkovChain.fromCsv(csvHandler.readValues(behaviorFile));
+		markovChain.setId(FILENAME + sessionBundle.getBehaviorId());
+
+		Map<String, List<Trace>> tracesPerState = getTracesPerState(filterTraces(httpCallables, sessionBundle), application);
+
+		for (String state : markovChain.getRequestStates()) {
+			modularizeMarkovState(markovChain, state, tracesPerState.get(state), application, services);
+		}
+
+		LOGGER.info("Modularization of {} done.", behaviorModelPack.getPathToBehaviorModelFiles());
+
+		return markovChain;
+	}
+
+	private List<HTTPRequestProcessingImpl> filterTraces(List<HTTPRequestProcessingImpl> httpCallables, SessionsBundle sessionBundle) {
 		List<String> sessionIds = sessionBundle.getSessions().stream().map(SimplifiedSession::getId).collect(Collectors.toList());
 
-		// Filter callables, which match with the sessionIds
-		// Henning: Das was getan wird auslagern Methode auslagern
-		List<HTTPRequestProcessingImpl> filteredCallables = httpCallables.stream()
+		return httpCallables.stream()
 				.filter(p -> p.getHTTPHeaders().get().containsKey("cookie") && sessionIds.contains(OPENxtraceUtils.extractSessionIdFromCookies(p.getHTTPHeaders().get().get("cookie"))))
 				.collect(Collectors.toList());
-		Behavior rootBehaviorModel = null;
-
-		try {
-			rootBehaviorModel = BehaviorModelSerializer.deserializeBehaviorModel(csvHandler
-					.readValues(behaviorModelPack.getPathToBehaviorModelFiles().resolve("behaviormodelextractor").resolve(FILENAME + sessionBundle.getBehaviorId() + FILE_EXT).toFile().toString()));
-		} catch (NullPointerException | IOException e) {
-			e.printStackTrace();
-		}
-
-		List<String> markovStateNames = rootBehaviorModel.getMarkovStates().stream().map(p -> p.getId()).collect(Collectors.toList());
-
-		// Delete unnecessary endpoints in the application model, which are not represented in the
-		// markov chain.
-		deleteNotOccurringEndpoints(application, markovStateNames);
-
-		// Get Replacing Requests per Markov chain
-		// TODO: !!! multiple traces with the same session ID will be put into the same session
-		Map<String, List<Trace>> requestsToReplaceMap = getReplacingRequests(filteredCallables, application, services);
-
-		// Get modularized Session logs for each markov state
-		Map<String, ModularizedSessionLogs> modularizedSessionLogsMap = requestsToReplaceMap.entrySet().stream()
-				.map(p -> new AbstractMap.SimpleEntry<String, ModularizedSessionLogs>(p.getKey(), getModularizedSessionLogs(p.getValue(), services))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-		// TODO: Schreibe gemergte Sessionlogs in anderes File
-		// Rename usecases of each session logs to {markovStateName}#useCase
-		modularizedSessionLogsMap.entrySet().stream().forEach(e -> e.setValue(renameSessionLogs(e)));
-
-		// Write modularized session logs back to session logs file
-		writeSessionLogs(modularizedSessionLogsMap, behaviorModelPack.getPathToBehaviorModelFiles());
-
-		// Get behavior model for each modularized session log
-		Map<String, Pair<Behavior, ModularizedSessionLogs>> modularizedBehaviorModelsPerMarkovState = new HashMap<String, Pair<Behavior, ModularizedSessionLogs>>();
-		for (Entry<String, ModularizedSessionLogs> entry : modularizedSessionLogsMap.entrySet()) {
-			Behavior behavior = BehaviorModelSerializer.deserializeBehaviorModel(getBehaviorModel(entry.getValue(), entry.getKey(), sessionBundle.getBehaviorId()));
-			modularizedBehaviorModelsPerMarkovState.put(entry.getKey(), Pair.of(behavior, entry.getValue()));
-		}
-
-		// Merge subbehavioralModels in the current behavior model
-		new BehaviorModelMerger().replaceMarkovStatesWithSubMarkovChains(rootBehaviorModel, modularizedBehaviorModelsPerMarkovState);
-
-		// Write behavior model back to file
-		try {
-			csvHandler.writeValues(behaviorModelPack.getPathToBehaviorModelFiles().resolve("behaviormodelextractor").resolve(FILENAME + sessionBundle.getBehaviorId() + FILE_EXT).toFile().toString(),
-					BehaviorModelSerializer.serializeBehaviorModel(rootBehaviorModel));
-		} catch (SecurityException | NullPointerException | IOException e) {
-			e.printStackTrace();
-		}
-
 	}
 
-	/**
-	 * Writes the modularized session logs in the existing session logs file
-	 *
-	 * @param modularizedSessionLogsMap
-	 *            the modularized session logs
-	 * @param path
-	 *            the path to the session logs directory
-	 */
-	private void writeSessionLogs(Map<String, ModularizedSessionLogs> modularizedSessionLogsMap, Path path) {
-		String rootSessionLogsString = "";
-		try {
-			rootSessionLogsString = FileUtils.readFileToString(path.resolve("sessions.dat").toFile(), "UTF-8");
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+	private void modularizeMarkovState(MarkovChain markovChain, String state, List<Trace> traces, Application application, Map<String, String> services) {
+		if ((traces == null) || traces.isEmpty()) {
+			LOGGER.info("Keeping state {}.", state);
+			return;
 		}
-		Map<String, String> rootSessionLogs = Stream.of(rootSessionLogsString.split("\n")).map(n -> new AbstractMap.SimpleEntry<>(n.split(";")[0], n))
-				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-		for (SessionLogs modularizedSessionLogs : modularizedSessionLogsMap.values()) {
-			if (modularizedSessionLogs.getLogs().isEmpty()) {
-				continue;
-			}
-			for (String modularizedSessionLog : modularizedSessionLogs.getLogs().split("\n")) {
-				String[] modularizedRequests = modularizedSessionLog.split(";");
-				if (rootSessionLogs.containsKey(modularizedRequests[0])) {
-					// Add all modularized requests to the corresponding session log
-					rootSessionLogs.put(modularizedRequests[0],
-							rootSessionLogs.get(modularizedRequests[0]).concat(";").concat(String.join(";", Arrays.copyOfRange(modularizedRequests, 1, modularizedRequests.length))));
-				}
-			}
-		}
-		// Write back into String
-		rootSessionLogsString = String.join("\n", rootSessionLogs.values().toArray(new String[rootSessionLogs.size()]));
+		SessionLogs sessionLogs = getModularizedSessionLogs(traces, services);
 
-		// Write back into File
-		try {
-			FileUtils.writeStringToFile(path.resolve("sessions.dat").toFile(), rootSessionLogsString, "UTF-8");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (sessionLogs.getLogs().isEmpty()) {
+			LOGGER.info("Removing state {}.", state);
+			double[] responseTimeSample = traces.stream().map(Trace::getRoot).map(SubTrace::getRoot).map(HTTPRequestProcessingImpl.class::cast).mapToDouble(r -> r.getResponseTime() / 1000000D)
+					.toArray();
+			markovChain.removeState(state, NormalDistribution.fromSample(responseTimeSample));
+		} else {
+			LOGGER.info("Replacing state {}.", state);
+			MarkovChain subChain = createSubMarkovChain(state, sessionLogs, markovChain.getId());
+
+			removePrePostProcessingState("PRE_PROCESSING#", subChain);
+			removePrePostProcessingState("POST_PROCESSING#", subChain);
+
+			markovChain.replaceState(state, subChain);
 		}
 	}
 
-	/**
-	 * Adds a prefix to each use case
-	 *
-	 * @param entry
-	 *            {@link Entry<String, SessionLogs>} containing the modularized session logs of a
-	 *            certain markov state.
-	 * @return the session logs containing the renamed use case names.
-	 */
-	private ModularizedSessionLogs renameSessionLogs(Entry<String, ModularizedSessionLogs> entry) {
-		if (entry.getValue().getLogs().isEmpty()) {
-			return entry.getValue();
+	private void removePrePostProcessingState(String prefix, MarkovChain chain) {
+		int removed = chain.removeStates(s -> s.startsWith(prefix), NormalDistribution.ZERO);
+
+		if (removed != 1) {
+			LOGGER.warn("Expected to remove 1 state with prefix {} but were {} states actually!", prefix, removed);
 		}
-		ModularizedSessionLogs sessionLogsContainer = entry.getValue();
-		String[] sessionLogs = sessionLogsContainer.getLogs().split("\n");
-		for (int i = 0; i < sessionLogs.length; i++) {
-			String[] requests = sessionLogs[i].split(";");
-			for (int j = 0; j < requests.length; j++) {
-				String[] requestParameter = requests[j].split(":");
-				// skip session id
-				if (requestParameter.length == 1) {
-					continue;
-				}
-				requestParameter[0] = "\"" + entry.getKey() + STATE_NAME_LIMITER + requestParameter[0].substring(1, requestParameter[0].length() - 1) + "\"";
-				requests[j] = String.join(":", requestParameter);
-			}
-			sessionLogs[i] = String.join(";", requests);
-		}
-		String sessionLogsString = String.join("\n", sessionLogs);
-		sessionLogsContainer.setLogs(sessionLogsString);
-		return sessionLogsContainer;
 	}
 
-	/**
-	 * Behavior model for the provided session log.
-	 *
-	 * @param sessionLogs
-	 *            the modularized session logs
-	 * @param markovChain
-	 *            the markov chain
-	 * @param behaviorId
-	 *            the behavior id
-	 * @return
-	 */
-	private String[][] getBehaviorModel(SessionLogs sessionLogs, String markovChain, int behaviorId) {
+	private MarkovChain createSubMarkovChain(String rootState, SessionLogs sessionLogs, String behaviorId) {
 		if (sessionLogs.getLogs().isEmpty()) {
 			return null;
 		}
-		Path modularizedSessionLogsPath = workingDir.resolve(String.valueOf(behaviorId));
-		modularizedSessionLogsPath.toFile().mkdir();
-		modularizedSessionLogsPath = modularizedSessionLogsPath.resolve(markovChain);
-		modularizedSessionLogsPath.toFile().mkdir();
 
-		moveEachRequestToSeparateSessionLog(sessionLogs); // TODO: Why ???
+		Path modularizedSessionLogsPath = workingDir.resolve(behaviorId).resolve(rootState);
+		modularizedSessionLogsPath.toFile().mkdirs();
+
 		BehaviorModelExtractor extractor = new BehaviorModelExtractor();
 		String[][] behaviorModel = null;
 		try {
 			Files.write(modularizedSessionLogsPath.resolve("sessions.dat"), Collections.singletonList(sessionLogs.getLogs()), StandardOpenOption.CREATE);
 			extractor.init(null, null, 0);
-			// TODO: The sessions will be clustered
-			extractor.createBehaviorModel(modularizedSessionLogsPath.resolve("sessions.dat").toString(), modularizedSessionLogsPath.toString());
-			// TODO: replace with
-			// extractor.extract(modularizedSessionLogsPath.resolve("sessions.dat").toString(),
-			// modularizedSessionLogsPath.toString(), "none");
-			behaviorModel = csvHandler.readValues(modularizedSessionLogsPath.resolve(FILENAME + "0" + FILE_EXT).toFile().toString());
-		} catch (NullPointerException | IOException | ExtractionException e) {
-			e.printStackTrace();
-		}
-		return behaviorModel;
-	}
+			// "simple" will generate a single behavior model (behaviormodel.csv)
+			extractor.extract(modularizedSessionLogsPath.resolve("sessions.dat").toString(), modularizedSessionLogsPath.toString(), "simple");
+			behaviorModel = csvHandler.readValues(modularizedSessionLogsPath.resolve(FILENAME + FILE_EXT).toFile().toString());
 
-	/**
-	 * Writes each request as separated session log.
-	 * @param sessionLogs
-	 */
-	private void moveEachRequestToSeparateSessionLog(SessionLogs sessionLogsContainer) {
-		ArrayList<String> separatedRequests = new ArrayList<String>();
-		String[] sessionLogs = sessionLogsContainer.getLogs().split("\n");
-		for (int i = 0; i < sessionLogs.length; i++) {
-			String[] requests = sessionLogs[i].split(";");
-			for (int j = 1; j < requests.length; j++) {
-				// TODO: !!! conflicts, e.g., i=1, j=23 and i=12, j=3
-				separatedRequests.add("fakeId" + i + j + ";" + requests[j]);
-			}
+			LOGGER.info("Created behavior model for {}.", rootState);
+		} catch (IOException | ExtractionException | ParseException e) {
+			LOGGER.error("Could not create behavior model", e);
 		}
-		sessionLogsContainer.setLogs(String.join("\n", separatedRequests.toArray(new String[separatedRequests.size()])));
+
+		return MarkovChain.fromCsv(behaviorModel);
 	}
 
 	/**
@@ -356,7 +274,7 @@ public class WorkloadModularizationManager {
 	 *            the services, which are going to be targeted
 	 * @return {@link SessionLogs}
 	 */
-	private ModularizedSessionLogs getModularizedSessionLogs(List<Trace> traces, Map<String, String> services) {
+	private SessionLogs getModularizedSessionLogs(List<Trace> traces, Map<String, String> services) {
 		OPENxtraceSerializer serializer = OPENxtraceSerializationFactory.getInstance().getSerializer(OPENxtraceSerializationFormat.JSON);
 		OutputStream stream = new ByteArrayOutputStream();
 		serializer.prepare(stream);
@@ -379,66 +297,31 @@ public class WorkloadModularizationManager {
 		}
 
 		SessionLogsInput input = new SessionLogsInput(services, jsonArray.toString());
-		String createSessionLogsLink = RestApi.SessionLogs.CREATE.requestUrl().get();
-		return eurekaRestTemplate.postForObject(createSessionLogsLink, input, ModularizedSessionLogs.class);
+		String createSessionLogsLink = RestApi.SessionLogs.CREATE.requestUrl().withQuery(RestApi.SessionLogs.QueryParameters.ADD_PRE_POST_PROCESSING, "true").get();
+		return eurekaRestTemplate.postForObject(createSessionLogsLink, input, SessionLogs.class);
 	}
 
-	/**
-	 * Returns all requests, which need to be replaced
-	 *
-	 * @param filteredCallables
-	 *            All Callables, which are part of a specific behavior model
-	 * @param application
-	 *            the application model, which only contains the endpoints, which are represented in
-	 *            the behavior model.
-	 * @param services
-	 *            The service(s) under test.
-	 * @return
-	 */
-	//TODO: Muss auch ohne Angabe vom service hostname gehen
-	private Map<String, List<Trace>> getReplacingRequests(List<HTTPRequestProcessingImpl> filteredCallables, Application application, Map<String, String> services) {
+	private Map<String, List<Trace>> getTracesPerState(List<HTTPRequestProcessingImpl> filteredCallables, Application application) {
 		Map<String, List<Trace>> requestsToReplaceMap = new HashMap<String, List<Trace>>();
 		RequestUriMapper uriMapper = new RequestUriMapper(application);
+
 		for (HTTPRequestProcessingImpl httpRequestProcessingImpl : filteredCallables) {
 			HttpEndpoint endpoint = uriMapper.map(httpRequestProcessingImpl.getUri(), httpRequestProcessingImpl.getRequestMethod().get().name());
-			if (!services.values().contains(endpoint.getDomain())) {
-				// This request is needed to be modularized by the session logs service
-				if (requestsToReplaceMap.containsKey(endpoint.getId())) {
-					requestsToReplaceMap.get(endpoint.getId()).add(httpRequestProcessingImpl.getContainingSubTrace().getContainingTrace());
-				} else {
-					requestsToReplaceMap.put(endpoint.getId(), new ArrayList<Trace>(Arrays.asList(httpRequestProcessingImpl.getContainingSubTrace().getContainingTrace())));
+
+			if (endpoint != null) {
+				List<Trace> traces = requestsToReplaceMap.get(endpoint.getId());
+
+				if (traces == null) {
+					traces = new ArrayList<>();
+					requestsToReplaceMap.put(endpoint.getId(), traces);
 				}
+
+				OPENxtraceUtils.setSessionId(httpRequestProcessingImpl, SESSION_ID_PREFIX + sessionIdCounter.getAndIncrement());
+				traces.add(httpRequestProcessingImpl.getContainingSubTrace().getContainingTrace());
 			}
 		}
+
 		return requestsToReplaceMap;
 	}
 
-	/**
-	 * Deletes all {@link Endpoint} objects, which do not occur in the current Markov chain.
-	 *
-	 * @param application
-	 *            the application model
-	 * @param markovStateNames
-	 *            all markov state names
-	 */
-	private void deleteNotOccurringEndpoints(Application application, List<String> markovStateNames) {
-		List<Endpoint<?>> endpointsToDelete = new ArrayList<Endpoint<?>>();
-		for (Endpoint<?> endpoint : application.getEndpoints()) {
-			if (!markovStateNames.contains(endpoint.getId())) {
-				endpointsToDelete.add(endpoint);
-			}
-		}
-		application.getEndpoints().removeAll(endpointsToDelete);
-	}
-
-	private boolean validateMarkovState(MarkovState markovState) {
-		if (markovState.getTransitions().isEmpty()) {
-			return true;
-		}
-		double propability = 0;
-		for (Transition transition : markovState.getTransitions()) {
-			propability += transition.getProbability();
-		}
-		return Math.abs(propability - 1.0) < 0.00000001;
-	}
 }

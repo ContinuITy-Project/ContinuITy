@@ -8,13 +8,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.commons.openxtrace.OpenXtraceTracer;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
-import org.spec.research.open.xtrace.api.core.Location;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.Callable;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
@@ -42,7 +42,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 
 	@Override
 	public String getSessionLogs(Iterable<Trace> data) {
-		List<HTTPRequestProcessingImpl> httpCallables = extractHttpRequestCallables(data);
+		List<HTTPRequestData> httpCallables = extractHttpRequestCallables(data);
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(httpCallables);
 		Application applicationModel = retrieveApplicationModel(tag);
 		HashMap<Long, Pair<String, String>> businessTransactions;
@@ -65,11 +65,31 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 * @return Map of session logs and the corresponding requests, which are represented as
 	 *         {@link HTTPRequestProcessingImpl}
 	 */
-	protected HashMap<String, List<HTTPRequestData>> sortBySessionAndTimestamp(List<HTTPRequestProcessingImpl> sortedHTTPInvocCallables) {
-		Collections.sort(sortedHTTPInvocCallables, new Comparator<HTTPRequestProcessingImpl>() {
+	protected HashMap<String, List<HTTPRequestData>> sortBySessionAndTimestamp(List<HTTPRequestData> sortedHTTPInvocCallables) {
+		sortByTimestamp(sortedHTTPInvocCallables);
+
+		HashMap<String, List<HTTPRequestData>> sessionRequestMap = new HashMap<String, List<HTTPRequestData>>();
+
+		for (HTTPRequestData requestData : sortedHTTPInvocCallables) {
+			String sessionId = requestData.getSessionId();
+
+			if ((sessionId != null) && !sessionId.isEmpty()) {
+				if (sessionRequestMap.containsKey(sessionId)) {
+					sessionRequestMap.get(sessionId).add(requestData);
+				} else {
+					sessionRequestMap.put(sessionId, new ArrayList<>(Arrays.asList(requestData)));
+				}
+			}
+		}
+
+		return sessionRequestMap;
+	}
+
+	protected void sortByTimestamp(List<HTTPRequestData> requests) {
+		Collections.sort(requests, new Comparator<HTTPRequestData>() {
 
 			@Override
-			public int compare(HTTPRequestProcessingImpl arg0, HTTPRequestProcessingImpl arg1) {
+			public int compare(HTTPRequestData arg0, HTTPRequestData arg1) {
 				int startTimeComparison = Long.compare(arg0.getTimestamp(), arg1.getTimestamp());
 
 				if (startTimeComparison != 0) {
@@ -79,23 +99,6 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 				}
 			}
 		});
-
-		HashMap<String, List<HTTPRequestData>> sessionRequestMap = new HashMap<String, List<HTTPRequestData>>();
-
-		for (HTTPRequestProcessingImpl requestData : sortedHTTPInvocCallables) {
-			if (requestData.getHTTPHeaders().isPresent() && requestData.getHTTPHeaders().get().containsKey("cookie")) {
-				String sessionId = extractSessionIdFromCookies(requestData.getHTTPHeaders().get().get("cookie"));
-				if (null != sessionId) {
-					if (sessionRequestMap.containsKey(sessionId)) {
-						sessionRequestMap.get(sessionId).add(new OPENxtraceHttpRequestData(requestData));
-					} else {
-						sessionRequestMap.put(sessionId, new ArrayList<HTTPRequestData>(Arrays.asList(new OPENxtraceHttpRequestData(requestData))));
-					}
-				}
-			}
-		}
-
-		return sessionRequestMap;
 	}
 
 	/**
@@ -104,8 +107,8 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 * @param traces
 	 * @param sortedHTTPInvocCallables
 	 */
-	protected List<HTTPRequestProcessingImpl> extractHttpRequestCallables(Iterable<Trace> traces) {
-		List<HTTPRequestProcessingImpl> httpCallables = new ArrayList<HTTPRequestProcessingImpl>();
+	protected List<HTTPRequestData> extractHttpRequestCallables(Iterable<Trace> traces) {
+		List<HTTPRequestData> httpCallables = new ArrayList<HTTPRequestData>();
 		for (Trace trace : traces) {
 			if ((null != trace.getRoot()) && (null != trace.getRoot().getRoot())) {
 				httpCallables.addAll(diveForHTTPRequestProcessingCallable(trace.getRoot().getRoot()));
@@ -115,15 +118,15 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	}
 
 	/**
-	 * Returns the {@link HTTPRequestProcessingImpl} object of the corresponding
-	 * {@link RemoteInvocationImpl} which is on the highest level.
+	 * Returns a list of {@link HTTPRequestData} for the {@link HTTPRequestProcessingImpl} object of
+	 * the corresponding {@link RemoteInvocationImpl} which is on the highest level.
 	 *
 	 * @param callable
 	 *            The root callable
-	 * @return List of {@link HTTPRequestProcessingImpl}
+	 * @return List of {@link HTTPRequestData}
 	 */
-	protected List<HTTPRequestProcessingImpl> diveForHTTPRequestProcessingCallable(Callable callable) {
-		return OpenXtraceTracer.forRoot(callable).extractSubtraces();
+	protected List<HTTPRequestData> diveForHTTPRequestProcessingCallable(Callable callable) {
+		return OpenXtraceTracer.forRoot(callable).extractSubtraces().stream().map(OPENxtraceHttpRequestData::new).collect(Collectors.toList());
 	}
 
 	/**
@@ -136,16 +139,14 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 *
 	 * @return all existing business transactions
 	 */
-	protected HashMap<Long, Pair<String, String>> getBusinessTransactionsFromOPENxtraces(Iterable<HTTPRequestProcessingImpl> httpCallables) {
+	protected HashMap<Long, Pair<String, String>> getBusinessTransactionsFromOPENxtraces(Iterable<HTTPRequestData> httpCallables) {
 		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<Long, Pair<String, String>>();
 
-		for (HTTPRequestProcessingImpl httpCallable : httpCallables) {
-			if ((httpCallable.getContainingSubTrace() != null) && (httpCallable.getContainingSubTrace().getLocation() != null)) {
-				Location traceLocation = httpCallable.getContainingSubTrace().getLocation();
+		for (HTTPRequestData httpCallable : httpCallables) {
+			String businessTransaction = httpCallable.getBusinessTransaction();
 
-				if (traceLocation.getBusinessTransaction().isPresent() && !traceLocation.getBusinessTransaction().get().equals("unkown transaction")) {
-					businessTransactions.put((Long) httpCallable.getIdentifier().get(), Pair.of(traceLocation.getBusinessTransaction().get(), httpCallable.getUri()));
-				}
+			if ((businessTransaction != null) && !businessTransaction.isEmpty() && !businessTransaction.equals("unkown transaction")) {
+				businessTransactions.put(httpCallable.getIdentifier(), Pair.of(businessTransaction, httpCallable.getUri()));
 			}
 		}
 
@@ -162,19 +163,29 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 *            the {@link HTTPRequestProcessingImpl} callables
 	 * @return
 	 */
-	protected HashMap<Long, Pair<String, String>> getBusinessTransactionsFromApplicationModel(Application application, Iterable<HTTPRequestProcessingImpl> httpCallables) {
+	protected HashMap<Long, Pair<String, String>> getBusinessTransactionsFromApplicationModel(Application application, Iterable<HTTPRequestData> httpCallables) {
 		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<Long, Pair<String, String>>();
 		RequestUriMapper uriMapper = new RequestUriMapper(application);
 
-		for (HTTPRequestProcessingImpl httpCallable : httpCallables) {
-			HttpEndpoint interf = uriMapper.map(httpCallable.getUri(), httpCallable.getRequestMethod().get().name());
+		for (HTTPRequestData httpCallable : httpCallables) {
+			String bt = null;
+			String path = null;
 
-			if ((interf != null)
-					&& interf.getDomain().equals(httpCallable.getContainingSubTrace().getLocation().getHost())
-					&& interf.getPort().equals(Integer.toString(httpCallable.getContainingSubTrace().getLocation().getPort()))) {
-				businessTransactions.put((Long) httpCallable.getIdentifier().get(), Pair.of(interf.getId(), interf.getPath()));
+			if (httpCallable.isSpecial()) {
+				bt = httpCallable.getBusinessTransaction();
+				path = httpCallable.getUri();
+			} else {
+				HttpEndpoint interf = uriMapper.map(httpCallable.getUri(), httpCallable.getRequestMethod());
+
+				if ((interf != null) && interf.getDomain().equals(httpCallable.getHost()) && interf.getPort().equals(Integer.toString(httpCallable.getPort()))) {
+					bt = interf.getId();
+					path = interf.getPath();
+				}
 			}
 
+			if (bt != null) {
+				businessTransactions.put(httpCallable.getIdentifier(), Pair.of(bt, path));
+			}
 		}
 
 		return businessTransactions;

@@ -10,11 +10,13 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.NotSupportedException;
+
 import rocks.inspectit.shared.all.communication.data.HttpTimerData;
 
 /**
  * Wraps {@link HttpTimerData}
- * 
+ *
  * @author Tobias Angerstein
  *
  */
@@ -121,6 +123,16 @@ public class InspectITHttpRequestData implements HTTPRequestData {
 		}
 		return parameters.entrySet().stream().map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), e.getValue().toArray(new String[e.getValue().size()])))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+	}
+
+	@Override
+	public String getSessionId() {
+		throw new NotSupportedException("Session ID for inspectIT data is currently not supported!");
+	}
+
+	@Override
+	public String getBusinessTransaction() {
+		throw new NotSupportedException("Business transaction for inspectIT data is currently not supported!");
 	}
 
 }

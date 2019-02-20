@@ -6,9 +6,11 @@ import java.util.Optional;
 import org.spec.research.open.xtrace.api.core.callables.HTTPRequestProcessing;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 
+import open.xtrace.OPENxtraceUtils;
+
 /**
  * Wraps {@link HTTPRequestProcessingImpl}
- * 
+ *
  * @author tan
  *
  */
@@ -70,5 +72,23 @@ public class OPENxtraceHttpRequestData implements HTTPRequestData {
 	@Override
 	public long getResponseCode() {
 		return callable.getResponseCode().get();
+	}
+
+	@Override
+	public String getSessionId() {
+		if (callable.getHTTPHeaders().isPresent() && callable.getHTTPHeaders().get().containsKey("cookie")) {
+			return OPENxtraceUtils.extractSessionIdFromCookies(callable.getHTTPHeaders().get().get("cookie"));
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public String getBusinessTransaction() {
+		if ((callable.getContainingSubTrace() != null) && (callable.getContainingSubTrace().getLocation() != null)) {
+			return callable.getContainingSubTrace().getLocation().getBusinessTransaction().orElse(null);
+		} else {
+			return null;
+		}
 	}
 }

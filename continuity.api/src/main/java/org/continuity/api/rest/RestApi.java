@@ -653,7 +653,7 @@ public class RestApi {
 
 		/** {@value #ROOT}/{id} */
 		public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
-		
+
 		/** {@value #ROOT}/create */
 		public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.POST);
 
@@ -663,15 +663,23 @@ public class RestApi {
 		public static class Paths {
 
 			public static final String GET = "/{id}";
-			
+
 			public static final String CREATE = "/create";
 
 			private Paths() {
 			}
 		}
 
+		public static class QueryParameters {
+
+			public static final String ADD_PRE_POST_PROCESSING = "add-pre-post-processing";
+
+			private QueryParameters() {
+			}
+		}
+
 	}
-	
+
 	/**
 	 * REST API of the Forecast service.
 	 *
@@ -679,12 +687,12 @@ public class RestApi {
 	 *
 	 */
 	public static class Forecast {
-		
+
 		public static final String SERVICE_NAME = "forecast";
-		
+
 		private Forecast() {
 		}
-		
+
 		public static class ForecastResult {
 			public static final String ROOT = "/forecastbundle";
 
@@ -696,21 +704,21 @@ public class RestApi {
 				public static final String GET = "/{id}";
 
 				private Paths() {
-				}	
+				}
 			}
 		}
 		public static class Context {
 			public static final String ROOT = "/context";
-			
+
 			/** {@value #ROOT}/submit */
 			public static final RestEndpoint SUBMIT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.SUBMIT, RequestMethod.GET);
-			
+
 			public static class Paths {
-				
+
 				public static final String SUBMIT = "/submit";
 
 				private Paths() {
-				}	
+				}
 			}
 		}
 	}
@@ -821,7 +829,7 @@ public class RestApi {
 				}
 			}
 		}
-		
+
 		/**
 		 * Sessions Bundles API of the WESSBAS service.
 		 *

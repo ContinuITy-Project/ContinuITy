@@ -4,17 +4,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
 import org.continuity.api.entities.deserialization.BehaviorModelSerializer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * 
+ * Will be replaced in the future. Use {@link MarkovBehaviorModel} instead.
+ *
  * @author Manuel Palenga
  *
  */
+@Deprecated
 public class BehaviorModel {
 
 	@JsonInclude(Include.NON_NULL)
@@ -149,7 +152,7 @@ public class BehaviorModel {
 		@JsonProperty(value = "think-time-deviation")
 		@JsonInclude(Include.NON_NULL)
 		private Double deviation;
-		
+
 		/**
 		 * Default constructor.
 		 */
@@ -158,7 +161,7 @@ public class BehaviorModel {
 
 		/**
 		 * Constructor
-		 * 
+		 *
 		 * @param targetState
 		 *            the target state
 		 * @param propability
