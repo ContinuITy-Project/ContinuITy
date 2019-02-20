@@ -1,8 +1,11 @@
 package org.continuity.api.entities.deserialization;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -14,11 +17,14 @@ import org.continuity.api.entities.artifact.BehaviorModel.Transition;
 /**
  * Provides method for (de-) serialization of multidimensional arrays (csv) and {@link Behavior}
  * objects.
- * 
+ *
  * @author Tobias Angerstein
  *
  */
 public class BehaviorModelSerializer {
+
+	private static final DecimalFormatSymbols SYMBOLS = new DecimalFormatSymbols(Locale.US);
+	private static final DecimalFormat DEC_FORMAT = new DecimalFormat("#.###", SYMBOLS);
 
 	/**
 	 * Default zero edge.
@@ -27,7 +33,7 @@ public class BehaviorModelSerializer {
 
 	/**
 	 * Deserializes the behaviorModel csv representation into a {@link Behavior}
-	 * 
+	 *
 	 * @param csvRepresentation
 	 *            the csv representation of a {@link Behavior}
 	 * @return {@link Behavior}
@@ -70,7 +76,7 @@ public class BehaviorModelSerializer {
 		// Add ExitState
 		MarkovState exitState = new MarkovState();
 		exitState.setId("$");
-		exitState.setTransitions(Collections.EMPTY_LIST);
+		exitState.setTransitions(Collections.emptyList());
 		markovStates.add(exitState);
 
 		Behavior behavior = new Behavior();
@@ -81,7 +87,7 @@ public class BehaviorModelSerializer {
 
 	/**
 	 * Provides serialization of {@link Behavior} into a multidimensional array representation.
-	 * 
+	 *
 	 * @param rootBehaviorModel
 	 *            the behavior model, which has to be serialized.
 	 * @return {@link String[][]}
@@ -126,14 +132,14 @@ public class BehaviorModelSerializer {
 
 	/**
 	 * Fills empty fields with predefined zero edge, except csvRepresentation[0][0]
-	 * 
+	 *
 	 * @param csvRepresentation
 	 *            {@link String[][]}
 	 */
 	private static void fillEmptyFields(String[][] csvRepresentation) {
 		for (int i = 0; i < csvRepresentation.length; i++) {
 			for (int j = 0; j < csvRepresentation[i].length; j++) {
-				if (i == 0 && j == 0) {
+				if ((i == 0) && (j == 0)) {
 					csvRepresentation[i][j] = "";
 				} else if (csvRepresentation[i][j] == null) {
 					csvRepresentation[i][j] = DEFAULT_ZERO_EDGE;
@@ -144,12 +150,12 @@ public class BehaviorModelSerializer {
 
 	/**
 	 * Provides transition properties String
-	 * 
+	 *
 	 * @param transition
 	 * @return
 	 */
 	private static String getTransitionString(Transition transition) {
-		return String.format("%f; n(%f %f)", transition.getProbability(), transition.getMean(), transition.getDeviation());
+		return String.format("%s; n(%s %s)", DEC_FORMAT.format(transition.getProbability()), DEC_FORMAT.format(transition.getMean()), DEC_FORMAT.format(transition.getDeviation()));
 	}
 
 }

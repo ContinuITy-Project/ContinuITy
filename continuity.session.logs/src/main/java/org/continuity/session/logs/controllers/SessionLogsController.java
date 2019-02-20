@@ -2,10 +2,11 @@ package org.continuity.session.logs.controllers;
 
 import static org.continuity.api.rest.RestApi.SessionLogs.Paths.CREATE;
 import static org.continuity.api.rest.RestApi.SessionLogs.Paths.GET;
+import static org.continuity.api.rest.RestApi.SessionLogs.QueryParameters.ADD_PRE_POST_PROCESSING;
 
+import java.util.Date;
 import java.util.List;
 
-import org.continuity.api.entities.artifact.ModularizedSessionLogs;
 import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.artifact.SessionLogsInput;
 import org.continuity.api.rest.RestApi;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -45,7 +47,7 @@ public class SessionLogsController {
 
 	/**
 	 * Provides the already generated session logs with the provided id.
-	 * 
+	 *
 	 * @param id
 	 *            the id of the session logs.
 	 * @return {@link SessionLogs}
@@ -66,17 +68,18 @@ public class SessionLogsController {
 	/**
 	 * Creates session logs based on the provided input data. The Session logs will be directly
 	 * passed and are not stored in the storage.
-	 * 
+	 *
 	 * @param sessionLogsInput
 	 *            Provides the traces and the target services.
 	 * @return {@link SessionLogs}
 	 */
 	@RequestMapping(value = CREATE, method = RequestMethod.POST)
-	public ResponseEntity<ModularizedSessionLogs> getModularizedSessionLogs(@RequestBody SessionLogsInput sessionLogsInput) {
-		ModularizedOPENxtraceSessionLogsExtractor extractor = new ModularizedOPENxtraceSessionLogsExtractor("", eurekaRestTemplate, sessionLogsInput.getServices());
+	public ResponseEntity<SessionLogs> getModularizedSessionLogs(@RequestBody SessionLogsInput sessionLogsInput,
+			@RequestParam(name = ADD_PRE_POST_PROCESSING, defaultValue = "false") boolean addPrePostProcessing) {
+		ModularizedOPENxtraceSessionLogsExtractor extractor = new ModularizedOPENxtraceSessionLogsExtractor("", eurekaRestTemplate, sessionLogsInput.getServices(), addPrePostProcessing);
 		List<Trace> traces = OPENxtraceUtils.deserializeIntoTraceList(sessionLogsInput.getSerializedTraces());
-		ModularizedSessionLogs sessionLogsResult = extractor.getSessionLogsAndThinkTimes(traces);
+		String sessionLogs = extractor.getSessionLogs(traces);
 
-		return ResponseEntity.ok(sessionLogsResult);
+		return ResponseEntity.ok(new SessionLogs(new Date(), sessionLogs));
 	}
 }
