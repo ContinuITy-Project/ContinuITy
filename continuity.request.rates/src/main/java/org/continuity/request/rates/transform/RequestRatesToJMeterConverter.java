@@ -103,7 +103,13 @@ public class RequestRatesToJMeterConverter {
 	private CookieManager createCookieManager() {
 		CookiePanel gui = new CookiePanel();
 
-		return (CookieManager) gui.createTestElement();
+		CookieManager manager = (CookieManager) gui.createTestElement();
+
+		// Otherwise, we will get NullPointerExceptions in the load test results.
+		manager.removeProperty("CookieManager.policy");
+		manager.setProperty("CookieManager.implementation", "HC3CookieHandler");
+
+		return manager;
 	}
 
 	private Arguments createUserDefinedVariables() {
