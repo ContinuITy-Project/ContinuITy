@@ -11,7 +11,8 @@ import com.google.common.io.Files;
 public enum MarkovChainTestInstance {
 
 	SOCK_SHOP("/markov-chains/sock-shop.csv"), SOCK_SHOP_WO_CART("/markov-chains/sock-shop-wo-cartUsingGET.csv"), SIMPLE("/markov-chains/simple.csv"), SIMPLE_WO_A(
-			"/markov-chains/simple-wo-a.csv"), SIMPLE_INSERT("/markov-chains/simple-insert.csv"), SIMPLE_WITH_INSERT("/markov-chains/simple-with-insert.csv");
+			"/markov-chains/simple-wo-a.csv"), SIMPLE_INSERT(
+					"/markov-chains/simple-insert.csv"), SIMPLE_WITH_INSERT("/markov-chains/simple-with-insert.csv"), SPECIAL_NUMBERS("/markov-chains/special-numbers.csv");
 
 	private static final String SEPARATOR = ",";
 

@@ -18,6 +18,13 @@ public class MarkovChainTest {
 		testReadWrite(MarkovChainTestInstance.SIMPLE_WITH_INSERT);
 	}
 
+	@Test
+	public void testSpecialNumbers() throws IOException {
+		String[][] csv = MarkovChainTestInstance.SPECIAL_NUMBERS.getCsv();
+		MarkovChain chain = MarkovChain.fromCsv(csv);
+		System.out.println(chain);
+	}
+
 	private void testReadWrite(MarkovChainTestInstance instance) throws IOException {
 		String[][] csv = instance.getCsv();
 		MarkovChain chain = MarkovChain.fromCsv(csv);
