@@ -44,7 +44,7 @@ public class MarkovChain {
 	 */
 	public static final String FINAL_STATE = "$";
 
-	private static final Pattern TRANSITION_PATTERN = Pattern.compile("([0-9.]+); n\\(([0-9.]+) ([0-9.]+)\\)");
+	private static final Pattern TRANSITION_PATTERN = Pattern.compile("(.+); n\\((.+) (.+)\\)");
 
 	private static final String SUB_INITIAL_STATE = "SUB_INITIAL*";
 
