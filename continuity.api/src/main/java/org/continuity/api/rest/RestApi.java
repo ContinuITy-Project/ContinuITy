@@ -333,6 +333,9 @@ public class RestApi {
 			/** {@value #ROOT}/{tag} */
 			public static final RestEndpoint UPDATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE, RequestMethod.POST);
 
+			/** {@value #ROOT}/{tag}/workload-model */
+			public static final RestEndpoint UPDATE_FROM_WORKLOAD_MODEL = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_FROM_WORKLOAD_MODEL, RequestMethod.POST);
+
 			/** {@value #ROOT}/legacy/{tag}/update */
 			public static final RestEndpoint LEGACY_UPDATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.LEGACY_UPDATE, RequestMethod.GET);
 
@@ -344,6 +347,7 @@ public class RestApi {
 				public static final String GET = "/{tag}";
 				public static final String GET_DELTA = "/{tag}/delta";
 				public static final String UPDATE = "/{tag}";
+				public static final String UPDATE_FROM_WORKLOAD_MODEL = "/{tag}/workload-model";
 				public static final String LEGACY_UPDATE = "/legacy/{tag}/update";
 
 				private Paths() {

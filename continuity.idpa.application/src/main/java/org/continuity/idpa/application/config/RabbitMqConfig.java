@@ -6,7 +6,6 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -26,10 +25,6 @@ public class RabbitMqConfig {
 
 	public static final String SERVICE_NAME = "idpaapplication";
 
-	public static final String WORKLOAD_MODEL_CREATED_QUEUE_NAME = "continuity.idpaapplication.event.workloadmodel.created";
-
-	public static final String WORKLOAD_MODEL_CREATED_ROUTING_KEY = "#";
-
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
 	@Bean
@@ -43,22 +38,6 @@ public class RabbitMqConfig {
 	@Bean
 	TopicExchange idpaApplicationChangedExchange() {
 		return AmqpApi.IdpaApplication.EVENT_CHANGED.create();
-	}
-
-	@Bean
-	TopicExchange workloadModelCreatedExchange() {
-		return AmqpApi.WorkloadModel.EVENT_CREATED.create();
-	}
-
-	@Bean
-	Queue workloadModelCreatedQueue() {
-		return QueueBuilder.nonDurable(WORKLOAD_MODEL_CREATED_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
-				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
-	}
-
-	@Bean
-	Binding workloadModelCreatedBinding() {
-		return BindingBuilder.bind(workloadModelCreatedQueue()).to(workloadModelCreatedExchange()).with(WORKLOAD_MODEL_CREATED_ROUTING_KEY);
 	}
 
 	@Bean

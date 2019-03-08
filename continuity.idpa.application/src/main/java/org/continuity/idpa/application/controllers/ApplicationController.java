@@ -5,6 +5,7 @@ import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.
 import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.GET_DELTA;
 import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.LEGACY_UPDATE;
 import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.UPDATE;
+import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.UPDATE_FROM_WORKLOAD_MODEL;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -14,8 +15,10 @@ import java.util.EnumSet;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
+import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
+import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.entities.ApplicationModelLink;
 import org.continuity.idpa.application.repository.ApplicationModelRepositoryManager;
@@ -34,6 +37,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
 
 import io.swagger.annotations.ApiParam;
 
@@ -51,6 +56,8 @@ public class ApplicationController {
 
 	private static final DateFormat DATE_FORMAT = ApiFormats.DATE_FORMAT;
 
+	private final RestTemplate restTemplate;
+
 	private final AmqpTemplate amqpTemplate;
 
 	@Value("${spring.application.name}")
@@ -59,8 +66,9 @@ public class ApplicationController {
 	private final ApplicationModelRepositoryManager manager;
 
 	@Autowired
-	public ApplicationController(ApplicationModelRepositoryManager manager, AmqpTemplate amqpTemplate) {
+	public ApplicationController(ApplicationModelRepositoryManager manager, RestTemplate restTemplate, AmqpTemplate amqpTemplate) {
 		this.manager = manager;
+		this.restTemplate = restTemplate;
 		this.amqpTemplate = amqpTemplate;
 	}
 
@@ -151,7 +159,67 @@ public class ApplicationController {
 
 		return ResponseEntity.ok().body(report.toString());
 	}
-	
+
+	/**
+	 * Stores a new or updates an application model if it differs from existing ones, possibly
+	 * ignoring specific change types. The application model is retrieved from a workload model.
+	 *
+	 * @param tag
+	 *            The tag of the application model.
+	 * @param workloadModelLink
+	 *            The link to the workload model.
+	 * @param ignoreInterfaceChanged
+	 *            Ignore {@link ApplicationChangeType#ENDPOINT_CHANGED}.
+	 * @param ignoreInterfaceRemoved
+	 *            Ignore {@link ApplicationChangeType#ENDPOINT_REMOVED}.
+	 * @param ignoreInterfaceAdded
+	 *            Ignore {@link ApplicationChangeType#ENDPOINT_ADDED}.
+	 * @param ignoreParameterRemoved
+	 *            Ignore {@link ApplicationChangeType#PARAMETER_REMOVED}.
+	 * @param ignoreParameterAdded
+	 *            Ignore {@link ApplicationChangeType#PARAMETER_ADDED}.
+	 * @return A report holding the differences between the passed model and the next older one.
+	 */
+	@RequestMapping(path = UPDATE_FROM_WORKLOAD_MODEL, method = RequestMethod.POST)
+	public void updateApplicationFromWorkloadModel(@PathVariable String tag, @RequestBody String workloadModelLink,
+			@RequestParam(name = "ignore-interface-changed", defaultValue = "false") boolean ignoreInterfaceChanged,
+			@RequestParam(name = "ignore-interface-removed", defaultValue = "false") boolean ignoreInterfaceRemoved,
+			@RequestParam(name = "ignore-interface-added", defaultValue = "false") boolean ignoreInterfaceAdded,
+			@RequestParam(name = "ignore-parameter-changed", defaultValue = "false") boolean ignoreParameterChanged,
+			@RequestParam(name = "ignore-parameter-removed", defaultValue = "false") boolean ignoreParameterRemoved,
+			@RequestParam(name = "ignore-parameter-added", defaultValue = "false") boolean ignoreParameterAdded) {
+		LOGGER.info("Updating IDPA from workload model link: {}", workloadModelLink);
+
+		ResponseEntity<LinkExchangeModel> workloadLinksResponse;
+		try {
+			workloadLinksResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(workloadModelLink), LinkExchangeModel.class);
+		} catch (HttpStatusCodeException e) {
+			LOGGER.error("Could not retrieve the workload model overview from {}. Got response code {}!", workloadModelLink, e.getStatusCode());
+			LOGGER.error("Exception:", e);
+			return;
+		}
+
+		LinkExchangeModel link = workloadLinksResponse.getBody();
+
+		if ("INVALID".equals(link.getWorkloadModelLinks().getApplicationLink())) {
+			LOGGER.error("Received invalid system model link: {}", link);
+			return;
+		}
+
+		ResponseEntity<Application> systemResponse;
+		try {
+			systemResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(link.getWorkloadModelLinks().getApplicationLink()), Application.class);
+		} catch (HttpStatusCodeException e) {
+			LOGGER.error("Could not retrieve the system model from {}. Got response code {}!", link.getWorkloadModelLinks().getApplicationLink(), e.getStatusCode());
+			LOGGER.error("Exception:", e);
+			return;
+		}
+
+		Application systemModel = systemResponse.getBody();
+
+		updateApplication(tag, systemModel, ignoreInterfaceChanged, ignoreInterfaceRemoved, ignoreInterfaceAdded, ignoreParameterChanged, ignoreParameterRemoved, ignoreParameterAdded);
+	}
+
 	/**
 	 * Stores a new application model if it differs from existing ones, possibly ignoring specific
 	 * change types.
@@ -173,7 +241,7 @@ public class ApplicationController {
 	 * @return A report holding the differences between the passed model and the next older one.
 	 */
 	@RequestMapping(path = UPDATE, method = RequestMethod.PUT)
-	public ResponseEntity<String> updateApplication(@PathVariable String tag, 
+	public ResponseEntity<String> updateApplication(@PathVariable String tag,
 			@ApiParam(value = "The application model in YAML format.", required = true) @RequestBody String application,
 			@RequestParam(name = "ignore-interface-changed", defaultValue = "false") boolean ignoreInterfaceChanged,
 			@RequestParam(name = "ignore-interface-removed", defaultValue = "false") boolean ignoreInterfaceRemoved,
@@ -181,7 +249,7 @@ public class ApplicationController {
 			@RequestParam(name = "ignore-parameter-changed", defaultValue = "false") boolean ignoreParameterChanged,
 			@RequestParam(name = "ignore-parameter-removed", defaultValue = "false") boolean ignoreParameterRemoved,
 			@RequestParam(name = "ignore-parameter-added", defaultValue = "false") boolean ignoreParameterAdded) {
-		
+
 		EnumSet<ApplicationChangeType> ignoredChangeTypes = changeTypesFromBooleans(ignoreInterfaceChanged, ignoreInterfaceRemoved, ignoreInterfaceAdded, ignoreParameterChanged, ignoreParameterRemoved,
 				ignoreParameterAdded);
 
@@ -194,7 +262,7 @@ public class ApplicationController {
 			LOGGER.error("Exception: " , e);
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
+
 		ApplicationChangeReport report = manager.saveOrUpdate(tag, system, ignoredChangeTypes);
 
 		if (report.changed()) {
