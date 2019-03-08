@@ -400,6 +400,28 @@ public class RestApi {
 		}
 
 		/**
+		 * API for checking the availability.
+		 *
+		 * @author Henning Schulz
+		 *
+		 */
+		public static class Availability {
+
+			public static final String ROOT = "/available";
+
+			/** {@value #ROOT}/ */
+			public static final RestEndpoint CHECK = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CHECK, RequestMethod.GET);
+
+			public static class Paths {
+
+				public static final String CHECK = "/";
+
+				private Paths() {
+				}
+			}
+		}
+
+		/**
 		 * Test plan API of the JMeter service.
 		 *
 		 * @author Henning Schulz
