@@ -106,7 +106,5 @@ public class LoadTestController {
 
 		return restTemplate.postForEntity(link, testConfiguration, LinkExchangeModel.class);
 	}
-	
-	
 
 }

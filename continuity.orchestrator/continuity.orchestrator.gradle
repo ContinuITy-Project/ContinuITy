@@ -23,6 +23,9 @@ dependencies {
 	// Required for Eclipse
 	compile("org.codehaus.groovy:groovy-all:2.4.7")
 	
+	// Docker
+	compile("com.github.docker-java:docker-java:3.1.1")
+	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 }
 
