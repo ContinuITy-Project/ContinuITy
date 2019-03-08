@@ -148,7 +148,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 		params.putAll(extractUriParams(uri, abstractUri));
 
 		if (httpRequest.getRequestBody().isPresent() && !httpRequest.getRequestBody().get().isEmpty()) {
-			params.put("_BODY", new String[] { httpRequest.getRequestBody().get() });
+			params.put("BODY", new String[] { httpRequest.getRequestBody().get() });
 		}
 
 		if (params != null) {

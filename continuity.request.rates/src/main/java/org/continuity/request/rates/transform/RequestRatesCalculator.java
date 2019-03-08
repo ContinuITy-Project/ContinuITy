@@ -146,7 +146,7 @@ public abstract class RequestRatesCalculator {
 		return records.stream().map(RequestRecord::getHeaders).filter(Objects::nonNull).flatMap(List::stream).distinct().map(name -> {
 			HttpParameter param = new HttpParameter();
 
-			if (name.startsWith("_BODY")) {
+			if (name.startsWith("BODY")) {
 				param.setParameterType(HttpParameterType.BODY);
 			} else if (name.startsWith("URL_PART")) {
 				param.setName(name.substring("URL_PART".length()));
