@@ -24,6 +24,37 @@ public class CliContextManager implements PromptProvider {
 
 	private final Stack<CliContext> context = new Stack<>();
 
+	private String currentTag;
+
+	public void setCurrentTag(String currentTag) {
+		this.currentTag = currentTag;
+	}
+
+	public String getCurrentTag() {
+		return currentTag;
+	}
+
+	/**
+	 * Gets a tag out of the input or throws an {@link IllegalArgumentException} if no tag can be
+	 * determined.
+	 *
+	 * @param passedTag
+	 *            A tag received from a command.
+	 * @return The tag if present and not equal to {@link Shorthand#DEFAULT_VALUE} or the current
+	 *         tag otherwise.
+	 */
+	public String getTagOrFail(String passedTag) {
+		if (Shorthand.DEFAULT_VALUE.equals(passedTag)) {
+			if (currentTag == null) {
+				throw new IllegalArgumentException("Cannot use the default tag. There is no tag set! Please call 'tag set <your tag>' first or define it as a parameter of the command.");
+			} else {
+				return currentTag;
+			}
+		} else {
+			return passedTag;
+		}
+	}
+
 	/**
 	 * Adds a new context.
 	 *
@@ -93,14 +124,29 @@ public class CliContextManager implements PromptProvider {
 		return new Shorthand(shorthandName, FALLBACK_NAME);
 	}
 
-	private String currentPrompt() {
-		String subPrompt = context.stream().map(CliContext::getName).collect(Collectors.joining("/"));
-		return ROOT_PROMPT + (subPrompt.isEmpty() ? "" : "/" + subPrompt);
+	private StringBuilder currentPrompt() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(ROOT_PROMPT);
+
+		String contextString = context.stream().map(CliContext::getName).collect(Collectors.joining("/"));
+
+		if (!contextString.isEmpty()) {
+			builder.append("/");
+			builder.append(contextString);
+		}
+
+		if (currentTag != null) {
+			builder.append(" (");
+			builder.append(currentTag);
+			builder.append(")");
+		}
+
+		return builder;
 	}
 
 	@Override
 	public AttributedString getPrompt() {
-		return new AttributedString(currentPrompt() + ":> ", AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW));
+		return new AttributedString(currentPrompt().append(":> "), AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW));
 	}
 
 }

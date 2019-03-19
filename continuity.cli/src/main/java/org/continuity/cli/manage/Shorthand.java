@@ -2,7 +2,9 @@ package org.continuity.cli.manage;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.core.MethodParameter;
@@ -28,6 +30,8 @@ public class Shorthand implements Comparable<Shorthand> {
 
 	private final Method method;
 
+	private final int numParameters;
+
 	/**
 	 * Constructor.
 	 *
@@ -51,6 +55,7 @@ public class Shorthand implements Comparable<Shorthand> {
 		}
 
 		this.commandName = this.method.getAnnotation(ShellMethod.class).key()[0];
+		this.numParameters = parameterTypes.length;
 	}
 
 	public Shorthand(String shorthandName, String commandName) {
@@ -58,6 +63,7 @@ public class Shorthand implements Comparable<Shorthand> {
 		this.commandName = commandName;
 		this.controller = null;
 		this.method = null;
+		this.numParameters = 0;
 	}
 
 	public String getShorthandName() {
@@ -80,10 +86,21 @@ public class Shorthand implements Comparable<Shorthand> {
 	 * @return
 	 */
 	public String execute(Object... args) throws Throwable {
+		List<Object> params = new ArrayList<>();
+		int i = 0;
+
+		for (Object arg : args) {
+			if (i < numParameters) {
+				params.add(checkRequiredParameter(arg, i));
+			}
+
+			i++;
+		}
+
 		Object returnValue;
 
 		try {
-			returnValue = method.invoke(controller, args);
+			returnValue = method.invoke(controller, params.toArray(new Object[numParameters]));
 		} catch (InvocationTargetException e) {
 			throw e.getTargetException();
 		}
@@ -99,8 +116,12 @@ public class Shorthand implements Comparable<Shorthand> {
 	 * @return
 	 */
 	public String getDefaultValue(int index) {
-		ShellOption shellOption = method.getParameters()[0].getAnnotation(ShellOption.class);
+		ShellOption shellOption = method.getParameters()[index].getAnnotation(ShellOption.class);
 		return shellOption == null ? null : shellOption.defaultValue();
+	}
+
+	private String getParameterName(int index) {
+		return method.getParameters()[index].getName();
 	}
 
 	/**
@@ -112,25 +133,34 @@ public class Shorthand implements Comparable<Shorthand> {
 	 *            The value received by the shorthand.
 	 * @param paramIndex
 	 *            The parameter index.
-	 * @param paramName
-	 *            The parameter name.
 	 * @return {@code value} or the default value of the target method (if {@code value} is
 	 *         {@code null}).
 	 */
-	public String checkRequiredParameter(String value, int paramIndex, String paramName) {
+	private Object checkRequiredParameter(Object value, int paramIndex) {
 		if (DEFAULT_VALUE.equals(value)) {
 			String defaultValue = getDefaultValue(paramIndex);
 
 			if (defaultValue == null) {
 				try {
 					throw new ParameterMissingResolutionException(
-							ParameterDescription.outOf(MethodParameter.forExecutable(getMethod(), paramIndex)).keys(Collections.singletonList(paramName)));
+							ParameterDescription.outOf(MethodParameter.forExecutable(getMethod(), paramIndex)).keys(Collections.singletonList(getParameterName(paramIndex))));
 				} catch (SecurityException e) {
 					e.printStackTrace();
 				}
 			}
 
-			return defaultValue;
+			switch (value.getClass().getSimpleName()) {
+			case "Boolean":
+				return Boolean.parseBoolean(defaultValue);
+			case "Integer":
+				return Integer.parseInt(defaultValue);
+			case "Long":
+				return Long.parseLong(defaultValue);
+			case "Double":
+				return Double.parseDouble(defaultValue);
+			default:
+				return defaultValue;
+			}
 		} else {
 			return value;
 		}

@@ -9,11 +9,12 @@ import javax.ws.rs.NotSupportedException;
 import org.continuity.api.entities.report.ApplicationChange;
 import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
+import org.continuity.commons.idpa.ApplicationChangeDetector;
+import org.continuity.commons.idpa.ApplicationUpdater;
 import org.continuity.commons.utils.DataHolder;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.Parameter;
-import org.continuity.idpa.application.changes.ApplicationChangeDetector;
 import org.continuity.idpa.legacy.IdpaFromOldAnnotationConverter;
 import org.continuity.idpa.visitor.FindBy;
 import org.continuity.idpa.visitor.IdpaByClassSearcher;
@@ -51,6 +52,8 @@ public class ApplicationModelRepositoryManager {
 
 	/**
 	 * Saves the passed application model if something changed - ignoring a set of change types.
+	 *
+	 * TODO: Use {@link ApplicationUpdater}.
 	 *
 	 * @param tag
 	 *            The tag of the model.

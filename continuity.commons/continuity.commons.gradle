@@ -40,6 +40,11 @@ dependencies {
 	// CSV parsing
 	compile group: 'com.univocity', name: 'univocity-parsers', version: '2.7.5'
 	
+	// Swagger
+	
+	compile("io.springfox:springfox-swagger2:2.7.0")
+	compile("io.springfox:springfox-swagger-ui:2.7.0")
+	
 	// Required for Eclipse
 	compile("org.codehaus.groovy:groovy-all:2.4.7")
 }

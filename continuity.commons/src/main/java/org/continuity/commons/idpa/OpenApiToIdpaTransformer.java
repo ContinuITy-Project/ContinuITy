@@ -1,4 +1,4 @@
-package org.continuity.idpa.application.openapi;
+package org.continuity.commons.idpa;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -29,9 +29,9 @@ import io.swagger.models.parameters.Parameter;
  * @author Henning Schulz
  *
  */
-public class OpenApiToContinuityTransformer {
+public class OpenApiToIdpaTransformer {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(OpenApiToContinuityTransformer.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(OpenApiToIdpaTransformer.class);
 
 	/**
 	 * Transforms the specified {@link Swagger} object into a {@link Application};
@@ -41,7 +41,7 @@ public class OpenApiToContinuityTransformer {
 	 * @return The generated application model.
 	 */
 	public Application transform(Swagger swagger) {
-		LOGGER.info("Transforming the swagger model {} to a application model.", swagger.getInfo().getTitle());
+		LOGGER.info("Transforming the swagger model {} to an application model.", swagger.getInfo().getTitle());
 
 		Application system = new Application();
 
@@ -70,7 +70,7 @@ public class OpenApiToContinuityTransformer {
 
 		String domain;
 		String port;
-		if (host.contains(":")) {
+		if ((host != null) && host.contains(":")) {
 			String[] split = host.split("\\:");
 			domain = split[0];
 			port = split[1];

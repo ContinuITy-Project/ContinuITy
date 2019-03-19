@@ -1,4 +1,4 @@
-package org.continuity.idpa.application.changes;
+package org.continuity.commons.idpa;
 
 import java.util.Date;
 import java.util.EnumSet;
@@ -13,7 +13,7 @@ import org.continuity.api.entities.report.ApplicationChangeType;
  * @author Henning Schulz
  *
  */
-public class SystemChangeReportBuilder {
+public class ApplicationChangeReportBuilder {
 
 	private Date beforeChange;
 	private Date afterChange;
@@ -24,17 +24,17 @@ public class SystemChangeReportBuilder {
 
 	private final EnumSet<ApplicationChangeType> ignoredChangeTypes;
 
-	public SystemChangeReportBuilder(EnumSet<ApplicationChangeType> ignoredChangeTypes, Date beforeChange, Date afterChange) {
+	public ApplicationChangeReportBuilder(EnumSet<ApplicationChangeType> ignoredChangeTypes, Date beforeChange, Date afterChange) {
 		this.ignoredChangeTypes = ignoredChangeTypes;
 		this.beforeChange = beforeChange;
 		this.afterChange = afterChange;
 	}
 
-	public SystemChangeReportBuilder(EnumSet<ApplicationChangeType> ignoredChangeTypes, Date afterChange) {
+	public ApplicationChangeReportBuilder(EnumSet<ApplicationChangeType> ignoredChangeTypes, Date afterChange) {
 		this(ignoredChangeTypes, new Date(0), afterChange);
 	}
 
-	public SystemChangeReportBuilder(Date beforeChange, Date afterChange) {
+	public ApplicationChangeReportBuilder(Date beforeChange, Date afterChange) {
 		this(EnumSet.noneOf(ApplicationChangeType.class), beforeChange, afterChange);
 	}
 

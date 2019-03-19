@@ -7,8 +7,8 @@ import static org.continuity.api.rest.RestApi.IdpaApplication.OpenApi.Paths.UPDA
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.continuity.commons.idpa.OpenApiToIdpaTransformer;
 import org.continuity.idpa.application.Application;
-import org.continuity.idpa.application.openapi.OpenApiToContinuityTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,13 +36,13 @@ public class OpenApiController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(OpenApiController.class);
 
-	private final OpenApiToContinuityTransformer transformer;
+	private final OpenApiToIdpaTransformer transformer;
 
 	private final ApplicationController systemModelController;
 
 	@Autowired
 	public OpenApiController(ApplicationController systemModelController) {
-		this.transformer = new OpenApiToContinuityTransformer();
+		this.transformer = new OpenApiToIdpaTransformer();
 		this.systemModelController = systemModelController;
 	}
 
