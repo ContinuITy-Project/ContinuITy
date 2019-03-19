@@ -12,8 +12,8 @@ import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.HttpParameter;
 import org.continuity.idpa.application.HttpParameterType;
 import org.continuity.idpa.application.Parameter;
-import org.continuity.idpa.application.openapi.OpenApiToContinuityTransformer;
 import org.continuity.idpa.application.Endpoint;
+import org.continuity.commons.idpa.OpenApiToIdpaTransformer;
 import org.continuity.idpa.application.Application;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +28,7 @@ public class OpenApiTransformationTest {
 
 	private Swagger swagger;
 
-	private OpenApiToContinuityTransformer transformer;
+	private OpenApiToIdpaTransformer transformer;
 
 	@Before
 	public void setup() throws IOException {
@@ -38,7 +38,7 @@ public class OpenApiTransformationTest {
 
 		swagger = new SwaggerParser().parse(writer.toString());
 
-		transformer = new OpenApiToContinuityTransformer();
+		transformer = new OpenApiToIdpaTransformer();
 	}
 
 	@Test

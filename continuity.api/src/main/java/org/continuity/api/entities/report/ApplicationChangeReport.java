@@ -33,6 +33,10 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 	@JsonInclude(Include.NON_EMPTY)
 	private Set<ApplicationChange> ignoredApplicationChanges;
 
+	@JsonProperty("updated-application")
+	@JsonInclude(Include.NON_NULL)
+	private Application updatedApplication;
+
 	/**
 	 * Sets the beforeChange date to 0.
 	 *
@@ -143,6 +147,14 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 	 */
 	public void setAfterChange(Date afterChange) {
 		this.afterChange = afterChange;
+	}
+
+	public Application getUpdatedApplication() {
+		return updatedApplication;
+	}
+
+	public void setUpdatedApplication(Application updatedApplication) {
+		this.updatedApplication = updatedApplication;
 	}
 
 	/**

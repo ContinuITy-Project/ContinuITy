@@ -3,9 +3,9 @@ package org.continuity.idpa.annotation.storage;
 import java.io.IOException;
 
 import org.continuity.api.entities.report.AnnotationValidityReport;
+import org.continuity.commons.idpa.AnnotationValidityChecker;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.validation.AnnotationFixer;
-import org.continuity.idpa.annotation.validation.AnnotationValidityChecker;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.legacy.IdpaFromOldAnnotationConverter;
 import org.slf4j.Logger;

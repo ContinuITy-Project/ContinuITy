@@ -5,6 +5,7 @@ import org.continuity.api.entities.report.AnnotationViolationType;
 import org.continuity.api.entities.report.ApplicationChange;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.api.entities.report.ModelElementReference;
+import org.continuity.commons.idpa.AnnotationValidityReportBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

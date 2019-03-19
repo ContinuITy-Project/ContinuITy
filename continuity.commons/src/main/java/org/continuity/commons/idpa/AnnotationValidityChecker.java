@@ -1,4 +1,4 @@
-package org.continuity.idpa.annotation.validation;
+package org.continuity.commons.idpa;
 
 import java.util.List;
 import java.util.Objects;
@@ -63,7 +63,14 @@ public class AnnotationValidityChecker {
 			boolean inputNotPresent = inputs.stream().map(Input::getId).filter(id -> Objects.equals(id, ann.getInput().getId())).collect(Collectors.toList()).isEmpty();
 
 			if (inputNotPresent) {
-				ModelElementReference inputRef = new ModelElementReference(ann.getInput());
+				ModelElementReference inputRef;
+
+				if (ann.getInput() == null) {
+					inputRef = new ModelElementReference("Input", null);
+				} else {
+					inputRef = new ModelElementReference(ann.getInput());
+				}
+
 				ModelElementReference annRef = new ModelElementReference(ann);
 				reportBuilder.addViolation(annRef, new AnnotationViolation(AnnotationViolationType.ILLEGAL_INTERNAL_REFERENCE, inputRef));
 			}

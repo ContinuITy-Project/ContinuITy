@@ -1,4 +1,4 @@
-package org.continuity.idpa.application.changes;
+package org.continuity.commons.idpa;
 
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -29,7 +29,7 @@ public class ApplicationChangeDetector {
 
 	private final Application newSystemModel;
 
-	private final SystemChangeReportBuilder reportBuilder;
+	private final ApplicationChangeReportBuilder reportBuilder;
 
 	/**
 	 * Creates an instance with the current system model as base.
@@ -43,7 +43,7 @@ public class ApplicationChangeDetector {
 
 	public ApplicationChangeDetector(Application newSystemModel, EnumSet<ApplicationChangeType> ignoredChangeTypes) {
 		this.newSystemModel = newSystemModel;
-		this.reportBuilder = new SystemChangeReportBuilder(ignoredChangeTypes, newSystemModel.getTimestamp());
+		this.reportBuilder = new ApplicationChangeReportBuilder(ignoredChangeTypes, newSystemModel.getTimestamp());
 	}
 
 	/**

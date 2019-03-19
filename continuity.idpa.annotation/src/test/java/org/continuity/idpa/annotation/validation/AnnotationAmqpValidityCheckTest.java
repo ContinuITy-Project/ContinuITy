@@ -11,6 +11,7 @@ import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.api.entities.report.ApplicationChange;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.api.entities.report.ModelElementReference;
+import org.continuity.commons.idpa.AnnotationValidityReportBuilder;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.amqp.AnnotationAmpqHandler;
 import org.continuity.idpa.annotation.storage.AnnotationStorage;
