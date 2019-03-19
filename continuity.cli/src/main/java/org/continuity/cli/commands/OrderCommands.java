@@ -20,17 +20,20 @@ import org.continuity.api.entities.config.OrderGoal;
 import org.continuity.api.entities.config.OrderMode;
 import org.continuity.api.entities.config.OrderOptions;
 import org.continuity.api.entities.config.WorkloadModelType;
-import org.continuity.api.entities.links.MeasurementDataLinkType;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.links.MeasurementDataLinkType;
 import org.continuity.api.entities.links.SessionsStatus;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.api.rest.RestApi;
 import org.continuity.cli.config.PropertiesProvider;
+import org.continuity.cli.manage.CliContext;
+import org.continuity.cli.manage.CliContextManager;
+import org.continuity.cli.manage.Shorthand;
 import org.continuity.cli.storage.OrderStorage;
 import org.continuity.commons.utils.WebUtils;
-import org.continuity.dsl.description.ForecastInput;
 import org.continuity.dsl.description.ContextParameter;
+import org.continuity.dsl.description.ForecastInput;
 import org.continuity.dsl.description.ForecastOptions;
 import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.dsl.description.Measurement;
@@ -47,8 +50,6 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
 
 /**
  *
@@ -58,9 +59,20 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
 @ShellComponent
 public class OrderCommands {
 
-	private static final String ORDERS_DIR = "orders";
+	private static final String ORDERS_DIR = "order";
 
 	private static final String NEW_ORDER_FILENAME = "order.yml";
+
+	private static final String CONTEXT_NAME = "order";
+
+	private final CliContext context = new CliContext(CONTEXT_NAME, //
+			new Shorthand("create", this, "createOrder", String.class), //
+			new Shorthand("edit", this, "editOrder", String.class), //
+			new Shorthand("submit", this, "submitOrder"), //
+			new Shorthand("wait", this, "waitForOrder", String.class, String.class), //
+			new Shorthand("report", this, "getOrderReport", String.class), //
+			new Shorthand("clean", this, "cleanOrders") //
+	);
 
 	@Autowired
 	private PropertiesProvider propertiesProvider;
@@ -71,10 +83,19 @@ public class OrderCommands {
 	@Autowired
 	private OrderStorage storage;
 
-	private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
+	@Autowired
+	private CliContextManager contextManager;
 
-	@ShellMethod(key = { "order-create" }, value = "Creates a new order.")
-	public String createOrder(String goal) throws JsonGenerationException, JsonMappingException, IOException {
+	@Autowired
+	private ObjectMapper mapper;
+
+	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'order' context so that the shorthands can be used.")
+	public void goToIdpaContext() {
+		contextManager.goToContext(context);
+	}
+
+	@ShellMethod(key = { "order create" }, value = "Creates a new order.")
+	public String createOrder(@ShellOption(defaultValue = "create-load-test") String goal) throws JsonGenerationException, JsonMappingException, IOException {
 		OrderGoal orderGoal = OrderGoal.fromPrettyString(goal);
 
 		if (orderGoal == null) {
@@ -89,7 +110,7 @@ public class OrderCommands {
 		return "Created and opened a new order at orders/order-new.yml";
 	}
 
-	@ShellMethod(key = { "order-edit" }, value = "Edits an already created order.")
+	@ShellMethod(key = { "order edit" }, value = "Edits an already created order.")
 	public String editOrder(@ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws JsonGenerationException, JsonMappingException, IOException {
 		Order order = storage.getOrder(id);
 
@@ -102,7 +123,7 @@ public class OrderCommands {
 		return "Updated the current order and opened it.";
 	}
 
-	@ShellMethod(key = { "order-submit" }, value = "Submits the latest created order.")
+	@ShellMethod(key = { "order submit" }, value = "Submits the latest created order.")
 	public String submitOrder() throws JsonParseException, JsonMappingException, IOException {
 		Path orderDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), ORDERS_DIR, NEW_ORDER_FILENAME);
 		Order order = mapper.readValue(orderDir.toFile(), Order.class);
@@ -128,8 +149,8 @@ public class OrderCommands {
 		return message.toString();
 	}
 
-	@ShellMethod(key = { "order-wait" }, value = "Waits for an order to be finished.")
-	public String waitForOrder(String timeout, @ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws IOException {
+	@ShellMethod(key = { "order wait" }, value = "Waits for an order to be finished.")
+	public String waitForOrder(@ShellOption(defaultValue = "1000") String timeout, @ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws IOException {
 		OrderResponse tuple = storage.getLinks(id);
 
 		if (tuple == null) {
@@ -152,7 +173,7 @@ public class OrderCommands {
 		}
 	}
 
-	@ShellMethod(key = { "order-report" }, value = "Gets the order report if available.")
+	@ShellMethod(key = { "order report" }, value = "Gets the order report if available.")
 	public String getOrderReport(@ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws IOException {
 		OrderReport report = storage.getReport(id);
 
@@ -163,7 +184,7 @@ public class OrderCommands {
 		}
 	}
 
-	@ShellMethod(key = { "order-clean" }, value = "Cleans the order storage.")
+	@ShellMethod(key = { "order clean" }, value = "Cleans the order storage.")
 	public String cleanOrders() throws IOException {
 		int num = storage.clean();
 
@@ -186,7 +207,7 @@ public class OrderCommands {
 		options.setWorkloadModelType(WorkloadModelType.WESSBAS);
 		options.setIntensityCalculationInterval(IntensityCalculationInterval.MINUTE);
 		order.setOptions(options);
-		
+
 		Measurement measurement = new Measurement("Name of measurement containing contextual data");
 		List<ContextParameter> covariates = new LinkedList<ContextParameter>();
 		covariates.add(measurement);
