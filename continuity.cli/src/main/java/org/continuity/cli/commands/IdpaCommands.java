@@ -9,6 +9,9 @@ import java.util.List;
 
 import org.continuity.api.rest.RestApi.Orchestrator.Idpa;
 import org.continuity.cli.config.PropertiesProvider;
+import org.continuity.cli.manage.CliContext;
+import org.continuity.cli.manage.CliContextManager;
+import org.continuity.cli.manage.Shorthand;
 import org.continuity.commons.idpa.AnnotationExtractor;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.IdpaElement;
@@ -35,13 +38,46 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 @ShellComponent
 public class IdpaCommands {
 
+	private static final String CONTEXT_NAME = "idpa";
+
+	private final CliContext context = new CliContext(CONTEXT_NAME, //
+			new Shorthand("download", this, "downloadIdpa", String.class), //
+			new Shorthand("edit", this, "editIdpa", String.class), //
+			new Shorthand("app", this, "goToIdpaAappContext"), //
+			new Shorthand("app upload", this, "uploadApplication", String.class), //
+			new Shorthand("ann", this, "goToIdpaAnnContext"), //
+			new Shorthand("ann upload", this, "uploadAnnotation", String.class), //
+			new Shorthand("ann init", this, "initAnnotation", String.class) //
+	);
+
+	private static final String APP_CONTEXT_NAME = "app";
+
+	private final CliContext appContext = new CliContext(APP_CONTEXT_NAME, //
+			new Shorthand("upload", this, "uploadApplication", String.class) //
+	);
+
+	private static final String ANN_CONTEXT_NAME = "ann";
+
+	private final CliContext annContext = new CliContext(ANN_CONTEXT_NAME, //
+			new Shorthand("upload", this, "uploadAnnotation", String.class), //
+			new Shorthand("init", this, "initAnnotation", String.class)
+	);
+
 	@Autowired
 	private PropertiesProvider propertiesProvider;
 
 	@Autowired
 	private RestTemplate restTemplate;
 
-	@ShellMethod(key = { "idpa-download" }, value = "Downloads and opens the IDPA with the specified tag.")
+	@Autowired
+	private CliContextManager contextManager;
+
+	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'idpa' context so that the shorthands can be used.")
+	public void goToIdpaContext() {
+		contextManager.goToContext(context);
+	}
+
+	@ShellMethod(key = { "idpa download" }, value = "Downloads and opens the IDPA with the specified tag.")
 	public String downloadIdpa(String tag) throws JsonGenerationException, JsonMappingException, IOException {
 		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
 
@@ -69,8 +105,8 @@ public class IdpaCommands {
 		return "Downloaded and opened the IDPA with tag " + tag + " from " + workingDir;
 	}
 
-	@ShellMethod(key = { "idpa-open" }, value = "Opens an already downloaded IDPA with the specified tag.")
-	public String openIdpa(String tag) throws IOException {
+	@ShellMethod(key = { "idpa edit" }, value = "Opens an already downloaded IDPA with the specified tag.")
+	public String editIdpa(String tag) throws IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
 		File annotationFile = new File(workingDir + "/annotation-" + tag + ".yml");
@@ -81,7 +117,41 @@ public class IdpaCommands {
 		return "Opened the IDPA with tag " + tag + " from " + workingDir;
 	}
 
-	@ShellMethod(key = { "idpa-ann-upload" }, value = "Uploads the annotation with the specified tag.")
+	@ShellMethod(key = { "idpa app" }, value = "Goes to the 'idpa/app' context so that the shorthands can be used.")
+	public void goToIdpaAappContext() {
+		contextManager.goToContext(context, appContext);
+	}
+
+	@ShellMethod(key = { "idpa app upload" }, value = "Handle with care! Uploads the application model with the specified tag. Can break the online stored annotation!")
+	public String uploadApplication(String pattern) throws JsonParseException, JsonMappingException, IOException {
+		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		IdpaYamlSerializer<Application> serializer = new IdpaYamlSerializer<>(Application.class);
+		ResponseEntity<String> response;
+		List<String> tags = new ArrayList<String>();
+		for (File file : getMatchingFiles(new File(workingDir), "application-", pattern)) {
+			Application application = serializer.readFromYaml(file);
+			String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
+			String tag = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
+			tags.add(tag);
+			try {
+				response = restTemplate.postForEntity(Idpa.UPDATE_APPLICATION.requestUrl(tag).withHost(url).get(), application, String.class);
+			} catch (HttpStatusCodeException e) {
+				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
+			}
+			if (!response.getStatusCode().is2xxSuccessful()) {
+				return "Error during upload: " + response;
+			}
+		}
+		return "Successfully uploaded annotations for tags '" + tags + "'.";
+
+	}
+
+	@ShellMethod(key = { "idpa ann" }, value = "Goes to the 'idpa/ann' context so that the shorthands can be used.")
+	public void goToIdpaAnnContext() {
+		contextManager.goToContext(context, annContext);
+	}
+
+	@ShellMethod(key = { "idpa ann upload" }, value = "Uploads the annotation with the specified tag.")
 	public String uploadAnnotation(String pattern) throws JsonParseException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		IdpaYamlSerializer<ApplicationAnnotation> serializer = new IdpaYamlSerializer<>(ApplicationAnnotation.class);
@@ -116,31 +186,7 @@ public class IdpaCommands {
 		return files;
 	}
 
-	@ShellMethod(key = { "idpa-app-upload" }, value = "Handle with care! Uploads the application model with the specified tag. Can break the online stored annotation!")
-	public String uploadApplication(String pattern) throws JsonParseException, JsonMappingException, IOException {
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		IdpaYamlSerializer<Application> serializer = new IdpaYamlSerializer<>(Application.class);
-		ResponseEntity<String> response;
-		List<String> tags = new ArrayList<String>();
-		for (File file : getMatchingFiles(new File(workingDir), "application-", pattern)) {
-			Application application = serializer.readFromYaml(file);
-			String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
-			String tag = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
-			tags.add(tag);
-			try {
-				response = restTemplate.postForEntity(Idpa.UPDATE_APPLICATION.requestUrl(tag).withHost(url).get(), application, String.class);
-			} catch (HttpStatusCodeException e) {
-				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
-			}
-			if (!response.getStatusCode().is2xxSuccessful()) {
-				return "Error during upload: " + response;
-			}
-		}
-		return "Successfully uploaded annotations for tags '" + tags + "'.";
-
-	}
-
-	@ShellMethod(key = { "idpa-ann-init" }, value = "Initializes an annotation for the stored application model with the specified tag.")
+	@ShellMethod(key = { "idpa ann init" }, value = "Initializes an annotation for the stored application model with the specified tag.")
 	public String initAnnotation(String tag) throws JsonParseException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File systemFile = new File(workingDir + "/application-" + tag + ".yml");
