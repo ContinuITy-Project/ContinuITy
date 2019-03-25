@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import org.continuity.idpa.annotation.CombinedInput;
 import org.continuity.idpa.annotation.CounterInput;
+import org.continuity.idpa.annotation.CsvColumnInput;
+import org.continuity.idpa.annotation.CsvInput;
 import org.continuity.idpa.annotation.DataType;
 import org.continuity.idpa.annotation.DatetimeInput;
 import org.continuity.idpa.annotation.DirectListInput;
@@ -46,7 +48,7 @@ public class InputFormatter {
 	 * @return input string
 	 */
 	public String getInputString(Input input) {
-		if ((input instanceof ExtractedInput) || (input instanceof CounterInput)) {
+		if ((input instanceof ExtractedInput) || (input instanceof CounterInput) || (input instanceof CsvInput) || (input instanceof CsvColumnInput)) {
 			return "${" + input.getId() + "}";
 		} else if (input instanceof DirectListInput) {
 			DirectListInput dataInput = (DirectListInput) input;

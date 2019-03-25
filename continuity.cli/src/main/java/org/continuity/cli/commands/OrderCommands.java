@@ -196,7 +196,12 @@ public class OrderCommands {
 
 		order.setMode(OrderMode.PAST_SESSIONS);
 
-		order.setTag("TAG");
+		if (contextManager.getCurrentTag() == null) {
+			order.setTag("TAG");
+		} else {
+			order.setTag(contextManager.getCurrentTag());
+		}
+
 		order.setTestingContext(Collections.singleton("CONTEXT"));
 
 		OrderOptions options = new OrderOptions();

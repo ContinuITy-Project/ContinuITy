@@ -95,11 +95,11 @@ public class TestPlanCreationAmqpHandler {
 		JMeterTestPlanBundle testPlanPack = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadLinks.getWorkloadModelLinks().getJmeterLink()), JMeterTestPlanBundle.class);
 
 		ListedHashTree annotatedTestPlan = testPlanPack.getTestPlan();
+		new UserDefinedDefaultVariablesCleanerAnnotator().cleanVariables(annotatedTestPlan);
 
 		// Check if modularization is enabled in the order.
 		if (null != modularizationOptions) {
 			List<String> serviceTags = new ArrayList<String>(modularizationOptions.getServices().keySet());
-			new UserDefinedDefaultVariablesCleanerAnnotator().cleanVariables(annotatedTestPlan);
 			annotatedTestPlan = createAnnotatedTestPlan(new JMeterTestPlanBundle(annotatedTestPlan, testPlanPack.getBehaviors()), serviceTags);
 		} else {
 			annotatedTestPlan = createAnnotatedTestPlan(testPlanPack,  Arrays.asList(tag));
