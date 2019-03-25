@@ -11,6 +11,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.json.JSONArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.Callable;
 import org.spec.research.open.xtrace.api.core.callables.NestingCallable;
@@ -22,6 +24,8 @@ import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializa
 import org.springframework.web.client.RestTemplate;
 
 public class OPENxtraceUtils {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(OPENxtraceUtils.class);
 
 	private static final String JSESSIONID = "JSESSIONID";
 
@@ -153,7 +157,12 @@ public class OPENxtraceUtils {
 
 	private static Map<String, String> splitCookies(String cookieString) {
 		LinkedHashMap<String, String> cookies = new LinkedHashMap<>();
-		Arrays.stream(cookieString.split(";")).map(String::trim).map(s -> s.split("=")).forEach(s -> cookies.put(s[0], s.length > 1 ? s[1] : null));
+
+		if (cookieString != null) {
+			Arrays.stream(cookieString.split(";")).map(String::trim).map(s -> s.split("=")).forEach(s -> cookies.put(s[0], s.length > 1 ? s[1] : null));
+		} else {
+			LOGGER.warn("Cannot split the cookies! The cookieString is null!");
+		}
 
 		return cookies;
 	}
