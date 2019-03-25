@@ -1,10 +1,16 @@
-package org.continuity.idpa.serialization.json;
+package org.continuity.idpa.serialization;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.continuity.idpa.AbstractIdpaElement;
 import org.continuity.idpa.IdpaElement;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.annotation.CsvColumnInput;
 import org.continuity.idpa.annotation.PropertyOverride;
-import org.continuity.idpa.serialization.JsonItemSaniDeserializer;
+import org.continuity.idpa.serialization.yaml.CsvColumnInputSerializer;
 import org.continuity.idpa.serialization.yaml.IdpaDeserializer;
 import org.continuity.idpa.serialization.yaml.IdpaElementMixin;
 import org.continuity.idpa.serialization.yaml.IdpaSerializer;
@@ -75,6 +81,7 @@ public class IdpaSerializationUtils {
 					yamlMapper.addMixIn(AbstractIdpaElement.class, IdpaElementMixin.class);
 					yamlMapper.registerModule(new SimpleModule().setSerializerModifier(new ContinuitySerializerModifier()));
 					yamlMapper.registerModule(new SimpleModule().addSerializer(getPropertyOverrideClass(), new PropertyOverrideSerializer()));
+					yamlMapper.registerModule(new SimpleModule().addSerializer(CsvColumnInput.class, new CsvColumnInputSerializer()));
 
 					yamlMapper.registerModule(new SimpleModule().setDeserializerModifier(new ContinuityDeserializerModifier()));
 					yamlMapper.registerModule(new SimpleModule().addDeserializer(PropertyOverride.class, new PropertyOverrideDeserializer()));
@@ -83,6 +90,67 @@ public class IdpaSerializationUtils {
 		}
 
 		return yamlMapper;
+	}
+
+	/**
+	 * Gets a list of {@link PreDeserializationSanitizer}, which are to be called before putting a
+	 * yaml String into the deserializer.
+	 *
+	 * @return The list of {@link PreDeserializationSanitizer}.
+	 */
+	public static List<PreDeserializationSanitizer> getPreDeserializationSanitizers() {
+		List<PreDeserializationSanitizer> sanitizers = new ArrayList<>();
+
+		sanitizers.add(IdpaSerializationUtils::sanitizeForCsvColumnInput);
+
+		return sanitizers;
+	}
+
+	/**
+	 * Applies all {@link PreDeserializationSanitizer} returned by
+	 * {@link #getPreDeserializationSanitizers()} to the input string.
+	 *
+	 * @param yaml
+	 *            The input string to be sanitized.
+	 * @return The sanitized string.
+	 */
+	public static String sanitizeBeforeDeserializing(String yaml) {
+		for (PreDeserializationSanitizer sanitizer : getPreDeserializationSanitizers()) {
+			yaml = sanitizer.sanitize(yaml);
+		}
+
+		return yaml;
+	}
+
+	private static String sanitizeForCsvColumnInput(String yaml) {
+		Matcher matcher = Pattern.compile("( +columns:)( *\\n +- &[a-zA-Z0-9_]+)+").matcher(yaml);
+
+		StringBuilder sanitizedYaml = new StringBuilder();
+
+		int lastEnd = 0;
+
+		while (matcher.find()) {
+			String columnsYaml = matcher.group();
+			int start = matcher.start();
+			int end = matcher.end();
+
+			sanitizedYaml.append(yaml.substring(lastEnd, start));
+			sanitizedYaml.append(matcher.group(1));
+
+			Matcher subMatcher = Pattern.compile("\\n +- &[a-zA-Z0-9_]+ *").matcher(columnsYaml);
+
+			while (subMatcher.find()) {
+				sanitizedYaml.append(subMatcher.group());
+				sanitizedYaml.append(" content: ");
+				sanitizedYaml.append(CsvColumnInput.DUMMY_CONTENT);
+			}
+
+			lastEnd = end;
+		}
+
+		sanitizedYaml.append(yaml.substring(lastEnd));
+
+		return sanitizedYaml.toString();
 	}
 
 	/**

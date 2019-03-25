@@ -2,6 +2,8 @@
  */
 package org.continuity.idpa.annotation;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author Henning Schulz
  *
  */
-@JsonPropertyOrder({ "file", "column", "separator", "associated" })
+@JsonPropertyOrder({ "file", "column", "separator", "header", "columns", "associated" })
 public class CsvInput extends ListInput {
 
 	private static final String DEFAULT_SEPARATOR = ";";
@@ -22,11 +24,19 @@ public class CsvInput extends ListInput {
 	private String filename;
 
 	@JsonProperty(value = "column")
-	private int column;
+	@JsonInclude(value = Include.CUSTOM, valueFilter = ColumnValueFilter.class)
+	private int column = -1;
 
 	@JsonProperty(value = "separator")
 	@JsonInclude(value = Include.CUSTOM, valueFilter = ValueFilter.class)
 	private String separator = DEFAULT_SEPARATOR;
+
+	@JsonProperty(value = "header")
+	private boolean header = false;
+
+	@JsonProperty(value = "columns")
+	@JsonInclude(Include.NON_EMPTY)
+	private List<CsvColumnInput> columns;
 
 	/**
 	 * Returns the filename of the CSV file.
@@ -66,6 +76,14 @@ public class CsvInput extends ListInput {
 		this.column = column;
 	}
 
+	public List<CsvColumnInput> getColumns() {
+		return columns;
+	}
+
+	public void setColumns(List<CsvColumnInput> columns) {
+		this.columns = columns;
+	}
+
 	/**
 	 * Returns the separator of the CSV file.
 	 *
@@ -83,6 +101,14 @@ public class CsvInput extends ListInput {
 	 */
 	public void setSeparator(String separator) {
 		this.separator = separator;
+	}
+
+	public boolean hasHeader() {
+		return header;
+	}
+
+	public void setHeader(boolean header) {
+		this.header = header;
 	}
 
 	@Override
@@ -111,4 +137,14 @@ public class CsvInput extends ListInput {
 		}
 
 	}
+
+	private static final class ColumnValueFilter {
+
+		@Override
+		public boolean equals(Object obj) {
+			return (obj != null) && (obj instanceof Number) && (((Number) obj).intValue() < 0);
+		}
+
+	}
+
 }

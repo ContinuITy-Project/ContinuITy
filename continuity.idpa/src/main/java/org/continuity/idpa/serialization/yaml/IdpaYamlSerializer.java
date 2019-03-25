@@ -1,20 +1,23 @@
 package org.continuity.idpa.serialization.yaml;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 
 import org.continuity.idpa.IdpaElement;
-import org.continuity.idpa.serialization.json.IdpaSerializationUtils;
+import org.continuity.idpa.serialization.IdpaSerializationUtils;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -47,8 +50,7 @@ public class IdpaYamlSerializer<T extends IdpaElement> {
 	}
 
 	public T readFromYaml(File yamlSource) throws JsonParseException, JsonMappingException, IOException {
-		T read = mapper.readValue(yamlSource, type);
-		return read;
+		return readFromYaml(yamlSource.toPath());
 	}
 
 	public T readFromYaml(String yamlSource) throws JsonParseException, JsonMappingException, IOException {
@@ -60,20 +62,18 @@ public class IdpaYamlSerializer<T extends IdpaElement> {
 	}
 
 	public T readFromYaml(Path yamlPath) throws JsonParseException, JsonMappingException, IOException {
-		return readFromYaml(yamlPath.toString());
+		String yaml = new String(Files.readAllBytes(yamlPath));
+		return readFromYamlString(yaml);
 	}
 
 	public T readFromYamlInputStream(InputStream inputStream) throws JsonParseException, JsonMappingException, IOException {
-		T read = mapper.readValue(inputStream, type);
-		return read;
+		String yaml = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
+		return readFromYamlString(yaml);
 	}
 
 	public T readFromYamlString(String yamlString) throws JsonParseException, JsonMappingException, IOException {
-		return mapper.readValue(yamlString, type);
-	}
-
-	public T readFromJsonNode(JsonNode root) throws JsonParseException, JsonMappingException, IOException {
-		return mapper.readerFor(type).readValue(root);
+		String sanitizedYaml = IdpaSerializationUtils.sanitizeBeforeDeserializing(yamlString);
+		return mapper.readValue(sanitizedYaml, type);
 	}
 
 	public void writeToYaml(T model, File yamlFile) throws JsonGenerationException, JsonMappingException, IOException {

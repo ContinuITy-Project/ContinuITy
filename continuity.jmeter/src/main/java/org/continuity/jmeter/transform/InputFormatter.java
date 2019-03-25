@@ -16,7 +16,7 @@ import org.continuity.idpa.annotation.RandomNumberInput;
 import org.continuity.idpa.annotation.RandomStringInput;
 import org.continuity.idpa.annotation.json.JsonInput;
 import org.continuity.idpa.annotation.json.JsonItem;
-import org.continuity.idpa.serialization.json.IdpaSerializationUtils;
+import org.continuity.idpa.serialization.IdpaSerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

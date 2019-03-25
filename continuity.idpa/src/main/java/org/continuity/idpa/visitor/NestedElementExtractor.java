@@ -10,12 +10,18 @@ import java.util.Map.Entry;
 
 import org.continuity.idpa.IdpaElement;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
+import org.continuity.idpa.annotation.CombinedInput;
 import org.continuity.idpa.annotation.CounterInput;
+import org.continuity.idpa.annotation.CsvColumnInput;
+import org.continuity.idpa.annotation.CsvInput;
+import org.continuity.idpa.annotation.DatetimeInput;
 import org.continuity.idpa.annotation.EndpointAnnotation;
 import org.continuity.idpa.annotation.ExtractedInput;
 import org.continuity.idpa.annotation.JsonPathExtraction;
 import org.continuity.idpa.annotation.ListInput;
 import org.continuity.idpa.annotation.ParameterAnnotation;
+import org.continuity.idpa.annotation.RandomNumberInput;
+import org.continuity.idpa.annotation.RandomStringInput;
 import org.continuity.idpa.annotation.RegExExtraction;
 import org.continuity.idpa.annotation.json.JsonInput;
 import org.continuity.idpa.application.Application;
@@ -85,9 +91,26 @@ public enum NestedElementExtractor {
 	},
 
 	/**
+	 * For {@link CsvInput}
+	 */
+	CSV_INPUT(CsvInput.class) {
+		@Override
+		protected Collection<IdpaElement> extractNestedElements(IdpaElement element) {
+			CsvInput input = (CsvInput) element;
+
+			if (input.getColumns() != null) {
+				return new ArrayList<>(input.getColumns());
+			} else {
+				return Collections.emptyList();
+			}
+		}
+	},
+
+	/**
 	 * For all other elements that do not have nested elements.
 	 */
-	EMPTY(Parameter.class, ParameterAnnotation.class, ListInput.class, CounterInput.class, RegExExtraction.class, JsonPathExtraction.class, JsonInput.class) {
+	EMPTY(Parameter.class, ParameterAnnotation.class, ListInput.class, CounterInput.class, RegExExtraction.class, JsonPathExtraction.class, JsonInput.class, CsvColumnInput.class,
+			CombinedInput.class, DatetimeInput.class, RandomNumberInput.class, RandomStringInput.class) {
 		@Override
 		protected Collection<IdpaElement> extractNestedElements(IdpaElement element) {
 			return Collections.emptyList();

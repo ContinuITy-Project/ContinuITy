@@ -19,7 +19,7 @@ import org.continuity.idpa.annotation.RandomStringInput;
 import org.continuity.idpa.annotation.json.JsonDerivedValue;
 import org.continuity.idpa.annotation.json.JsonInput;
 import org.continuity.idpa.annotation.json.JsonObject;
-import org.continuity.idpa.serialization.json.IdpaSerializationUtils;
+import org.continuity.idpa.serialization.IdpaSerializationUtils;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.junit.Before;
 import org.junit.Test;

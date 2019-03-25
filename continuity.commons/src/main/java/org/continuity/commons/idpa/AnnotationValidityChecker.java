@@ -1,5 +1,6 @@
 package org.continuity.commons.idpa;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -58,8 +59,10 @@ public class AnnotationValidityChecker {
 	}
 
 	private void checkAnnotationInternally(ApplicationAnnotation annotation) {
+		List<Input> inputs = new ArrayList<>();
+		new IdpaByClassSearcher<>(Input.class, inputs::add).visit(annotation);
+
 		IdpaByClassSearcher<ParameterAnnotation> paramSearcher = new IdpaByClassSearcher<>(ParameterAnnotation.class, ann -> {
-			List<Input> inputs = annotation.getInputs();
 			boolean inputNotPresent = inputs.stream().map(Input::getId).filter(id -> Objects.equals(id, ann.getInput().getId())).collect(Collectors.toList()).isEmpty();
 
 			if (inputNotPresent) {

@@ -1,0 +1,26 @@
+---
+overrides: []
+inputs:
+- !<csv>
+  file: data.csv
+  header: true
+  columns:
+  - &Input_username
+  - &Input_password
+- !<csv>
+  file: data.csv
+  header: false
+  columns:
+  - &Input_foo
+- !<csv>
+  &Input_oldCsv file: data.csv
+  column: 1
+  header: false
+endpoint-annotations:
+- endpoint: login
+  overrides: []
+  parameter-annotations:
+  - parameter: username
+    input: *Input_foo
+    overrides: []
+
