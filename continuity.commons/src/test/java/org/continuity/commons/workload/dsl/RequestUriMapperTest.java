@@ -2,9 +2,9 @@ package org.continuity.commons.workload.dsl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.idpa.application.Application;
+import org.continuity.idpa.application.HttpEndpoint;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,6 +17,7 @@ public class RequestUriMapperTest {
 	HttpEndpoint interf3;
 	HttpEndpoint interf4;
 	HttpEndpoint interf5;
+	HttpEndpoint interf6;
 
 	@Before
 	public void setupSystemModel() {
@@ -46,6 +47,11 @@ public class RequestUriMapperTest {
 		interf5.setPath("/foo/{id}/bar");
 		interf5.setMethod("PUT");
 		system.addEndpoint(interf5);
+
+		interf6 = new HttpEndpoint();
+		interf6.setPath("/foo/{id:*}");
+		interf6.setMethod("DELETE");
+		system.addEndpoint(interf6);
 
 		mapper = new RequestUriMapper(system);
 	}
@@ -82,6 +88,11 @@ public class RequestUriMapperTest {
 
 		assertThat(mapper.mapRespectingWildcards("foo/{id}/bar", "PUT")).isEqualTo(interf5);
 		assertThat(mapper.mapRespectingWildcards("foo/{id}/bar", "GET")).isNull();
+
+		assertThat(mapper.mapRespectingWildcards("/foo/bar", "DELETE")).isEqualTo(interf6);
+		assertThat(mapper.mapRespectingWildcards("/foo/bar/baz", "DELETE")).isEqualTo(interf6);
+		assertThat(mapper.mapRespectingWildcards("/foo", "DELETE")).isNull();
+		assertThat(mapper.mapRespectingWildcards("/foo/", "DELETE")).isNull();
 	}
 
 }

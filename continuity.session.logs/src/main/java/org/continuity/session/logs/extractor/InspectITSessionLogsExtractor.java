@@ -12,8 +12,6 @@ import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.rest.InspectITRestClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
 
 import rocks.inspectit.shared.all.communication.data.HttpTimerData;
@@ -28,8 +26,6 @@ import rocks.inspectit.shared.all.communication.data.cmr.BusinessTransactionData
  *
  */
 public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<InvocationSequenceData> {
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(InspectITSessionLogsExtractor.class);
 
 	/**
 	 * CMR configuration
@@ -61,6 +57,7 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 	 *            abstract URI (e.g., <code>/foo/{bar}/get</code>).
 	 * @return The session logs as string.
 	 */
+	@Override
 	public String getSessionLogs(Iterable<InvocationSequenceData> invocationSequences) {
 
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(invocationSequences);
