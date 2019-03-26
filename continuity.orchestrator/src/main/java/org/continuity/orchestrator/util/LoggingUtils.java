@@ -1,11 +1,6 @@
 package org.continuity.orchestrator.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class LoggingUtils {
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(LoggingUtils.class);
 
 	private LoggingUtils() {
 	}

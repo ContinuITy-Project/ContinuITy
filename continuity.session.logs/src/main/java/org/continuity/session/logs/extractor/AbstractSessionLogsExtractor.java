@@ -2,6 +2,7 @@ package org.continuity.session.logs.extractor;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -186,13 +187,25 @@ public abstract class AbstractSessionLogsExtractor<T> {
 		String[] uriParts = normalizeUri(uri).split("\\/");
 		String[] patternParts = normalizeUri(urlPattern).split("\\/");
 
-		if (uriParts.length != patternParts.length) {
-			throw new IllegalArgumentException("Uri and pattern need to have the same length, bus was '" + uri + "' and '" + urlPattern + "'!");
-		}
+		if (patternParts[patternParts.length - 1].matches("\\{.*\\:\\*\\}") && (uriParts.length >= patternParts.length)) {
+			Map<String, String[]> params = extractParams(uriParts, patternParts, patternParts.length - 1);
 
+			String remaining = Arrays.stream(uriParts).skip(patternParts.length - 1).collect(Collectors.joining("/"));
+			String paramName = patternParts[patternParts.length - 1].substring(1, patternParts[patternParts.length - 1].length() - 3);
+			params.put(paramName, new String[] { remaining });
+
+			return params;
+		} else if (uriParts.length != patternParts.length) {
+			throw new IllegalArgumentException("Uri and pattern need to have the same length, bus was '" + uri + "' and '" + urlPattern + "'!");
+		} else {
+			return extractParams(uriParts, patternParts, uriParts.length);
+		}
+	}
+
+	private Map<String, String[]> extractParams(String[] uriParts, String[] patternParts, int max) {
 		Map<String, String[]> params = new HashMap<>();
 
-		for (int i = 0; i < uriParts.length; i++) {
+		for (int i = 0; i < max; i++) {
 			if (patternParts[i].matches("\\{.*\\}")) {
 				String param = patternParts[i].substring(1, patternParts[i].length() - 1);
 				params.put("URL_PART_" + param, new String[] { uriParts[i] });
