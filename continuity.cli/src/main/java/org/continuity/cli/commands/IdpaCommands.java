@@ -5,11 +5,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AndFileFilter;
@@ -25,6 +29,7 @@ import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
 import org.continuity.commons.idpa.AnnotationExtractor;
+import org.continuity.commons.idpa.AnnotationFromAccessLogsExtractor;
 import org.continuity.commons.idpa.AnnotationValidityChecker;
 import org.continuity.commons.idpa.ApplicationUpdater;
 import org.continuity.commons.idpa.OpenApiToIdpaTransformer;
@@ -70,6 +75,7 @@ public class IdpaCommands {
 			new Shorthand("ann", this, "goToIdpaAnnContext"), //
 			new Shorthand("ann upload", this, "uploadAnnotation", String.class), //
 			new Shorthand("ann init", this, "initAnnotation", String.class), //
+			new Shorthand("ann extract", this, "extractAnnotation", String.class, String.class, String.class), //
 			new Shorthand("ann check", this, "checkAnnotation", String.class) //
 	);
 
@@ -88,6 +94,7 @@ public class IdpaCommands {
 	private final CliContext annContext = new CliContext(ANN_CONTEXT_NAME, //
 			new Shorthand("upload", this, "uploadAnnotation", String.class), //
 			new Shorthand("init", this, "initAnnotation", String.class), //
+			new Shorthand("extract", this, "extractAnnotation", String.class, String.class, String.class), //
 			new Shorthand("check", this, "checkAnnotation", String.class), //
 			new Shorthand("open", this, "openIdpa", String.class) //
 	);
@@ -374,6 +381,47 @@ public class IdpaCommands {
 		openAnnotation(tag);
 
 		return "Initialized and opened the annotation.";
+	}
+
+	@ShellMethod(key = { "idpa ann extract" }, value = "Extracts an annotation for the stored application model with the specified tag from Apache request logs.")
+	public String extractAnnotation(String logsFile, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
+			@ShellOption(defaultValue = AnnotationFromAccessLogsExtractor.DEFAULT_ACCESS_LOGS_REGEX, help = "The regular expression used to extract the request method and path including the query. There should be one capture group per property in the mentioned order.") String regex)
+			throws IOException {
+		tag = contextManager.getTagOrFail(tag);
+
+		Application application = readApplicationModel(tag);
+		ApplicationAnnotation annotation = readAnnotation(tag);
+
+		if (application == null) {
+			return "There is no application model! Please create one first.";
+		}
+
+		if (annotation != null) {
+			return "There is already an annotation! Remove or move it first before extracting a new one.";
+		}
+
+		Path pathToLogs = Paths.get(logsFile);
+		Path workingDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR));
+
+		if (pathToLogs.isAbsolute()) {
+			pathToLogs = workingDir.resolve(pathToLogs);
+		}
+
+		AnnotationFromAccessLogsExtractor extractor = new AnnotationFromAccessLogsExtractor(application, pathToLogs, workingDir);
+		extractor.setRegex(regex);
+		extractor.extract();
+
+		annotation = extractor.getExtractedAnnotation();
+		Application filteredApplication = extractor.getFilteredApplication();
+		Set<String> ignoredRequests = extractor.getIgnoredRequests();
+
+		saveAnnotation(annotation, tag);
+		openAnnotation(tag);
+
+		saveApplicationModel(filteredApplication, tag + "-filtered");
+		openApplicationModel(tag + "-filtered");
+
+		return "Extracted and opened the annotation and the filtered application model.\nIgnored requests:\n" + ignoredRequests.stream().collect(Collectors.joining("\n"));
 	}
 
 	@ShellMethod(key = { "idpa ann check" }, value = "Checks whether the annotation with the specified tag fits to the respective application model.")

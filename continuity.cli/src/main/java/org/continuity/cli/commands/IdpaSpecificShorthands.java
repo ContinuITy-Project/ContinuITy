@@ -111,6 +111,18 @@ public class IdpaSpecificShorthands {
 		return contextManager.getAvailablility("ann init");
 	}
 
+	@ShellMethod(key = { "ann extract" }, value = "Shorthand for 'idpa ann extract'.")
+	@ShellMethodAvailability({ "annExtractAvailability" })
+	public String extractAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String logsFile, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
+			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String regex) throws Throwable {
+		Shorthand shorthand = contextManager.getShorthand("ann extract");
+		return shorthand.execute(logsFile, tag, regex);
+	}
+
+	public Availability annExtractAvailability() {
+		return contextManager.getAvailablility("ann extract");
+	}
+
 	@ShellMethod(key = { "ann check" }, value = "Shorthand for 'idpa ann check'.")
 	@ShellMethodAvailability({ "annCheckAvailability" })
 	public String checkAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
