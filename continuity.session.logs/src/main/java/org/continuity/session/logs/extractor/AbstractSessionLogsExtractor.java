@@ -2,7 +2,6 @@ package org.continuity.session.logs.extractor;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.rest.RestApi.IdpaApplication;
+import org.continuity.commons.idpa.UrlPartParameterExtractor;
 import org.continuity.idpa.application.Application;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,48 +183,22 @@ public abstract class AbstractSessionLogsExtractor<T> {
 	 *            The abstract URI that specifies the pattern.
 	 * @return The extracted parameters in the form <code>[URL_PART_name -> value]</code>.
 	 */
-	protected Map<String, String[]> extractUriParams(String uri, String urlPattern) {
-		String[] uriParts = normalizeUri(uri).split("\\/");
-		String[] patternParts = normalizeUri(urlPattern).split("\\/");
-
-		if (patternParts[patternParts.length - 1].matches("\\{.*\\:\\*\\}") && (uriParts.length >= patternParts.length)) {
-			Map<String, String[]> params = extractParams(uriParts, patternParts, patternParts.length - 1);
-
-			String remaining = Arrays.stream(uriParts).skip(patternParts.length - 1).collect(Collectors.joining("/"));
-			String paramName = patternParts[patternParts.length - 1].substring(1, patternParts[patternParts.length - 1].length() - 3);
-			params.put(paramName, new String[] { remaining });
-
-			return params;
-		} else if (uriParts.length != patternParts.length) {
-			throw new IllegalArgumentException("Uri and pattern need to have the same length, bus was '" + uri + "' and '" + urlPattern + "'!");
-		} else {
-			return extractParams(uriParts, patternParts, uriParts.length);
-		}
-	}
-
-	private Map<String, String[]> extractParams(String[] uriParts, String[] patternParts, int max) {
+	private Map<String, String[]> extractUriParams(String uri, String urlPattern) {
+		UrlPartParameterExtractor extractor = new UrlPartParameterExtractor(urlPattern, uri);
 		Map<String, String[]> params = new HashMap<>();
 
-		for (int i = 0; i < max; i++) {
-			if (patternParts[i].matches("\\{.*\\}")) {
-				String param = patternParts[i].substring(1, patternParts[i].length() - 1);
-				params.put("URL_PART_" + param, new String[] { uriParts[i] });
+		while (extractor.hasNext()) {
+			String param = extractor.nextParameter();
+			String value = extractor.currentValue();
+
+			if (value == null) {
+				throw new IllegalArgumentException("Uri and pattern need to have the same length, bus was '" + uri + "' and '" + urlPattern + "'!");
 			}
+
+			params.put("URL_PART_" + param, new String[] { value });
 		}
 
 		return params;
-	}
-
-	private String normalizeUri(String uri) {
-		if (!uri.startsWith("/")) {
-			uri = "/" + uri;
-		}
-
-		if (!uri.endsWith("/")) {
-			uri = uri + "/";
-		}
-
-		return uri;
 	}
 
 	/**

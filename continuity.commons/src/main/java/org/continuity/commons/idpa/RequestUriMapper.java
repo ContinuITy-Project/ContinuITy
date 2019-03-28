@@ -126,7 +126,7 @@ public class RequestUriMapper {
 			if ((found != null) || !method.equals(interf.getMethod()) || (uriParts.length < interfUriParts.length)) {
 				return;
 			}
-			if (isTrailingWildcard(interfUriParts[interfUriParts.length - 1])) {
+			if (hasTrailingWildcard(interfUriParts)) {
 				if (compareUriParts(interfUriParts, interfUriParts.length - 1)) {
 					found = interf;
 				} else {
@@ -161,8 +161,8 @@ public class RequestUriMapper {
 			return uriPart.matches("\\{.*\\}");
 		}
 
-		private boolean isTrailingWildcard(String uriPart) {
-			return uriPart.matches("\\{.*\\:\\*\\}");
+		private boolean hasTrailingWildcard(String[] interfUriParts) {
+			return (interfUriParts.length != 0) && interfUriParts[interfUriParts.length - 1].matches("\\{.*\\:\\*\\}");
 		}
 
 	}

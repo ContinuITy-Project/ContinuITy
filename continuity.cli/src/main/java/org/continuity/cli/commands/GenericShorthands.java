@@ -66,6 +66,18 @@ public class GenericShorthands {
 		return contextManager.getAvailablility("init");
 	}
 
+	@ShellMethod(key = { "extract" }, value = "Shorthand for '<context> extract'. Available in 'idpa ann'.")
+	@ShellMethodAvailability({ "extractAvailability" })
+	public String extract(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String logsFile, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
+			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String regex) throws Throwable {
+		Shorthand shorthand = contextManager.getShorthand("extract");
+		return shorthand.execute(logsFile, tag, regex);
+	}
+
+	public Availability extractAvailability() {
+		return contextManager.getAvailablility("extract");
+	}
+
 	@ShellMethod(key = { "open" }, value = "Shorthand for '<context> open'. Available in 'idpa' and 'order'.")
 	@ShellMethodAvailability({ "openAvailability" })
 	public String open(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id) throws Throwable {
