@@ -15,23 +15,17 @@ import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
-import org.continuity.api.rest.RestApi.IdpaAnnotation;
-import org.continuity.api.rest.RestApi.IdpaApplication;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.utils.WebUtils;
-import org.continuity.idpa.annotation.ApplicationAnnotation;
-import org.continuity.idpa.application.Application;
 import org.continuity.jmeter.config.RabbitMqConfig;
 import org.continuity.jmeter.transform.JMeterAnnotator;
-import org.continuity.jmeter.transform.UserDefinedDefaultVariablesCleanerAnnotator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 @Component
@@ -95,14 +89,14 @@ public class TestPlanCreationAmqpHandler {
 		JMeterTestPlanBundle testPlanPack = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadLinks.getWorkloadModelLinks().getJmeterLink()), JMeterTestPlanBundle.class);
 
 		ListedHashTree annotatedTestPlan = testPlanPack.getTestPlan();
-		new UserDefinedDefaultVariablesCleanerAnnotator().cleanVariables(annotatedTestPlan);
+		JMeterAnnotator annotator = new JMeterAnnotator(annotatedTestPlan, restTemplate);
 
 		// Check if modularization is enabled in the order.
 		if (null != modularizationOptions) {
 			List<String> serviceTags = new ArrayList<String>(modularizationOptions.getServices().keySet());
-			annotatedTestPlan = createAnnotatedTestPlan(new JMeterTestPlanBundle(annotatedTestPlan, testPlanPack.getBehaviors()), serviceTags);
+			annotatedTestPlan = annotator.createAnnotatedTestPlan(serviceTags);
 		} else {
-			annotatedTestPlan = createAnnotatedTestPlan(testPlanPack,  Arrays.asList(tag));
+			annotatedTestPlan = annotator.createAnnotatedTestPlan(Arrays.asList(tag));
 		}
 
 		if (properties == null) {
@@ -116,35 +110,6 @@ public class TestPlanCreationAmqpHandler {
 		}
 
 		return new JMeterTestPlanBundle(annotatedTestPlan, testPlanPack.getBehaviors());
-	}
-
-	private ListedHashTree createAnnotatedTestPlan(JMeterTestPlanBundle testPlanPack, List<String> tags) {
-		ListedHashTree testPlan = testPlanPack.getTestPlan();
-
-		for (String tag : tags) {
-			ApplicationAnnotation annotation;
-			try {
-				annotation = restTemplate.getForObject(IdpaAnnotation.Annotation.GET.requestUrl(tag).get(),
-						ApplicationAnnotation.class);
-			} catch (HttpStatusCodeException e) {
-				LOGGER.error("Received a non-200 response: {} ({}) - {}", e.getStatusCode(),
-						e.getStatusCode().getReasonPhrase(), e.getResponseBodyAsString());
-				continue;
-			}
-			if (annotation == null) {
-				LOGGER.error("Annotation with tag {} is null! Aborting.", tag);
-				continue;
-			}
-			Application application = restTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(tag).get(),
-					Application.class);
-			if (application == null) {
-				LOGGER.error("Application with tag {} is null! Aborting.", tag);
-				continue;
-			}
-			JMeterAnnotator annotator = new JMeterAnnotator(testPlan, application);
-			annotator.addAnnotations(annotation);
-		}
-		return testPlan;
 	}
 
 }

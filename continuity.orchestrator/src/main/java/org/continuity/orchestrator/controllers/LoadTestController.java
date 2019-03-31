@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -96,11 +97,15 @@ public class LoadTestController {
 	 *            the testConfiguration
 	 * @param tag
 	 *            the corresponding tag
+	 * @param annotate
+	 *            Indicates whether the test plan should be annotated with the IDPA stored for the
+	 *            specified tag.
 	 * @return Returns a {@link LinkExchangeModel} containing a link to the test configuration
 	 */
 	@RequestMapping(path = POST, method = RequestMethod.POST)
-	public ResponseEntity<LinkExchangeModel> uploadTestPlan(@PathVariable String type, @RequestBody ObjectNode testConfiguration, @PathVariable String tag) {
-		String link = RestApi.Generic.UPLOAD_LOAD_TEST.get(type).requestUrl(tag).get();
+	public ResponseEntity<LinkExchangeModel> uploadTestPlan(@PathVariable String type, @RequestBody ObjectNode testConfiguration, @PathVariable String tag,
+			@RequestParam(defaultValue = "false") boolean annotate) {
+		String link = RestApi.Generic.UPLOAD_LOAD_TEST.get(type).requestUrl(tag).withQuery("annotate", Boolean.toString(annotate)).get();
 
 		LOGGER.info("Trying to upload the test configuration at {}", link);
 

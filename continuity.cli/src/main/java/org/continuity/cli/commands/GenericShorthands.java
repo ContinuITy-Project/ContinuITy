@@ -33,11 +33,12 @@ public class GenericShorthands {
 		return contextManager.getAvailablility("download");
 	}
 
-	@ShellMethod(key = { "upload" }, value = "Shorthand for '<context> upload'. Available in 'idpa'.")
+	@ShellMethod(key = { "upload" }, value = "Shorthand for '<context> upload'. Available in 'idpa app', 'idpa ann', and 'jmeter'.")
 	@ShellMethodAvailability({ "uploadAvailability" })
-	public String upload(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id) throws Throwable {
+	public String upload(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg1, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg2,
+			@ShellOption(value = { "--annotate", "-a" }, defaultValue = "false") boolean annotate) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("upload");
-		return shorthand.execute(id);
+		return shorthand.execute(arg1, arg2, annotate);
 	}
 
 	public Availability uploadAvailability() {
