@@ -1,6 +1,5 @@
 package org.continuity.commons.idpa;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,14 +7,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.continuity.commons.accesslogs.AbstractAccessLogsConsumer;
+import org.continuity.commons.accesslogs.AccessLogEntry;
 import org.continuity.idpa.WeakReference;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.CsvColumnInput;
@@ -27,8 +24,6 @@ import org.continuity.idpa.annotation.ParameterAnnotation;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.HttpParameter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Extracts an IDPA annotation based on an existing application model and Apache access logs.
@@ -36,9 +31,7 @@ import org.slf4j.LoggerFactory;
  * @author Henning Schulz
  *
  */
-public class AnnotationFromAccessLogsExtractor {
-
-	public static final String DEFAULT_ACCESS_LOGS_REGEX = ".* - - \\[[^\\]]+\\] \"([A-Z]+) ([^\"]+) .+\" .*";
+public class AnnotationFromAccessLogsExtractor extends AbstractAccessLogsConsumer {
 
 	private static final String PREFIX_INPUT = "Input_";
 
@@ -46,23 +39,13 @@ public class AnnotationFromAccessLogsExtractor {
 
 	private static final String FILE_EXT_CSV = ".csv";
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationFromAccessLogsExtractor.class);
-
 	private final Application application;
 
-	private final RequestUriMapper mapper;
-
-	private final Path pathToAccessLogs;
-
 	private final Path outputDir;
-
-	private Pattern pattern;
 
 	private ApplicationAnnotation extractedAnnotation;
 
 	private Application filteredApplication;
-
-	private Set<String> ignoredRequests = new LinkedHashSet<>();
 
 	private Map<HttpEndpoint, ParameterValueCollector> collectorPerEndpoint = new HashMap<>();
 
@@ -76,61 +59,30 @@ public class AnnotationFromAccessLogsExtractor {
 	 *            The directory where potentially created CSV files should be stored.
 	 */
 	public AnnotationFromAccessLogsExtractor(Application application, Path pathToAccessLogs, Path outputDir) {
+		super(application, pathToAccessLogs);
+
 		this.application = application;
-		this.mapper = new RequestUriMapper(application);
-		this.pathToAccessLogs = pathToAccessLogs;
 		this.outputDir = outputDir;
 	}
 
-	/**
-	 * Sets the regular expression. If this method is not called,
-	 * {@value #DEFAULT_ACCESS_LOGS_REGEX} will be used.
-	 *
-	 * @param regex
-	 *            The regular expression used to extract the request method and path including the
-	 *            query. There should be one capture group per property in the mentioned order.
-	 */
-	public void setRegex(String regex) {
-		this.pattern = Pattern.compile(regex);
+	public void extract() throws IOException {
+		consume();
 	}
 
-	public void extract() throws IOException {
-		if (pattern == null) {
-			setRegex(DEFAULT_ACCESS_LOGS_REGEX);
-		}
+	@Override
+	protected void init() {
+	}
 
-		BufferedReader reader = Files.newBufferedReader(pathToAccessLogs);
+	@Override
+	protected void process(AccessLogEntry logEntry, HttpEndpoint endpoint) {
+		getCollectorForEndpoint(endpoint).collectFromPath(logEntry.getPath());
+		getCollectorForEndpoint(endpoint).collectFromQueryString(logEntry.getRequestParameters());
+	}
 
-		String line = reader.readLine();
-
-		while (line != null) {
-			processLine(line);
-			line = reader.readLine();
-		}
-
+	@Override
+	protected void finalize() throws IOException {
 		collectFilteredApplication();
 		collectExtractedAnnotation();
-	}
-
-	private void processLine(String line) throws IOException {
-		Matcher matcher = pattern.matcher(line);
-
-		if (matcher.find()) {
-			String method = matcher.group(1);
-			String uri = matcher.group(2);
-			String[] pathAndQuery = uri.split("\\?");
-
-			HttpEndpoint endpoint = mapper.map(pathAndQuery[0], method);
-
-			if (endpoint == null) {
-				ignoredRequests.add(method + " " + uri);
-			} else {
-				getCollectorForEndpoint(endpoint).collectFromPath(pathAndQuery.length > 0 ? pathAndQuery[0] : uri);
-				getCollectorForEndpoint(endpoint).collectFromQueryString(pathAndQuery.length > 1 ? pathAndQuery[1] : null);
-			}
-		} else {
-			LOGGER.error("The regular expression does not match to the log entry: {}", line);
-		}
 	}
 
 	private ParameterValueCollector getCollectorForEndpoint(HttpEndpoint endpoint) {
@@ -253,10 +205,6 @@ public class AnnotationFromAccessLogsExtractor {
 
 	public Application getFilteredApplication() {
 		return filteredApplication;
-	}
-
-	public Set<String> getIgnoredRequests() {
-		return ignoredRequests;
 	}
 
 }

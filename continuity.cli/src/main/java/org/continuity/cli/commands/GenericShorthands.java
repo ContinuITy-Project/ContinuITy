@@ -206,4 +206,15 @@ public class GenericShorthands {
 		return contextManager.getAvailablility("check");
 	}
 
+	@ShellMethod(key = { "unify" }, value = "Shorthand for '<context> unify'. Available in 'accesslogs'.")
+	@ShellMethodAvailability({ "unifyAvailability" })
+	public String unify(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String path, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
+		Shorthand shorthand = contextManager.getShorthand("unify");
+		return shorthand.execute(path, tag);
+	}
+
+	public Availability unifyAvailability() {
+		return contextManager.getAvailablility("unify");
+	}
+
 }
