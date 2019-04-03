@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.continuity.commons.accesslogs.ParameterRecord;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.HttpParameter;
 import org.continuity.idpa.visitor.FindBy;
@@ -36,19 +37,14 @@ public class ParameterValueCollector {
 		}
 	}
 
-	public void collectFromQueryString(String query) {
-		if ((query == null) || query.isEmpty()) {
+	public void collectFromQueryString(List<ParameterRecord> parameters) {
+		if ((parameters == null) || parameters.isEmpty()) {
 			return;
 		}
 
-		for (String paramString : query.split("&")) {
-			String[] paramAndValue = paramString.split("=");
-
-			if (paramAndValue.length >= 2) {
-				String param = paramAndValue[0];
-				String value = paramAndValue[1];
-
-				storeParamAndValue(param, value);
+		for (ParameterRecord param : parameters) {
+			if (param.getValue() != null) {
+				storeParamAndValue(param.getName(), param.getValue());
 			}
 		}
 

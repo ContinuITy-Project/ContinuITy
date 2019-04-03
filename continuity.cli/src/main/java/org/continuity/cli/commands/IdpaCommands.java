@@ -28,6 +28,7 @@ import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
+import org.continuity.commons.accesslogs.AccessLogEntry;
 import org.continuity.commons.idpa.AnnotationExtractor;
 import org.continuity.commons.idpa.AnnotationFromAccessLogsExtractor;
 import org.continuity.commons.idpa.AnnotationValidityChecker;
@@ -385,7 +386,7 @@ public class IdpaCommands {
 
 	@ShellMethod(key = { "idpa ann extract" }, value = "Extracts an annotation for the stored application model with the specified tag from Apache request logs.")
 	public String extractAnnotation(String logsFile, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
-			@ShellOption(defaultValue = AnnotationFromAccessLogsExtractor.DEFAULT_ACCESS_LOGS_REGEX, help = "The regular expression used to extract the request method and path including the query. There should be one capture group per property in the mentioned order.") String regex)
+			@ShellOption(defaultValue = AccessLogEntry.DEFAULT_REGEX, help = "The regular expression used to extract the request method and path including the query. There should be one capture group per property in the mentioned order.") String regex)
 			throws IOException {
 		tag = contextManager.getTagOrFail(tag);
 
