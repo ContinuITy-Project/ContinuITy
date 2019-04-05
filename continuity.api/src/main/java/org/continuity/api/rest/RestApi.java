@@ -327,6 +327,9 @@ public class RestApi {
 			/** {@value #ROOT}/{tag} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
+			/** {@value #ROOT}/{tag}/regex */
+			public static final RestEndpoint GET_AS_REGEX = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_AS_REGEX, RequestMethod.GET);
+
 			/** {@value #ROOT}/{tag}/delta */
 			public static final RestEndpoint GET_DELTA = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_DELTA, RequestMethod.GET);
 
@@ -345,6 +348,7 @@ public class RestApi {
 			public static class Paths {
 
 				public static final String GET = "/{tag}";
+				public static final String GET_AS_REGEX = "/{tag}/regex";
 				public static final String GET_DELTA = "/{tag}/delta";
 				public static final String UPDATE = "/{tag}";
 				public static final String UPDATE_FROM_WORKLOAD_MODEL = "/{tag}/workload-model";

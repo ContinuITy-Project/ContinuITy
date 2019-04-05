@@ -2,6 +2,7 @@ package org.continuity.idpa.application.controllers;
 
 import static org.continuity.api.rest.RestApi.IdpaApplication.Application.ROOT;
 import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.GET;
+import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.GET_AS_REGEX;
 import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.GET_DELTA;
 import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.LEGACY_UPDATE;
 import static org.continuity.api.rest.RestApi.IdpaApplication.Application.Paths.UPDATE;
@@ -12,6 +13,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
@@ -20,7 +23,9 @@ import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.application.Application;
+import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.entities.ApplicationModelLink;
+import org.continuity.idpa.application.entities.EndpointAsRegex;
 import org.continuity.idpa.application.repository.ApplicationModelRepositoryManager;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.slf4j.Logger;
@@ -84,7 +89,7 @@ public class ApplicationController {
 		try {
 			return ResponseEntity.ok(manager.read(tag));
 		} catch (IOException e) {
-			LOGGER.error("En exception occured during reading!", e);
+			LOGGER.error("An exception occured during reading!", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 	}
@@ -111,6 +116,54 @@ public class ApplicationController {
 		}
 
 		return ResponseEntity.ok(manager.getDeltaSince(tag, date));
+	}
+
+	/**
+	 * Retrieves the application model stored for the specified tag and transforms it to a map of
+	 * regular expressions. Currently only supports {@link HttpEndpoint}, i.e., all other types
+	 * won't be contained.
+	 *
+	 * @param tag
+	 *            The tag of the application.
+	 * @return A map of endpoint IDs to request methods and regular expressions to be applied to
+	 *         check whether a certain request matches the endpoint, e.g.,
+	 *         {@code ^/?my/(?<id>[^/]*)/path/(?<rest>.*)/?$} for the abstract path
+	 *         <code>@code /my/{id}/path/{rest:*}</code>. Url parameters can be extracted via the
+	 *         corresponding named capture groups.
+	 */
+	@RequestMapping(path = GET_AS_REGEX, method = RequestMethod.GET)
+	public ResponseEntity<Map<String, EndpointAsRegex>> getApplicationAsRegex(@PathVariable String tag) {
+		Application app;
+		try {
+			app = manager.read(tag);
+		} catch (IOException e) {
+			LOGGER.error("An exception occured during reading!", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+
+		Map<String, EndpointAsRegex> regexPerEndpoint = app.getEndpoints().stream().filter(HttpEndpoint.class::isInstance).map(HttpEndpoint.class::cast)
+				.collect(Collectors.toMap(HttpEndpoint::getId, this::toRegex));
+
+		return ResponseEntity.ok(regexPerEndpoint);
+	}
+
+	private EndpointAsRegex toRegex(HttpEndpoint endpoint) {
+		String path = endpoint.getPath();
+		String regex = null;
+
+		if (path != null) {
+			if (path.startsWith("/")) {
+				path = path.substring(1);
+			}
+
+			if (path.endsWith("/")) {
+				path = path.substring(0, path.length() - 1);
+			}
+
+			regex = new StringBuilder().append("^/?").append(path.replaceAll("\\{([^\\}]*)\\:\\*\\}", "(?<$1>.*)").replaceAll("\\{([^\\}]*)\\}", "(?<$1>[^/]*)")).append("/?$").toString();
+		}
+
+		return new EndpointAsRegex(endpoint.getDomain(), endpoint.getPort(), endpoint.getMethod(), regex);
 	}
 
 	/**
