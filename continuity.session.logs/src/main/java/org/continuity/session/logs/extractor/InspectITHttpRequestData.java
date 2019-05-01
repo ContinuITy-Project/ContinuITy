@@ -47,8 +47,8 @@ public class InspectITHttpRequestData implements HTTPRequestData {
 	}
 
 	@Override
-	public long getIdentifier() {
-		return httpTimerData.getId();
+	public String getIdentifier() {
+		return Long.toString(httpTimerData.getId());
 	}
 
 	@Override

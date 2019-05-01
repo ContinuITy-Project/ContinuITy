@@ -24,7 +24,7 @@ public class PrePostProcessingHttpRequestData implements HTTPRequestData {
 	}
 
 	@Override
-	public long getIdentifier() {
+	public String getIdentifier() {
 		return mode.getIdentifier(root);
 	}
 
@@ -102,8 +102,8 @@ public class PrePostProcessingHttpRequestData implements HTTPRequestData {
 			}
 
 			@Override
-			protected long getIdentifier(HTTPRequestData root) {
-				return (31 * root.getIdentifier()) + 1;
+			protected String getIdentifier(HTTPRequestData root) {
+				return root.getIdentifier() + "-PRE";
 			}
 		},
 		POST("POST_PROCESSING#") {
@@ -113,8 +113,8 @@ public class PrePostProcessingHttpRequestData implements HTTPRequestData {
 			}
 
 			@Override
-			protected long getIdentifier(HTTPRequestData root) {
-				return (31 * root.getIdentifier()) + 2;
+			protected String getIdentifier(HTTPRequestData root) {
+				return root.getIdentifier() + "-POST";
 			}
 		};
 
@@ -130,7 +130,7 @@ public class PrePostProcessingHttpRequestData implements HTTPRequestData {
 
 		protected abstract long getTimestamp(HTTPRequestData root);
 
-		protected abstract long getIdentifier(HTTPRequestData root);
+		protected abstract String getIdentifier(HTTPRequestData root);
 
 	}
 

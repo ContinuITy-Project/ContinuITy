@@ -15,7 +15,7 @@ public interface HTTPRequestData {
 	 *
 	 * @return identifier
 	 */
-	public long getIdentifier();
+	public String getIdentifier();
 
 	/**
 	 * Returns timestamp in nanos

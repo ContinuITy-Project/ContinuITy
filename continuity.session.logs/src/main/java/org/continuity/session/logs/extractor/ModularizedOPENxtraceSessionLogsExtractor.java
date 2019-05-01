@@ -73,7 +73,7 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	public String getSessionLogs(Iterable<Trace> data) {
 		List<HTTPRequestData> httpCallables = extractHttpRequestCallables(data);
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(httpCallables);
-		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<Long, Pair<String, String>>();
+		HashMap<String, Pair<String, String>> businessTransactions = new HashMap<>();
 
 		for (String tag : services.keySet()) {
 			Application applicationModel = retrieveApplicationModel(tag);

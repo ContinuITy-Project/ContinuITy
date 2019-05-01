@@ -74,7 +74,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 	 *            Map of httpCallable identifier and pair of business transaction name and URI
 	 * @return
 	 */
-	public String getSessionLogsAsString(HashMap<String, List<HTTPRequestData>> sortedList, HashMap<Long, Pair<String, String>> businessTransactions) {
+	public String getSessionLogsAsString(HashMap<String, List<HTTPRequestData>> sortedList, HashMap<String, Pair<String, String>> businessTransactions) {
 
 		boolean first = true;
 		StringBuffer sessionLogs = new StringBuffer();
