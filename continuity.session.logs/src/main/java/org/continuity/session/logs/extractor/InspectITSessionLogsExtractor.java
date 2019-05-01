@@ -34,7 +34,7 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param tag
 	 *            the tag of the application
 	 * @param eurekaRestTemplate
@@ -63,7 +63,7 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(invocationSequences);
 
 		Application systemModel = retrieveApplicationModel(tag);
-		HashMap<Long, Pair<String, String>> businessTransactions;
+		HashMap<String, Pair<String, String>> businessTransactions;
 
 		if (systemModel == null) {
 			businessTransactions = getBusinessTransactionsFromInspectitBTs(invocationSequences);
@@ -76,7 +76,7 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 
 	/**
 	 * Returns all {@link HttpTimerData} of the traces sorted by session and timestamp
-	 * 
+	 *
 	 * @param invocationSequences
 	 *            the input traces
 	 * @return Map of session logs and the corresponding requests represented as
@@ -150,13 +150,13 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 
 	/**
 	 * Extracts all different businessTransactions from the input traces
-	 * 
+	 *
 	 * @param invocationSequences
 	 *            the input traces
 	 * @return the business transactions
-	 * 
+	 *
 	 */
-	private HashMap<Long, Pair<String, String>> getBusinessTransactionsFromInspectitBTs(Iterable<InvocationSequenceData> invocationSequences) {
+	private HashMap<String, Pair<String, String>> getBusinessTransactionsFromInspectitBTs(Iterable<InvocationSequenceData> invocationSequences) {
 		InspectITRestClient fetcher = new InspectITRestClient(cmrConfig);
 
 		Iterable<ApplicationData> applications = null;
@@ -166,8 +166,6 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 			applications = fetcher.fetchAllApplications();
 
 			for (ApplicationData application : (List<ApplicationData>) applications) {
-				// TODO: This comparison does not work (because application is not a string)!
-				// @Tobias: Should be solved now ...
 				if (!application.getName().equals("Unknown Application")) {
 					justOneMonitoredApplication = fetcher.fetchAllBusinessTransactions(application.getId());
 				}
@@ -185,7 +183,7 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 			businessTransactionsMap.put(businessTransactionId, businessTransactionName);
 		}
 
-		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<>();
+		HashMap<String, Pair<String, String>> businessTransactions = new HashMap<>();
 
 		for (InvocationSequenceData invoc : invocationSequences) {
 			if (businessTransactionsMap.get(invoc.getBusinessTransactionId()) != null) {
@@ -194,7 +192,7 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 				if (!businessTransactionName.equals("Unknown Transaction")) {
 					if ((invoc.getTimerData() != null) && (invoc.getTimerData() instanceof HttpTimerData)) {
 						HttpTimerData dat = (HttpTimerData) invoc.getTimerData();
-						businessTransactions.put(dat.getId(), Pair.of(businessTransactionName, dat.getHttpInfo().getUri()));
+						businessTransactions.put(Long.toString(dat.getId()), Pair.of(businessTransactionName, dat.getHttpInfo().getUri()));
 					}
 				}
 			}
@@ -206,15 +204,15 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 	/**
 	 * Returns all business transactions of the application model, which are consisted in the
 	 * invocationSequences.
-	 * 
+	 *
 	 * @param application
 	 *            the application
 	 * @param invocationSequences
 	 *            the input traces
 	 * @return the business transactions
 	 */
-	private HashMap<Long, Pair<String, String>> getBusinessTransactionsFromApplicationModel(Application application, Iterable<InvocationSequenceData> invocationSequences) {
-		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<>();
+	private HashMap<String, Pair<String, String>> getBusinessTransactionsFromApplicationModel(Application application, Iterable<InvocationSequenceData> invocationSequences) {
+		HashMap<String, Pair<String, String>> businessTransactions = new HashMap<>();
 		RequestUriMapper uriMapper = new RequestUriMapper(application);
 
 		for (InvocationSequenceData invoc : invocationSequences) {
@@ -223,7 +221,7 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 				HttpEndpoint interf = uriMapper.map(dat.getHttpInfo().getUri(), dat.getHttpInfo().getRequestMethod());
 
 				if ((interf != null) && interf.getDomain().equals(dat.getHttpInfo().getServerName()) && interf.getPort().equals(Integer.toString(dat.getHttpInfo().getServerPort()))) {
-					businessTransactions.put(dat.getId(), Pair.of(interf.getId(), interf.getPath()));
+					businessTransactions.put(Long.toString(dat.getId()), Pair.of(interf.getId(), interf.getPath()));
 				}
 			}
 		}

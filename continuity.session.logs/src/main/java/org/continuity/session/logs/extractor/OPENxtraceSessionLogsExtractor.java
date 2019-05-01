@@ -45,7 +45,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 		List<HTTPRequestData> httpCallables = extractHttpRequestCallables(data);
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(httpCallables);
 		Application applicationModel = retrieveApplicationModel(tag);
-		HashMap<Long, Pair<String, String>> businessTransactions;
+		HashMap<String, Pair<String, String>> businessTransactions;
 
 		if (applicationModel == null) {
 			businessTransactions = getBusinessTransactionsFromOPENxtraces(httpCallables);
@@ -139,8 +139,8 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 *
 	 * @return all existing business transactions
 	 */
-	protected HashMap<Long, Pair<String, String>> getBusinessTransactionsFromOPENxtraces(Iterable<HTTPRequestData> httpCallables) {
-		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<Long, Pair<String, String>>();
+	protected HashMap<String, Pair<String, String>> getBusinessTransactionsFromOPENxtraces(Iterable<HTTPRequestData> httpCallables) {
+		HashMap<String, Pair<String, String>> businessTransactions = new HashMap<>();
 
 		for (HTTPRequestData httpCallable : httpCallables) {
 			String businessTransaction = httpCallable.getBusinessTransaction();
@@ -163,8 +163,8 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	 *            the {@link HTTPRequestProcessingImpl} callables
 	 * @return
 	 */
-	protected HashMap<Long, Pair<String, String>> getBusinessTransactionsFromApplicationModel(Application application, Iterable<HTTPRequestData> httpCallables) {
-		HashMap<Long, Pair<String, String>> businessTransactions = new HashMap<Long, Pair<String, String>>();
+	protected HashMap<String, Pair<String, String>> getBusinessTransactionsFromApplicationModel(Application application, Iterable<HTTPRequestData> httpCallables) {
+		HashMap<String, Pair<String, String>> businessTransactions = new HashMap<>();
 		RequestUriMapper uriMapper = new RequestUriMapper(application);
 
 		for (HTTPRequestData httpCallable : httpCallables) {

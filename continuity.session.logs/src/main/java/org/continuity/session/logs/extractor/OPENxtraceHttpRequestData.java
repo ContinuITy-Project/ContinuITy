@@ -1,9 +1,9 @@
 package org.continuity.session.logs.extractor;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.spec.research.open.xtrace.api.core.callables.HTTPRequestProcessing;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 
@@ -26,22 +26,8 @@ public class OPENxtraceHttpRequestData implements HTTPRequestData {
 	}
 
 	@Override
-	public long getIdentifier() {
-		long identifier;
-		
-		if(callable.getIdentifier().get() instanceof String) {
-			String stringIdentifier = (String) callable.getIdentifier().get();
-			if(StringUtils.isNumeric(stringIdentifier)) {
-				identifier = Long.parseLong(stringIdentifier);
-			} else if(stringIdentifier.matches("[0-9a-fA-F]+")) {
-				identifier = Long.parseLong(stringIdentifier, 16);
-			} else {
-				identifier = (long) callable.getIdentifier().get().hashCode();
-			}
-		} else {
-			identifier = (long) callable.getIdentifier().get().hashCode();
-		}
-		return identifier;
+	public String getIdentifier() {
+		return Objects.toString(callable.getIdentifier().get());
 	}
 
 	@Override
