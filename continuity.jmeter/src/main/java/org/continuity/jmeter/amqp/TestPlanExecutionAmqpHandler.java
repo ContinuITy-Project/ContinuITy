@@ -99,15 +99,19 @@ public class TestPlanExecutionAmqpHandler {
 
 		if (properties == null) {
 			LOGGER.warn("Could not set JMeter properties, as they are null.");
-		} else if (properties.getNumUsers() != null) {
-			jmeterPropertiesCorrector.setNumberOfUsers(testPlanBundle.getTestPlan(), properties.getNumUsers());
-			LOGGER.info("Set number of users to {}.", properties.getNumUsers());
-		} else if (properties.getDuration() != null) {
-			jmeterPropertiesCorrector.setDuration(testPlanBundle.getTestPlan(), properties.getDuration());
-			LOGGER.info("Set duration to {}.", properties.getDuration());
-		} else if (properties.getRampup() != null) {
-			jmeterPropertiesCorrector.setRampup(testPlanBundle.getTestPlan(), properties.getRampup());
-			LOGGER.info("Set rampup to {}.", properties.getRampup());
+		} else {
+			if (properties.getNumUsers() != null) {
+				jmeterPropertiesCorrector.setNumberOfUsers(testPlanBundle.getTestPlan(), properties.getNumUsers());
+				LOGGER.info("Set number of users to {}.", properties.getNumUsers());
+			}
+			if (properties.getDuration() != null) {
+				jmeterPropertiesCorrector.setDuration(testPlanBundle.getTestPlan(), properties.getDuration());
+				LOGGER.info("Set duration to {}.", properties.getDuration());
+			}
+			if (properties.getRampup() != null) {
+				jmeterPropertiesCorrector.setRampup(testPlanBundle.getTestPlan(), properties.getRampup());
+				LOGGER.info("Set rampup to {}.", properties.getRampup());
+			}
 		}
 
 		Path tmpPath;

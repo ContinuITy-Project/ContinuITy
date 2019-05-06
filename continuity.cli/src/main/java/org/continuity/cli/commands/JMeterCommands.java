@@ -22,7 +22,6 @@ import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
 import org.continuity.cli.process.JMeterProcess;
 import org.continuity.cli.storage.OrderStorage;
-import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.jmeter.TestPlanWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -75,8 +74,6 @@ public class JMeterCommands {
 	private ObjectMapper mapper;
 
 	private TestPlanWriter testPlanWriter;
-
-	private JMeterPropertiesCorrector propertiesCorrector = new JMeterPropertiesCorrector();
 
 	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'jmeter' context so that the shorthands can be used.")
 	public void goToIdpaContext() {
@@ -131,9 +128,6 @@ public class JMeterCommands {
 		testPlanDir.toFile().mkdirs();
 
 		JMeterTestPlanBundle testPlanBundle = response.getBody();
-		propertiesCorrector.correctPaths(testPlanBundle.getTestPlan(), testPlanDir.toAbsolutePath());
-		propertiesCorrector.configureResultFile(testPlanBundle.getTestPlan(), testPlanDir.resolve("results.csv").toAbsolutePath());
-		propertiesCorrector.prepareForHeadlessExecution(testPlanBundle.getTestPlan());
 		Path testPlanPath = testPlanWriter.write(testPlanBundle.getTestPlan(), testPlanBundle.getBehaviors(), testPlanDir);
 		new JMeterProcess(jmeterHome).run(testPlanPath);
 

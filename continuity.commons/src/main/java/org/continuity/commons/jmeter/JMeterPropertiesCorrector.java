@@ -1,7 +1,9 @@
 package org.continuity.commons.jmeter;
 
 import java.nio.file.Path;
+import java.util.Collection;
 
+import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.control.Controller;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.protocol.http.control.CookieManager;
@@ -26,9 +28,51 @@ import net.voorn.markov4jmeter.control.MarkovController;
  */
 public class JMeterPropertiesCorrector {
 
+	private static final String TESTPLAN_DIR_VAR = "testplan-dir";
+	private static final String TESTPLAN_DIR_REF = new StringBuilder().append("${").append(TESTPLAN_DIR_VAR).append("}").toString();
+	private static final String TESTPLAN_DIR_VALUE = "${__BeanShell(import org.apache.jmeter.services.FileServer; FileServer.getFileServer().getBaseDir();)}";
+
+	/**
+	 * Corrects everything such that the test plan can be executed:
+	 *
+	 * <ul>
+	 * <li>Sets the Markov4JMeter behavior model paths to the dynamically determined absolute path
+	 * of the test plan.</li>
+	 * <li>Sets the results file to the test plan's directory and configures the fields to be
+	 * written.</li>
+	 * <li>Prepares for headless execution</li>
+	 * </ul>
+	 *
+	 * <b>If the test plan is parameterized afterwards, these changes can become invalid!</b>
+	 *
+	 * @param testPlan
+	 *            The test plan in which the paths are to be corrected.
+	 */
+	public void autocorrect(ListedHashTree testPlan) {
+		SearchByClass<Arguments> search = new SearchByClass<>(Arguments.class);
+		testPlan.traverse(search);
+
+		Collection<Arguments> searchResult = search.getSearchResults();
+
+		if (searchResult.size() != 1) {
+			throw new RuntimeException("Number of Arguments in test plan was " + searchResult.size() + "!");
+		}
+
+		// Only one iteration!
+		for (Arguments args : search.getSearchResults()) {
+			args.removeArgument(TESTPLAN_DIR_VAR);
+			args.addArgument(TESTPLAN_DIR_VAR, TESTPLAN_DIR_VALUE);
+		}
+
+		correctBehaviorPaths(testPlan, TESTPLAN_DIR_REF);
+		configureResultFile(testPlan, TESTPLAN_DIR_REF + "/jmeter-results.csv");
+
+		prepareForHeadlessExecution(testPlan);
+	}
+
 	/**
 	 * Sets the paths of the behavior model files in the specified JMeter test plan to the specified
-	 * dir.
+	 * dir. <b>Will overwrite the default path, which is in the test plan's directory.</b>
 	 *
 	 * @param testPlan
 	 *            Test plan with wrong behavior model paths.
@@ -36,6 +80,10 @@ public class JMeterPropertiesCorrector {
 	 *            The root dir where the behavior models are stored.
 	 */
 	public void correctPaths(ListedHashTree testPlan, Path dir) {
+		correctBehaviorPaths(testPlan, dir.toAbsolutePath().toString());
+	}
+
+	private void correctBehaviorPaths(ListedHashTree testPlan, String dir) {
 		SearchByClass<MarkovController> search = new SearchByClass<>(MarkovController.class);
 		testPlan.traverse(search);
 
@@ -60,14 +108,15 @@ public class JMeterPropertiesCorrector {
 
 				BehaviorMixEntry entry = (BehaviorMixEntry) propertyObject;
 
-				Path fullPath = dir.resolve(entry.getBName() + ".csv");
-				entry.setFilename(fullPath.toString());
+				String fullPath = dir + "/" + entry.getBName() + ".csv";
+				entry.setFilename(fullPath);
 			}
 		}
 	}
 
 	/**
-	 * Sets a CSV file for writing the results and configures the stored results.
+	 * Sets a CSV file for writing the results and configures the stored results. <b>Will overwrite
+	 * the default path, which is in the test plan's directory.</b>
 	 *
 	 * @param testPlan
 	 *            The test plan that should write its results to the file.
@@ -75,12 +124,16 @@ public class JMeterPropertiesCorrector {
 	 *            The path to the CSV.
 	 */
 	public void configureResultFile(ListedHashTree testPlan, Path resultCsvPath) {
+		configureResultFile(testPlan, resultCsvPath.toAbsolutePath().toString());
+	}
+
+	public void configureResultFile(ListedHashTree testPlan, String resultCsvPath) {
 		SearchByClass<ResultCollector> search = new SearchByClass<>(ResultCollector.class);
 		testPlan.traverse(search);
 
 		// Should be only one
 		for (ResultCollector collector : search.getSearchResults()) {
-			collector.setFilename(resultCsvPath.toAbsolutePath().toString());
+			collector.setFilename(resultCsvPath);
 
 			configureResultCollectorProperties(collector);
 		}
@@ -103,17 +156,30 @@ public class JMeterPropertiesCorrector {
 
 		config.setAsXml(false);
 		config.setTime(true);
-		config.setMessage(true);
-		config.setSuccess(true);
-		config.setThreadCounts(true);
 		config.setLatency(true);
-		config.setSampleCount(true);
-		config.setLabel(true);
-		config.setThreadName(true);
 		config.setTimestamp(true);
+		config.setSuccess(true);
+		config.setLabel(true);
 		config.setCode(true);
+		config.setMessage(true);
+		config.setThreadName(true);
 		config.setDataType(true);
+		config.setEncoding(false);
+		config.setAssertions(false);
+		config.setSubresults(false);
+		config.setResponseData(false);
+		config.setSamplerData(false);
+		config.setFieldNames(true);
+		config.setResponseHeaders(false);
+		config.setRequestHeaders(false);
+		config.setAssertionResultsFailureMessage(false);
 		config.setBytes(true);
+		config.setSentBytes(true);
+		config.setUrl(true);
+		config.setThreadCounts(true);
+		config.setSampleCount(true);
+		config.setIdleTime(true);
+		config.setConnectTime(true);
 	}
 
 	/**
