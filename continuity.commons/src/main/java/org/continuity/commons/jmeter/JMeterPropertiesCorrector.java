@@ -134,6 +134,59 @@ public class JMeterPropertiesCorrector {
 	}
 
 	/**
+	 * Sets the number of users.
+	 *
+	 * @param numUsers
+	 *            Number of users to be executed in parallel.
+	 */
+	public void setNumberOfUsers(ListedHashTree testPlan, int numUsers) {
+		SearchByClass<ThreadGroup> search = new SearchByClass<>(ThreadGroup.class);
+		testPlan.traverse(search);
+
+		for (ThreadGroup group : search.getSearchResults()) {
+			group.setNumThreads(numUsers);
+		}
+	}
+
+	/**
+	 * Sets the duration.
+	 *
+	 * @param durationSeconds
+	 *            The duration od the test in seconds.
+	 */
+	public void setDuration(ListedHashTree testPlan, long durationSeconds) {
+		SearchByClass<ThreadGroup> search = new SearchByClass<>(ThreadGroup.class);
+		testPlan.traverse(search);
+
+		for (ThreadGroup group : search.getSearchResults()) {
+			group.setScheduler(true);
+			group.setDuration(durationSeconds);
+
+			Controller mainController = group.getSamplerController();
+
+			if (mainController instanceof LoopController) {
+				// Sets Loop Count: Forever [CHECK]
+				((LoopController) mainController).setLoops(-1);
+			}
+		}
+	}
+
+	/**
+	 * Sets the ramp up time.
+	 *
+	 * @param rampupSeconds
+	 *            The ramp up time in seconds.
+	 */
+	public void setRampup(ListedHashTree testPlan, int rampupSeconds) {
+		SearchByClass<ThreadGroup> search = new SearchByClass<>(ThreadGroup.class);
+		testPlan.traverse(search);
+
+		for (ThreadGroup group : search.getSearchResults()) {
+			group.setRampUp(rampupSeconds);
+		}
+	}
+
+	/**
 	 * Sets the number of users, the duration and the ramp up time.
 	 *
 	 * @param numUsers
@@ -142,7 +195,11 @@ public class JMeterPropertiesCorrector {
 	 *            The duration od the test in seconds.
 	 * @param rampupSeconds
 	 *            The ramp up time in seconds.
+	 * @deprecated Please use {@link #setNumberOfUsers(ListedHashTree, int)},
+	 *             {@link #setDuration(ListedHashTree, long)}, and
+	 *             {@link #setRampup(ListedHashTree, int)}.
 	 */
+	@Deprecated
 	public void setRuntimeProperties(ListedHashTree testPlan, int numUsers, long durationSeconds, int rampupSeconds) {
 		SearchByClass<ThreadGroup> search = new SearchByClass<>(ThreadGroup.class);
 		testPlan.traverse(search);
@@ -161,7 +218,7 @@ public class JMeterPropertiesCorrector {
 			}
 		}
 	}
-	
+
 	/**
 	 * Sets the duration and the ramp up time.
 	 *
@@ -169,7 +226,10 @@ public class JMeterPropertiesCorrector {
 	 *            The duration of the test in seconds.
 	 * @param rampupSeconds
 	 *            The ramp up time in seconds.
+	 * @deprecated Please use {@link #setDuration(ListedHashTree, long)} and
+	 *             {@link #setRampup(ListedHashTree, int)}.
 	 */
+	@Deprecated
 	public void setRuntimeProperties(ListedHashTree testPlan, long durationSeconds, int rampupSeconds) {
 		SearchByClass<ThreadGroup> search = new SearchByClass<>(ThreadGroup.class);
 		testPlan.traverse(search);

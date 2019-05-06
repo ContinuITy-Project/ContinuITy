@@ -1,10 +1,7 @@
 package org.continuity.wessbas.entities;
 
-import org.continuity.api.amqp.AmqpApi.IdpaAnnotation;
 import org.continuity.api.entities.config.WorkloadModelType;
 import org.continuity.api.entities.links.LinkExchangeModel;
-import org.continuity.api.rest.RestApi;
-import org.continuity.api.rest.RestApi.Orchestrator.Idpa;
 import org.continuity.api.rest.RestApi.IdpaApplication;
 import org.continuity.api.rest.RestApi.Wessbas;
 

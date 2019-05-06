@@ -98,16 +98,16 @@ public class TestPlanExecutionAmqpHandler {
 		PropertySpecification properties = task.getProperties();
 
 		if (properties == null) {
-			LOGGER.warn("Task {}: Could not set JMeter properties, as they are null.", task.getTaskId());
-		} else if ((properties.getNumUsers() != null) && (properties.getDuration() != null) && (properties.getRampup() != null)) {
-			jmeterPropertiesCorrector.setRuntimeProperties(testPlanBundle.getTestPlan(), properties.getNumUsers(), properties.getDuration(), properties.getRampup());
-			LOGGER.info("Task {}: Set JMeter properties num-users = {}, duration = {}, rampup = {}.", task.getTaskId(), properties.getNumUsers(), properties.getDuration(), properties.getRampup());
-		}  else if ((properties.getNumUsers() == null) && (properties.getDuration() != null) && (properties.getRampup() != null)) {
-			jmeterPropertiesCorrector.setRuntimeProperties(testPlanBundle.getTestPlan(), properties.getDuration(), properties.getRampup());
-			LOGGER.info("Task {}: Set JMeter properties duration = {}, rampup = {}.", task.getTaskId(), properties.getDuration(), properties.getRampup());
-		} else {
-			LOGGER.warn("Task {}: Could not set JMeter properties, as some of them are null: duration = {}, rampup = {}.", task.getTaskId(),
-					properties.getDuration(), properties.getRampup());
+			LOGGER.warn("Could not set JMeter properties, as they are null.");
+		} else if (properties.getNumUsers() != null) {
+			jmeterPropertiesCorrector.setNumberOfUsers(testPlanBundle.getTestPlan(), properties.getNumUsers());
+			LOGGER.info("Set number of users to {}.", properties.getNumUsers());
+		} else if (properties.getDuration() != null) {
+			jmeterPropertiesCorrector.setDuration(testPlanBundle.getTestPlan(), properties.getDuration());
+			LOGGER.info("Set duration to {}.", properties.getDuration());
+		} else if (properties.getRampup() != null) {
+			jmeterPropertiesCorrector.setRampup(testPlanBundle.getTestPlan(), properties.getRampup());
+			LOGGER.info("Set rampup to {}.", properties.getRampup());
 		}
 
 		Path tmpPath;

@@ -101,12 +101,15 @@ public class TestPlanCreationAmqpHandler {
 
 		if (properties == null) {
 			LOGGER.warn("Could not set JMeter properties, as they are null.");
-		} else if ((properties.getNumUsers() != null) && (properties.getDuration() != null) && (properties.getRampup() != null)) {
-			jmeterPropertiesCorrector.setRuntimeProperties(testPlanPack.getTestPlan(), properties.getNumUsers(), properties.getDuration(), properties.getRampup());
-			LOGGER.info("Set JMeter properties num-users = {}, duration = {}, rampup = {}.", properties.getNumUsers(), properties.getDuration(), properties.getRampup());
-		} else {
-			LOGGER.warn("Could not set JMeter properties, as some of them are null: num-users = {}, duration = {}, rampup = {}.", properties.getNumUsers(), properties.getDuration(),
-					properties.getRampup());
+		} else if (properties.getNumUsers() != null) {
+			jmeterPropertiesCorrector.setNumberOfUsers(testPlanPack.getTestPlan(), properties.getNumUsers());
+			LOGGER.info("Set number of users to {}.", properties.getNumUsers());
+		} else if (properties.getDuration() != null) {
+			jmeterPropertiesCorrector.setDuration(testPlanPack.getTestPlan(), properties.getDuration());
+			LOGGER.info("Set duration to {}.", properties.getDuration());
+		} else if (properties.getRampup() != null) {
+			jmeterPropertiesCorrector.setRampup(testPlanPack.getTestPlan(), properties.getRampup());
+			LOGGER.info("Set rampup to {}.", properties.getRampup());
 		}
 
 		return new JMeterTestPlanBundle(annotatedTestPlan, testPlanPack.getBehaviors());
