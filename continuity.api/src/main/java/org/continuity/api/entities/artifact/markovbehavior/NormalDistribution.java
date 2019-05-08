@@ -47,8 +47,20 @@ public class NormalDistribution {
 	 * @return The resulting normal distribution.
 	 */
 	public static NormalDistribution fromSample(double... sample) {
-		double mean = DoubleStream.of(sample).sum() / sample.length;
-		double variance = DoubleStream.of(sample).map(x -> Math.pow(x - mean, 2)).sum() / (sample.length - 1);
+		double mean;
+		double variance;
+
+		if (sample.length > 0) {
+			mean = DoubleStream.of(sample).sum() / sample.length;
+		} else {
+			mean = 0;
+		}
+
+		if (sample.length > 1) {
+			variance = DoubleStream.of(sample).map(x -> Math.pow(x - mean, 2)).sum() / (sample.length - 1);
+		} else {
+			variance = 0;
+		}
 
 		return new NormalDistribution(mean, variance);
 	}
