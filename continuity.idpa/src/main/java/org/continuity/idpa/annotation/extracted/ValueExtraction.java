@@ -4,6 +4,8 @@ import org.continuity.idpa.IdpaElement;
 
 public interface ValueExtraction extends IdpaElement {
 
+	public static final String DEFAULT_FALLBACK_VALUE = "__PREVIOUS";
+
 	/**
 	 * Gets the interface from which the value is extracted.
 	 *
