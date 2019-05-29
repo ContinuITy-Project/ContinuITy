@@ -9,8 +9,8 @@ import org.continuity.api.entities.report.ApplicationChange;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.EndpointAnnotation;
-import org.continuity.idpa.annotation.ExtractedInput;
-import org.continuity.idpa.annotation.ValueExtraction;
+import org.continuity.idpa.annotation.extracted.ExtractedInput;
+import org.continuity.idpa.annotation.extracted.ValueExtraction;
 import org.continuity.idpa.visitor.IdpaByClassSearcher;
 
 /**
@@ -74,7 +74,7 @@ public class AnnotationFixer {
 		boolean broken = false;
 
 		for (ValueExtraction extraction : input.getExtractions()) {
-			if (removedInterfaces.contains(extraction.getFrom().getId())) {
+			if (extraction.getFrom().isEndpoint() && removedInterfaces.contains(extraction.getFrom().getEndpoint().getId())) {
 				broken = true;
 				break;
 			}

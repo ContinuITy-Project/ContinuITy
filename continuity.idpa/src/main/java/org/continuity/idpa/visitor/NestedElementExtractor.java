@@ -16,19 +16,17 @@ import org.continuity.idpa.annotation.CsvColumnInput;
 import org.continuity.idpa.annotation.CsvInput;
 import org.continuity.idpa.annotation.DatetimeInput;
 import org.continuity.idpa.annotation.EndpointAnnotation;
-import org.continuity.idpa.annotation.ExtractedInput;
-import org.continuity.idpa.annotation.JsonPathExtraction;
 import org.continuity.idpa.annotation.ListInput;
 import org.continuity.idpa.annotation.ParameterAnnotation;
 import org.continuity.idpa.annotation.RandomNumberInput;
 import org.continuity.idpa.annotation.RandomStringInput;
-import org.continuity.idpa.annotation.RegExExtraction;
+import org.continuity.idpa.annotation.extracted.ExtractedInput;
+import org.continuity.idpa.annotation.extracted.JsonPathExtraction;
+import org.continuity.idpa.annotation.extracted.RegExExtraction;
 import org.continuity.idpa.annotation.json.JsonInput;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.Parameter;
-import org.continuity.idpa.serialization.ModelSanitizers.InterfaceAnnotation;
-import org.continuity.idpa.serialization.ModelSanitizers.SystemAnnotation;
 
 /**
  * Utility for extracting the nested elements of {@link IdpaElement}s.
@@ -55,7 +53,7 @@ public enum NestedElementExtractor {
 	},
 
 	/**
-	 * For {@link SystemAnnotation}.
+	 * For {@link ApplicationAnnotation}.
 	 */
 	SYSTEM_ANNOTATION(ApplicationAnnotation.class) {
 		@Override
@@ -69,7 +67,7 @@ public enum NestedElementExtractor {
 	},
 
 	/**
-	 * For {@link InterfaceAnnotation}.
+	 * For {@link EndpointAnnotation}.
 	 */
 	INTERFACE_ANNOTATION(EndpointAnnotation.class) {
 		@Override

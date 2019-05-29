@@ -2,10 +2,11 @@ package org.continuity.idpa.serialization;
 
 import org.continuity.idpa.IdpaElement;
 import org.continuity.idpa.WeakReference;
-import org.continuity.idpa.annotation.ListInput;
 import org.continuity.idpa.annotation.Input;
-import org.continuity.idpa.application.Parameter;
+import org.continuity.idpa.annotation.ListInput;
+import org.continuity.idpa.annotation.extracted.EndpointOrInput;
 import org.continuity.idpa.application.Endpoint;
+import org.continuity.idpa.application.Parameter;
 import org.continuity.idpa.visitor.IdpaVisitor;
 
 import com.fasterxml.jackson.databind.util.StdConverter;
@@ -36,7 +37,7 @@ public class ModelSanitizers {
 			return (StdConverter<? super T, ? super T>) new ParameterAnnotation();
 		}
 
-		if (org.continuity.idpa.annotation.RegExExtraction.class.isAssignableFrom(type)) {
+		if (org.continuity.idpa.annotation.extracted.RegExExtraction.class.isAssignableFrom(type)) {
 			return (StdConverter<? super T, ? super T>) new RegExExtraction();
 		}
 
@@ -87,6 +88,7 @@ public class ModelSanitizers {
 				}
 			}
 		}
+
 	}
 
 	public static class InterfaceAnnotation extends StdConverter<org.continuity.idpa.annotation.EndpointAnnotation, org.continuity.idpa.annotation.EndpointAnnotation> {
@@ -115,15 +117,20 @@ public class ModelSanitizers {
 		}
 	}
 
-	public static class RegExExtraction extends StdConverter<org.continuity.idpa.annotation.RegExExtraction, org.continuity.idpa.annotation.RegExExtraction> {
+	public static class RegExExtraction extends StdConverter<org.continuity.idpa.annotation.extracted.RegExExtraction, org.continuity.idpa.annotation.extracted.RegExExtraction> {
 
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
-		public org.continuity.idpa.annotation.RegExExtraction convert(org.continuity.idpa.annotation.RegExExtraction extraction) {
-			WeakReference<Endpoint<?>> ref = extraction.getFrom();
-			extraction.setFrom(WeakReference.create(SERVICE_INTERFACE_CLASS, ref.getId()));
+		public org.continuity.idpa.annotation.extracted.RegExExtraction convert(org.continuity.idpa.annotation.extracted.RegExExtraction extraction) {
+			EndpointOrInput eoi = extraction.getFrom();
+
+			if (eoi.isEndpoint()) {
+				WeakReference<Endpoint<?>> ref = eoi.getEndpoint();
+				eoi.setEndpoint(WeakReference.create(SERVICE_INTERFACE_CLASS, ref.getId()));
+			}
+
 			return extraction;
 		}
 	}

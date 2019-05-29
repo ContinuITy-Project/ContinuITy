@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 
 import org.continuity.idpa.annotation.ApplicationAnnotation;
-import org.continuity.idpa.annotation.ExtractedInput;
-import org.continuity.idpa.annotation.JsonPathExtraction;
-import org.continuity.idpa.annotation.RegExExtraction;
+import org.continuity.idpa.annotation.extracted.ExtractedInput;
+import org.continuity.idpa.annotation.extracted.JsonPathExtraction;
+import org.continuity.idpa.annotation.extracted.RegExExtraction;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.junit.Before;
 import org.junit.Test;

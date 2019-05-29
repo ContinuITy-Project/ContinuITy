@@ -1,11 +1,12 @@
 /**
  */
-package org.continuity.idpa.annotation;
+package org.continuity.idpa.annotation.extracted;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.continuity.idpa.AbstractIdpaElement;
+import org.continuity.idpa.annotation.Input;
 import org.continuity.idpa.serialization.ValueExtractionDeserializer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;

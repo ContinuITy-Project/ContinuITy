@@ -7,7 +7,7 @@ import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.DirectListInput;
-import org.continuity.idpa.annotation.ExtractedInput;
+import org.continuity.idpa.annotation.extracted.ExtractedInput;
 
 /**
  * @author Henning Schulz

@@ -18,12 +18,12 @@ import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.CsvInput;
 import org.continuity.idpa.annotation.DirectListInput;
 import org.continuity.idpa.annotation.EndpointAnnotation;
-import org.continuity.idpa.annotation.ExtractedInput;
 import org.continuity.idpa.annotation.Input;
-import org.continuity.idpa.annotation.JsonPathExtraction;
 import org.continuity.idpa.annotation.ParameterAnnotation;
-import org.continuity.idpa.annotation.RegExExtraction;
-import org.continuity.idpa.annotation.ValueExtraction;
+import org.continuity.idpa.annotation.extracted.ExtractedInput;
+import org.continuity.idpa.annotation.extracted.JsonPathExtraction;
+import org.continuity.idpa.annotation.extracted.RegExExtraction;
+import org.continuity.idpa.annotation.extracted.ValueExtraction;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.HttpEndpoint;
@@ -420,12 +420,14 @@ public class ModelTransformater {
 	/**
 	 * Returns a map of all regex extractions which are matching to the provided endpointId.
 	 *
+	 * TODO: expects all ValueExtractions to refer to endpoints
+	 *
 	 * @param application
-	 * 						Application model.
+	 *            Application model.
 	 * @param extractedInputs
-	 * 						List of all regex extractions.
+	 *            List of all regex extractions.
 	 * @param endpointId
-	 * 						Endpoint id for which regex extractions are searched.
+	 *            Endpoint id for which regex extractions are searched.
 	 * @return Map of matched regex extractions.
 	 */
 	private Map<String, Extraction> getExtractions(Application application, List<ExtractedInput> extractedInputs, String endpointId, Class<? extends ValueExtraction> valueExtractionType) {
@@ -434,17 +436,17 @@ public class ModelTransformater {
 
 		for(ExtractedInput extracted : extractedInputs) {
 			for(ValueExtraction extraction : extracted.getExtractions().stream()
-					.filter(e -> (endpointId.equals(e.getFrom().getId()) && valueExtractionType.isInstance(e)))
+					.filter(e -> (endpointId.equals(e.getFrom().getEndpoint().getId()) && valueExtractionType.isInstance(e)))
 					.collect(Collectors.toList())) {
 
-				extraction.getFrom().resolve(application);
-				if(!extraction.getFrom().isResolved()) {
-					String exceptionMessage = String.format("Extraction-from is not resolved! (Referred id: '%s')", extraction.getFrom().getId());
+				extraction.getFrom().getEndpoint().resolve(application);
+				if (!extraction.getFrom().getEndpoint().isResolved()) {
+					String exceptionMessage = String.format("Extraction-from is not resolved! (Referred id: '%s')", extraction.getFrom().getEndpoint().getId());
 					LOGGER.error(exceptionMessage);
 					throw new IllegalArgumentException(exceptionMessage);
 				}
 
-				HttpEndpoint regexEndpoint = (HttpEndpoint)extraction.getFrom().getReferred();
+				HttpEndpoint regexEndpoint = (HttpEndpoint) extraction.getFrom().getEndpoint().getReferred();
 				String regexEndpointId = regexEndpoint.getId();
 
 				if(regexEndpointId.equals(endpointId)) {

@@ -3,6 +3,7 @@
 package org.continuity.idpa.annotation;
 
 import org.continuity.idpa.IdpaElement;
+import org.continuity.idpa.annotation.extracted.ExtractedInput;
 import org.continuity.idpa.annotation.json.JsonInput;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;

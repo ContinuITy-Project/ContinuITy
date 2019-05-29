@@ -1,8 +1,8 @@
 package org.continuity.idpa.serialization;
 
-import org.continuity.idpa.annotation.JsonPathExtraction;
-import org.continuity.idpa.annotation.RegExExtraction;
-import org.continuity.idpa.annotation.ValueExtraction;
+import org.continuity.idpa.annotation.extracted.JsonPathExtraction;
+import org.continuity.idpa.annotation.extracted.RegExExtraction;
+import org.continuity.idpa.annotation.extracted.ValueExtraction;
 
 public class ValueExtractionDeserializer extends UniquePropertyPolymorphicDeserializer<ValueExtraction> {
 
