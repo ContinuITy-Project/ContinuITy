@@ -10,7 +10,9 @@ import org.continuity.idpa.IdpaElement;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.CsvColumnInput;
 import org.continuity.idpa.annotation.PropertyOverride;
+import org.continuity.idpa.annotation.extracted.EndpointOrInput;
 import org.continuity.idpa.serialization.yaml.CsvColumnInputSerializer;
+import org.continuity.idpa.serialization.yaml.EndpointOrInputSerializer;
 import org.continuity.idpa.serialization.yaml.IdpaDeserializer;
 import org.continuity.idpa.serialization.yaml.IdpaElementMixin;
 import org.continuity.idpa.serialization.yaml.IdpaSerializer;
@@ -82,8 +84,10 @@ public class IdpaSerializationUtils {
 					yamlMapper.registerModule(new SimpleModule().setSerializerModifier(new ContinuitySerializerModifier()));
 					yamlMapper.registerModule(new SimpleModule().addSerializer(getPropertyOverrideClass(), new PropertyOverrideSerializer()));
 					yamlMapper.registerModule(new SimpleModule().addSerializer(CsvColumnInput.class, new CsvColumnInputSerializer()));
+					yamlMapper.registerModule(new SimpleModule().addSerializer(EndpointOrInput.class, new EndpointOrInputSerializer()));
 
 					yamlMapper.registerModule(new SimpleModule().setDeserializerModifier(new ContinuityDeserializerModifier()));
+					yamlMapper.registerModule(new SimpleModule().setDeserializerModifier(new ExtractedInputIdSaniDeserializerModifier()));
 					yamlMapper.registerModule(new SimpleModule().addDeserializer(PropertyOverride.class, new PropertyOverrideDeserializer()));
 				}
 			}
@@ -102,6 +106,7 @@ public class IdpaSerializationUtils {
 		List<PreDeserializationSanitizer> sanitizers = new ArrayList<>();
 
 		sanitizers.add(IdpaSerializationUtils::sanitizeForCsvColumnInput);
+		sanitizers.add(IdpaSerializationUtils::sanitizeForValueExtraction);
 
 		return sanitizers;
 	}
@@ -146,6 +151,43 @@ public class IdpaSerializationUtils {
 			}
 
 			lastEnd = end;
+		}
+
+		sanitizedYaml.append(yaml.substring(lastEnd));
+
+		return sanitizedYaml.toString();
+	}
+
+	private static String sanitizeForValueExtraction(String yaml) {
+		Matcher matcher = Pattern.compile("\\n( +)(- |  )(from:) *(\\*?[a-zA-Z0-9_\\.]+)").matcher(yaml);
+
+		StringBuilder sanitizedYaml = new StringBuilder();
+
+		int lastEnd = 0;
+
+		while (matcher.find()) {
+			int start = matcher.start();
+			String indent = matcher.group(1);
+			String endpointOrId = matcher.group(4);
+
+			sanitizedYaml.append(yaml.substring(lastEnd, start)).append("\n");
+			sanitizedYaml.append(indent).append(matcher.group(2)).append(matcher.group(3));
+			indent += "  ";
+
+			sanitizedYaml.append("\n").append(indent);
+
+			if (endpointOrId.startsWith("*")) {
+				sanitizedYaml.append("  rawInputId: ").append(endpointOrId.substring(1));
+			} else {
+				String[] endpointAndKey = endpointOrId.split("\\.");
+				sanitizedYaml.append("  endpoint: ").append(endpointAndKey[0]);
+
+				if (endpointAndKey.length > 1) {
+					sanitizedYaml.append("\n").append(indent).append("  response-key: ").append(endpointAndKey[1]);
+				}
+			}
+
+			lastEnd = matcher.end();
 		}
 
 		sanitizedYaml.append(yaml.substring(lastEnd));
@@ -207,6 +249,20 @@ public class IdpaSerializationUtils {
 		public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
 			if (ApplicationAnnotation.class.equals(beanDesc.getBeanClass())) {
 				return new JsonItemSaniDeserializer((JsonDeserializer<ApplicationAnnotation>) deserializer);
+			}
+
+			return deserializer;
+		}
+
+	}
+
+	private static class ExtractedInputIdSaniDeserializerModifier extends BeanDeserializerModifier {
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
+			if (ApplicationAnnotation.class.equals(beanDesc.getBeanClass())) {
+				return new ExtractedInputIdSaniDeserializer((JsonDeserializer<ApplicationAnnotation>) deserializer);
 			}
 
 			return deserializer;

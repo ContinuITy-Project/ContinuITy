@@ -20,10 +20,11 @@ import org.continuity.benchflow.artifact.ContinuITyModel;
 import org.continuity.benchflow.artifact.ThinkTimeHelper;
 import org.continuity.idpa.WeakReference;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
-import org.continuity.idpa.annotation.ExtractedInput;
-import org.continuity.idpa.annotation.JsonPathExtraction;
-import org.continuity.idpa.annotation.RegExExtraction;
-import org.continuity.idpa.annotation.ValueExtraction;
+import org.continuity.idpa.annotation.extracted.EndpointOrInput;
+import org.continuity.idpa.annotation.extracted.ExtractedInput;
+import org.continuity.idpa.annotation.extracted.JsonPathExtraction;
+import org.continuity.idpa.annotation.extracted.RegExExtraction;
+import org.continuity.idpa.annotation.extracted.ValueExtraction;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.junit.Before;
@@ -319,7 +320,7 @@ public class TestModelTransformater {
 		jsonExtraction.setMatchNumber(0);
 		jsonExtraction.setFallbackValue("NOT_FOUND");
 		jsonExtraction.setJsonPath("$.root.element[0].timestamp");
-		jsonExtraction.setFrom(WeakReference.create(endpoint));
+		jsonExtraction.setFrom(EndpointOrInput.endpoint(WeakReference.create(endpoint)));
 		listValueExtractions.add(regExExtraction);
 
 		extractedInput.setExtractions(listValueExtractions);
@@ -355,7 +356,7 @@ public class TestModelTransformater {
 	private RegExExtraction createRegExExtraction(HttpEndpoint endpoint, String pattern, String fallbackValue, int matchNumber) {
 		RegExExtraction regExExtraction = new RegExExtraction();
 		regExExtraction.setPattern(pattern);
-		regExExtraction.setFrom(WeakReference.create(endpoint));
+		regExExtraction.setFrom(EndpointOrInput.endpoint(WeakReference.create(endpoint)));
 		if(matchNumber != -1) {
 			regExExtraction.setMatchNumber(matchNumber);
 		}

@@ -13,7 +13,8 @@ import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.EndpointAnnotation;
 import org.continuity.idpa.annotation.Input;
 import org.continuity.idpa.annotation.ParameterAnnotation;
-import org.continuity.idpa.annotation.RegExExtraction;
+import org.continuity.idpa.annotation.extracted.EndpointOrInput;
+import org.continuity.idpa.annotation.extracted.RegExExtraction;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.Parameter;
@@ -112,12 +113,16 @@ public class AnnotationValidityChecker {
 		paramSearcher.visit(annotation);
 
 		IdpaByClassSearcher<RegExExtraction> extractionSearcher = new IdpaByClassSearcher<>(RegExExtraction.class, extraction -> {
-			Endpoint<?> interf = extraction.getFrom().resolve(newApplication);
+			EndpointOrInput eoi = extraction.getFrom();
 
-			if (interf == null) {
-				ModelElementReference interfRef = new ModelElementReference(extraction.getFrom());
-				ModelElementReference annRef = new ModelElementReference(extraction);
-				reportBuilder.addViolation(annRef, new AnnotationViolation(AnnotationViolationType.ILLEGAL_ENDPOINT_REFERENCE, interfRef));
+			if (eoi.isEndpoint()) {
+				Endpoint<?> interf = eoi.getEndpoint().resolve(newApplication);
+
+				if (interf == null) {
+					ModelElementReference interfRef = new ModelElementReference(eoi.getEndpoint());
+					ModelElementReference annRef = new ModelElementReference(extraction);
+					reportBuilder.addViolation(annRef, new AnnotationViolation(AnnotationViolationType.ILLEGAL_ENDPOINT_REFERENCE, interfRef));
+				}
 			}
 		});
 

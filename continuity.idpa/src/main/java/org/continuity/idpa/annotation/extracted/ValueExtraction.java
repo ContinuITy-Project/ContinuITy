@@ -1,8 +1,6 @@
-package org.continuity.idpa.annotation;
+package org.continuity.idpa.annotation.extracted;
 
 import org.continuity.idpa.IdpaElement;
-import org.continuity.idpa.WeakReference;
-import org.continuity.idpa.application.Endpoint;
 
 public interface ValueExtraction extends IdpaElement {
 
@@ -11,15 +9,7 @@ public interface ValueExtraction extends IdpaElement {
 	 *
 	 * @return The extracted interface.
 	 */
-	WeakReference<Endpoint<?>> getFrom();
-
-	/**
-	 * Gets the key. Can be used to specify a specific response, e.g., the header or body of an HTTP
-	 * response.
-	 *
-	 * @return {@link #key} The key.
-	 */
-	String getResponseKey();
+	EndpointOrInput getFrom();
 
 	/**
 	 * Gets the value that is to be used if there was no match.

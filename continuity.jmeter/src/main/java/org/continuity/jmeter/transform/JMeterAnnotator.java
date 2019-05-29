@@ -66,7 +66,9 @@ public class JMeterAnnotator {
 		new UserDefinedVarsAnnotator(annotation).annotateVariables(testPlan);
 		new CSVDataSetAnnotator(annotation).addCsvDataSetConfigs(testPlan);
 		new HttpSamplersAnnotator(application, annotation).annotateSamplers(testPlan);
-		new ValueExtractorsAnnotator(application, annotation).annotateSamplers(testPlan);
+		ValueExtractorsAnnotator vxa = new ValueExtractorsAnnotator(application, annotation);
+		vxa.annotateSamplers(testPlan);
+		vxa.annotateInputs(testPlan);
 		new CounterAnnotator(annotation).addCounters(testPlan);
 		new HeadersAnnotator(application, annotation).annotateSamplers(testPlan);
 	}

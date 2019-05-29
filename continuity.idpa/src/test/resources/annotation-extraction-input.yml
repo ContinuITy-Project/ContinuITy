@@ -1,0 +1,23 @@
+---
+overrides: []
+inputs:
+- !<direct>
+  &Input_direct data:
+  - abc42
+- !<extracted>
+  &Input_extracted extractions:
+  - from: foo.body
+    json-path: $.id
+  - from: *Input_direct
+    pattern: \d+
+endpoint-annotations:
+- endpoint: foo
+  overrides: []
+  parameter-annotations:
+  - parameter: param
+    input: *Input_extracted
+    overrides: []
+  - parameter: bar
+    input: *Input_direct
+    overrides: []
+

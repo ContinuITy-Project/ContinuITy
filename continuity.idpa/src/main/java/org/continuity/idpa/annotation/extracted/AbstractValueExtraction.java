@@ -1,8 +1,6 @@
-package org.continuity.idpa.annotation;
+package org.continuity.idpa.annotation.extracted;
 
 import org.continuity.idpa.AbstractIdpaElement;
-import org.continuity.idpa.WeakReference;
-import org.continuity.idpa.application.Endpoint;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -12,16 +10,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AbstractValueExtraction extends AbstractIdpaElement implements ValueExtraction {
 
-	private static final String DEFAULT_RESPONSE_KEY = "<default>";
 	private static final String DEFAULT_FALLBACK_VALUE = "NOT FOUND";
 	private static final int DEFAULT_MATCH_NUMBER = 1;
 
 	@JsonProperty(value = "from")
-	private WeakReference<Endpoint<?>> from;
-
-	@JsonProperty(value = "response-key")
-	@JsonInclude(value = Include.CUSTOM, valueFilter = ResponseKeyValueFilter.class)
-	private String responseKey = DEFAULT_RESPONSE_KEY;
+	private EndpointOrInput from;
 
 	@JsonProperty(value = "fallback")
 	@JsonInclude(value = Include.CUSTOM, valueFilter = FallbackValueFilter.class)
@@ -31,46 +24,19 @@ public class AbstractValueExtraction extends AbstractIdpaElement implements Valu
 	@JsonInclude(value = Include.CUSTOM, valueFilter = MatchNumberValueFilter.class)
 	private int matchNumber = DEFAULT_MATCH_NUMBER;
 
-	/**
-	 * Gets the interface from which the value is extracted.
-	 *
-	 * @return The extracted interface.
-	 */
 	@Override
-	public WeakReference<Endpoint<?>> getFrom() {
-		return this.from;
+	public EndpointOrInput getFrom() {
+		return from;
 	}
 
 	/**
-	 * Sets the interface from which the value is extracted.
+	 * Sets the endpoint of input from which the value is extracted.
 	 *
 	 * @param extracted
 	 *            The extracted interface.
 	 */
-	public void setFrom(WeakReference<Endpoint<?>> from) {
+	public void setFrom(EndpointOrInput from) {
 		this.from = from;
-	}
-
-	/**
-	 * Gets the key. Can be used to specify a specific response, e.g., the header or body of an HTTP
-	 * response.
-	 *
-	 * @return {@link #key} The key.
-	 */
-	@Override
-	public String getResponseKey() {
-		return this.responseKey;
-	}
-
-	/**
-	 * Sets the key. Can be used to specify a specific response, e.g., the header or body of an HTTP
-	 * response.
-	 *
-	 * @param key
-	 *            The key.
-	 */
-	public void setResponseKey(String responseKey) {
-		this.responseKey = responseKey;
 	}
 
 	/**
@@ -124,18 +90,6 @@ public class AbstractValueExtraction extends AbstractIdpaElement implements Valu
 		} catch (JsonProcessingException e) {
 			return "Cannot transform to string: " + e;
 		}
-	}
-
-	private static final class ResponseKeyValueFilter {
-
-		/**
-		 * {@inheritDoc}
-		 */
-		@Override
-		public boolean equals(Object obj) {
-			return DEFAULT_RESPONSE_KEY.equals(obj);
-		}
-
 	}
 
 	private static final class FallbackValueFilter {

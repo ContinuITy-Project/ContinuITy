@@ -5,11 +5,12 @@ import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.CsvInput;
 import org.continuity.idpa.annotation.DirectListInput;
 import org.continuity.idpa.annotation.EndpointAnnotation;
-import org.continuity.idpa.annotation.ExtractedInput;
 import org.continuity.idpa.annotation.ParameterAnnotation;
 import org.continuity.idpa.annotation.PropertyOverride;
 import org.continuity.idpa.annotation.PropertyOverrideKey;
-import org.continuity.idpa.annotation.RegExExtraction;
+import org.continuity.idpa.annotation.extracted.EndpointOrInput;
+import org.continuity.idpa.annotation.extracted.ExtractedInput;
+import org.continuity.idpa.annotation.extracted.RegExExtraction;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.HttpEndpoint;
@@ -175,7 +176,7 @@ public enum AnnotationValidityTestInstance {
 			ExtractedInput extrInput = new ExtractedInput();
 			extrInput.setId("EXTRACTED");
 			RegExExtraction extr = new RegExExtraction();
-			extr.setFrom(interfRef);
+			extr.setFrom(EndpointOrInput.endpoint(interfRef));
 			extr.setPattern("(.*)");
 			extrInput.getExtractions().add(extr);
 

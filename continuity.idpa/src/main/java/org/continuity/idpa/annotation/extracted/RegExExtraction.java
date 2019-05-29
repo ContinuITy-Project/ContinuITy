@@ -1,6 +1,6 @@
 /**
  */
-package org.continuity.idpa.annotation;
+package org.continuity.idpa.annotation.extracted;
 
 import org.continuity.idpa.serialization.ModelSanitizers;
 
