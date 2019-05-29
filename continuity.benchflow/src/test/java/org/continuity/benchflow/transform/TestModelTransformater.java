@@ -349,7 +349,7 @@ public class TestModelTransformater {
 
 		Extraction benchFlowExtraction2 = extractions.get("Input_extraction_test");
 		assertEquals(regExExtraction2.getPattern(), benchFlowExtraction2.pattern());
-		assertEquals("NOT FOUND", benchFlowExtraction2.fallbackValue().get());
+		assertEquals(ValueExtraction.DEFAULT_FALLBACK_VALUE, benchFlowExtraction2.fallbackValue().get());
 		assertEquals(1, benchFlowExtraction2.matchNumber().get());
 	}
 
@@ -762,7 +762,7 @@ public class TestModelTransformater {
 		Extraction extractionLoginItem = mapLoginRegex.get("Input_extracted_item");
 		assertEquals("<input name=\"item\" type=\"hidden\" value=\"(.*)\"/>", extractionLoginItem.pattern());
 		assertEquals(1 , extractionLoginItem.matchNumber().get());
-		assertEquals("NOT FOUND", extractionLoginItem.fallbackValue().get());
+		assertEquals(ValueExtraction.DEFAULT_FALLBACK_VALUE, extractionLoginItem.fallbackValue().get());
 
 		Map<String, Extraction> mapAccountRegex = JavaConverters.mapAsJavaMap(operationAccount.regexExtraction().get());
 		assertEquals(1, mapAccountRegex.size());
@@ -772,7 +772,7 @@ public class TestModelTransformater {
 		assertEquals("<input id=\"select\" name=\"object\" type=\"hidden\" value=\"(.*)\"/>", extractionAccountToken.pattern());
 
 		assertEquals(1, extractionAccountToken.matchNumber().get());
-		assertEquals("NOT FOUND", extractionAccountToken.fallbackValue().get());
+		assertEquals(ValueExtraction.DEFAULT_FALLBACK_VALUE, extractionAccountToken.fallbackValue().get());
 
 		// Check query parameter
 		Map<String, Parameter> mapLoginQueryParameter = JavaConverters.mapAsJavaMap(operationLogin.queryParameter().get());
@@ -887,7 +887,7 @@ public class TestModelTransformater {
 
 		Extraction extractionContent = mapConvertRegex.get("Input_extracted_content_json");
 		assertEquals("<div id=\"result\" value=\"(.*)\"/>", extractionContent.pattern());
-		assertEquals("NOT FOUND", extractionContent.fallbackValue().get());
+		assertEquals(ValueExtraction.DEFAULT_FALLBACK_VALUE, extractionContent.fallbackValue().get());
 
 		// Check regex parameter
 		assertTrue(operationTransform.body().get() instanceof Body);

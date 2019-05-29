@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AbstractValueExtraction extends AbstractIdpaElement implements ValueExtraction {
 
-	private static final String DEFAULT_FALLBACK_VALUE = "NOT FOUND";
 	private static final int DEFAULT_MATCH_NUMBER = 1;
 
 	@JsonProperty(value = "from")

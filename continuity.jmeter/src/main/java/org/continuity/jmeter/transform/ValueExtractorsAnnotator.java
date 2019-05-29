@@ -91,7 +91,12 @@ public class ValueExtractorsAnnotator extends AbstractSamplerAnnotator {
 		// JMeter uses $1$ for marking the first group
 		extractor.setTemplate(extraction.getTemplate().replace("(", "$").replace(")", "$"));
 		extractor.setMatchNumber(extraction.getMatchNumber());
-		extractor.setDefaultValue(extraction.getFallbackValue());
+
+		if (ValueExtraction.DEFAULT_FALLBACK_VALUE.equals(extraction.getFallbackValue())) {
+			extractor.setDefaultValue("${" + id + "}");
+		} else {
+			extractor.setDefaultValue(extraction.getFallbackValue());
+		}
 
 		return extractor;
 	}
@@ -103,7 +108,12 @@ public class ValueExtractorsAnnotator extends AbstractSamplerAnnotator {
 		processor.setRefNames(id);
 		processor.setJsonPathExpressions(extraction.getJsonPath());
 		processor.setMatchNumbers(Integer.toString(extraction.getMatchNumber()));
-		processor.setDefaultValues(extraction.getFallbackValue());
+
+		if (ValueExtraction.DEFAULT_FALLBACK_VALUE.equals(extraction.getFallbackValue())) {
+			processor.setDefaultValues("${" + id + "}");
+		} else {
+			processor.setDefaultValues(extraction.getFallbackValue());
+		}
 
 		processor.setComputeConcatenation(false);
 
