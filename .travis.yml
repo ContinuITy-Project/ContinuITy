@@ -67,6 +67,11 @@ after_success:
     docker push continuityproject/forecast:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker tag continuityproject/forecast continuityproject/forecast:latest;
     docker push continuityproject/forecast:latest;
+
+    docker tag continuityproject/cli continuityproject/cli:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/cli:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/cli continuityproject/cli:latest;
+    docker push continuityproject/cli:latest;
     fi
 
 script:

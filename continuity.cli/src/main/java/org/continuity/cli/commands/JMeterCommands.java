@@ -47,11 +47,8 @@ public class JMeterCommands {
 
 	private static final String KEY_JMETER_HOME = "jmeter.home";
 
-	private static final String KEY_JMETER_CONFIG = "jmeter.configuration";
-
 	private final CliContext context = new CliContext(CONTEXT_NAME, //
 			new Shorthand("home", this, "setJMeterHome", String.class), //
-			new Shorthand("config", this, "setJMeterConfig", String.class), //
 			new Shorthand("download", this, "downloadLoadTest", String.class), //
 			new Shorthand("upload", this, "uploadLoadTest", String.class, String.class, boolean.class) //
 	);
@@ -84,15 +81,8 @@ public class JMeterCommands {
 	public String setJMeterHome(String jmeterHome) {
 		jmeterHome = jmeterHome.replace("\\", "/");
 		Object old = propertiesProvider.get().put(KEY_JMETER_HOME, jmeterHome);
+		testPlanWriter = new TestPlanWriter(jmeterHome);
 		return old == null ? "Set JMeter home." : "Replaced old JMeter home: " + old;
-	}
-
-	@ShellMethod(key = { "jmeter config" }, value = "Sets the configuration directory of JMeter.")
-	public String setJMeterConfig(String jmeterConfig) {
-		jmeterConfig = jmeterConfig.replace("\\", "/");
-		Object old = propertiesProvider.get().put(KEY_JMETER_CONFIG, jmeterConfig);
-		testPlanWriter = new TestPlanWriter(jmeterConfig);
-		return old == null ? "Set JMeter config dir." : "Replaced old JMeter config dir: " + old;
 	}
 
 	@ShellMethod(key = { "jmeter download" }, value = "Downloads and opens a JMeter load test specified by a link.")
@@ -188,12 +178,10 @@ public class JMeterCommands {
 
 	private String initTestPlanWriter(String jmeterHome) {
 		if (testPlanWriter == null) {
-			String jmeterConfig = propertiesProvider.get().getProperty(KEY_JMETER_CONFIG);
-
-			if (jmeterConfig == null) {
-				return "Please set the jmeter config path first (call 'jmeter config [path]')";
+			if (jmeterHome == null) {
+				return "Please set the jmeter home path first (call 'jmeter home [path]')";
 			} else {
-				testPlanWriter = new TestPlanWriter(jmeterConfig);
+				testPlanWriter = new TestPlanWriter(jmeterHome);
 			}
 		} else if (jmeterHome == null) {
 			return "Please set the jmeter home path first (call 'jmeter home [path]')";

@@ -12,3 +12,21 @@ dependencies {
 	
 	compile group: 'io.swagger', name: 'swagger-parser', version: '1.0.34'
 }
+
+group = 'continuityproject'
+
+apply plugin: 'com.palantir.docker'
+
+docker {
+	name "${project.group}/cli"
+	files jar.archivePath
+	
+	copySpec.from('.') {
+		include 'continuity.cli.docker.properties'
+	}
+	
+	buildArgs([
+		'JAR_FILE': "${jar.archiveName}",
+		'CONFIGURATION_FILE': "continuity.cli.docker.properties"
+	])
+}
