@@ -101,17 +101,6 @@ public class GenericShorthands {
 		return contextManager.getAvailablility("home");
 	}
 
-	@ShellMethod(key = { "config" }, value = "Shorthand for '<context> config'. Available in 'jmeter'.")
-	@ShellMethodAvailability({ "configAvailability" })
-	public String config(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String path) throws Throwable {
-		Shorthand shorthand = contextManager.getShorthand("config");
-		return shorthand.execute(path);
-	}
-
-	public Availability configAvailability() {
-		return contextManager.getAvailablility("config");
-	}
-
 	@ShellMethod(key = { "create" }, value = "Shorthand for '<context> create'. Available in 'order' and 'idpa app'.")
 	@ShellMethodAvailability({ "createAvailability" })
 	public String create(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String resourceOrType, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {

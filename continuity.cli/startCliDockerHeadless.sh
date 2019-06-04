@@ -1,0 +1,1 @@
+docker run -d --name continuity-cli -it -v cli-wd:/working-dir continuityproject/cli-headless
