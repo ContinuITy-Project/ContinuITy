@@ -72,6 +72,25 @@ public class RequestBuilder {
 	}
 
 	/**
+	 * Adds a query to the request if the value is not {@code null} or empty.
+	 *
+	 * @see #withQuery(String, String)
+	 *
+	 * @param param
+	 *            The parameter name. Can be null.
+	 * @param value
+	 *            The value of the parameter.
+	 * @return The builder for further request modifications.
+	 */
+	public RequestBuilder withQueryIfNotEmpty(String param, String value) {
+		if ((value != null) && !"".equals(value)) {
+			withQuery(param, value);
+		}
+
+		return this;
+	}
+
+	/**
 	 * Replaces the stored host name.
 	 *
 	 * @param host
@@ -91,7 +110,7 @@ public class RequestBuilder {
 	public String getURI() {
 		return path + queryString;
 	}
-	
+
 	/**
 	 * Omits the {@code http://} at the beginning of the request.
 	 *

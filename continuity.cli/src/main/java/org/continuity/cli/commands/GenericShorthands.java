@@ -2,6 +2,7 @@ package org.continuity.cli.commands;
 
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
+import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.Availability;
 import org.springframework.shell.standard.ShellCommandGroup;
@@ -24,7 +25,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "download" }, value = "Shorthand for '<context> download'. Available in 'idpa' and 'jmeter'.")
 	@ShellMethodAvailability({ "downloadAvailability" })
-	public String download(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String link) throws Throwable {
+	public AttributedString download(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String link) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("download");
 		return shorthand.execute(link);
 	}
@@ -35,7 +36,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "upload" }, value = "Shorthand for '<context> upload'. Available in 'idpa app', 'idpa ann', and 'jmeter'.")
 	@ShellMethodAvailability({ "uploadAvailability" })
-	public String upload(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg1, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg2,
+	public AttributedString upload(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg1, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg2,
 			@ShellOption(value = { "--annotate", "-a" }, defaultValue = "false") boolean annotate) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("upload");
 		return shorthand.execute(arg1, arg2, annotate);
@@ -45,20 +46,9 @@ public class GenericShorthands {
 		return contextManager.getAvailablility("upload");
 	}
 
-	@ShellMethod(key = { "set" }, value = "Shorthand for '<context> set'. Available in 'tag'.")
-	@ShellMethodAvailability({ "setAvailability" })
-	public void set(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String value) throws Throwable {
-		Shorthand shorthand = contextManager.getShorthand("set");
-		shorthand.execute(value);
-	}
-
-	public Availability setAvailability() {
-		return contextManager.getAvailablility("set");
-	}
-
 	@ShellMethod(key = { "init" }, value = "Shorthand for '<context> init'. Available in 'idpa ann'.")
 	@ShellMethodAvailability({ "initAvailability" })
-	public String init(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
+	public AttributedString init(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("init");
 		return shorthand.execute(tag);
 	}
@@ -69,7 +59,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "extract" }, value = "Shorthand for '<context> extract'. Available in 'idpa ann'.")
 	@ShellMethodAvailability({ "extractAvailability" })
-	public String extract(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String logsFile, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
+	public AttributedString extract(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String logsFile, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
 			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String regex) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("extract");
 		return shorthand.execute(logsFile, tag, regex);
@@ -81,7 +71,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "open" }, value = "Shorthand for '<context> open'. Available in 'idpa' and 'order'.")
 	@ShellMethodAvailability({ "openAvailability" })
-	public String open(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id) throws Throwable {
+	public AttributedString open(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("open");
 		return shorthand.execute(id);
 	}
@@ -92,7 +82,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "home" }, value = "Shorthand for '<context> home'. Available in 'jmeter'.")
 	@ShellMethodAvailability({ "homeAvailability" })
-	public String home(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String path) throws Throwable {
+	public AttributedString home(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String path) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("home");
 		return shorthand.execute(path);
 	}
@@ -103,7 +93,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "create" }, value = "Shorthand for '<context> create'. Available in 'order' and 'idpa app'.")
 	@ShellMethodAvailability({ "createAvailability" })
-	public String create(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String resourceOrType, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
+	public AttributedString create(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String resourceOrType, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("create");
 		return shorthand.execute(resourceOrType, tag);
 	}
@@ -114,7 +104,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "update" }, value = "Shorthand for '<context> update'. Available in 'idpa app'.")
 	@ShellMethodAvailability({ "updateAvailability" })
-	public String update(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String resource, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
+	public AttributedString update(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String resource, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
 			@ShellOption(defaultValue = "false", value = { "--add", "-a" }, help = "Consider element additions.") boolean add,
 			@ShellOption(defaultValue = "false", value = { "--remove", "-r" }, help = "Consider element removals.") boolean remove,
 			@ShellOption(defaultValue = "false", value = { "--change", "-c" }, help = "Consider element changes.") boolean change,
@@ -131,7 +121,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "submit" }, value = "Shorthand for '<context> submit'. Available in 'order'.")
 	@ShellMethodAvailability({ "submitAvailability" })
-	public String submit() throws Throwable {
+	public AttributedString submit() throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("submit");
 		return shorthand.execute();
 	}
@@ -142,7 +132,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "wait" }, value = "Shorthand for '<context> wait'. Available in 'order'.")
 	@ShellMethodAvailability({ "waitAvailability" })
-	public String wait(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String timeout, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id) throws Throwable {
+	public AttributedString wait(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String timeout, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("wait");
 		return shorthand.execute(timeout, id);
 	}
@@ -153,7 +143,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "report" }, value = "Shorthand for '<context> report'. Available in 'order'.")
 	@ShellMethodAvailability({ "reportAvailability" })
-	public String report(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id) throws Throwable {
+	public AttributedString report(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("report");
 		return shorthand.execute(id);
 	}
@@ -164,7 +154,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "clean" }, value = "Shorthand for '<context> clean'. Available in 'order'.")
 	@ShellMethodAvailability({ "cleanAvailability" })
-	public String clear() throws Throwable {
+	public AttributedString clear() throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("clean");
 		return shorthand.execute();
 	}
@@ -173,20 +163,9 @@ public class GenericShorthands {
 		return contextManager.getAvailablility("clean");
 	}
 
-	@ShellMethod(key = { "reset" }, value = "Shorthand for '<context> clean'. Available in 'tag'.")
-	@ShellMethodAvailability({ "resetAvailability" })
-	public void reset() throws Throwable {
-		Shorthand shorthand = contextManager.getShorthand("reset");
-		shorthand.execute();
-	}
-
-	public Availability resetAvailability() {
-		return contextManager.getAvailablility("reset");
-	}
-
 	@ShellMethod(key = { "check" }, value = "Shorthand for '<context> check'. Available in 'idpa ann'.")
 	@ShellMethodAvailability({ "checkAvailability" })
-	public String check(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
+	public AttributedString check(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("check");
 		return shorthand.execute(tag);
 	}
@@ -197,7 +176,7 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "unify" }, value = "Shorthand for '<context> unify'. Available in 'accesslogs'.")
 	@ShellMethodAvailability({ "unifyAvailability" })
-	public String unify(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String path, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
+	public AttributedString unify(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String path, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("unify");
 		return shorthand.execute(path, tag);
 	}

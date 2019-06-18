@@ -20,14 +20,17 @@ import org.apache.commons.io.filefilter.AndFileFilter;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
+import org.continuity.api.rest.CustomHeaders;
 import org.continuity.api.rest.RestApi.Orchestrator.Idpa;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
+import org.continuity.cli.utils.ResponseBuilder;
 import org.continuity.commons.accesslogs.AccessLogEntry;
 import org.continuity.commons.idpa.AnnotationExtractor;
 import org.continuity.commons.idpa.AnnotationFromAccessLogsExtractor;
@@ -38,6 +41,7 @@ import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
+import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.shell.standard.ShellComponent;
@@ -100,6 +104,8 @@ public class IdpaCommands {
 			new Shorthand("open", this, "openIdpa", String.class) //
 	);
 
+	private static final String PARAM_TIMESTAMP = "timestamp";
+
 	@Autowired
 	private PropertiesProvider propertiesProvider;
 
@@ -128,29 +134,56 @@ public class IdpaCommands {
 	}
 
 	@ShellMethod(key = { "idpa download" }, value = "Downloads and opens the IDPA with the specified tag.")
-	public String downloadIdpa(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws JsonGenerationException, JsonMappingException, IOException {
+	public AttributedString downloadIdpa(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws JsonGenerationException, JsonMappingException, IOException {
 		tag = contextManager.getTagOrFail(tag);
 
 		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
 
-		ResponseEntity<Application> applicationResponse = restTemplate.getForEntity(Idpa.GET_APPLICATION.requestUrl(tag).withHost(url).get(), Application.class);
-		ResponseEntity<ApplicationAnnotation> annotationResponse = restTemplate.getForEntity(Idpa.GET_ANNOTATION.requestUrl(tag).withHost(url).get(), ApplicationAnnotation.class);
-
-		if (!applicationResponse.getStatusCode().is2xxSuccessful()) {
-			return "Could not get application model: " + applicationResponse;
+		ResponseEntity<Application> applicationResponse;
+		try {
+			applicationResponse = restTemplate.getForEntity(Idpa.GET_APPLICATION.requestUrl(tag).withHost(url).withQueryIfNotEmpty(PARAM_TIMESTAMP, contextManager.getCurrentVersion()).get(),
+					Application.class);
+		} catch (HttpStatusCodeException e) {
+			applicationResponse = ResponseEntity.status(e.getStatusCode()).body(null);
 		}
 
-		if (!annotationResponse.getStatusCode().is2xxSuccessful()) {
-			return "Could not get annotation: " + annotationResponse;
+		ResponseEntity<ApplicationAnnotation> annotationResponse;
+		try {
+			annotationResponse = restTemplate.getForEntity(Idpa.GET_ANNOTATION.requestUrl(tag).withHost(url).withQueryIfNotEmpty(PARAM_TIMESTAMP, contextManager.getCurrentVersion()).get(),
+					ApplicationAnnotation.class);
+		} catch (HttpStatusCodeException e) {
+			annotationResponse = ResponseEntity.status(e.getStatusCode()).body(null);
 		}
 
-		saveApplicationModel(applicationResponse.getBody(), tag);
-		saveAnnotation(annotationResponse.getBody(), tag);
+		ResponseBuilder response = new ResponseBuilder();
 
-		openApplicationModel(tag);
-		openAnnotation(tag);
+		if (applicationResponse.getStatusCode().is2xxSuccessful()) {
+			saveApplicationModel(applicationResponse.getBody(), tag);
+			openApplicationModel(tag);
+		} else if (applicationResponse.getStatusCode().is4xxClientError()) {
+			response.bold("There is no such application model!").newline();
+		} else {
+			response.error("Unknown error when downloading the application model: ").error(applicationResponse.getStatusCode().toString()).error(" (")
+					.error(applicationResponse.getStatusCode().getReasonPhrase()).error(")").newline();
+		}
 
-		return "Downloaded and opened the IDPA with tag " + tag;
+		if (annotationResponse.getStatusCode().is2xxSuccessful()) {
+			saveAnnotation(annotationResponse.getBody(), tag);
+			openAnnotation(tag);
+
+			List<String> brokenValues = annotationResponse.getHeaders().get(CustomHeaders.BROKEN);
+
+			if ((brokenValues != null) && brokenValues.contains("true")) {
+				response.error("The annotation is broken! Please use ").boldError("ann check").error(" for details.").newline();
+			}
+		} else if (annotationResponse.getStatusCode().is4xxClientError()) {
+			response.bold("There is no such annotation model!").newline();
+		} else {
+			response.error("Unknown error when downloading the annotation: ").error(annotationResponse.getStatusCode().toString()).error(" (")
+					.error(annotationResponse.getStatusCode().getReasonPhrase()).error(")").newline();
+		}
+
+		return response.normal("Downloaded and opened the IDPA with tag ").normal(tag).normal(" and timestamp/version ").normal(contextManager.getCurrentVersionOrLatest()).normal(".").build();
 	}
 
 	@ShellMethod(key = { "idpa open" }, value = "Opens an already downloaded IDPA with the specified tag.")
@@ -293,14 +326,16 @@ public class IdpaCommands {
 		return report;
 	}
 
-	@ShellMethod(key = { "idpa app upload" }, value = "Handle with care! Uploads the application model with the specified tag. Can break the online stored annotation!")
-	public String uploadApplication(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "Tag of the application model. Can contain UNIX-like wildcards.") String pattern)
+	@ShellMethod(key = { "idpa app upload" }, value = "Uploads the application model with the specified tag. Can break the online stored annotation!")
+	public AttributedString uploadApplication(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "Tag of the application model. Can contain UNIX-like wildcards.") String pattern)
 			throws JsonParseException, JsonMappingException, IOException {
 		pattern = contextManager.getTagOrFail(pattern);
 
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		ResponseEntity<String> response;
-		List<String> tags = new ArrayList<String>();
+		List<String> tags = new ArrayList<>();
+		ResponseBuilder responses = new ResponseBuilder();
+		boolean error = false;
 
 		for (File file : getAllFilesMatchingWildcards(workingDir + "/application-" + pattern + ".yml")) {
 			Application application = appSerializer.readFromYaml(file);
@@ -312,11 +347,37 @@ public class IdpaCommands {
 			} catch (HttpStatusCodeException e) {
 				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
 			}
+
+			responses.newline().bold(tag);
+
 			if (!response.getStatusCode().is2xxSuccessful()) {
-				return "Error during upload: " + response;
+				responses.error(" [ERROR]");
+			}
+
+			responses.newline();
+
+			@SuppressWarnings("unchecked")
+			List<String> broken = restTemplate.getForObject(Idpa.GET_BROKEN.requestUrl(tag).withQuery("timestamp", ApiFormats.DATE_FORMAT.format(application.getTimestamp())).withHost(url).get(),
+					List.class);
+
+			if ((broken != null) && (broken.size() > 0)) {
+				responses.error("The new application version broke the following annotations: ");
+				responses.error(broken.stream().collect(Collectors.joining(", "))).newline();
+			}
+
+			if (response.getStatusCode().is2xxSuccessful()) {
+				responses.jsonAsYamlNormal(response.getBody());
+			} else {
+				responses.jsonAsYamlError(response.getBody());
+				error = true;
 			}
 		}
-		return "Successfully uploaded annotations for tags '" + tags + "'.";
+
+		if (error) {
+			return new ResponseBuilder().normal("Uploaded application models for tags ").normal(tags).normal(". ").error("Some of them resulted in errors:").newline().append(responses).build();
+		} else {
+			return new ResponseBuilder().normal("Successfully uploaded application models for tags ").normal(tags).normal(":").newline().append(responses).build();
+		}
 
 	}
 
@@ -326,12 +387,23 @@ public class IdpaCommands {
 	}
 
 	@ShellMethod(key = { "idpa ann upload" }, value = "Uploads the annotation with the specified tag.")
-	public String uploadAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "Tag of the annotation. Can contain UNIX-like wildcards.") String pattern)
+	public AttributedString uploadAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "Tag of the annotation. Can contain UNIX-like wildcards.") String pattern)
 			throws JsonParseException, JsonMappingException, IOException {
 		pattern = contextManager.getTagOrFail(pattern);
 
+		ResponseBuilder resp = new ResponseBuilder();
+
 		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		List<String> tags = new ArrayList<String>();
+		ResponseBuilder responses = new ResponseBuilder();
+		boolean error = false;
+
+		String timestamp = contextManager.getCurrentVersion();
+
+		if (timestamp == null) {
+			timestamp = ApiFormats.DATE_FORMAT.format(new Date());
+			resp.bold("No timestamp set! Using the current time: ").bold(timestamp).newline();
+		}
 
 		for (File file : getAllFilesMatchingWildcards(workingDir + "/annotation-" + pattern + ".yml")) {
 			ApplicationAnnotation annotation = annSerializer.readFromYaml(file);
@@ -340,16 +412,26 @@ public class IdpaCommands {
 			tags.add(tag);
 			ResponseEntity<String> response;
 			try {
-				response = restTemplate.postForEntity(Idpa.UPDATE_ANNOTATION.requestUrl(tag).withHost(url).get(), annotation, String.class);
+				response = restTemplate.postForEntity(Idpa.UPDATE_ANNOTATION.requestUrl(tag).withHost(url).withQuery(PARAM_TIMESTAMP, timestamp).get(), annotation, String.class);
 			} catch (HttpStatusCodeException e) {
 				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
 			}
-			if (!response.getStatusCode().is2xxSuccessful()) {
-				return "Error during upload: " + response;
+
+			responses.newline().bold(tag);
+
+			if (response.getStatusCode().is2xxSuccessful()) {
+				responses.newline().jsonAsYamlNormal(response.getBody());
+			} else {
+				responses.error(" [ERROR]").newline().jsonAsYamlError(response.getBody());
+				error = true;
 			}
 		}
-		return "Successfully uploaded annotations for tags '" + tags + "'.";
 
+		if (error) {
+			return resp.normal("Uploaded annotations for tags ").normal(tags).normal(". ").error("Some of them resulted in errors:").newline().append(responses).build();
+		} else {
+			return resp.normal("Successfully uploaded annotations for tags ").normal(tags).normal(":").newline().append(responses).build();
+		}
 	}
 
 	private Collection<File> getAllFilesMatchingWildcards(String wildcards) {
