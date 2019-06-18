@@ -3,8 +3,8 @@ package org.continuity.jmeter.transform;
 import java.util.List;
 
 import org.apache.jorphan.collections.ListedHashTree;
-import org.continuity.api.rest.RestApi.IdpaAnnotation;
-import org.continuity.api.rest.RestApi.IdpaApplication;
+import org.continuity.api.rest.RestApi;
+import org.continuity.api.rest.RestApi.Idpa;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ public class JMeterAnnotator {
 		for (String tag : tags) {
 			ApplicationAnnotation annotation;
 			try {
-				annotation = restTemplate.getForObject(IdpaAnnotation.Annotation.GET.requestUrl(tag).get(), ApplicationAnnotation.class);
+				annotation = restTemplate.getForObject(Idpa.Annotation.GET.requestUrl(tag).get(), ApplicationAnnotation.class);
 			} catch (HttpStatusCodeException e) {
 				LOGGER.error("Received a non-200 response: {} ({}) - {}", e.getStatusCode(), e.getStatusCode().getReasonPhrase(), e.getResponseBodyAsString());
 				continue;
@@ -51,7 +51,7 @@ public class JMeterAnnotator {
 				LOGGER.error("Annotation with tag {} is null! Aborting.", tag);
 				continue;
 			}
-			Application application = restTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(tag).get(), Application.class);
+			Application application = restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(tag).get(), Application.class);
 			if (application == null) {
 				LOGGER.error("Application with tag {} is null! Aborting.", tag);
 				continue;
