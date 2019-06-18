@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import org.jline.utils.AttributedString;
 import org.springframework.core.MethodParameter;
 import org.springframework.shell.ParameterDescription;
 import org.springframework.shell.ParameterMissingResolutionException;
@@ -85,7 +86,7 @@ public class Shorthand implements Comparable<Shorthand> {
 	 *            The arguments.
 	 * @return
 	 */
-	public String execute(Object... args) throws Throwable {
+	public AttributedString execute(Object... args) throws Throwable {
 		List<Object> params = new ArrayList<>();
 		int i = 0;
 
@@ -105,7 +106,11 @@ public class Shorthand implements Comparable<Shorthand> {
 			throw e.getTargetException();
 		}
 
-		return Objects.toString(returnValue);
+		if (returnValue instanceof AttributedString) {
+			return (AttributedString) returnValue;
+		} else {
+			return new AttributedString(Objects.toString(returnValue));
+		}
 	}
 
 	/**

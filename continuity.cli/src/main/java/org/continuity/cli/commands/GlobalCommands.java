@@ -114,7 +114,7 @@ public class GlobalCommands implements Quit.Command {
 		AttributedString description;
 
 		if (shorthands.isEmpty()) {
-			description = new AttributedString("-");
+			description = new AttributedString("(none)");
 		} else {
 			description = AttributedString.join(new AttributedString("\n        "), shorthands.stream().map(this::formatShorthand).collect(Collectors.toList()));
 		}

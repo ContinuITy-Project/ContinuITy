@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.continuity.api.entities.config.ModularizationOptions;
-import org.continuity.api.rest.RestApi.IdpaApplication;
+import org.continuity.api.rest.RestApi;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.springframework.web.client.RestTemplate;
@@ -36,7 +36,7 @@ public class ModularizationUtils {
 		if (!services.values().contains("undefined")) {
 			return services.values();
 		} else {
-			return services.keySet().stream().map(t -> restTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(t).get(), Application.class)).map(Application::getEndpoints)
+			return services.keySet().stream().map(t -> restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(t).get(), Application.class)).map(Application::getEndpoints)
 					.flatMap(List::stream).map(endp -> (HttpEndpoint) endp)
 					.map(HttpEndpoint::getDomain)
 					.collect(Collectors.toSet());
@@ -54,7 +54,7 @@ public class ModularizationUtils {
 	 * @return The list of {@link Application}.
 	 */
 	public static Collection<Application> getServiceApplicationModels(Map<String, String> services, RestTemplate restTemplate) {
-		return services.keySet().stream().map(t -> restTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(t).get(), Application.class)).collect(Collectors.toList());
+		return services.keySet().stream().map(t -> restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(t).get(), Application.class)).collect(Collectors.toList());
 	}
 
 }

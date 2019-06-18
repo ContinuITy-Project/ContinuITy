@@ -10,6 +10,7 @@ import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,8 +34,7 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 	@JsonInclude(Include.NON_EMPTY)
 	private Set<ApplicationChange> ignoredApplicationChanges;
 
-	@JsonProperty("updated-application")
-	@JsonInclude(Include.NON_NULL)
+	@JsonIgnore
 	private Application updatedApplication;
 
 	/**
@@ -149,10 +149,20 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 		this.afterChange = afterChange;
 	}
 
+	/**
+	 * Gets the updated application (only for local use; won't be sent via REST).
+	 *
+	 * @return
+	 */
 	public Application getUpdatedApplication() {
 		return updatedApplication;
 	}
 
+	/**
+	 * Sets the updated application (only for local use; won't be sent via REST).
+	 *
+	 * @param updatedApplication
+	 */
 	public void setUpdatedApplication(Application updatedApplication) {
 		this.updatedApplication = updatedApplication;
 	}

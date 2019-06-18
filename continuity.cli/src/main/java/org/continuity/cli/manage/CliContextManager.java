@@ -1,11 +1,13 @@
 package org.continuity.cli.manage;
 
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.EmptyStackException;
 import java.util.Map;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+import org.continuity.api.entities.ApiFormats;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStyle;
 import org.springframework.shell.Availability;
@@ -22,9 +24,13 @@ public class CliContextManager implements PromptProvider {
 
 	private static final String FALLBACK_NAME = "fallback";
 
+	private static final String DEFAULT_VERSION = "latest";
+
 	private final Stack<CliContext> context = new Stack<>();
 
 	private String currentTag;
+
+	private String currentVersion;
 
 	public void setCurrentTag(String currentTag) {
 		this.currentTag = currentTag;
@@ -32,6 +38,26 @@ public class CliContextManager implements PromptProvider {
 
 	public String getCurrentTag() {
 		return currentTag;
+	}
+
+	public void setCurrentVersion(String currentVersion) {
+		if (currentVersion != null) {
+			try {
+				ApiFormats.DATE_FORMAT.parse(currentVersion);
+			} catch (ParseException e) {
+				throw new IllegalArgumentException("Illegally formatted date '" + currentVersion + "'!");
+			}
+		}
+
+		this.currentVersion = currentVersion;
+	}
+
+	public String getCurrentVersion() {
+		return currentVersion;
+	}
+
+	public String getCurrentVersionOrLatest() {
+		return currentVersion == null ? DEFAULT_VERSION : currentVersion;
 	}
 
 	/**
@@ -138,7 +164,10 @@ public class CliContextManager implements PromptProvider {
 		if (currentTag != null) {
 			builder.append(" (");
 			builder.append(currentTag);
+			builder.append("@").append(getCurrentVersionOrLatest());
 			builder.append(")");
+		} else if (currentVersion != null) {
+			builder.append(" (???").append("@").append(currentVersion).append(")");
 		}
 
 		return builder;

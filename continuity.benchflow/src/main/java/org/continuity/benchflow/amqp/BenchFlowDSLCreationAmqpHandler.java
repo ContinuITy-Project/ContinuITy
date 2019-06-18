@@ -8,8 +8,7 @@ import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
-import org.continuity.api.rest.RestApi.IdpaAnnotation;
-import org.continuity.api.rest.RestApi.IdpaApplication;
+import org.continuity.api.rest.RestApi.Idpa;
 import org.continuity.benchflow.artifact.ContinuITyModel;
 import org.continuity.benchflow.config.RabbitMqConfig;
 import org.continuity.benchflow.transform.ModelTransformater;
@@ -29,7 +28,7 @@ import org.springframework.web.client.RestTemplate;
 import cloud.benchflow.dsl.definition.workload.HttpWorkload;
 
 /**
- * 
+ *
  * @author Manuel Palenga
  *
  */
@@ -47,16 +46,16 @@ public class BenchFlowDSLCreationAmqpHandler {
 
 	@Autowired
 	private MemoryStorage<HttpWorkload> storage;
-	
+
 	/**
-	 * Transforms a workload model into a BenchFlow DSL. 
-	 * 
+	 * Transforms a workload model into a BenchFlow DSL.
+	 *
 	 * @param task
 	 * 				Task to be processed.
 	 */
 	@RabbitListener(queues = RabbitMqConfig.TASK_CREATE_QUEUE_NAME)
 	public void createDSL(TaskDescription task) {
-		
+
 		TaskReport report;
 
 		String workloadModelLink = task.getSource().getWorkloadModelLinks().getLink();
@@ -68,7 +67,7 @@ public class BenchFlowDSLCreationAmqpHandler {
 			LOGGER.info("Task {}: Creating a load test from {}...", task.getTaskId(), workloadModelLink);
 
 			ContinuITyModel continuITyModel = getContinuITyModel(workloadModelLink, task.getTag());
-			
+
 			if (continuITyModel == null) {
 				LOGGER.error("The workload model at {} does not provide all required input fields!", workloadModelLink);
 				report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
@@ -84,29 +83,29 @@ public class BenchFlowDSLCreationAmqpHandler {
 			}
 		}
 
-		
+
 		amqpTemplate.convertAndSend(AmqpApi.Global.EVENT_FINISHED.name(), AmqpApi.Global.EVENT_FINISHED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), report);
 	}
 
 	private ContinuITyModel getContinuITyModel(String workloadModelLink, String tag) {
-		
+
 		LinkExchangeModel workloadLinks = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadModelLink), LinkExchangeModel.class);
-		
+
 		if (workloadLinks == null) {
 			LOGGER.error("Workload links with tag {} is null! Aborting.", tag);
 			return null;
 		}
-		
-		if (workloadLinks.getWorkloadModelLinks() == null || workloadLinks.getWorkloadModelLinks().getBehaviorLink() == null) {
+
+		if ((workloadLinks.getWorkloadModelLinks() == null) || (workloadLinks.getWorkloadModelLinks().getBehaviorLink() == null)) {
 			LOGGER.error("Behavior links with tag {} is null! Aborting.", tag);
 			return null;
 		}
 
 		BehaviorModel behaviorModel = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadLinks.getWorkloadModelLinks().getBehaviorLink()), BehaviorModel.class);
-		
+
 		ApplicationAnnotation annotation;
 		try {
-			annotation = restTemplate.getForObject(IdpaAnnotation.Annotation.GET.requestUrl(tag).get(), ApplicationAnnotation.class);
+			annotation = restTemplate.getForObject(Idpa.Annotation.GET.requestUrl(tag).get(), ApplicationAnnotation.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.error("Received a non-200 response: {} ({}) - {}", e.getStatusCode(), e.getStatusCode().getReasonPhrase(), e.getResponseBodyAsString());
 			return null;
@@ -117,14 +116,14 @@ public class BenchFlowDSLCreationAmqpHandler {
 			return null;
 		}
 
-		Application application = restTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(tag).get(), Application.class);
+		Application application = restTemplate.getForObject(Idpa.Application.GET.requestUrl(tag).get(), Application.class);
 
 		if (application == null) {
 			LOGGER.error("Application with tag {} is null! Aborting.", tag);
 			return null;
 		}
-		
+
 		return new ContinuITyModel(behaviorModel, application, annotation);
 	}
-	
+
 }

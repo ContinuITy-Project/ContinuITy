@@ -1,6 +1,5 @@
 package org.continuity.api.amqp;
 
-import org.continuity.api.amqp.RoutingKeyFormatter.Keyword;
 import org.continuity.api.amqp.RoutingKeyFormatter.LoadTestType;
 import org.continuity.api.amqp.RoutingKeyFormatter.RecipeId;
 import org.continuity.api.amqp.RoutingKeyFormatter.ServiceName;
@@ -86,7 +85,7 @@ public class AmqpApi {
 		private static final String SCOPE = "workloadmodel";
 
 		public static final ExchangeDefinition<WorkloadType> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(WorkloadType.INSTANCE);
-		
+
 		public static final ExchangeDefinition<WorkloadType> MIX_CREATE = ExchangeDefinition.task(SCOPE, "createmix").nonDurable().autoDelete().withRoutingKey(WorkloadType.INSTANCE);
 
 		public static final ExchangeDefinition<WorkloadType> EVENT_CREATED = ExchangeDefinition.event(SCOPE, "created").nonDurable().autoDelete().withRoutingKey(WorkloadType.INSTANCE);
@@ -116,39 +115,22 @@ public class AmqpApi {
 	}
 
 	/**
-	 * AMQP API of the IDPA annotation service.
+	 * AMQP API of the IDPA service.
 	 *
 	 * @author Henning Schulz
 	 *
 	 */
-	public static class IdpaAnnotation {
+	public static class Idpa {
 
-		private static final String SCOPE = "idpaannotation";
-
-		public static final ExchangeDefinition<Keyword> EVENT_MESSAGE = ExchangeDefinition.event(SCOPE, "message").nonDurable().autoDelete().withRoutingKey(Keyword.INSTANCE);
-
-		private IdpaAnnotation() {
-		}
-
-	}
-
-	/**
-	 * AMQP API of the IDPA application service.
-	 *
-	 * @author Henning Schulz
-	 *
-	 */
-	public static class IdpaApplication {
-
-		private static final String SCOPE = "idpaapplication";
+		private static final String SCOPE = "idpa";
 
 		public static final ExchangeDefinition<Tag> EVENT_CHANGED = ExchangeDefinition.event(SCOPE, "changed").nonDurable().autoDelete().withRoutingKey(Tag.INSTANCE);
 
-		private IdpaApplication() {
+		private Idpa() {
 		}
 
 	}
-	
+
 	/**
 	 * AMQP API of the forecast service.
 	 *
@@ -160,7 +142,7 @@ public class AmqpApi {
 		private static final String SCOPE = "forecast";
 
 		public static final ExchangeDefinition<ServiceName> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(ServiceName.INSTANCE);
-		
+
 		private Forecast() {
 		}
 

@@ -15,7 +15,6 @@ import org.continuity.api.entities.links.MeasurementDataLinks;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
-import org.continuity.api.rest.RestApi.IdpaApplication;
 import org.continuity.commons.openxtrace.OpenXtraceTracer;
 import org.continuity.commons.storage.CsvFileStorage;
 import org.continuity.commons.storage.MixedStorage;
@@ -143,7 +142,7 @@ public class RequestRatesAmqpHandler {
 		} else {
 			Application application;
 			try {
-				application = restTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(task.getTag()).get(), Application.class);
+				application = restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(task.getTag()).get(), Application.class);
 			} catch (HttpStatusCodeException e) {
 				LOGGER.info("Could not get application model for tag {}. Response: {} - {}.", task.getTag(), e.getRawStatusCode(), e.getStatusCode().getReasonPhrase());
 				application = null;

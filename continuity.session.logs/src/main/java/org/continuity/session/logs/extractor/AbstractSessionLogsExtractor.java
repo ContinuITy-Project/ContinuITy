@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.continuity.api.rest.RestApi.IdpaApplication;
+import org.continuity.api.rest.RestApi;
 import org.continuity.commons.idpa.UrlPartParameterExtractor;
 import org.continuity.idpa.application.Application;
 import org.slf4j.Logger;
@@ -276,7 +276,7 @@ public abstract class AbstractSessionLogsExtractor<T> {
 		}
 
 		try {
-			return restTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(tag).get(), Application.class);
+			return restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(tag).get(), Application.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.error("Received error status code when asking for system model with tag " + tag, e);
 			return null;

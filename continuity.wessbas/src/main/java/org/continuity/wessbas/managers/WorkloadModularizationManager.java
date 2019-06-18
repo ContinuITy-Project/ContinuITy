@@ -30,7 +30,6 @@ import org.continuity.api.entities.artifact.markovbehavior.MarkovChain;
 import org.continuity.api.entities.artifact.markovbehavior.NormalDistribution;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.rest.RestApi;
-import org.continuity.api.rest.RestApi.IdpaApplication;
 import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
@@ -141,7 +140,7 @@ public class WorkloadModularizationManager {
 	public void runPipeline(String tag, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, Map<String, String> services) {
 		List<SessionsBundle> sessionBundles = behaviorModelPack.getSessionsBundlePack().getSessionsBundles();
 		List<HTTPRequestProcessingImpl> httpCallables = OPENxtraceUtils.extractHttpRequestCallables(OPENxtraceUtils.getOPENxtraces(linkExchangeModel, plainRestTemplate));
-		Application application = eurekaRestTemplate.getForObject(IdpaApplication.Application.GET.requestUrl(tag).get(), Application.class);
+		Application application = eurekaRestTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(tag).get(), Application.class);
 
 		MarkovBehaviorModel behaviorModel = new MarkovBehaviorModel();
 

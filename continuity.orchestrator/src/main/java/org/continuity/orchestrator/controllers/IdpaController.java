@@ -3,7 +3,7 @@ package org.continuity.orchestrator.controllers;
 import static org.continuity.api.rest.RestApi.Orchestrator.Idpa.ROOT;
 import static org.continuity.api.rest.RestApi.Orchestrator.Idpa.Paths.GET_ANNOTATION;
 import static org.continuity.api.rest.RestApi.Orchestrator.Idpa.Paths.GET_APPLICATION;
-import static org.continuity.api.rest.RestApi.Orchestrator.Idpa.Paths.REPORT;
+import static org.continuity.api.rest.RestApi.Orchestrator.Idpa.Paths.GET_BROKEN;
 import static org.continuity.api.rest.RestApi.Orchestrator.Idpa.Paths.UPDATE_ANNOTATION;
 import static org.continuity.api.rest.RestApi.Orchestrator.Idpa.Paths.UPDATE_APPLICATION;
 import static org.continuity.api.rest.RestApi.Orchestrator.Idpa.Paths.UPDATE_APP_FROM_OPEN_API_JSON;
@@ -12,17 +12,14 @@ import static org.continuity.api.rest.RestApi.Orchestrator.Idpa.Paths.UPDATE_APP
 import java.io.IOException;
 import java.util.Map;
 
-import org.continuity.api.rest.RestApi.IdpaAnnotation;
-import org.continuity.api.rest.RestApi.IdpaApplication;
+import org.continuity.api.rest.RequestBuilder;
+import org.continuity.api.rest.RestApi.Idpa;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
-import org.continuity.orchestrator.config.RabbitMqConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,19 +47,24 @@ public class IdpaController {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	@Autowired
-	private AmqpTemplate amqpTemplate;
-
 	/**
 	 * Gets the application model for the specified tag.
 	 *
 	 * @param tag
 	 *            The tag of the application.
+	 * @param timestamp
+	 *            The timestamp for which the application is requested.
 	 * @return The application model.
 	 */
 	@RequestMapping(path = GET_APPLICATION, method = RequestMethod.GET)
-	public ResponseEntity<Application> getApplication(@PathVariable("tag") String tag) {
-		return restTemplate.getForEntity(IdpaApplication.Application.GET.requestUrl(tag).get(), Application.class);
+	public ResponseEntity<Application> getApplication(@PathVariable("tag") String tag, @RequestParam(required = false) String timestamp) {
+		RequestBuilder req = Idpa.Application.GET.requestUrl(tag);
+
+		if (timestamp != null) {
+			req = req.withQuery("timestamp", timestamp);
+		}
+
+		return restTemplate.getForEntity(req.get(), Application.class);
 	}
 
 	/**
@@ -70,12 +72,20 @@ public class IdpaController {
 	 *
 	 * @param tag
 	 *            The tag of the annotation.
+	 * @param timestamp
+	 *            The timestamp for which the annotation is requested.
 	 * @return The annotation.
 	 */
 	@RequestMapping(path = GET_ANNOTATION, method = RequestMethod.GET)
-	public ResponseEntity<ApplicationAnnotation> getAnnotation(@PathVariable("tag") String tag) {
+	public ResponseEntity<ApplicationAnnotation> getAnnotation(@PathVariable("tag") String tag, @RequestParam(required = false) String timestamp) {
 		try {
-			return restTemplate.getForEntity(IdpaAnnotation.Annotation.GET.requestUrl(tag).get(), ApplicationAnnotation.class);
+			RequestBuilder req = Idpa.Annotation.GET.requestUrl(tag);
+
+			if (timestamp != null) {
+				req = req.withQuery("timestamp", timestamp);
+			}
+
+			return restTemplate.getForEntity(req.get(), ApplicationAnnotation.class);
 		} catch (HttpStatusCodeException e) {
 			if (e.getStatusCode() == HttpStatus.LOCKED) {
 				ObjectMapper mapper = new ObjectMapper();
@@ -111,7 +121,7 @@ public class IdpaController {
 	@RequestMapping(path = UPDATE_APPLICATION, method = RequestMethod.POST)
 	public ResponseEntity<String> updateApplication(@PathVariable("tag") String tag, @RequestBody Application application) {
 		try {
-			return restTemplate.postForEntity(IdpaApplication.Application.UPDATE.requestUrl(tag).get(), application, String.class);
+			return restTemplate.postForEntity(Idpa.Application.UPDATE.requestUrl(tag).get(), application, String.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.warn("Updating the system model with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
 			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
@@ -132,7 +142,7 @@ public class IdpaController {
 	@RequestMapping(path = UPDATE_APP_FROM_OPEN_API_JSON, method = RequestMethod.POST)
 	public ResponseEntity<String> updateAppFromOpenApiJson(@PathVariable("tag") String tag, @PathVariable("version") String version, @RequestBody JsonNode json) {
 		try {
-			return restTemplate.postForEntity(IdpaApplication.OpenApi.UPDATE_FROM_JSON.requestUrl(tag, version).get(), json, String.class);
+			return restTemplate.postForEntity(Idpa.OpenApi.UPDATE_FROM_JSON.requestUrl(tag, version).get(), json, String.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.warn("Updating the system model with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
 			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
@@ -154,7 +164,7 @@ public class IdpaController {
 	@RequestMapping(path = UPDATE_APP_FROM_OPEN_API_URL, method = RequestMethod.POST)
 	public ResponseEntity<String> updateAppFromOpenApiUrl(@PathVariable("tag") String tag, @PathVariable("version") String version, @RequestBody String url) {
 		try {
-			return restTemplate.postForEntity(IdpaApplication.OpenApi.UPDATE_FROM_URL.requestUrl(tag, version).get(), url, String.class);
+			return restTemplate.postForEntity(Idpa.OpenApi.UPDATE_FROM_URL.requestUrl(tag, version).get(), url, String.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.warn("Updating the system model with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
 			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
@@ -170,9 +180,9 @@ public class IdpaController {
 	 *            The annotation.
 	 */
 	@RequestMapping(path = UPDATE_ANNOTATION, method = RequestMethod.POST)
-	public ResponseEntity<String> updateAnnotation(@PathVariable("tag") String tag, @RequestBody ApplicationAnnotation annotation) {
+	public ResponseEntity<String> updateAnnotation(@PathVariable("tag") String tag, @RequestParam String timestamp, @RequestBody ApplicationAnnotation annotation) {
 		try {
-			return restTemplate.postForEntity(IdpaAnnotation.Annotation.UPDATE.requestUrl(tag).get(), annotation, String.class);
+			return restTemplate.postForEntity(Idpa.Annotation.UPDATE.requestUrl(tag).withQuery("timestamp", timestamp).get(), annotation, String.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.warn("Updating the annotation with tag {} resulted in a {} - {} response!", tag, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
 			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
@@ -180,20 +190,22 @@ public class IdpaController {
 	}
 
 	/**
-	 * Retrieves a report from the workload annotation if available.
+	 * Returns the timestamps of all annotations that are broken due to a certain application.
 	 *
-	 * @param timeout
-	 *            The timeout to wait for messages.
-	 * @return A response entity (200) holding a report or 204 (no content) if there is no report.
+	 * @param tag
+	 *            The tag.
+	 * @param timestamp
+	 *            The timestamp of the application.
+	 * @return A list with the timestamps of all broken annotations - formatted as JSON string.
 	 */
-	@RequestMapping(path = REPORT, method = RequestMethod.GET)
-	public ResponseEntity<?> getAnnotationReport(@RequestParam(value = "timeout", required = true) long timeout) {
-		Map<?, ?> report = amqpTemplate.receiveAndConvert(RabbitMqConfig.IDPA_ANNOTATION_MESSAGE_AVAILABLE_QUEUE_NAME, timeout, ParameterizedTypeReference.forType(Map.class));
-
-		if (report != null) {
-			return ResponseEntity.ok(report);
-		} else {
-			return ResponseEntity.noContent().build();
+	@RequestMapping(path = GET_BROKEN, method = RequestMethod.GET)
+	public ResponseEntity<String> getBroken(@PathVariable("tag") String tag, @RequestParam String timestamp) {
+		try {
+			return restTemplate.getForEntity(Idpa.Annotation.GET_BROKEN.requestUrl(tag).withQuery("timestamp", timestamp).get(), String.class);
+		} catch (HttpStatusCodeException e) {
+			LOGGER.warn("Getting the broken states for the application with tag {} and timestamp {} resulted in a {} - {} response!", tag, timestamp, e.getStatusCode(),
+					e.getStatusCode().getReasonPhrase());
+			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
 		}
 	}
 

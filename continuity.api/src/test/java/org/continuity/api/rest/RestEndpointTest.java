@@ -17,7 +17,7 @@ public class RestEndpointTest {
 
 		assertThat(RestApi.SessionLogs.GET.parsePathParameters("myhost/sessions/my-id-123")).isEqualTo(Collections.singletonList("my-id-123"));
 
-		assertThat(RestApi.IdpaApplication.OpenApi.UPDATE_FROM_URL.parsePathParameters("application/openapi/mytag/2.0/url")).isEqualTo(Arrays.asList("mytag", "2.0"));
+		assertThat(RestApi.Idpa.OpenApi.UPDATE_FROM_URL.parsePathParameters("application/openapi/mytag/2.0/url")).isEqualTo(Arrays.asList("mytag", "2.0"));
 	}
 
 }
