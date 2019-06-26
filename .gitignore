@@ -43,3 +43,9 @@ continuity.jmeter/storage
 continuity.orchestrator/storage
 continuity.wessbas/storage
 continuity.request.rates/request-logs
+continuity.service.jmeter/storage
+continuity.service.orchestrator/storage
+continuity.service.request.rates/request-logs/*.csv
+continuity.service.session.logs/storage
+continuity.service.wessbas/persisted
+continuity.service.wessbas/storage

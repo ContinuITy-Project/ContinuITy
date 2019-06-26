@@ -9,14 +9,17 @@ dependencyManagement {
 }
 
 dependencies {
-	compile project(':continuity.api')
-	compile project(':continuity.commons')
-	compile project(':continuity.dsl')
+	compile project(':continuity.lib.api')
+	compile project(':continuity.lib.commons')
 	
-	compile files('lib/JRI.jar')
-	compile files('lib/JRIEngine.jar')
-	compile files('lib/REngine.jar')
-
+	compile group: 'net.sf.markov4jmeter', name: 'm4jdsl', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'commons', version: '1.0.0'
+	compile group: 'net.sf.markov4jmeter', name: 'behaviormodelextractor', version: '1.0.1'
+	compile group: 'net.sf.markov4jmeter', name: 'modelgenerator', version: '1.0.0'
+	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20140405'
+	
+	compile group: 'nz.ac.waikato.cms.weka', name: 'weka-stable', version: '3.6.11'
+	
 	// Spring Boot
 	
 	compile("org.springframework.boot:spring-boot-starter-web")
@@ -32,10 +35,7 @@ dependencies {
 	
 	// Required for Eclipse
 	compile("org.codehaus.groovy:groovy-all:2.4.7")
-	
-	// InfluxDB
-	compile("org.influxdb:influxdb-java:2.10")
-	
+
 }
 
 group = 'continuityproject'
@@ -43,11 +43,10 @@ group = 'continuityproject'
 apply plugin: 'com.palantir.docker'
 
 docker {
-	name "${project.group}/forecast"
-	copySpec.from('.') {
-		include 'prophet/**'
-		include 'telescope-multi/**'
-	}
+	name "${project.group}/wessbas"
 	files jar.archivePath
+	copySpec.from('.') {
+		include 'configuration/**'
+	}
 	buildArgs(['JAR_FILE': "${jar.archiveName}"])
 }

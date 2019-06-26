@@ -7,8 +7,8 @@ dependencyManagement {
 }
 
 dependencies {
-	compile project(':continuity.idpa')
-	compile project(':continuity.api')
+	compile project(':continuity.lib.idpa')
+	compile project(':continuity.lib.api')
 	
 	
 	compile group: 'net.sf.markov4jmeter', name: 'm4jdsl', version: '1.0.0'

@@ -9,16 +9,8 @@ dependencyManagement {
 }
 
 dependencies {
-	compile project(':continuity.api')
-	compile project(':continuity.commons')
-	
-	compile group: 'net.sf.markov4jmeter', name: 'm4jdsl', version: '1.0.0'
-	compile group: 'net.sf.markov4jmeter', name: 'commons', version: '1.0.0'
-	compile group: 'net.sf.markov4jmeter', name: 'behaviormodelextractor', version: '1.0.1'
-	compile group: 'net.sf.markov4jmeter', name: 'modelgenerator', version: '1.0.0'
-	compile group: 'net.voorn', name: 'markov4jmeter', version: '1.0.20140405'
-	
-	compile group: 'nz.ac.waikato.cms.weka', name: 'weka-stable', version: '3.6.11'
+	compile project(':continuity.lib.api')
+	compile project(':continuity.lib.commons')
 	
 	// Spring Boot
 	
@@ -38,15 +30,27 @@ dependencies {
 
 }
 
+task copyJmeterFolders(type: Copy) {
+	from '..'
+	into 'build'
+	include 'bin/**'
+	include 'lib/**'
+}
+
+build.dependsOn {
+	copyJmeterFolders
+}
+
 group = 'continuityproject'
 
 apply plugin: 'com.palantir.docker'
 
 docker {
-	name "${project.group}/wessbas"
+	name "${project.group}/request-rates"
 	files jar.archivePath
-	copySpec.from('.') {
-		include 'configuration/**'
+	copySpec.from('build') {
+		include 'bin/**'
+		include 'lib/**'
 	}
 	buildArgs(['JAR_FILE': "${jar.archiveName}"])
 }

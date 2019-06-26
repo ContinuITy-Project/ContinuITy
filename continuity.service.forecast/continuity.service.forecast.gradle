@@ -9,9 +9,14 @@ dependencyManagement {
 }
 
 dependencies {
-	compile project(':continuity.api')
-	compile project(':continuity.commons')
+	compile project(':continuity.lib.api')
+	compile project(':continuity.lib.commons')
+	compile project(':continuity.lib.dsl')
 	
+	compile files('lib/JRI.jar')
+	compile files('lib/JRIEngine.jar')
+	compile files('lib/REngine.jar')
+
 	// Spring Boot
 	
 	compile("org.springframework.boot:spring-boot-starter-web")
@@ -27,18 +32,10 @@ dependencies {
 	
 	// Required for Eclipse
 	compile("org.codehaus.groovy:groovy-all:2.4.7")
-
-}
-
-task copyJmeterFolders(type: Copy) {
-	from '..'
-	into 'build'
-	include 'bin/**'
-	include 'lib/**'
-}
-
-build.dependsOn {
-	copyJmeterFolders
+	
+	// InfluxDB
+	compile("org.influxdb:influxdb-java:2.10")
+	
 }
 
 group = 'continuityproject'
@@ -46,11 +43,11 @@ group = 'continuityproject'
 apply plugin: 'com.palantir.docker'
 
 docker {
-	name "${project.group}/request-rates"
-	files jar.archivePath
-	copySpec.from('build') {
-		include 'bin/**'
-		include 'lib/**'
+	name "${project.group}/forecast"
+	copySpec.from('.') {
+		include 'prophet/**'
+		include 'telescope-multi/**'
 	}
+	files jar.archivePath
 	buildArgs(['JAR_FILE': "${jar.archiveName}"])
 }
