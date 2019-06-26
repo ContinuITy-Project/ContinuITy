@@ -18,8 +18,8 @@ repositories {
 }
 
 dependencies {
-	compile project(':continuity.api')
-	compile project(':continuity.commons')
+	compile project(':continuity.lib.api')
+	compile project(':continuity.lib.commons')
 	
 	// Spring Boot
 	

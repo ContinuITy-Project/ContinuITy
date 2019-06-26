@@ -1,19 +1,21 @@
 rootProject.name = "continuity.root"
 
-include "continuity.api"
-include "continuity.benchflow"
+include "continuity.lib.api"
+include "continuity.lib.commons"
+include "continuity.lib.dsl"
+include "continuity.lib.idpa"
+
 include "continuity.cli"
-include "continuity.commons"
-include "continuity.dsl"
-include "continuity.eureka"
-include "continuity.forecast"
-include "continuity.idpa"
-include "continuity.jmeter"
-include "continuity.orchestrator"
-include "continuity.request.rates"
+
+include "continuity.service.benchflow"
+include "continuity.service.eureka"
+include "continuity.service.forecast"
+include "continuity.service.jmeter"
+include "continuity.service.orchestrator"
+include "continuity.service.request.rates"
 include "continuity.service.idpa"
-include "continuity.session.logs"
-include "continuity.wessbas"
+include "continuity.service.session.logs"
+include "continuity.service.wessbas"
 
 /**
  * Sets the name of the project build file (and all of its sub-projects) to be "${project.name}.gradle" pattern.
