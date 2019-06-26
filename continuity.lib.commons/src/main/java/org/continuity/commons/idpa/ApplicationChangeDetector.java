@@ -43,7 +43,7 @@ public class ApplicationChangeDetector {
 
 	public ApplicationChangeDetector(Application newSystemModel, EnumSet<ApplicationChangeType> ignoredChangeTypes) {
 		this.newSystemModel = newSystemModel;
-		this.reportBuilder = new ApplicationChangeReportBuilder(ignoredChangeTypes, newSystemModel.getTimestamp());
+		this.reportBuilder = new ApplicationChangeReportBuilder(ignoredChangeTypes, newSystemModel.getVersionOrTimestamp());
 	}
 
 	/**
@@ -53,7 +53,7 @@ public class ApplicationChangeDetector {
 	 *            An old system model.
 	 */
 	public void compareTo(Application oldSystemModel) {
-		reportBuilder.setBeforeChange(oldSystemModel.getTimestamp());
+		reportBuilder.setBeforeChange(oldSystemModel.getVersionOrTimestamp());
 
 		final Set<ModelElementReference> visited = new HashSet<>();
 		IdpaByClassSearcher<Endpoint<?>> searcher = new IdpaByClassSearcher<>(Endpoint.GENERIC_TYPE, inter -> checkInterface(inter, oldSystemModel, visited));
