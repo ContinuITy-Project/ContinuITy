@@ -1,4 +1,4 @@
-package org.continuity.idpa.repository;
+package org.continuity.idpa.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,7 +10,7 @@ import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.api.entities.report.ModelElementReference;
 import org.continuity.idpa.Idpa;
-import org.continuity.idpa.SystemModelTestInstance;
+import org.continuity.idpa.StaticIdpaTestInstance;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.HttpEndpoint;
@@ -40,9 +40,9 @@ public class SystemModelRepositoryManagerTest {
 
 	@Test
 	public void testSaveSameModel() {
-		testWithSameModel(SystemModelTestInstance.FIRST.getApplication());
-		testWithSameModel(SystemModelTestInstance.SECOND.getApplication());
-		testWithSameModel(SystemModelTestInstance.THIRD.getApplication());
+		testWithSameModel(StaticIdpaTestInstance.FIRST.getApplication());
+		testWithSameModel(StaticIdpaTestInstance.SECOND.getApplication());
+		testWithSameModel(StaticIdpaTestInstance.THIRD.getApplication());
 	}
 
 	private void testWithSameModel(Application systemModel) {
@@ -55,9 +55,9 @@ public class SystemModelRepositoryManagerTest {
 
 	@Test
 	public void testSaveModelWithAddedInterface() throws IOException {
-		Application firstModel = SystemModelTestInstance.FIRST.getApplication();
-		Application secondModel = SystemModelTestInstance.SECOND.getApplication();
-		Application thirdModel = SystemModelTestInstance.THIRD.getApplication();
+		Application firstModel = StaticIdpaTestInstance.FIRST.getApplication();
+		Application secondModel = StaticIdpaTestInstance.SECOND.getApplication();
+		Application thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
 
@@ -75,9 +75,9 @@ public class SystemModelRepositoryManagerTest {
 		assertThat(modelCaptor.getValue().getEndpoints()).as("Expected the endpoints of the second model").isEqualTo(secondModel.getEndpoints());
 
 		// Ignoring INTERFACE_ADDED
-		firstModel = SystemModelTestInstance.FIRST.getApplication();
-		secondModel = SystemModelTestInstance.SECOND.getApplication();
-		thirdModel = SystemModelTestInstance.THIRD.getApplication();
+		firstModel = StaticIdpaTestInstance.FIRST.getApplication();
+		secondModel = StaticIdpaTestInstance.SECOND.getApplication();
+		thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 		Mockito.reset(repositoryMock);
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
 
@@ -90,12 +90,12 @@ public class SystemModelRepositoryManagerTest {
 				.extracting(ModelElementReference::getId).containsExactlyInAnyOrder("logoutuser", "user");
 		assertThat(report.getApplicationChanges()).as("Expect the changes of the report to be empty.").isEmpty();
 
-		Mockito.verify(repositoryMock, Mockito.times(0)).save(Mockito.anyString(), Mockito.any());
+		Mockito.verify(repositoryMock, Mockito.times(0)).save(Mockito.anyString(), Mockito.any(Application.class));
 
 		// Removing an interface at the same time
-		firstModel = SystemModelTestInstance.FIRST.getApplication();
-		secondModel = SystemModelTestInstance.SECOND.getApplication();
-		thirdModel = SystemModelTestInstance.THIRD.getApplication();
+		firstModel = StaticIdpaTestInstance.FIRST.getApplication();
+		secondModel = StaticIdpaTestInstance.SECOND.getApplication();
+		thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 		Mockito.reset(repositoryMock);
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
 
@@ -115,9 +115,9 @@ public class SystemModelRepositoryManagerTest {
 
 	@Test
 	public void testSaveModelWithRemovedInterface() throws IOException {
-		Application firstModel = SystemModelTestInstance.FIRST.getApplication();
-		Application secondModel = SystemModelTestInstance.SECOND.getApplication();
-		Application thirdModel = SystemModelTestInstance.THIRD.getApplication();
+		Application firstModel = StaticIdpaTestInstance.FIRST.getApplication();
+		Application secondModel = StaticIdpaTestInstance.SECOND.getApplication();
+		Application thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, secondModel, null));
 
@@ -134,9 +134,9 @@ public class SystemModelRepositoryManagerTest {
 		// Cannot check for absence of other changes, since the user parameter was added
 
 		// Ignoring INTERFACE_REMOVED
-		firstModel = SystemModelTestInstance.FIRST.getApplication();
-		secondModel = SystemModelTestInstance.SECOND.getApplication();
-		thirdModel = SystemModelTestInstance.THIRD.getApplication();
+		firstModel = StaticIdpaTestInstance.FIRST.getApplication();
+		secondModel = StaticIdpaTestInstance.SECOND.getApplication();
+		thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 		Mockito.reset(repositoryMock);
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, secondModel, null));
 
@@ -147,9 +147,9 @@ public class SystemModelRepositoryManagerTest {
 				.as("Expected that there are no other ignored changes than the removal of login").isEmpty();
 
 		// Adding an interface at the same time
-		firstModel = SystemModelTestInstance.FIRST.getApplication();
-		secondModel = SystemModelTestInstance.SECOND.getApplication();
-		thirdModel = SystemModelTestInstance.THIRD.getApplication();
+		firstModel = StaticIdpaTestInstance.FIRST.getApplication();
+		secondModel = StaticIdpaTestInstance.SECOND.getApplication();
+		thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 		Mockito.reset(repositoryMock);
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
 
@@ -170,8 +170,8 @@ public class SystemModelRepositoryManagerTest {
 
 	@Test
 	public void testWithIgnoredParameterRemovals() throws IOException {
-		Application firstModel = SystemModelTestInstance.FIRST.getApplication();
-		Application secondModel = SystemModelTestInstance.SECOND.getApplication();
+		Application firstModel = StaticIdpaTestInstance.FIRST.getApplication();
+		Application secondModel = StaticIdpaTestInstance.SECOND.getApplication();
 
 		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
 		ApplicationChangeReport report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", secondModel, EnumSet.of(ApplicationChangeType.PARAMETER_REMOVED));

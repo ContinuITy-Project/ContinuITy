@@ -21,7 +21,7 @@ import org.springframework.http.ResponseEntity;
  * @author Henning Schulz
  *
  */
-public enum SystemModelTestInstance {
+public enum StaticIdpaTestInstance implements IdpaTestInstance {
 
 	FIRST("http://first/") {
 		@Override
@@ -47,6 +47,7 @@ public enum SystemModelTestInstance {
 		@Override
 		public ApplicationAnnotation getAnnotation() {
 			ApplicationAnnotation ann = new ApplicationAnnotation();
+			ann.setTimestamp(getApplication().getTimestamp());
 
 			DirectListInput input = new DirectListInput();
 			input.setId("input");
@@ -77,6 +78,7 @@ public enum SystemModelTestInstance {
 		@Override
 		public ApplicationAnnotation getAnnotation() {
 			ApplicationAnnotation ann = FIRST.getAnnotation();
+			ann.setTimestamp(getApplication().getTimestamp());
 			((DirectListInput) ann.getInputs().get(0)).setData(Arrays.asList("what", "ever"));
 			return ann;
 		}
@@ -117,6 +119,7 @@ public enum SystemModelTestInstance {
 		@Override
 		public ApplicationAnnotation getAnnotation() {
 			ApplicationAnnotation ann = new ApplicationAnnotation();
+			ann.setTimestamp(getApplication().getTimestamp());
 
 			DirectListInput input = new DirectListInput();
 			input.setId("input");
@@ -161,6 +164,7 @@ public enum SystemModelTestInstance {
 		@Override
 		public ApplicationAnnotation getAnnotation() {
 			ApplicationAnnotation ann = new ApplicationAnnotation();
+			ann.setTimestamp(getApplication().getTimestamp());
 
 			DirectListInput input = new DirectListInput();
 			input.setId("input");
@@ -179,13 +183,9 @@ public enum SystemModelTestInstance {
 
 	private final String link;
 
-	private SystemModelTestInstance(String link) {
+	private StaticIdpaTestInstance(String link) {
 		this.link = link;
 	}
-
-	public abstract Application getApplication();
-
-	public abstract ApplicationAnnotation getAnnotation();
 
 	public ResponseEntity<Application> getEntity() {
 		return new ResponseEntity<>(getApplication(), HttpStatus.OK);
