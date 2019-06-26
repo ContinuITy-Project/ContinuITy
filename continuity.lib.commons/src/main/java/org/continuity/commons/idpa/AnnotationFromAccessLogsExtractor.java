@@ -99,7 +99,7 @@ public class AnnotationFromAccessLogsExtractor extends AbstractAccessLogsConsume
 	private void collectFilteredApplication() {
 		filteredApplication = new Application();
 		filteredApplication.setId(application.getId());
-		filteredApplication.setTimestamp(application.getTimestamp());
+		filteredApplication.setVersionOrTimestamp(application.getVersionOrTimestamp());
 		filteredApplication.getEndpoints().addAll(collectorPerEndpoint.keySet());
 	}
 

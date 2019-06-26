@@ -8,9 +8,7 @@ import static org.continuity.api.rest.RestApi.Idpa.Application.Paths.UPDATE;
 import static org.continuity.api.rest.RestApi.Idpa.Application.Paths.UPDATE_FROM_WORKLOAD_MODEL;
 
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,6 +19,7 @@ import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.entities.ApplicationModelLink;
@@ -58,8 +57,6 @@ public class ApplicationController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationController.class);
 
-	private static final DateFormat DATE_FORMAT = ApiFormats.DATE_FORMAT;
-
 	private final RestTemplate restTemplate;
 
 	private final AmqpTemplate amqpTemplate;
@@ -82,13 +79,13 @@ public class ApplicationController {
 	 *
 	 * @param tag
 	 *            The tag of the application.
-	 * @param timestamp
+	 * @param version
 	 *            The timestamp for which the application model is searched (optional).
 	 * @return The current application model.
 	 */
 	@RequestMapping(path = GET, method = RequestMethod.GET)
-	public ResponseEntity<Application> getApplication(@PathVariable String tag, @RequestParam(required = false) String timestamp) {
-		if (timestamp == null) {
+	public ResponseEntity<Application> getApplication(@PathVariable String tag, @RequestParam(required = false) String version) {
+		if (version == null) {
 			try {
 				return ResponseEntity.ok(manager.read(tag));
 			} catch (IOException e) {
@@ -96,17 +93,17 @@ public class ApplicationController {
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 			}
 		} else {
-			Date date;
+			VersionOrTimestamp vot;
 			try {
-				date = DATE_FORMAT.parse(timestamp);
-			} catch (ParseException e) {
-				LOGGER.error("Could not parse timestamp {}.", timestamp);
+				vot = VersionOrTimestamp.fromString(version);
+			} catch (ParseException | NumberFormatException e) {
+				LOGGER.error("Could not parse version or timestamp {}.", version);
 				LOGGER.error("Exception:", e);
 				return ResponseEntity.badRequest().build();
 			}
 
 			try {
-				return ResponseEntity.ok(manager.read(tag, date));
+				return ResponseEntity.ok(manager.read(tag, vot));
 			} catch (IOException e) {
 				LOGGER.error("An exception occured during reading!", e);
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -126,16 +123,16 @@ public class ApplicationController {
 	 */
 	@RequestMapping(path = GET_DELTA, method = RequestMethod.GET)
 	public ResponseEntity<ApplicationChangeReport> getDeltaSince(@PathVariable String tag, @RequestParam("since") String since) {
-		Date date;
+		VersionOrTimestamp vot;
 		try {
-			date = DATE_FORMAT.parse(since);
-		} catch (ParseException e) {
-			LOGGER.error("Could not parse since date {}.", since);
+			vot = VersionOrTimestamp.fromString(since);
+		} catch (ParseException | NumberFormatException e) {
+			LOGGER.error("Could not parse version or timestamp {}.", since);
 			LOGGER.error("Exception:", e);
 			return ResponseEntity.badRequest().build();
 		}
 
-		return ResponseEntity.ok(manager.getDeltaSince(tag, date));
+		return ResponseEntity.ok(manager.getDeltaSince(tag, vot));
 	}
 
 	/**

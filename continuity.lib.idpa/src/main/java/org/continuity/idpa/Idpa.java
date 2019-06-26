@@ -1,6 +1,5 @@
 package org.continuity.idpa;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +14,7 @@ import org.continuity.idpa.application.Application;
  */
 public class Idpa {
 
-	private Date timestamp;
+	private VersionOrTimestamp version;
 
 	private Application application;
 
@@ -26,22 +25,22 @@ public class Idpa {
 	public Idpa() {
 	}
 
-	public Idpa(Date timestamp, Application application, ApplicationAnnotation annotation) {
-		this.timestamp = timestamp;
+	public Idpa(VersionOrTimestamp version, Application application, ApplicationAnnotation annotation) {
+		this.version = version;
 		this.application = application;
 		this.annotation = annotation;
 
-		if ((this.timestamp == null) && (this.application != null)) {
-			this.timestamp = this.application.getTimestamp();
+		if ((this.version == null) && (this.application != null)) {
+			this.version = this.application.getVersionOrTimestamp();
 		}
 	}
 
-	public Date getTimestamp() {
-		return timestamp;
+	public VersionOrTimestamp getVersionOrTimestamp() {
+		return version;
 	}
 
-	public void setTimestamp(Date timestamp) {
-		this.timestamp = timestamp;
+	public void setVersionOrTimestamp(VersionOrTimestamp version) {
+		this.version = version;
 	}
 
 	public Application getApplication() {

@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -25,6 +26,7 @@ import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.api.rest.CustomHeaders;
+import org.continuity.api.rest.RequestBuilder;
 import org.continuity.api.rest.RestApi.Orchestrator.Idpa;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;
@@ -38,6 +40,7 @@ import org.continuity.commons.idpa.AnnotationValidityChecker;
 import org.continuity.commons.idpa.ApplicationUpdater;
 import org.continuity.commons.idpa.OpenApiToIdpaTransformer;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
@@ -104,7 +107,7 @@ public class IdpaCommands {
 			new Shorthand("open", this, "openIdpa", String.class) //
 	);
 
-	private static final String PARAM_TIMESTAMP = "timestamp";
+	private static final String PARAM_VERSION = "version";
 
 	@Autowired
 	private PropertiesProvider propertiesProvider;
@@ -141,7 +144,7 @@ public class IdpaCommands {
 
 		ResponseEntity<Application> applicationResponse;
 		try {
-			applicationResponse = restTemplate.getForEntity(Idpa.GET_APPLICATION.requestUrl(tag).withHost(url).withQueryIfNotEmpty(PARAM_TIMESTAMP, contextManager.getCurrentVersion()).get(),
+			applicationResponse = restTemplate.getForEntity(Idpa.GET_APPLICATION.requestUrl(tag).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(),
 					Application.class);
 		} catch (HttpStatusCodeException e) {
 			applicationResponse = ResponseEntity.status(e.getStatusCode()).body(null);
@@ -149,7 +152,7 @@ public class IdpaCommands {
 
 		ResponseEntity<ApplicationAnnotation> annotationResponse;
 		try {
-			annotationResponse = restTemplate.getForEntity(Idpa.GET_ANNOTATION.requestUrl(tag).withHost(url).withQueryIfNotEmpty(PARAM_TIMESTAMP, contextManager.getCurrentVersion()).get(),
+			annotationResponse = restTemplate.getForEntity(Idpa.GET_ANNOTATION.requestUrl(tag).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(),
 					ApplicationAnnotation.class);
 		} catch (HttpStatusCodeException e) {
 			annotationResponse = ResponseEntity.status(e.getStatusCode()).body(null);
@@ -357,8 +360,7 @@ public class IdpaCommands {
 			responses.newline();
 
 			@SuppressWarnings("unchecked")
-			List<String> broken = restTemplate.getForObject(Idpa.GET_BROKEN.requestUrl(tag).withQuery("timestamp", ApiFormats.DATE_FORMAT.format(application.getTimestamp())).withHost(url).get(),
-					List.class);
+			List<String> broken = restTemplate.getForObject(Idpa.GET_BROKEN.requestUrl(tag).withQuery(PARAM_VERSION, application.getVersionOrTimestamp().toString()).withHost(url).get(), List.class);
 
 			if ((broken != null) && (broken.size() > 0)) {
 				responses.error("The new application version broke the following annotations: ");
@@ -388,7 +390,7 @@ public class IdpaCommands {
 
 	@ShellMethod(key = { "idpa ann upload" }, value = "Uploads the annotation with the specified tag.")
 	public AttributedString uploadAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "Tag of the annotation. Can contain UNIX-like wildcards.") String pattern)
-			throws JsonParseException, JsonMappingException, IOException {
+			throws JsonParseException, JsonMappingException, IOException, NumberFormatException, ParseException {
 		pattern = contextManager.getTagOrFail(pattern);
 
 		ResponseBuilder resp = new ResponseBuilder();
@@ -398,11 +400,11 @@ public class IdpaCommands {
 		ResponseBuilder responses = new ResponseBuilder();
 		boolean error = false;
 
-		String timestamp = contextManager.getCurrentVersion();
+		String currVersion = contextManager.getCurrentVersion();
 
-		if (timestamp == null) {
-			timestamp = ApiFormats.DATE_FORMAT.format(new Date());
-			resp.bold("No timestamp set! Using the current time: ").bold(timestamp).newline();
+		if (currVersion == null) {
+			currVersion = ApiFormats.DATE_FORMAT.format(new Date());
+			resp.normal("No version set! Using the current time as fallback: ").bold(currVersion).newline();
 		}
 
 		for (File file : getAllFilesMatchingWildcards(workingDir + "/annotation-" + pattern + ".yml")) {
@@ -410,9 +412,17 @@ public class IdpaCommands {
 			String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
 			String tag = file.getName().substring("annotation-".length(), file.getName().length() - ".yml".length());
 			tags.add(tag);
+
+			RequestBuilder req = Idpa.UPDATE_ANNOTATION.requestUrl(tag).withHost(url);
+
+			if (annotation.getVersionOrTimestamp().isEmpty()) {
+				resp.bold("Annotation '").normal(tag).bold("' has no version! Setting the current one as fallback: ").normal(currVersion);
+				annotation.setVersionOrTimestamp(VersionOrTimestamp.fromString(currVersion));
+			}
+
 			ResponseEntity<String> response;
 			try {
-				response = restTemplate.postForEntity(Idpa.UPDATE_ANNOTATION.requestUrl(tag).withHost(url).withQuery(PARAM_TIMESTAMP, timestamp).get(), annotation, String.class);
+				response = restTemplate.postForEntity(req.get(), annotation, String.class);
 			} catch (HttpStatusCodeException e) {
 				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
 			}

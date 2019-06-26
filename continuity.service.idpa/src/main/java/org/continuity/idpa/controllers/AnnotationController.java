@@ -9,13 +9,12 @@ import static org.continuity.api.rest.RestApi.Idpa.Annotation.Paths.UPLOAD;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.api.rest.CustomHeaders;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.continuity.idpa.storage.AnnotationStorageManager;
@@ -60,20 +59,20 @@ public class AnnotationController {
 	 *
 	 * @param tag
 	 *            The tag of the annotation.
-	 * @param timestamp
+	 * @param version
 	 *            The timestamp for which the application model is searched (optional).
 	 * @return {@link ResponseEntity} holding the annotation. It will hold a header
 	 *         {@link CustomHeaders#BROKEN} indicating whether the IDPA is broken.
 	 */
 	@RequestMapping(path = GET, method = RequestMethod.GET)
-	public ResponseEntity<?> getAnnotation(@PathVariable("tag") String tag, @RequestParam(required = false) String timestamp) {
-		Date date = null;
+	public ResponseEntity<?> getAnnotation(@PathVariable("tag") String tag, @RequestParam(required = false) String version) {
+		VersionOrTimestamp vot = null;
 
-		if (timestamp != null) {
+		if (version != null) {
 			try {
-				date = ApiFormats.DATE_FORMAT.parse(timestamp);
-			} catch (ParseException e) {
-				LOGGER.error("Could not parse timestamp {}.", timestamp);
+				vot = VersionOrTimestamp.fromString(version);
+			} catch (ParseException | NumberFormatException e) {
+				LOGGER.error("Could not parse version or timestamp {}.", version);
 				LOGGER.error("Exception:", e);
 				return ResponseEntity.badRequest().build();
 			}
@@ -82,10 +81,10 @@ public class AnnotationController {
 		ApplicationAnnotation annotation;
 
 		try {
-			if (date == null) {
+			if (vot == null) {
 				annotation = storageManager.read(tag);
 			} else {
-				annotation = storageManager.read(tag, date);
+				annotation = storageManager.read(tag, vot);
 			}
 		} catch (IOException e) {
 			LOGGER.error("Error during getting annotation with tag " + tag, e);
@@ -95,7 +94,7 @@ public class AnnotationController {
 		if (annotation == null) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} else {
-			boolean broken = ((date == null) && storageManager.isBroken(tag)) || ((date != null) && storageManager.isBroken(tag, date));
+			boolean broken = ((vot == null) && storageManager.isBroken(tag)) || ((vot != null) && storageManager.isBroken(tag, vot));
 			return ResponseEntity.ok().header(CustomHeaders.BROKEN, Boolean.toString(broken)).body(annotation);
 		}
 	}
@@ -105,25 +104,16 @@ public class AnnotationController {
 	 * respect to the system model, it is rejected.
 	 *
 	 * @param tag
-	 * @param timestamp
+	 * @param version
 	 * @param annotation
 	 * @return
 	 */
 	@RequestMapping(path = UPDATE, method = RequestMethod.POST)
-	public ResponseEntity<String> updateAnnotation(@PathVariable("tag") String tag, @RequestParam String timestamp, @RequestBody ApplicationAnnotation annotation) {
-		Date date;
-		try {
-			date = ApiFormats.DATE_FORMAT.parse(timestamp);
-		} catch (ParseException e) {
-			LOGGER.error("Could not parse timestamp {}.", timestamp);
-			LOGGER.error("Exception:", e);
-			return ResponseEntity.badRequest().body("Illegal timestamp '" + timestamp + "'!");
-		}
-
+	public ResponseEntity<String> updateAnnotation(@PathVariable("tag") String tag, @RequestBody ApplicationAnnotation annotation) {
 		AnnotationValidityReport report = null;
 
 		try {
-			report = storageManager.saveOrUpdate(tag, date, annotation);
+			report = storageManager.saveOrUpdate(tag, annotation);
 		} catch (IOException e) {
 			LOGGER.error("Error during updating annotation with tag {}!", tag);
 			e.printStackTrace();
@@ -143,23 +133,13 @@ public class AnnotationController {
 	 *
 	 * @param tag
 	 *            Tag of the annotation.
-	 * @param timestamp
+	 * @param version
 	 * @param annotation
 	 *            The annotation model in YAML format.
 	 * @return
 	 */
 	@RequestMapping(path = UPLOAD, method = RequestMethod.PUT)
-	public ResponseEntity<String> updateAnnotationYaml(@PathVariable("tag") String tag, @RequestParam String timestamp,
-			@ApiParam(value = "The annotation model in YAML format.", required = true) @RequestBody String annotation) {
-		Date date;
-		try {
-			date = ApiFormats.DATE_FORMAT.parse(timestamp);
-		} catch (ParseException e) {
-			LOGGER.error("Could not parse timestamp {}.", timestamp);
-			LOGGER.error("Exception:", e);
-			return ResponseEntity.badRequest().build();
-		}
-
+	public ResponseEntity<String> updateAnnotationYaml(@PathVariable("tag") String tag, @ApiParam(value = "The annotation model in YAML format.", required = true) @RequestBody String annotation) {
 		AnnotationValidityReport report = null;
 
 		IdpaYamlSerializer<ApplicationAnnotation> serializer = new IdpaYamlSerializer<>(ApplicationAnnotation.class);
@@ -173,7 +153,7 @@ public class AnnotationController {
 		}
 
 		try {
-			report = storageManager.saveOrUpdate(tag, date, idpaAnnotation);
+			report = storageManager.saveOrUpdate(tag, idpaAnnotation);
 		} catch (IOException e) {
 			LOGGER.error("Error during updating annotation with tag {}!", tag);
 			LOGGER.error("Exception: ", e);
@@ -192,19 +172,19 @@ public class AnnotationController {
 	 *
 	 * @param tag
 	 *            The tag.
-	 * @param timestamp
+	 * @param version
 	 *            The timestamp of the application.
 	 * @return A list with the timestamps of all broken annotations.
 	 */
 	@RequestMapping(path = GET_BROKEN, method = RequestMethod.GET)
-	public ResponseEntity<List<String>> getBroken(@PathVariable("tag") String tag, @RequestParam String timestamp) {
+	public ResponseEntity<List<String>> getBroken(@PathVariable("tag") String tag, @RequestParam String version) {
 		List<String> broken;
 		try {
-			broken = storageManager.getBrokenForApplication(tag, ApiFormats.DATE_FORMAT.parse(timestamp)).stream().map(ApiFormats.DATE_FORMAT::format).collect(Collectors.toList());
+			broken = storageManager.getBrokenForApplication(tag, VersionOrTimestamp.fromString(version)).stream().map(VersionOrTimestamp::toString).collect(Collectors.toList());
 		} catch (ParseException e) {
 			LOGGER.error("Could not parse timestamp!", e);
 
-			return ResponseEntity.badRequest().body(Arrays.asList("Illegally formatted timestamp: " + timestamp));
+			return ResponseEntity.badRequest().body(Arrays.asList("Illegally formatted timestamp: " + version));
 		}
 
 		return ResponseEntity.ok(broken);

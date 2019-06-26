@@ -23,7 +23,10 @@ public class AnnotationExtractor {
 		ApplicationToAnnotationTransformer transformer = new ApplicationToAnnotationTransformer();
 		IdpaVisitor visitor = new IdpaVisitor(transformer::onModelElementVisited);
 		visitor.visit(application);
-		return transformer.getExtractedAnnotation();
+
+		ApplicationAnnotation annotation = transformer.getExtractedAnnotation();
+		annotation.setVersionOrTimestamp(application.getVersionOrTimestamp());
+		return annotation;
 	}
 
 }

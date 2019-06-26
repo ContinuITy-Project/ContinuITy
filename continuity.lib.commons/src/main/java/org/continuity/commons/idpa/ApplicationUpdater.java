@@ -43,7 +43,7 @@ public class ApplicationUpdater {
 	public ApplicationChangeReport updateApplication(Application origApp, Application newApp, EnumSet<ApplicationChangeType> consideredChangeTypes) {
 		Application merged = new Application();
 		merged.setId(origApp.getId()); // Using oldApp is by intention
-		merged.setTimestamp(newApp.getTimestamp());
+		merged.setVersionOrTimestamp(newApp.getVersionOrTimestamp());
 		merged.getEndpoints().addAll(newApp.getEndpoints());
 
 		EnumSet<ApplicationChangeType> ignoredChanges = EnumSet.allOf(ApplicationChangeType.class);

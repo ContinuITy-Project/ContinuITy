@@ -1,6 +1,5 @@
 package org.continuity.commons.idpa;
 
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -8,6 +7,7 @@ import java.util.Set;
 import org.continuity.api.entities.report.ApplicationChange;
 import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
+import org.continuity.idpa.VersionOrTimestamp;
 
 /**
  * @author Henning Schulz
@@ -15,8 +15,8 @@ import org.continuity.api.entities.report.ApplicationChangeType;
  */
 public class ApplicationChangeReportBuilder {
 
-	private Date beforeChange;
-	private Date afterChange;
+	private VersionOrTimestamp beforeChange;
+	private VersionOrTimestamp afterChange;
 
 	private final Set<ApplicationChange> changes = new HashSet<>();
 
@@ -24,17 +24,17 @@ public class ApplicationChangeReportBuilder {
 
 	private final EnumSet<ApplicationChangeType> ignoredChangeTypes;
 
-	public ApplicationChangeReportBuilder(EnumSet<ApplicationChangeType> ignoredChangeTypes, Date beforeChange, Date afterChange) {
+	public ApplicationChangeReportBuilder(EnumSet<ApplicationChangeType> ignoredChangeTypes, VersionOrTimestamp beforeChange, VersionOrTimestamp afterChange) {
 		this.ignoredChangeTypes = ignoredChangeTypes;
 		this.beforeChange = beforeChange;
 		this.afterChange = afterChange;
 	}
 
-	public ApplicationChangeReportBuilder(EnumSet<ApplicationChangeType> ignoredChangeTypes, Date afterChange) {
-		this(ignoredChangeTypes, new Date(0), afterChange);
+	public ApplicationChangeReportBuilder(EnumSet<ApplicationChangeType> ignoredChangeTypes, VersionOrTimestamp afterChange) {
+		this(ignoredChangeTypes, VersionOrTimestamp.MIN_VALUE, afterChange);
 	}
 
-	public ApplicationChangeReportBuilder(Date beforeChange, Date afterChange) {
+	public ApplicationChangeReportBuilder(VersionOrTimestamp beforeChange, VersionOrTimestamp afterChange) {
 		this(EnumSet.noneOf(ApplicationChangeType.class), beforeChange, afterChange);
 	}
 
@@ -52,7 +52,7 @@ public class ApplicationChangeReportBuilder {
 	 * @param beforeChange
 	 *            New value for {@link #beforeChange}
 	 */
-	public void setBeforeChange(Date beforeChange) {
+	public void setBeforeChange(VersionOrTimestamp beforeChange) {
 		this.beforeChange = beforeChange;
 	}
 

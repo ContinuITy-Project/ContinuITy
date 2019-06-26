@@ -2,7 +2,6 @@ package org.continuity.idpa.storage;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -10,6 +9,7 @@ import java.util.function.BiConsumer;
 import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.commons.idpa.AnnotationValidityChecker;
 import org.continuity.idpa.Idpa;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.storage.IdpaStorage.IdpaEntry;
 import org.slf4j.Logger;
@@ -46,18 +46,18 @@ public class AnnotationStorageManager implements IdpaStorageListener {
 	}
 
 	/**
-	 * Retrieves the specified annotation for a given timestamp if present.
+	 * Retrieves the specified annotation for a given version or timestamp if present.
 	 *
 	 * @param tag
 	 *            The tag of the annotation.
-	 * @param timestamp
-	 *            The timestamp for which an application model is searched.
+	 * @param version
+	 *            The version or timestamp for which an application model is searched.
 	 * @return A {@link ApplicationAnnotation}. If there is no annotation for the tag, {@code null}
 	 *         will be returned.
 	 * @throws IOException
 	 */
-	public ApplicationAnnotation read(String tag, Date timestamp) throws IOException {
-		return storage.readLatestBefore(tag, timestamp).getAnnotation();
+	public ApplicationAnnotation read(String tag, VersionOrTimestamp version) throws IOException {
+		return storage.readLatestBefore(tag, version).getAnnotation();
 	}
 
 	/**
@@ -65,15 +65,19 @@ public class AnnotationStorageManager implements IdpaStorageListener {
 	 * respect to the application model, it is rejected. It does <b>not</b> try to fix it. If you
 	 * want to store an annotation that covers application parts that are not part of the current
 	 * application model, please update the application model first.<br>
-	 * Assumes a corresponding application model to be present.
+	 * Assumes a version or timestamp and a corresponding application model to be present.
 	 *
 	 * @param tag
 	 * @param annotation
 	 * @return A report holding information about the changes and if the new annotation is broken.
 	 * @throws IOException
 	 */
-	public AnnotationValidityReport saveOrUpdate(String tag, Date timestamp, ApplicationAnnotation annotation) throws IOException {
-		Idpa latest = storage.readLatestBefore(tag, timestamp);
+	public AnnotationValidityReport saveOrUpdate(String tag, ApplicationAnnotation annotation) throws IOException {
+		if (annotation.getVersionOrTimestamp().isEmpty()) {
+			throw new IllegalArgumentException("Cannot store an annotation without a version or timestamp! Either needs to be set or passed as assitional argument.");
+		}
+
+		Idpa latest = storage.readLatestBefore(tag, annotation.getVersionOrTimestamp());
 
 		if (latest == null) {
 			throw new IllegalStateException("There is no application model with tag " + tag);
@@ -84,12 +88,31 @@ public class AnnotationStorageManager implements IdpaStorageListener {
 		AnnotationValidityReport report = checker.getReport();
 
 		if (!report.isBreaking()) {
-			storage.save(tag, timestamp, annotation);
+			storage.save(tag, annotation);
+			LOGGER.info("Stored an annotation with tag {} and version {}.", tag, annotation.getVersionOrTimestamp());
 
-			storage.unmarkAsBroken(tag, timestamp);
+			storage.unmarkAsBroken(tag, annotation.getVersionOrTimestamp());
 		}
 
 		return report;
+	}
+
+	/**
+	 * Updates the annotation stored with the specified tag. If the annotation is invalid with
+	 * respect to the application model, it is rejected. It does <b>not</b> try to fix it. If you
+	 * want to store an annotation that covers application parts that are not part of the current
+	 * application model, please update the application model first.<br>
+	 * Assumes a corresponding application model to be present.
+	 *
+	 * @param tag
+	 * @param version
+	 * @param annotation
+	 * @return A report holding information about the changes and if the new annotation is broken.
+	 * @throws IOException
+	 */
+	public AnnotationValidityReport saveOrUpdate(String tag, VersionOrTimestamp version, ApplicationAnnotation annotation) throws IOException {
+		annotation.setVersionOrTimestamp(version);
+		return saveOrUpdate(tag, annotation);
 	}
 
 	/**
@@ -103,14 +126,14 @@ public class AnnotationStorageManager implements IdpaStorageListener {
 	}
 
 	/**
-	 * Returns whether the annotation for the specified tag and timestamp is broken.
+	 * Returns whether the annotation for the specified tag and version or timestamp is broken.
 	 *
 	 * @param tag
-	 * @param timestamp
+	 * @param version
 	 * @return {@code true} if it is broken or {@code false} otherwise.
 	 */
-	public boolean isBroken(String tag, Date timestamp) {
-		return storage.isBroken(tag, timestamp);
+	public boolean isBroken(String tag, VersionOrTimestamp version) {
+		return storage.isBroken(tag, version);
 	}
 
 	/**
@@ -118,16 +141,16 @@ public class AnnotationStorageManager implements IdpaStorageListener {
 	 *
 	 * @param tag
 	 *            The tag.
-	 * @param timestamp
-	 *            The timestamp of the application model.
-	 * @return A list of all timestamps of annotations that are broken.
+	 * @param version
+	 *            The version or timestamp of the application model.
+	 * @return A list of all versions or timestamps of annotations that are broken.
 	 */
-	public List<Date> getBrokenForApplication(String tag, Date timestamp) {
-		List<Date> broken = new ArrayList<>();
+	public List<VersionOrTimestamp> getBrokenForApplication(String tag, VersionOrTimestamp version) {
+		List<VersionOrTimestamp> broken = new ArrayList<>();
 
-		applyForApplication(tag, timestamp, (t, idpa) -> {
-			if (isBroken(tag, idpa.getTimestamp())) {
-				broken.add(idpa.getTimestamp());
+		applyForApplication(tag, version, (t, idpa) -> {
+			if (isBroken(tag, idpa.getVersionOrTimestamp())) {
+				broken.add(idpa.getVersionOrTimestamp());
 			}
 		});
 
@@ -140,16 +163,16 @@ public class AnnotationStorageManager implements IdpaStorageListener {
 	 * Checks whether the annotations affected by the change are broken and marks them accordingly.
 	 */
 	@Override
-	public void onApplicationChanged(String tag, Date timestamp) {
-		applyForApplication(tag, timestamp, this::adjustBrokenMark);
+	public void onApplicationChanged(String tag, VersionOrTimestamp version) {
+		applyForApplication(tag, version, this::adjustBrokenMark);
 	}
 
-	private void applyForApplication(String tag, Date timestamp, BiConsumer<String, Idpa> consumer) {
+	private void applyForApplication(String tag, VersionOrTimestamp version, BiConsumer<String, Idpa> consumer) {
 		Iterator<IdpaEntry> it = storage.iterate(tag).iterator();
 
 		IdpaEntry curr = null;
 
-		while (it.hasNext() && ((curr == null) || curr.getApplication().getTimestamp().after(timestamp))) {
+		while (it.hasNext() && ((curr == null) || curr.getApplication().getVersionOrTimestamp().after(version))) {
 			curr = it.next();
 		}
 
@@ -157,7 +180,7 @@ public class AnnotationStorageManager implements IdpaStorageListener {
 			consumer.accept(tag, curr);
 		}
 
-		while (it.hasNext() && (curr != null) && curr.getApplication().getTimestamp().equals(timestamp)) {
+		while (it.hasNext() && (curr != null) && curr.getApplication().getVersionOrTimestamp().equals(version)) {
 			curr = it.next();
 			consumer.accept(tag, curr);
 		}
@@ -178,23 +201,23 @@ public class AnnotationStorageManager implements IdpaStorageListener {
 	private void adjustBrokenMark(String tag, Idpa idpa) {
 		if (isBroken(idpa)) {
 			try {
-				storage.markAsBroken(tag, idpa.getTimestamp());
-				LOGGER.warn("Annotation of tag {} for timestamp {} is now broken.", tag, idpa.getTimestamp());
+				storage.markAsBroken(tag, idpa.getVersionOrTimestamp());
+				LOGGER.warn("Annotation of tag {} for version {} is now broken.", tag, idpa.getVersionOrTimestamp());
 			} catch (IOException e) {
-				LOGGER.error("Could not mark annotation " + tag + " (" + idpa.getTimestamp() + ") as broken!", e);
+				LOGGER.error("Could not mark annotation " + tag + " (" + idpa.getVersionOrTimestamp() + ") as broken!", e);
 			}
 		} else {
 			try {
-				storage.unmarkAsBroken(tag, idpa.getTimestamp());
-				LOGGER.info("Annotation of tag {} for timestamp {} is not broken (anymore).", tag, idpa.getTimestamp());
+				storage.unmarkAsBroken(tag, idpa.getVersionOrTimestamp());
+				LOGGER.info("Annotation of tag {} for version {} is not broken (anymore).", tag, idpa.getVersionOrTimestamp());
 			} catch (IOException e) {
-				LOGGER.error("Could not unmark annotation " + tag + " (" + idpa.getTimestamp() + ") as broken!", e);
+				LOGGER.error("Could not unmark annotation " + tag + " (" + idpa.getVersionOrTimestamp() + ") as broken!", e);
 			}
 		}
 	}
 
 	@Override
-	public void onAnnotationChanged(String tag, Date timestamp) {
+	public void onAnnotationChanged(String tag, VersionOrTimestamp version) {
 		// do nothing
 	}
 

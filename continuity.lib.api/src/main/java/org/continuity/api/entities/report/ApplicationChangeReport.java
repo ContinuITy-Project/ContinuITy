@@ -1,11 +1,11 @@
 package org.continuity.api.entities.report;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.continuity.api.entities.ApiFormats;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 
@@ -25,10 +25,10 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 
 	@JsonInclude(Include.NON_NULL)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ApiFormats.DATE_FORMAT_PATTERN)
-	private Date beforeChange;
+	private VersionOrTimestamp beforeChange;
 	@JsonInclude(Include.NON_NULL)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ApiFormats.DATE_FORMAT_PATTERN)
-	private Date afterChange;
+	private VersionOrTimestamp afterChange;
 
 	@JsonProperty("ignored-application-changes")
 	@JsonInclude(Include.NON_EMPTY)
@@ -43,15 +43,15 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 	 * @param changes
 	 * @param afterChange
 	 */
-	public ApplicationChangeReport(Set<ApplicationChange> changes, Date afterChange) {
-		this(changes, Collections.emptySet(), new Date(0), afterChange);
+	public ApplicationChangeReport(Set<ApplicationChange> changes, VersionOrTimestamp afterChange) {
+		this(changes, Collections.emptySet(), VersionOrTimestamp.MIN_VALUE, afterChange);
 	}
 
-	public ApplicationChangeReport(Set<ApplicationChange> changes, Date beforeChange, Date afterChange) {
+	public ApplicationChangeReport(Set<ApplicationChange> changes, VersionOrTimestamp beforeChange, VersionOrTimestamp afterChange) {
 		this(changes, Collections.emptySet(), beforeChange, afterChange);
 	}
 
-	public ApplicationChangeReport(Set<ApplicationChange> changes, Set<ApplicationChange> ignoredChanges, Date beforeChange, Date afterChange) {
+	public ApplicationChangeReport(Set<ApplicationChange> changes, Set<ApplicationChange> ignoredChanges, VersionOrTimestamp beforeChange, VersionOrTimestamp afterChange) {
 		super(changes);
 
 		this.ignoredApplicationChanges = ignoredChanges;
@@ -70,7 +70,7 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 	 *
 	 * @return An empty report.
 	 */
-	public static ApplicationChangeReport empty(Date afterChange) {
+	public static ApplicationChangeReport empty(VersionOrTimestamp afterChange) {
 		return new ApplicationChangeReport(Collections.emptySet(), afterChange);
 	}
 
@@ -89,7 +89,7 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 			changes.add(new ApplicationChange(ApplicationChangeType.ENDPOINT_ADDED, new ModelElementReference(interf)));
 		}
 
-		return new ApplicationChangeReport(changes, application.getTimestamp());
+		return new ApplicationChangeReport(changes, application.getVersionOrTimestamp());
 	}
 
 	/**
@@ -116,7 +116,7 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 	 *
 	 * @return {@link #beforeChange}
 	 */
-	public Date getBeforeChange() {
+	public VersionOrTimestamp getBeforeChange() {
 		return this.beforeChange;
 	}
 
@@ -126,7 +126,7 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 	 * @param beforeChange
 	 *            New value for {@link #beforeChange}
 	 */
-	public void setBeforeChange(Date beforeChange) {
+	public void setBeforeChange(VersionOrTimestamp beforeChange) {
 		this.beforeChange = beforeChange;
 	}
 
@@ -135,7 +135,7 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 	 *
 	 * @return {@link #afterChange}
 	 */
-	public Date getAfterChange() {
+	public VersionOrTimestamp getAfterChange() {
 		return this.afterChange;
 	}
 
@@ -145,7 +145,7 @@ public class ApplicationChangeReport extends AbstractIdpaReport {
 	 * @param afterChange
 	 *            New value for {@link #afterChange}
 	 */
-	public void setAfterChange(Date afterChange) {
+	public void setAfterChange(VersionOrTimestamp afterChange) {
 		this.afterChange = afterChange;
 	}
 

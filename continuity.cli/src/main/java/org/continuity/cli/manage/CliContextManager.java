@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
-import org.continuity.api.entities.ApiFormats;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStyle;
 import org.springframework.shell.Availability;
@@ -43,9 +43,9 @@ public class CliContextManager implements PromptProvider {
 	public void setCurrentVersion(String currentVersion) {
 		if (currentVersion != null) {
 			try {
-				ApiFormats.DATE_FORMAT.parse(currentVersion);
-			} catch (ParseException e) {
-				throw new IllegalArgumentException("Illegally formatted date '" + currentVersion + "'!");
+				VersionOrTimestamp.fromString(currentVersion);
+			} catch (ParseException | NumberFormatException e) {
+				throw new IllegalArgumentException("Illegally formatted version or timestamp '" + currentVersion + "'!");
 			}
 		}
 
