@@ -10,9 +10,11 @@ import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
+import org.continuity.cli.utils.ResponseBuilder;
 import org.continuity.commons.accesslogs.UnifiedCsvFromAccessLogsExtractor;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
+import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -42,8 +44,13 @@ public class AccesslogsCommands {
 	private final IdpaYamlSerializer<Application> appSerializer = new IdpaYamlSerializer<>(Application.class);
 
 	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'accesslogs' context so that the shorthands can be used.")
-	public void goToIdpaContext() {
-		contextManager.goToContext(context);
+	public AttributedString goToAccesslogsContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
+		if (Shorthand.DEFAULT_VALUE.equals(unknown)) {
+			contextManager.goToContext(context);
+			return null;
+		} else {
+			return new ResponseBuilder().error("Unknown sub command ").boldError(unknown).error("!").build();
+		}
 	}
 
 	@ShellMethod(key = { "accesslogs unify" }, value = "Creates a unified CSV holding the required information for session logs creation based on an application model.")

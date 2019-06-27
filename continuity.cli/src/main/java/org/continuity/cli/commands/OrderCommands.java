@@ -31,12 +31,14 @@ import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
 import org.continuity.cli.storage.OrderStorage;
+import org.continuity.cli.utils.ResponseBuilder;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.dsl.description.ContextParameter;
 import org.continuity.dsl.description.ForecastInput;
 import org.continuity.dsl.description.ForecastOptions;
 import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.dsl.description.Measurement;
+import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -90,8 +92,13 @@ public class OrderCommands {
 	private ObjectMapper mapper;
 
 	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'order' context so that the shorthands can be used.")
-	public void goToIdpaContext() {
-		contextManager.goToContext(context);
+	public AttributedString goToIdpaContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
+		if (Shorthand.DEFAULT_VALUE.equals(unknown)) {
+			contextManager.goToContext(context);
+			return null;
+		} else {
+			return new ResponseBuilder().error("Unknown sub command ").boldError(unknown).error("!").build();
+		}
 	}
 
 	@ShellMethod(key = { "order create" }, value = "Creates a new order.")

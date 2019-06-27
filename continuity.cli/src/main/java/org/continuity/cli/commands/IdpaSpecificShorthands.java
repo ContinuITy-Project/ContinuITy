@@ -20,9 +20,9 @@ public class IdpaSpecificShorthands {
 
 	@ShellMethod(key = { "app" }, value = "Shorthand for 'idpa app'.")
 	@ShellMethodAvailability({ "appAvailability" })
-	public void app() throws Throwable {
+	public AttributedString app(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("app");
-		shorthand.execute();
+		return shorthand.execute(unknown);
 	}
 
 	public Availability appAvailability() {
@@ -82,9 +82,9 @@ public class IdpaSpecificShorthands {
 
 	@ShellMethod(key = { "ann" }, value = "Shorthand for 'idpa ann'.")
 	@ShellMethodAvailability({ "annAvailability" })
-	public void ann() throws Throwable {
+	public AttributedString ann(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("ann");
-		shorthand.execute();
+		return shorthand.execute(unknown);
 	}
 
 	public Availability annAvailability() {

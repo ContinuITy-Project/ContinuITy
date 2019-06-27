@@ -108,8 +108,10 @@ public class Shorthand implements Comparable<Shorthand> {
 
 		if (returnValue instanceof AttributedString) {
 			return (AttributedString) returnValue;
+		} else if (returnValue == null) {
+			return null;
 		} else {
-			return new AttributedString(Objects.toString(returnValue));
+			return new AttributedString(returnValue.toString());
 		}
 	}
 

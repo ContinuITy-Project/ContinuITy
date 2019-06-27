@@ -22,7 +22,9 @@ import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
 import org.continuity.cli.process.JMeterProcess;
 import org.continuity.cli.storage.OrderStorage;
+import org.continuity.cli.utils.ResponseBuilder;
 import org.continuity.commons.jmeter.TestPlanWriter;
+import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.shell.standard.ShellCommandGroup;
@@ -73,8 +75,13 @@ public class JMeterCommands {
 	private TestPlanWriter testPlanWriter;
 
 	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'jmeter' context so that the shorthands can be used.")
-	public void goToIdpaContext() {
-		contextManager.goToContext(context);
+	public AttributedString goToIdpaContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
+		if (Shorthand.DEFAULT_VALUE.equals(unknown)) {
+			contextManager.goToContext(context);
+			return null;
+		} else {
+			return new ResponseBuilder().error("Unknown sub command ").boldError(unknown).error("!").build();
+		}
 	}
 
 	@ShellMethod(key = { "jmeter home" }, value = "Sets the home directory of JMeter (where the bin directory is placed).")
