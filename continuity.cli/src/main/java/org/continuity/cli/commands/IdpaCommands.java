@@ -75,12 +75,12 @@ public class IdpaCommands {
 	private final CliContext context = new CliContext(CONTEXT_NAME, //
 			new Shorthand("download", this, "downloadIdpa", String.class), //
 			new Shorthand("open", this, "openIdpa", String.class), //
-			new Shorthand("app", this, "goToIdpaAappContext"), //
+			new Shorthand("app", this, "goToIdpaAappContext", String.class), //
 			new Shorthand("app upload", this, "uploadApplication", String.class), //
 			new Shorthand("app create", this, "createIdpaApplication", String.class, String.class), //
 			new Shorthand("app update", this, "updateIdpaApplication", String.class, String.class, boolean.class, boolean.class, boolean.class, boolean.class, boolean.class, boolean.class), //
 			new Shorthand("app init", this, "initApplication", String.class), //
-			new Shorthand("ann", this, "goToIdpaAnnContext"), //
+			new Shorthand("ann", this, "goToIdpaAnnContext", String.class), //
 			new Shorthand("ann upload", this, "uploadAnnotation", String.class), //
 			new Shorthand("ann init", this, "initAnnotation", String.class), //
 			new Shorthand("ann extract", this, "extractAnnotation", String.class, String.class, String.class), //
@@ -132,8 +132,13 @@ public class IdpaCommands {
 	private final ApplicationUpdater applicationUpdater = new ApplicationUpdater();
 
 	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'idpa' context so that the shorthands can be used.")
-	public void goToIdpaContext() {
-		contextManager.goToContext(context);
+	public AttributedString goToIdpaContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
+		if (Shorthand.DEFAULT_VALUE.equals(unknown)) {
+			contextManager.goToContext(context);
+			return null;
+		} else {
+			return new ResponseBuilder().error("Unknown sub command ").boldError(unknown).error("!").build();
+		}
 	}
 
 	@ShellMethod(key = { "idpa download" }, value = "Downloads and opens the IDPA with the specified tag.")
@@ -216,8 +221,13 @@ public class IdpaCommands {
 	}
 
 	@ShellMethod(key = { "idpa app" }, value = "Goes to the 'idpa/app' context so that the shorthands can be used.")
-	public void goToIdpaAappContext() {
-		contextManager.goToContext(context, appContext);
+	public AttributedString goToIdpaAappContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String unknown) {
+		if (Shorthand.DEFAULT_VALUE.equals(unknown)) {
+			contextManager.goToContext(context, appContext);
+			return null;
+		} else {
+			return new ResponseBuilder().error("Unknown sub command ").boldError(unknown).error("!").build();
+		}
 	}
 
 	@ShellMethod(key = { "idpa app init" }, value = "Initializes an application model with the specified tag.")
@@ -241,7 +251,7 @@ public class IdpaCommands {
 	}
 
 	@ShellMethod(key = { "idpa app create" }, value = "Creates an IDPA application model from an OpenApi.")
-	public String createIdpaApplication(String openApiLocation, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag)
+	public String createIdpaApplication(String openApiLocation, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String tag)
 			throws URISyntaxException, JsonGenerationException, JsonMappingException, IOException {
 		tag = contextManager.getTagOrFail(tag);
 
@@ -384,8 +394,13 @@ public class IdpaCommands {
 	}
 
 	@ShellMethod(key = { "idpa ann" }, value = "Goes to the 'idpa/ann' context so that the shorthands can be used.")
-	public void goToIdpaAnnContext() {
-		contextManager.goToContext(context, annContext);
+	public AttributedString goToIdpaAnnContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
+		if (Shorthand.DEFAULT_VALUE.equals(unknown)) {
+			contextManager.goToContext(context, annContext);
+			return null;
+		} else {
+			return new ResponseBuilder().error("Unknown sub command ").boldError(unknown).error("!").build();
+		}
 	}
 
 	@ShellMethod(key = { "idpa ann upload" }, value = "Uploads the annotation with the specified tag.")
