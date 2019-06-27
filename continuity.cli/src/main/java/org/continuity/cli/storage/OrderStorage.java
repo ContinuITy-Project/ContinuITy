@@ -104,7 +104,7 @@ public class OrderStorage {
 	public int clean() throws IOException {
 		int removedCount = 0;
 
-		for (File dir : Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), STORAGE_DIR).toFile().listFiles()) {
+		for (File dir : Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), STORAGE_DIR).toFile().listFiles()) {
 			if (dir.isDirectory()) {
 				FileUtils.deleteDirectory(dir);
 				removedCount++;
@@ -115,7 +115,7 @@ public class OrderStorage {
 	}
 
 	private Path getOrderDir(String id) {
-		Path orderDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), STORAGE_DIR, id);
+		Path orderDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), STORAGE_DIR, id);
 		orderDir.toFile().mkdirs();
 		return orderDir;
 	}

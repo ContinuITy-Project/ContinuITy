@@ -145,7 +145,7 @@ public class IdpaCommands {
 	public AttributedString downloadIdpa(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws JsonGenerationException, JsonMappingException, IOException {
 		tag = contextManager.getTagOrFail(tag);
 
-		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
+		String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
 
 		ResponseEntity<Application> applicationResponse;
 		try {
@@ -344,7 +344,7 @@ public class IdpaCommands {
 			throws JsonParseException, JsonMappingException, IOException {
 		pattern = contextManager.getTagOrFail(pattern);
 
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		ResponseEntity<String> response;
 		List<String> tags = new ArrayList<>();
 		ResponseBuilder responses = new ResponseBuilder();
@@ -352,7 +352,7 @@ public class IdpaCommands {
 
 		for (File file : getAllFilesMatchingWildcards(workingDir + "/application-" + pattern + ".yml")) {
 			Application application = appSerializer.readFromYaml(file);
-			String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
+			String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
 			String tag = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
 			tags.add(tag);
 			try {
@@ -410,7 +410,7 @@ public class IdpaCommands {
 
 		ResponseBuilder resp = new ResponseBuilder();
 
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		List<String> tags = new ArrayList<String>();
 		ResponseBuilder responses = new ResponseBuilder();
 		boolean error = false;
@@ -424,7 +424,7 @@ public class IdpaCommands {
 
 		for (File file : getAllFilesMatchingWildcards(workingDir + "/annotation-" + pattern + ".yml")) {
 			ApplicationAnnotation annotation = annSerializer.readFromYaml(file);
-			String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
+			String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
 			String tag = file.getName().substring("annotation-".length(), file.getName().length() - ".yml".length());
 			tags.add(tag);
 
@@ -509,7 +509,7 @@ public class IdpaCommands {
 		}
 
 		Path pathToLogs = Paths.get(logsFile);
-		Path workingDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR));
+		Path workingDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR));
 
 		if (pathToLogs.isAbsolute()) {
 			pathToLogs = workingDir.resolve(pathToLogs);
@@ -557,7 +557,7 @@ public class IdpaCommands {
 	}
 
 	private File saveApplicationModel(Application application, String tag) throws JsonGenerationException, JsonMappingException, IOException {
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
 
 		appSerializer.writeToYaml(application, applicationFile);
@@ -566,7 +566,7 @@ public class IdpaCommands {
 	}
 
 	private File saveAnnotation(ApplicationAnnotation annotation, String tag) throws JsonGenerationException, JsonMappingException, IOException {
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File annotationFile = new File(workingDir + "/annotation-" + tag + ".yml");
 
 		annSerializer.writeToYaml(annotation, annotationFile);
@@ -575,7 +575,7 @@ public class IdpaCommands {
 	}
 
 	private Application readApplicationModel(String tag) throws IOException {
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
 
 		if (applicationFile.exists()) {
@@ -586,7 +586,7 @@ public class IdpaCommands {
 	}
 
 	private ApplicationAnnotation readAnnotation(String tag) throws IOException {
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File annotationFile = new File(workingDir + "/annotation-" + tag + ".yml");
 
 		if (annotationFile.exists()) {
@@ -597,7 +597,7 @@ public class IdpaCommands {
 	}
 
 	private boolean openApplicationModel(String tag) throws IOException {
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
 
 		if (applicationFile.exists()) {
@@ -608,7 +608,7 @@ public class IdpaCommands {
 	}
 
 	private boolean openAnnotation(String tag) throws IOException {
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File annotationFile = new File(workingDir + "/annotation-" + tag + ".yml");
 
 		if (annotationFile.exists()) {

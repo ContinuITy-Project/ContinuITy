@@ -87,14 +87,14 @@ public class JMeterCommands {
 	@ShellMethod(key = { "jmeter home" }, value = "Sets the home directory of JMeter (where the bin directory is placed).")
 	public String setJMeterHome(String jmeterHome) {
 		jmeterHome = jmeterHome.replace("\\", "/");
-		Object old = propertiesProvider.get().put(KEY_JMETER_HOME, jmeterHome);
+		Object old = propertiesProvider.putProperty(KEY_JMETER_HOME, jmeterHome);
 		testPlanWriter = new TestPlanWriter(jmeterHome);
 		return old == null ? "Set JMeter home." : "Replaced old JMeter home: " + old;
 	}
 
 	@ShellMethod(key = { "jmeter download" }, value = "Downloads and opens a JMeter load test specified by a link.")
 	public String downloadLoadTest(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String loadTestLink) throws IOException {
-		String jmeterHome = propertiesProvider.get().getProperty(KEY_JMETER_HOME);
+		String jmeterHome = propertiesProvider.getProperty(KEY_JMETER_HOME);
 
 		String error = initTestPlanWriter(jmeterHome);
 
@@ -121,7 +121,7 @@ public class JMeterCommands {
 		}
 
 		List<String> params = Loadtest.GET.parsePathParameters(loadTestLink);
-		Path testPlanDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), params.get(1));
+		Path testPlanDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), params.get(1));
 		testPlanDir.toFile().mkdirs();
 
 		JMeterTestPlanBundle testPlanBundle = response.getBody();
@@ -136,13 +136,13 @@ public class JMeterCommands {
 			@ShellOption(value = { "--annotate", "-a" }, defaultValue = "false") boolean annotate) throws IOException {
 		tag = contextManager.getTagOrFail(tag);
 
-		String error = initTestPlanWriter(propertiesProvider.get().getProperty(KEY_JMETER_HOME));
+		String error = initTestPlanWriter(propertiesProvider.getProperty(KEY_JMETER_HOME));
 
 		if (!error.isEmpty()) {
 			return error;
 		}
 
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		Path testPlanDir = Paths.get(workingDir).resolve(loadTestPath);
 
 		File dir = testPlanDir.toFile();
@@ -168,7 +168,7 @@ public class JMeterCommands {
 
 		JMeterTestPlanBundle bundle = new JMeterTestPlanBundle(testPlan, behaviors);
 
-		String continuityHost = propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL);
+		String continuityHost = propertiesProvider.getProperty(PropertiesProvider.KEY_URL);
 
 		ResponseEntity<LinkExchangeModel> response = restTemplate.postForEntity(
 				RestApi.Orchestrator.Loadtest.POST.requestUrl("jmeter", tag).withHost(continuityHost).withQuery("annotate", Boolean.toString(annotate)).get(), bundle,
