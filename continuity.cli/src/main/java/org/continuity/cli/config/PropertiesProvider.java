@@ -47,12 +47,33 @@ public class PropertiesProvider {
 		properties.store(new FileWriter(path), "ContinuITy CLI properties");
 	}
 
+	public String getProperty(String key) {
+		return get().getProperty(key);
+	}
+
+	public Object putProperty(Object key, Object value) {
+		Object old = get().put(key, value);
+
+		try {
+			save();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return old;
+	}
+
+	@Override
+	public String toString() {
+		return get().toString();
+	}
+
 	/**
 	 * Gets {@link #properties}.
 	 *
 	 * @return {@link #properties}
 	 */
-	public Properties get() {
+	private Properties get() {
 		if (path == null) {
 			try {
 				init(DEFAULT_PATH);

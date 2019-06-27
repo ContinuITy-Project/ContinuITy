@@ -132,10 +132,10 @@ public class OrderCommands {
 
 	@ShellMethod(key = { "order submit" }, value = "Submits the latest created order.")
 	public String submitOrder() throws JsonParseException, JsonMappingException, IOException {
-		Path orderDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), ORDERS_DIR, NEW_ORDER_FILENAME);
+		Path orderDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), ORDERS_DIR, NEW_ORDER_FILENAME);
 		Order order = mapper.readValue(orderDir.toFile(), Order.class);
 
-		String url = WebUtils.addProtocolIfMissing(propertiesProvider.get().getProperty(PropertiesProvider.KEY_URL));
+		String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
 		ResponseEntity<OrderResponse> response;
 		try {
 			response = restTemplate.postForEntity(RestApi.Orchestrator.Orchestration.SUBMIT.requestUrl().withHost(url).get(), order, OrderResponse.class);
@@ -247,7 +247,7 @@ public class OrderCommands {
 	}
 
 	private File storeAsNewOrder(Order order) throws JsonGenerationException, JsonMappingException, IOException {
-		Path ordersDir = Paths.get(propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR), ORDERS_DIR);
+		Path ordersDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), ORDERS_DIR);
 		ordersDir.toFile().mkdirs();
 
 		File orderFile = ordersDir.resolve(NEW_ORDER_FILENAME).toFile();
