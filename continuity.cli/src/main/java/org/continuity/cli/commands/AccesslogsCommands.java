@@ -59,7 +59,7 @@ public class AccesslogsCommands {
 
 		Application application = readApplicationModel(tag);
 
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		Path accessLogsPath = Paths.get(workingDir).resolve(pathToAccessLogs);
 		Path outputPath = accessLogsPath.getParent().resolve(accessLogsPath.getFileName() + "-unified.csv");
 
@@ -73,7 +73,7 @@ public class AccesslogsCommands {
 	}
 
 	private Application readApplicationModel(String tag) throws IOException {
-		String workingDir = propertiesProvider.get().getProperty(PropertiesProvider.KEY_WORKING_DIR);
+		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
 
 		if (applicationFile.exists()) {
