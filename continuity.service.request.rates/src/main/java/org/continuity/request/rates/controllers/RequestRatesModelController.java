@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.continuity.commons.idpa.AnnotationExtractor;
 import org.continuity.commons.storage.MixedStorage;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
@@ -59,9 +60,9 @@ public class RequestRatesModelController {
 			return ResponseEntity.notFound().build();
 		}
 
-		String tag = storage.getTagForId(id);
+		AppId aid = storage.getAppIdForId(id);
 
-		return ResponseEntity.ok(new WorkloadModelPack(applicationName, id, tag));
+		return ResponseEntity.ok(new WorkloadModelPack(applicationName, id, aid));
 	}
 
 	/**

@@ -166,7 +166,7 @@ public class TestPlanExecutionAmqpHandler {
 
 					runningTests.put(testId, false);
 
-					String reportId = reportStorage.put(FileUtils.readFileToString(resultsPath.toFile(), Charset.defaultCharset()) + appendix, task.getTag());
+					String reportId = reportStorage.put(FileUtils.readFileToString(resultsPath.toFile(), Charset.defaultCharset()) + appendix, task.getAppId());
 					String reportLink = RestApi.JMeter.Report.GET.requestUrl(reportId).withoutProtocol().get();
 
 					TaskReport report = TaskReport.successful(task.getTaskId(), new LinkExchangeModel().getLoadTestLinks().setType(LoadTestType.JMETER).setReportLink(reportLink).parent());

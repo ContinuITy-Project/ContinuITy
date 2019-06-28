@@ -38,6 +38,7 @@ import org.continuity.dsl.description.ForecastInput;
 import org.continuity.dsl.description.ForecastOptions;
 import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.dsl.description.Measurement;
+import org.continuity.idpa.AppId;
 import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -203,10 +204,10 @@ public class OrderCommands {
 
 		order.setMode(OrderMode.PAST_SESSIONS);
 
-		if (contextManager.getCurrentTag() == null) {
-			order.setTag("TAG");
+		if (contextManager.getCurrentAppId() == null) {
+			order.setAppId(AppId.fromString("APP_ID"));
 		} else {
-			order.setTag(contextManager.getCurrentTag());
+			order.setAppId(contextManager.getCurrentAppId());
 		}
 
 		order.setTestingContext(Collections.singleton("CONTEXT"));
@@ -228,9 +229,9 @@ public class OrderCommands {
 		order.setForecastInput(forecastInput);
 
 		ModularizationOptions modularizationOptions = new ModularizationOptions();
-		HashMap<String, String> services = new HashMap<String, String>();
-		services.put("TAG1", "HOSTNAME1");
-		services.put("TAG2", "HOSTNAME2");
+		HashMap<AppId, String> services = new HashMap<>();
+		services.put(AppId.fromString("APP_ID_1"), "HOSTNAME1");
+		services.put(AppId.fromString("APP_ID_2"), "HOSTNAME2");
 		modularizationOptions.setServices(services);
 		modularizationOptions.setModularizationApproach(ModularizationApproach.SESSION_LOGS);
 		order.setModularizationOptions(modularizationOptions);

@@ -27,7 +27,7 @@ public enum StaticIdpaTestInstance implements IdpaTestInstance {
 		@Override
 		public Application getApplication() {
 			Application model = new Application();
-			model.setId(TAG);
+			model.setId(APP_ID.toString());
 			model.setTimestamp(new Date(86400000));
 
 			HttpEndpoint interf = new HttpEndpoint();
@@ -88,7 +88,7 @@ public enum StaticIdpaTestInstance implements IdpaTestInstance {
 		@Override
 		public Application getApplication() {
 			Application system = new Application();
-			system.setId(TAG);
+			system.setId(APP_ID.toString());
 			system.setTimestamp(new Date(2 * 86400000));
 
 			HttpEndpoint interf = new HttpEndpoint();
@@ -151,7 +151,7 @@ public enum StaticIdpaTestInstance implements IdpaTestInstance {
 		@Override
 		public Application getApplication() {
 			Application system = new Application();
-			system.setId(TAG);
+			system.setId(APP_ID.toString());
 			system.setTimestamp(new Date(3 * 86400000));
 			HttpEndpoint interf = new HttpEndpoint();
 			interf.setDomain("mydomain");
@@ -179,7 +179,7 @@ public enum StaticIdpaTestInstance implements IdpaTestInstance {
 		}
 	};
 
-	public static final String TAG = "TEST";
+	public static final AppId APP_ID = AppId.fromString("TEST");
 
 	private final String link;
 

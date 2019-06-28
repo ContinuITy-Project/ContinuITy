@@ -2,6 +2,8 @@ package org.continuity.commons.storage;
 
 import java.nio.file.Path;
 
+import org.continuity.idpa.AppId;
+
 public class MixedStorage<T> implements ArtifactStorage<T> {
 
 	private static final String FILE_PREFIX = "_persisted_";
@@ -40,17 +42,17 @@ public class MixedStorage<T> implements ArtifactStorage<T> {
 	/**
 	 * Reserves a slot in the storage.
 	 *
-	 * @param tag
-	 *            The tag of the entity.
+	 * @param aid
+	 *            The app-id of the entity.
 	 * @param persist
 	 *            Whether the {@link FileStorage} should be used.
 	 * @return An id for the slot.
 	 */
-	public String reserve(String tag, boolean persist) {
+	public String reserve(AppId aid, boolean persist) {
 		if (persist) {
-			return toFileId(fileStorage.reserve(tag));
+			return toFileId(fileStorage.reserve(aid));
 		} else {
-			return memoryStorage.reserve(tag);
+			return memoryStorage.reserve(aid);
 		}
 	}
 
@@ -68,28 +70,28 @@ public class MixedStorage<T> implements ArtifactStorage<T> {
 	 *
 	 * @param entity
 	 *            The entity to be stored.
-	 * @param tag
-	 *            The tag of the entity.
+	 * @param aid
+	 *            The app-id of the entity.
 	 * @param persist
 	 *            Whether the {@link FileStorage} should be used.
 	 * @return The created id.
 	 */
-	public String put(T entity, String tag, boolean persist) {
+	public String put(T entity, AppId aid, boolean persist) {
 		if (persist) {
-			return toFileId(fileStorage.put(entity, tag));
+			return toFileId(fileStorage.put(entity, aid));
 		} else {
-			return memoryStorage.put(entity, tag);
+			return memoryStorage.put(entity, aid);
 		}
 	}
 
 	@Override
-	public String reserve(String tag) {
-		return reserve(tag, false);
+	public String reserve(AppId aid) {
+		return reserve(aid, false);
 	}
 
 	@Override
-	public String put(T entity, String tag) {
-		return put(entity, tag, false);
+	public String put(T entity, AppId aid) {
+		return put(entity, aid, false);
 	}
 
 	@Override
@@ -111,11 +113,11 @@ public class MixedStorage<T> implements ArtifactStorage<T> {
 	}
 
 	@Override
-	public String getTagForId(String id) {
+	public AppId getAppIdForId(String id) {
 		if (isFileId(id)) {
-			return fileStorage.getTagForId(fromFileId(id));
+			return fileStorage.getAppIdForId(fromFileId(id));
 		} else {
-			return memoryStorage.getTagForId(id);
+			return memoryStorage.getAppIdForId(id);
 		}
 	}
 

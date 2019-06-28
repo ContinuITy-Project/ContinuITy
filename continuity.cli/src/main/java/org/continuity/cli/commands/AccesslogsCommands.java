@@ -12,6 +12,7 @@ import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
 import org.continuity.cli.utils.ResponseBuilder;
 import org.continuity.commons.accesslogs.UnifiedCsvFromAccessLogsExtractor;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.jline.utils.AttributedString;
@@ -54,10 +55,10 @@ public class AccesslogsCommands {
 	}
 
 	@ShellMethod(key = { "accesslogs unify" }, value = "Creates a unified CSV holding the required information for session logs creation based on an application model.")
-	public String createUnifiedCsv(String pathToAccessLogs, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws IOException {
-		tag = contextManager.getTagOrFail(tag);
+	public String createUnifiedCsv(String pathToAccessLogs, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws IOException {
+		AppId aid = contextManager.getAppIdOrFail(appId);
 
-		Application application = readApplicationModel(tag);
+		Application application = readApplicationModel(aid);
 
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		Path accessLogsPath = Paths.get(workingDir).resolve(pathToAccessLogs);
@@ -72,9 +73,9 @@ public class AccesslogsCommands {
 				.append("\nThe following requests have been ignored because the could not be mapped to an endpoint:\n").append(ignored).toString();
 	}
 
-	private Application readApplicationModel(String tag) throws IOException {
+	private Application readApplicationModel(AppId aid) throws IOException {
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
+		File applicationFile = new File(workingDir + "/application-" + aid + ".yml");
 
 		if (applicationFile.exists()) {
 			return appSerializer.readFromYaml(applicationFile);

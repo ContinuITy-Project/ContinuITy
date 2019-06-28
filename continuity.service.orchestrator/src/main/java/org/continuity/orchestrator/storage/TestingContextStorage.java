@@ -13,7 +13,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.commons.storage.ArtifactStorage;
 import org.continuity.commons.storage.JsonFileStorage;
-import org.continuity.commons.storage.TagFileStorage;
+import org.continuity.commons.storage.AppIdFileStorage;
+import org.continuity.idpa.AppId;
 import org.continuity.orchestrator.entities.TestingContextMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,20 +29,20 @@ public class TestingContextStorage {
 
 	private final ArtifactStorage<LinkExchangeModel> artifactStorage;
 
-	private final TagFileStorage<TestingContextMapping> mappingStorage;
+	private final AppIdFileStorage<TestingContextMapping> mappingStorage;
 
 	public TestingContextStorage(Path storagePath) {
 		this.artifactStorage = new JsonFileStorage<LinkExchangeModel>(storagePath.resolve(ARTIFACTS_DIR), new LinkExchangeModel());
-		this.mappingStorage = new TagFileStorage<>(storagePath.resolve(MAPPINGS_DIR), TestingContextMapping.class);
+		this.mappingStorage = new AppIdFileStorage<>(storagePath.resolve(MAPPINGS_DIR), TestingContextMapping.class);
 	}
 
-	public void store(String tag, Set<String> testingContext, LinkExchangeModel artifact) throws IOException {
-		Pair<String, LinkExchangeModel> existing = mergeWithExisting(tag, testingContext, artifact);
+	public void store(AppId aid, Set<String> testingContext, LinkExchangeModel artifact) throws IOException {
+		Pair<String, LinkExchangeModel> existing = mergeWithExisting(aid, testingContext, artifact);
 		String id;
 
 		if (existing == null) {
 			LOGGER.info("Creating a new source entity for testing-context {}", testingContext);
-			id = artifactStorage.put(artifact, tag);
+			id = artifactStorage.put(artifact, aid);
 		} else {
 			LOGGER.info("Updating an existing source entity for testing-context {}", testingContext);
 			id = existing.getKey();
@@ -49,7 +50,7 @@ public class TestingContextStorage {
 			artifactStorage.putToReserved(id, artifact);
 		}
 
-		TestingContextMapping mapping = mappingStorage.read(tag);
+		TestingContextMapping mapping = mappingStorage.read(aid);
 
 		if (mapping == null) {
 			mapping = new TestingContextMapping();
@@ -57,11 +58,11 @@ public class TestingContextStorage {
 
 		mapping.addMapping(testingContext, id);
 
-		mappingStorage.store(mapping, tag);
+		mappingStorage.store(mapping, aid);
 	}
 
-	private Pair<String, LinkExchangeModel> mergeWithExisting(String tag, Set<String> testingContext, LinkExchangeModel artifact) throws IOException {
-		Map<String, LinkExchangeModel> existing = getFull(tag, testingContext);
+	private Pair<String, LinkExchangeModel> mergeWithExisting(AppId aid, Set<String> testingContext, LinkExchangeModel artifact) throws IOException {
+		Map<String, LinkExchangeModel> existing = getFull(aid, testingContext);
 
 		for (Map.Entry<String, LinkExchangeModel> entry : existing.entrySet()) {
 			if (overlap(entry.getValue(), artifact)) {
@@ -72,8 +73,8 @@ public class TestingContextStorage {
 		return null;
 	}
 
-	public Map<Set<String>, Set<LinkExchangeModel>> get(String tag, Set<String> testingContext, boolean includePartial) throws IOException {
-		TestingContextMapping mapping = mappingStorage.read(tag);
+	public Map<Set<String>, Set<LinkExchangeModel>> get(AppId aid, Set<String> testingContext, boolean includePartial) throws IOException {
+		TestingContextMapping mapping = mappingStorage.read(aid);
 
 		if (mapping == null) {
 			return Collections.emptyMap();
@@ -101,7 +102,7 @@ public class TestingContextStorage {
 			}
 		} else {
 			Set<LinkExchangeModel> sources = new HashSet<>();
-			sources.addAll(getFull(tag, testingContext).values());
+			sources.addAll(getFull(aid, testingContext).values());
 
 			if (!sources.isEmpty()) {
 				result.put(testingContext, sources);
@@ -111,8 +112,8 @@ public class TestingContextStorage {
 		return result;
 	}
 
-	private Map<String, LinkExchangeModel> getFull(String tag, Set<String> testingContext) throws IOException {
-		TestingContextMapping mapping = mappingStorage.read(tag);
+	private Map<String, LinkExchangeModel> getFull(AppId aid, Set<String> testingContext) throws IOException {
+		TestingContextMapping mapping = mappingStorage.read(aid);
 		Set<String> fullMapping = mapping.getFullMappings().get(testingContext);
 
 		Map<String, LinkExchangeModel> sources = new HashMap<>();

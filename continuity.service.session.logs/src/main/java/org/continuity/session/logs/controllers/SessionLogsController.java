@@ -11,6 +11,7 @@ import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.artifact.SessionLogsInput;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MixedStorage;
+import org.continuity.idpa.AppId;
 import org.continuity.session.logs.extractor.ModularizedOPENxtraceSessionLogsExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +77,8 @@ public class SessionLogsController {
 	@RequestMapping(value = CREATE, method = RequestMethod.POST)
 	public ResponseEntity<SessionLogs> getModularizedSessionLogs(@RequestBody SessionLogsInput sessionLogsInput,
 			@RequestParam(name = ADD_PRE_POST_PROCESSING, defaultValue = "false") boolean addPrePostProcessing) {
-		ModularizedOPENxtraceSessionLogsExtractor extractor = new ModularizedOPENxtraceSessionLogsExtractor("", eurekaRestTemplate, sessionLogsInput.getServices(), addPrePostProcessing);
+		ModularizedOPENxtraceSessionLogsExtractor extractor = new ModularizedOPENxtraceSessionLogsExtractor(AppId.fromString(""), eurekaRestTemplate, sessionLogsInput.getServices(),
+				addPrePostProcessing);
 		List<Trace> traces = OPENxtraceUtils.deserializeIntoTraceList(sessionLogsInput.getSerializedTraces());
 		String sessionLogs = extractor.getSessionLogs(traces);
 

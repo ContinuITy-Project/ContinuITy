@@ -58,12 +58,12 @@ public class BehaviorMixCreationAmqpHandler {
 	 */
 	@RabbitListener(queues = RabbitMqConfig.MIX_CREATE_QUEUE_NAME)
 	public void onMonitoringDataAvailable(TaskDescription task) {
-		LOGGER.info("Task {}: Received new task to be processed for tag '{}'", task.getTaskId(), task.getTag());
+		LOGGER.info("Task {}: Received new task to be processed for app-id '{}'", task.getTaskId(), task.getAppId());
 
 		TaskReport report;
 
 		if (task.getSource().getSessionLogsLinks().getLink() == null) {
-			LOGGER.error("Task {}: Session logs link is missing for tag {}!", task.getTaskId(), task.getTag());
+			LOGGER.error("Task {}: Session logs link is missing for app-id {}!", task.getTaskId(), task.getAppId());
 			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {
 			BehaviorMixManager behaviorManager = new BehaviorMixManager(restTemplate);
@@ -71,12 +71,12 @@ public class BehaviorMixCreationAmqpHandler {
 			BehaviorModelPack behaviorModelPack = new BehaviorModelPack(sessionsBundles, behaviorManager.getWorkingDir());
 
 			if (sessionsBundles == null) {
-				LOGGER.info("Task {}: Could not create a new behavior mix for tag '{}'.", task.getTaskId(), task.getTag());
+				LOGGER.info("Task {}: Could not create a new behavior mix for app-id '{}'.", task.getTaskId(), task.getAppId());
 
 				report = TaskReport.error(task.getTaskId(), TaskError.INTERNAL_ERROR);
 			} else {
 				
-				String storageId = storage.put(behaviorModelPack, task.getTag(), task.isLongTermUse());
+				String storageId = storage.put(behaviorModelPack, task.getAppId(), task.isLongTermUse());
 				String behaviorModelPackLink = RestApi.Wessbas.SessionsBundles.GET.requestUrl(storageId).withoutProtocol().get();
 
 				report = TaskReport.successful(task.getTaskId(), new LinkExchangeModel().getSessionsBundlesLinks().setLink(behaviorModelPackLink).parent());

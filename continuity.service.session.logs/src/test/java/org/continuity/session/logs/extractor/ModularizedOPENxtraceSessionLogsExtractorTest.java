@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import org.continuity.api.rest.RestApi;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.junit.Before;
@@ -47,15 +48,15 @@ public class ModularizedOPENxtraceSessionLogsExtractorTest {
 	 */
 	@Before
 	public void initializeExtractor() {
-		HashMap<String, String> services = new HashMap<String, String>();
-		services.put("carts-tag", "carts");
-		services.put("orders-tag", "orders");
+		HashMap<AppId, String> services = new HashMap<>();
+		services.put(AppId.fromString("carts-app-id"), "carts");
+		services.put(AppId.fromString("orders-app-id"), "orders");
 		RestTemplate restTemplate = Mockito.mock(RestTemplate.class);
-		Mockito.when(restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl("carts-tag").get(), Application.class)).thenReturn(generateSimpleApplicationModel("carts"));
-		Mockito.when(restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl("orders-tag").get(), Application.class)).thenReturn(generateSimpleApplicationModel("orders"));
+		Mockito.when(restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl("carts-app-id").get(), Application.class)).thenReturn(generateSimpleApplicationModel("carts"));
+		Mockito.when(restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl("orders-app-id").get(), Application.class)).thenReturn(generateSimpleApplicationModel("orders"));
 
-		extractor =  new ModularizedOPENxtraceSessionLogsExtractor("tag",restTemplate , services);
-		extractorWithPrePostProcessing = new ModularizedOPENxtraceSessionLogsExtractor("tag",restTemplate , services, true);
+		extractor = new ModularizedOPENxtraceSessionLogsExtractor(AppId.fromString("app-id"), restTemplate, services);
+		extractorWithPrePostProcessing = new ModularizedOPENxtraceSessionLogsExtractor(AppId.fromString("app-id"), restTemplate, services, true);
 	}
 
 

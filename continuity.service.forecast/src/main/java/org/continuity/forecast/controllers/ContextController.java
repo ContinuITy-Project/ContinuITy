@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Example json input: {"tag":"appl-name","covar-name":"covar-name", "values":[{"timestamp": 123456789, "value": "some value"}]}
+ * Example json input: {"app-id":"appl-name","covar-name":"covar-name", "values":[{"timestamp": 123456789, "value": "some value"}]}
  * @author Alper Hidiroglu
  *
  */

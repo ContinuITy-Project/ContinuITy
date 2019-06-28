@@ -8,6 +8,7 @@ import static org.continuity.api.rest.RestApi.Orchestrator.Loadtest.Paths.REPORT
 
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.rest.RestApi;
+import org.continuity.idpa.AppId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,10 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import springfox.documentation.annotations.ApiIgnore;
 
 @RestController
 @RequestMapping(ROOT)
@@ -95,17 +100,18 @@ public class LoadTestController {
 	 *            The type of the load test (e.g., jmeter).
 	 * @param testConfiguration
 	 *            the testConfiguration
-	 * @param tag
-	 *            the corresponding tag
+	 * @param aid
+	 *            the corresponding app-id
 	 * @param annotate
 	 *            Indicates whether the test plan should be annotated with the IDPA stored for the
-	 *            specified tag.
+	 *            specified app-id.
 	 * @return Returns a {@link LinkExchangeModel} containing a link to the test configuration
 	 */
 	@RequestMapping(path = POST, method = RequestMethod.POST)
-	public ResponseEntity<LinkExchangeModel> uploadTestPlan(@PathVariable String type, @RequestBody ObjectNode testConfiguration, @PathVariable String tag,
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<LinkExchangeModel> uploadTestPlan(@PathVariable String type, @RequestBody ObjectNode testConfiguration, @ApiIgnore @PathVariable("app-id") AppId aid,
 			@RequestParam(defaultValue = "false") boolean annotate) {
-		String link = RestApi.Generic.UPLOAD_LOAD_TEST.get(type).requestUrl(tag).withQuery("annotate", Boolean.toString(annotate)).get();
+		String link = RestApi.Generic.UPLOAD_LOAD_TEST.get(type).requestUrl(aid).withQuery("annotate", Boolean.toString(annotate)).get();
 
 		LOGGER.info("Trying to upload the test configuration at {}", link);
 

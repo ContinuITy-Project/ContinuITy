@@ -7,6 +7,7 @@ import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.commons.storage.MemoryStorage;
+import org.continuity.idpa.AppId;
 import org.continuity.orchestrator.config.RabbitMqConfig;
 import org.continuity.orchestrator.entities.Recipe;
 import org.continuity.orchestrator.storage.TestingContextStorage;
@@ -60,7 +61,7 @@ public class OrchestrationAmqpHandler {
 			recipe.next().execute();
 		} else {
 			OrderReport orderReport = OrderReport.asSuccessful(recipe.getOrderId(), recipe.getTestingContext(), recipe.getSource());
-			storeToTestingContext(orderReport, recipeId, recipe.getTag());
+			storeToTestingContext(orderReport, recipeId, recipe.getAppId());
 			finishRecipe(orderReport, recipeId);
 		}
 	}
@@ -100,10 +101,10 @@ public class OrchestrationAmqpHandler {
 		LOGGER.info("{} Sent recipe to finished queue.", LoggingUtils.formatPrefix(report.getOrderId(), recipeId));
 	}
 
-	private void storeToTestingContext(OrderReport report, String recipeId, String tag) {
+	private void storeToTestingContext(OrderReport report, String recipeId, AppId aid) {
 		if ((report.getTestingContext() != null) && !report.getTestingContext().isEmpty()) {
 			try {
-				testingContextStorage.store(tag, report.getTestingContext(), report.getInternalArtifacts());
+				testingContextStorage.store(aid, report.getTestingContext(), report.getInternalArtifacts());
 			} catch (IOException e) {
 				LOGGER.error("{} Error when storing the testing context!", LoggingUtils.formatPrefix(report.getOrderId(), recipeId));
 				LOGGER.error("Exception:", e);

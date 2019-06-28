@@ -35,27 +35,27 @@ public interface RoutingKeyFormatter {
 	}
 
 	/**
-	 * Use a tag as routing key.
+	 * Use a app-id as routing key.
 	 *
 	 * @author Henning Schulz
 	 *
 	 */
-	public static class Tag implements RoutingKeyFormatter {
+	public static class AppId implements RoutingKeyFormatter {
 
-		public static Tag INSTANCE = new Tag();
+		public static AppId INSTANCE = new AppId();
 
-		private Tag() {
+		private AppId() {
 		}
 
 		/**
-		 * Use a tag as routing key.
+		 * Use a app-id as routing key.
 		 *
-		 * @param tag
-		 *            The tag.
+		 * @param appId
+		 *            The app-id.
 		 * @return The formatted routing key.
 		 */
-		public String of(String tag) {
-			return tag;
+		public String of(String appId) {
+			return appId;
 		}
 
 	}

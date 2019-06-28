@@ -19,6 +19,7 @@ import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
@@ -43,7 +44,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiParam;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * Offers a REST API for controlling the stored system models.
@@ -77,17 +81,18 @@ public class ApplicationController {
 	 * Retrieves the current application model. If the timestamp is {@code null}, the latest version
 	 * will be returned.
 	 *
-	 * @param tag
-	 *            The tag of the application.
+	 * @param aid
+	 *            The app-id of the application.
 	 * @param version
 	 *            The timestamp for which the application model is searched (optional).
 	 * @return The current application model.
 	 */
 	@RequestMapping(path = GET, method = RequestMethod.GET)
-	public ResponseEntity<Application> getApplication(@PathVariable String tag, @RequestParam(required = false) String version) {
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<Application> getApplication(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) String version) {
 		if (version == null) {
 			try {
-				return ResponseEntity.ok(manager.read(tag));
+				return ResponseEntity.ok(manager.read(aid));
 			} catch (IOException e) {
 				LOGGER.error("An exception occured during reading!", e);
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -103,7 +108,7 @@ public class ApplicationController {
 			}
 
 			try {
-				return ResponseEntity.ok(manager.read(tag, vot));
+				return ResponseEntity.ok(manager.read(aid, vot));
 			} catch (IOException e) {
 				LOGGER.error("An exception occured during reading!", e);
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -115,14 +120,15 @@ public class ApplicationController {
 	 * Gets a report holding the difference between the current application model and a date in the
 	 * past.
 	 *
-	 * @param tag
-	 *            The tag of the application model.
+	 * @param aid
+	 *            The app-id of the application model.
 	 * @param since
 	 *            The date to compare against in the format {@link ApiFormats#DATE_FORMAT}.
 	 * @return The delta report.
 	 */
 	@RequestMapping(path = GET_DELTA, method = RequestMethod.GET)
-	public ResponseEntity<ApplicationChangeReport> getDeltaSince(@PathVariable String tag, @RequestParam("since") String since) {
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<ApplicationChangeReport> getDeltaSince(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam("since") String since) {
 		VersionOrTimestamp vot;
 		try {
 			vot = VersionOrTimestamp.fromString(since);
@@ -132,16 +138,16 @@ public class ApplicationController {
 			return ResponseEntity.badRequest().build();
 		}
 
-		return ResponseEntity.ok(manager.getDeltaSince(tag, vot));
+		return ResponseEntity.ok(manager.getDeltaSince(aid, vot));
 	}
 
 	/**
-	 * Retrieves the application model stored for the specified tag and transforms it to a map of
+	 * Retrieves the application model stored for the specified app-id and transforms it to a map of
 	 * regular expressions. Currently only supports {@link HttpEndpoint}, i.e., all other types
 	 * won't be contained.
 	 *
-	 * @param tag
-	 *            The tag of the application.
+	 * @param aid
+	 *            The app-id of the application.
 	 * @return A map of endpoint IDs to request methods and regular expressions to be applied to
 	 *         check whether a certain request matches the endpoint, e.g.,
 	 *         {@code ^/?my/(?<id>[^/]*)/path/(?<rest>.*)/?$} for the abstract path
@@ -149,10 +155,11 @@ public class ApplicationController {
 	 *         corresponding named capture groups.
 	 */
 	@RequestMapping(path = GET_AS_REGEX, method = RequestMethod.GET)
-	public ResponseEntity<Map<String, EndpointAsRegex>> getApplicationAsRegex(@PathVariable String tag) {
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<Map<String, EndpointAsRegex>> getApplicationAsRegex(@ApiIgnore @PathVariable("app-id") AppId aid) {
 		Application app;
 		try {
-			app = manager.read(tag);
+			app = manager.read(aid);
 		} catch (IOException e) {
 			LOGGER.error("An exception occured during reading!", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -187,8 +194,8 @@ public class ApplicationController {
 	 * Stores a new application model if it differs from existing ones, possibly ignoring specific
 	 * change types.
 	 *
-	 * @param tag
-	 *            The tag of the application model.
+	 * @param aid
+	 *            The app-id of the application model.
 	 * @param system
 	 *            The system model to be stored.
 	 * @param ignoreInterfaceChanged
@@ -204,7 +211,8 @@ public class ApplicationController {
 	 * @return A report holding the differences between the passed model and the next older one.
 	 */
 	@RequestMapping(path = UPDATE, method = RequestMethod.POST)
-	public ResponseEntity<String> updateApplication(@PathVariable String tag, @RequestBody Application system,
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<String> updateApplication(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestBody Application system,
 			@RequestParam(name = "ignore-interface-changed", defaultValue = "false") boolean ignoreInterfaceChanged,
 			@RequestParam(name = "ignore-interface-removed", defaultValue = "false") boolean ignoreInterfaceRemoved,
 			@RequestParam(name = "ignore-interface-added", defaultValue = "false") boolean ignoreInterfaceAdded,
@@ -215,14 +223,14 @@ public class ApplicationController {
 		EnumSet<ApplicationChangeType> ignoredChangeTypes = changeTypesFromBooleans(ignoreInterfaceChanged, ignoreInterfaceRemoved, ignoreInterfaceAdded, ignoreParameterChanged, ignoreParameterRemoved,
 				ignoreParameterAdded);
 
-		ApplicationChangeReport report = manager.saveOrUpdate(tag, system, ignoredChangeTypes);
+		ApplicationChangeReport report = manager.saveOrUpdate(aid, system, ignoredChangeTypes);
 
 		if (report.changed()) {
 			try {
-				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(tag),
-						new ApplicationModelLink(applicationName, tag, report.getBeforeChange()));
+				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(aid.toString()),
+						new ApplicationModelLink(applicationName, aid, report.getBeforeChange()));
 			} catch (AmqpException e) {
-				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", tag, AmqpApi.Idpa.EVENT_CHANGED.name());
+				LOGGER.error("Could not send the system model with app-id {} to the {} exchange!", aid, AmqpApi.Idpa.EVENT_CHANGED.name());
 				LOGGER.error("Exception:", e);
 			}
 		}
@@ -234,8 +242,8 @@ public class ApplicationController {
 	 * Stores a new or updates an application model if it differs from existing ones, possibly
 	 * ignoring specific change types. The application model is retrieved from a workload model.
 	 *
-	 * @param tag
-	 *            The tag of the application model.
+	 * @param aid
+	 *            The app-id of the application model.
 	 * @param workloadModelLink
 	 *            The link to the workload model.
 	 * @param ignoreInterfaceChanged
@@ -251,7 +259,8 @@ public class ApplicationController {
 	 * @return A report holding the differences between the passed model and the next older one.
 	 */
 	@RequestMapping(path = UPDATE_FROM_WORKLOAD_MODEL, method = RequestMethod.POST)
-	public void updateApplicationFromWorkloadModel(@PathVariable String tag, @RequestBody String workloadModelLink,
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public void updateApplicationFromWorkloadModel(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestBody String workloadModelLink,
 			@RequestParam(name = "ignore-interface-changed", defaultValue = "false") boolean ignoreInterfaceChanged,
 			@RequestParam(name = "ignore-interface-removed", defaultValue = "false") boolean ignoreInterfaceRemoved,
 			@RequestParam(name = "ignore-interface-added", defaultValue = "false") boolean ignoreInterfaceAdded,
@@ -287,15 +296,15 @@ public class ApplicationController {
 
 		Application systemModel = systemResponse.getBody();
 
-		updateApplication(tag, systemModel, ignoreInterfaceChanged, ignoreInterfaceRemoved, ignoreInterfaceAdded, ignoreParameterChanged, ignoreParameterRemoved, ignoreParameterAdded);
+		updateApplication(aid, systemModel, ignoreInterfaceChanged, ignoreInterfaceRemoved, ignoreInterfaceAdded, ignoreParameterChanged, ignoreParameterRemoved, ignoreParameterAdded);
 	}
 
 	/**
 	 * Stores a new application model if it differs from existing ones, possibly ignoring specific
 	 * change types.
 	 *
-	 * @param tag
-	 *            The tag of the application model.
+	 * @param aid
+	 *            The app-id of the application model.
 	 * @param system
 	 *            The application model in YAML format.
 	 * @param ignoreInterfaceChanged
@@ -311,7 +320,8 @@ public class ApplicationController {
 	 * @return A report holding the differences between the passed model and the next older one.
 	 */
 	@RequestMapping(path = UPDATE, method = RequestMethod.PUT)
-	public ResponseEntity<String> updateApplicationYaml(@PathVariable String tag,
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<String> updateApplicationYaml(@ApiIgnore @PathVariable("app-id") AppId aid,
 			@ApiParam(value = "The application model in YAML format.", required = true) @RequestBody String application,
 			@RequestParam(name = "ignore-interface-changed", defaultValue = "false") boolean ignoreInterfaceChanged,
 			@RequestParam(name = "ignore-interface-removed", defaultValue = "false") boolean ignoreInterfaceRemoved,
@@ -328,19 +338,19 @@ public class ApplicationController {
 		try {
 			system = serializer.readFromYamlString(application);
 		} catch (IOException e) {
-			LOGGER.error("Exception during reading application model with tag {}!", tag);
+			LOGGER.error("Exception during reading application model with app-id {}!", aid);
 			LOGGER.error("Exception: " , e);
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		ApplicationChangeReport report = manager.saveOrUpdate(tag, system, ignoredChangeTypes);
+		ApplicationChangeReport report = manager.saveOrUpdate(aid, system, ignoredChangeTypes);
 
 		if (report.changed()) {
 			try {
-				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(tag),
-						new ApplicationModelLink(applicationName, tag, report.getBeforeChange()));
+				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(aid.toString()),
+						new ApplicationModelLink(applicationName, aid, report.getBeforeChange()));
 			} catch (AmqpException e) {
-				LOGGER.error("Could not send the system model with tag {} to the {} exchange!", tag, AmqpApi.Idpa.EVENT_CHANGED.name());
+				LOGGER.error("Could not send the system model with app-id {} to the {} exchange!", aid, AmqpApi.Idpa.EVENT_CHANGED.name());
 				LOGGER.error("Exception: ", e);
 			}
 		}
@@ -352,14 +362,14 @@ public class ApplicationController {
 	 * Stores a new application model if it differs from existing ones. None of the change types
 	 * will be ignored.
 	 *
-	 * @param tag
-	 *            The tag of the application model.
+	 * @param aid
+	 *            The app-id of the application model.
 	 * @param system
 	 *            The application model to be stored.
 	 * @return A report holding the differences between the passed model and the next older one.
 	 */
-	public ResponseEntity<String> updateApplication(@PathVariable String tag, @RequestBody Application system) {
-		return updateApplication(tag, system, false, false, false, false, false, false);
+	public ResponseEntity<String> updateApplication(AppId aid, @RequestBody Application system) {
+		return updateApplication(aid, system, false, false, false, false, false, false);
 	}
 
 	private EnumSet<ApplicationChangeType> changeTypesFromBooleans(boolean ignoreInterfaceChanged, boolean ignoreInterfaceRemoved, boolean ignoreInterfaceAdded, boolean ignoreParameterChanged,

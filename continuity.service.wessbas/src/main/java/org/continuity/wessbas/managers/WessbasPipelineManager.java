@@ -147,7 +147,7 @@ public class WessbasPipelineManager {
 		// Apply Modularization
 		WorkloadModularizationManager modularizationManager = new WorkloadModularizationManager(restTemplate);
 		BehaviorModelPack behaviorModelPack = new BehaviorModelPack(sessionsBundles, workingDir);
-		modularizationManager.runPipeline(task.getTag(), task.getSource(), behaviorModelPack, task.getModularizationOptions().getServices());
+		modularizationManager.runPipeline(task.getAppId(), task.getSource(), behaviorModelPack, task.getModularizationOptions().getServices());
 
 		Properties behaviorProperties = new Properties();
 		behaviorProperties.load(Files.newInputStream(workingDir.resolve("behaviormodelextractor").resolve("behaviormix.txt")));

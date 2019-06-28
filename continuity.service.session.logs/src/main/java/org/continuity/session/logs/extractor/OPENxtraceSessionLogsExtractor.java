@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.commons.openxtrace.OpenXtraceTracer;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.spec.research.open.xtrace.api.core.Trace;
@@ -32,19 +33,19 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 	/**
 	 * Constructor
 	 *
-	 * @param tag
-	 *            tag of the application
+	 * @param aid
+	 *            app-id of the application
 	 * @param eurekaRestTemplate
 	 */
-	public OPENxtraceSessionLogsExtractor(String tag, RestTemplate eurekaRestTemplate) {
-		super(tag, eurekaRestTemplate);
+	public OPENxtraceSessionLogsExtractor(AppId aid, RestTemplate eurekaRestTemplate) {
+		super(aid, eurekaRestTemplate);
 	}
 
 	@Override
 	public String getSessionLogs(Iterable<Trace> data) {
 		List<HTTPRequestData> httpCallables = extractHttpRequestCallables(data);
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(httpCallables);
-		Application applicationModel = retrieveApplicationModel(tag);
+		Application applicationModel = retrieveApplicationModel(aid);
 		HashMap<String, Pair<String, String>> businessTransactions;
 
 		if (applicationModel == null) {
@@ -131,7 +132,7 @@ public class OPENxtraceSessionLogsExtractor extends AbstractSessionLogsExtractor
 
 	/**
 	 * Extracts all different businessTransactions from the input traces Assumption: applicationName
-	 * and tag name are identical Assumption: Each Containing Subtrace of the first found
+	 * and app-id name are identical Assumption: Each Containing Subtrace of the first found
 	 * HTTPRequestProcessingCallable consists of business transaction information.
 	 *
 	 * @param traces

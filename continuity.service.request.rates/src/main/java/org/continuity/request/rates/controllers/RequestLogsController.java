@@ -10,6 +10,7 @@ import java.util.List;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.CsvFileStorage;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.AppId;
 import org.continuity.request.rates.entities.CsvRow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(ROOT)
 public class RequestLogsController {
 
-	private static final String TAG = "requests";
+	private static final AppId APP_ID = AppId.fromString("requests");
 
 	@Autowired
 	private CsvFileStorage<CsvRow> storage;
@@ -51,7 +52,7 @@ public class RequestLogsController {
 		boolean parseable = rows.stream().map(CsvRow::checkDates).reduce(Boolean::logicalAnd).get();
 
 		if (parseable) {
-			String id = storage.put(rows, TAG);
+			String id = storage.put(rows, APP_ID);
 			String link = RestApi.RequestRates.RequestLogs.GET.requestUrl(id).withoutProtocol().get();
 			return ResponseEntity.created(URI.create(WebUtils.addProtocolIfMissing(link))).body(link);
 		} else {

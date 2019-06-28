@@ -42,13 +42,13 @@ public class ForecastAmqpHandler {
 
 	@Autowired
 	private AmqpTemplate amqpTemplate;
-	
+
 	@Autowired
 	private RestTemplate restTemplate;
-	
+
 	@Autowired
 	private MixedStorage<ForecastBundle> storage;
-	
+
 	@Autowired
 	private ConcurrentHashMap<String, Pair<Date, Integer>> dateAndAmountOfUsersStorage;
 
@@ -65,40 +65,40 @@ public class ForecastAmqpHandler {
 	 */
 	@RabbitListener(queues = RabbitMqConfig.TASK_CREATE_QUEUE_NAME)
 	public void onMonitoringDataAvailable(TaskDescription task) {
-		LOGGER.info("Task {}: Received new task to be processed for tag '{}'", task.getTaskId(), task.getTag());
-		
+		LOGGER.info("Task {}: Received new task to be processed for app-id '{}'", task.getTaskId(), task.getAppId());
+
 		String linkToSessions = task.getSource().getSessionsBundlesLinks().getLink();
-		
+
 		List<String> pathParams = RestApi.Wessbas.SessionsBundles.GET.parsePathParameters(linkToSessions);
 
 		TaskReport report;
 
 		if (linkToSessions == null) {
-			LOGGER.error("Task {}: Link to sessions is missing for tag {}!", task.getTaskId(), task.getTag());
+			LOGGER.error("Task {}: Link to sessions is missing for app-id {}!", task.getTaskId(), task.getAppId());
 			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {
 			InfluxDB influxDb = InfluxDBFactory.connect(task.getForecastInput().getForecastOptions().getInfluxLink(), "admin", "admin");
-			
+
 			boolean statusChanged = task.getSource().getSessionsBundlesLinks().getStatus().equals(SessionsStatus.CHANGED) ? true : false;
-			
+
 			// calculate new intensities
 			if(statusChanged) {
-				IntensitiesPipelineManager intensitiesPipelineManager = new IntensitiesPipelineManager(restTemplate, influxDb, task.getTag(), task.getForecastInput());
+				IntensitiesPipelineManager intensitiesPipelineManager = new IntensitiesPipelineManager(restTemplate, influxDb, task.getAppId(), task.getForecastInput());
 				intensitiesPipelineManager.runPipeline(linkToSessions);
 				Pair<Date, Integer> dateAndAmountOfUserGroups = intensitiesPipelineManager.getDateAndAmountOfUserGroups();
 				dateAndAmountOfUsersStorage.put(pathParams.get(0), dateAndAmountOfUserGroups);
-			} 
-			
-			ForecastPipelineManager pipelineManager = new ForecastPipelineManager(influxDb, task.getTag(), task.getForecastInput());
+			}
+
+			ForecastPipelineManager pipelineManager = new ForecastPipelineManager(influxDb, task.getAppId(), task.getForecastInput());
 			ForecastBundle forecastBundle = pipelineManager.runPipeline(dateAndAmountOfUsersStorage.get(pathParams.get(0)));
 			influxDb.close();
 
 			if (forecastBundle == null) {
-				LOGGER.info("Task {}: Could not create forecast for tag '{}'.", task.getTaskId(), task.getTag());
+				LOGGER.info("Task {}: Could not create forecast for app-id '{}'.", task.getTaskId(), task.getAppId());
 
 				report = TaskReport.error(task.getTaskId(), TaskError.INTERNAL_ERROR);
 			} else {
-				String storageId = storage.put(forecastBundle, task.getTag(), task.isLongTermUse());
+				String storageId = storage.put(forecastBundle, task.getAppId(), task.isLongTermUse());
 				String forecastLink = RestApi.Forecast.ForecastResult.GET.requestUrl(storageId).withoutProtocol().get();
 
 				LOGGER.info("Task {}: Created a new forecast with id '{}'.", task.getTaskId(), storageId);

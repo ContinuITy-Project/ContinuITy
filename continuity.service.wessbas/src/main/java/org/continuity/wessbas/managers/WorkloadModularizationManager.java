@@ -31,6 +31,7 @@ import org.continuity.api.entities.artifact.markovbehavior.NormalDistribution;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.idpa.RequestUriMapper;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.wessbas.entities.BehaviorModelPack;
@@ -137,10 +138,10 @@ public class WorkloadModularizationManager {
 		LOGGER.info("Set working directory to {}", workingDir);
 	}
 
-	public void runPipeline(String tag, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, Map<String, String> services) {
+	public void runPipeline(AppId aid, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, Map<AppId, String> services) {
 		List<SessionsBundle> sessionBundles = behaviorModelPack.getSessionsBundlePack().getSessionsBundles();
 		List<HTTPRequestProcessingImpl> httpCallables = OPENxtraceUtils.extractHttpRequestCallables(OPENxtraceUtils.getOPENxtraces(linkExchangeModel, plainRestTemplate));
-		Application application = eurekaRestTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(tag).get(), Application.class);
+		Application application = eurekaRestTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid).get(), Application.class);
 
 		MarkovBehaviorModel behaviorModel = new MarkovBehaviorModel();
 
@@ -180,7 +181,7 @@ public class WorkloadModularizationManager {
 	 * @throws NullPointerException
 	 * @throws FileNotFoundException
 	 */
-	private MarkovChain modularizeUserGroup(Application application, SessionsBundle sessionBundle, BehaviorModelPack behaviorModelPack, Map<String, String> services,
+	private MarkovChain modularizeUserGroup(Application application, SessionsBundle sessionBundle, BehaviorModelPack behaviorModelPack, Map<AppId, String> services,
 			List<HTTPRequestProcessingImpl> httpCallables) throws FileNotFoundException, IOException {
 		LOGGER.info("Modularizing behavior model {} at path {}...", sessionBundle.getBehaviorId(), behaviorModelPack.getPathToBehaviorModelFiles());
 
@@ -207,7 +208,7 @@ public class WorkloadModularizationManager {
 				.collect(Collectors.toList());
 	}
 
-	private void modularizeMarkovState(MarkovChain markovChain, String state, List<Trace> traces, Application application, Map<String, String> services) {
+	private void modularizeMarkovState(MarkovChain markovChain, String state, List<Trace> traces, Application application, Map<AppId, String> services) {
 		if ((traces == null) || traces.isEmpty()) {
 			LOGGER.info("Keeping state {}.", state);
 			return;
@@ -273,7 +274,7 @@ public class WorkloadModularizationManager {
 	 *            the services, which are going to be targeted
 	 * @return {@link SessionLogs}
 	 */
-	private SessionLogs getModularizedSessionLogs(List<Trace> traces, Map<String, String> services) {
+	private SessionLogs getModularizedSessionLogs(List<Trace> traces, Map<AppId, String> services) {
 		OPENxtraceSerializer serializer = OPENxtraceSerializationFactory.getInstance().getSerializer(OPENxtraceSerializationFormat.JSON);
 		OutputStream stream = new ByteArrayOutputStream();
 		serializer.prepare(stream);

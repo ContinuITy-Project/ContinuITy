@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.idpa.UrlPartParameterExtractor;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +36,9 @@ public abstract class AbstractSessionLogsExtractor<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSessionLogsExtractor.class);
 
 	/**
-	 * Tag of the application
+	 * App-id of the application
 	 */
-	protected String tag;
+	protected AppId aid;
 
 	/**
 	 * Eureka rest template
@@ -47,13 +48,13 @@ public abstract class AbstractSessionLogsExtractor<T> {
 	/**
 	 * Constructor
 	 *
-	 * @param tag
-	 *            tag of application
+	 * @param aid
+	 *            app-id of application
 	 * @param eurekaRestTemplate
 	 *            rest template
 	 */
-	protected AbstractSessionLogsExtractor(String tag, RestTemplate eurekaRestTemplate) {
-		this.tag = tag;
+	protected AbstractSessionLogsExtractor(AppId aid, RestTemplate eurekaRestTemplate) {
+		this.aid = aid;
 		this.restTemplate = eurekaRestTemplate;
 	}
 
@@ -269,16 +270,16 @@ public abstract class AbstractSessionLogsExtractor<T> {
 		}
 	}
 
-	protected Application retrieveApplicationModel(String tag) {
-		if (tag == null) {
-			LOGGER.warn("Cannot retrieve the application model for naming the Session Logs. The tag is nulL!");
+	protected Application retrieveApplicationModel(AppId aid) {
+		if (aid == null) {
+			LOGGER.warn("Cannot retrieve the application model for naming the Session Logs. The app-id is null!");
 			return null;
 		}
 
 		try {
-			return restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(tag).get(), Application.class);
+			return restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid).get(), Application.class);
 		} catch (HttpStatusCodeException e) {
-			LOGGER.error("Received error status code when asking for system model with tag " + tag, e);
+			LOGGER.error("Received error status code when asking for system model with app-id " + aid, e);
 			return null;
 		}
 	}

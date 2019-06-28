@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.commons.openxtrace.OpenXtraceTracer;
 import org.continuity.commons.utils.ModularizationUtils;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.Callable;
@@ -25,7 +26,7 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	/**
 	 * The hostnames of the services, which have to be tested.
 	 */
-	private final Map<String, String> services;
+	private final Map<AppId, String> services;
 
 	private final Collection<String> targetHostNames;
 
@@ -34,8 +35,8 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	/**
 	 * Constructor.
 	 *
-	 * @param tag
-	 *            The tag of the application
+	 * @param aid
+	 *            The app-id of the application
 	 * @param eurekaRestTemplate
 	 *            eureka rest template
 	 * @param hostNames
@@ -46,8 +47,8 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	 *            Whether explicit entries for the pre and post processing should be added to the
 	 *            session logs
 	 */
-	public ModularizedOPENxtraceSessionLogsExtractor(String tag, RestTemplate eurekaRestTemplate, Map<String, String> services, boolean addPrePostProcessing) {
-		super(tag, eurekaRestTemplate);
+	public ModularizedOPENxtraceSessionLogsExtractor(AppId aid, RestTemplate eurekaRestTemplate, Map<AppId, String> services, boolean addPrePostProcessing) {
+		super(aid, eurekaRestTemplate);
 		this.services = services;
 		this.targetHostNames = ModularizationUtils.getTargetHostNames(services, restTemplate);
 		this.addPrePostProcessing = addPrePostProcessing;
@@ -56,8 +57,8 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	/**
 	 * Constructor.
 	 *
-	 * @param tag
-	 *            The tag of the application
+	 * @param aid
+	 *            The app-id of the application
 	 * @param eurekaRestTemplate
 	 *            eureka rest template
 	 * @param hostNames
@@ -65,8 +66,8 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 	 * @param services
 	 *            The services to be included
 	 */
-	public ModularizedOPENxtraceSessionLogsExtractor(String tag, RestTemplate eurekaRestTemplate, Map<String, String> services) {
-		this(tag, eurekaRestTemplate, services, false);
+	public ModularizedOPENxtraceSessionLogsExtractor(AppId aid, RestTemplate eurekaRestTemplate, Map<AppId, String> services) {
+		this(aid, eurekaRestTemplate, services, false);
 	}
 
 	@Override
@@ -75,8 +76,8 @@ public class ModularizedOPENxtraceSessionLogsExtractor extends OPENxtraceSession
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(httpCallables);
 		HashMap<String, Pair<String, String>> businessTransactions = new HashMap<>();
 
-		for (String tag : services.keySet()) {
-			Application applicationModel = retrieveApplicationModel(tag);
+		for (AppId aid : services.keySet()) {
+			Application applicationModel = retrieveApplicationModel(aid);
 
 			if (applicationModel == null) {
 				businessTransactions.putAll(getBusinessTransactionsFromOPENxtraces(httpCallables));

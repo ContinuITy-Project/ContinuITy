@@ -2,6 +2,7 @@ package org.continuity.api.entities.config;
 
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.dsl.description.ForecastInput;
+import org.continuity.idpa.AppId;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -14,7 +15,8 @@ public class TaskDescription {
 	 */
 	private String taskId;
 
-	private String tag;
+	@JsonProperty("app-id")
+	private AppId appId;
 
 	private LinkExchangeModel source;
 
@@ -26,7 +28,7 @@ public class TaskDescription {
 
 	@JsonProperty("modularization-options")
 	private ModularizationOptions modularizationOptions;
-	
+
 	private ForecastInput forecastInput;
 
 	public String getTaskId() {
@@ -37,12 +39,12 @@ public class TaskDescription {
 		this.taskId = taskId;
 	}
 
-	public String getTag() {
-		return tag;
+	public AppId getAppId() {
+		return appId;
 	}
 
-	public void setTag(String tag) {
-		this.tag = tag;
+	public void setAppId(AppId appId) {
+		this.appId = appId;
 	}
 
 	public LinkExchangeModel getSource() {
@@ -76,7 +78,7 @@ public class TaskDescription {
 	public void setModularizationOptions(ModularizationOptions modularizationOptions) {
 		this.modularizationOptions = modularizationOptions;
 	}
-	
+
 	public ForecastInput getForecastInput() {
 		return forecastInput;
 	}

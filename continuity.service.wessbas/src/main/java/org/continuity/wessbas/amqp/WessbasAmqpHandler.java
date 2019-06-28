@@ -62,12 +62,12 @@ public class WessbasAmqpHandler {
 	 */
 	@RabbitListener(queues = RabbitMqConfig.TASK_CREATE_QUEUE_NAME)
 	public void onMonitoringDataAvailable(TaskDescription task) {
-		LOGGER.info("Task {}: Received new task to be processed for tag '{}'", task.getTaskId(), task.getTag());
+		LOGGER.info("Task {}: Received new task to be processed for app-id '{}'", task.getTaskId(), task.getAppId());
 
 		TaskReport report;
 
 		if (task.getSource().getSessionLogsLinks().getLink() == null && task.getSource().getForecastLinks().getLink() == null) {
-			LOGGER.error("Task {}: Session logs link and forecast link is missing for tag {}!", task.getTaskId(), task.getTag());
+			LOGGER.error("Task {}: Session logs link and forecast link is missing for app-id {}!", task.getTaskId(), task.getAppId());
 			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {
 			WessbasBundle workloadModel = null;
@@ -84,15 +84,15 @@ public class WessbasAmqpHandler {
 				workloadModel = pipelineManager.runPipeline(task, task.getProperties().getIntensityCalculationInterval());
 			}
 			if (workloadModel == null) {
-				LOGGER.info("Task {}: Could not create a new workload model for tag '{}'.", task.getTaskId(), task.getTag());
+				LOGGER.info("Task {}: Could not create a new workload model for app-id '{}'.", task.getTaskId(), task.getAppId());
 
 				report = TaskReport.error(task.getTaskId(), TaskError.INTERNAL_ERROR);
 			} else {
-				String storageId = storage.put(workloadModel, task.getTag(), task.isLongTermUse());
+				String storageId = storage.put(workloadModel, task.getAppId(), task.isLongTermUse());
 
 				LOGGER.info("Task {}: Created a new workload model with id '{}'.", task.getTaskId(), storageId);
 
-				WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getTag(), task.getModularizationOptions() != null);
+				WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getAppId(), task.getModularizationOptions() != null);
 				report = TaskReport.successful(task.getTaskId(), responsePack);
 
 				amqpTemplate.convertAndSend(AmqpApi.WorkloadModel.EVENT_CREATED.name(), AmqpApi.WorkloadModel.EVENT_CREATED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), responsePack);

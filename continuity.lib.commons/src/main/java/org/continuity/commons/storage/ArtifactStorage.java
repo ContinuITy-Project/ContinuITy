@@ -1,5 +1,7 @@
 package org.continuity.commons.storage;
 
+import org.continuity.idpa.AppId;
+
 import m4jdsl.WorkloadModel;
 
 public interface ArtifactStorage<T> {
@@ -7,11 +9,11 @@ public interface ArtifactStorage<T> {
 	/**
 	 * Reserves a slot in the storage.
 	 *
-	 * @param tag
-	 *            The tag of the entity.
+	 * @param aid
+	 *            The app-id of the entity.
 	 * @return An id for the slot.
 	 */
-	String reserve(String tag);
+	String reserve(AppId aid);
 
 	/**
 	 * Adds a new entity to an already reserved slot.
@@ -28,11 +30,11 @@ public interface ArtifactStorage<T> {
 	 *
 	 * @param entity
 	 *            The entity to be stored.
-	 * @param tag
-	 *            The tag of the entity.
+	 * @param aid
+	 *            The app-id of the entity.
 	 * @return The created id.
 	 */
-	String put(T entity, String tag);
+	String put(T entity, AppId aid);
 
 	/**
 	 * Retrieves the model for the given id.
@@ -53,12 +55,12 @@ public interface ArtifactStorage<T> {
 	boolean remove(String id);
 
 	/**
-	 * Returns the tag that is part of the ID.
-	 * 
+	 * Returns the app-id that is part of the ID.
+	 *
 	 * @param id
-	 *            The ID containing the tag.
-	 * @return The tag
+	 *            The ID containing the app-id.
+	 * @return The app-id
 	 */
-	String getTagForId(String id);
+	AppId getAppIdForId(String id);
 
 }
