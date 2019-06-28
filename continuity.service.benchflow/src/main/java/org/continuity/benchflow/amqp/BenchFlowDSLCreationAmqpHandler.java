@@ -14,6 +14,7 @@ import org.continuity.benchflow.config.RabbitMqConfig;
 import org.continuity.benchflow.transform.ModelTransformater;
 import org.continuity.commons.storage.MemoryStorage;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.slf4j.Logger;
@@ -66,7 +67,7 @@ public class BenchFlowDSLCreationAmqpHandler {
 		} else {
 			LOGGER.info("Task {}: Creating a load test from {}...", task.getTaskId(), workloadModelLink);
 
-			ContinuITyModel continuITyModel = getContinuITyModel(workloadModelLink, task.getTag());
+			ContinuITyModel continuITyModel = getContinuITyModel(workloadModelLink, task.getAppId());
 
 			if (continuITyModel == null) {
 				LOGGER.error("The workload model at {} does not provide all required input fields!", workloadModelLink);
@@ -75,7 +76,7 @@ public class BenchFlowDSLCreationAmqpHandler {
 				ModelTransformater modelConverter = new ModelTransformater();
 				HttpWorkload benchflowWorkload = modelConverter.transformToBenchFlow(continuITyModel);
 
-				String id = storage.put(benchflowWorkload, task.getTag());
+				String id = storage.put(benchflowWorkload, task.getAppId());
 				LOGGER.info("Task {}: Created a load test from {}.", task.getTaskId(), workloadModelLink);
 
 				report = TaskReport.successful(task.getTaskId(),
@@ -87,17 +88,17 @@ public class BenchFlowDSLCreationAmqpHandler {
 		amqpTemplate.convertAndSend(AmqpApi.Global.EVENT_FINISHED.name(), AmqpApi.Global.EVENT_FINISHED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), report);
 	}
 
-	private ContinuITyModel getContinuITyModel(String workloadModelLink, String tag) {
+	private ContinuITyModel getContinuITyModel(String workloadModelLink, AppId aid) {
 
 		LinkExchangeModel workloadLinks = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadModelLink), LinkExchangeModel.class);
 
 		if (workloadLinks == null) {
-			LOGGER.error("Workload links with tag {} is null! Aborting.", tag);
+			LOGGER.error("Workload links with app-id {} is null! Aborting.", aid);
 			return null;
 		}
 
 		if ((workloadLinks.getWorkloadModelLinks() == null) || (workloadLinks.getWorkloadModelLinks().getBehaviorLink() == null)) {
-			LOGGER.error("Behavior links with tag {} is null! Aborting.", tag);
+			LOGGER.error("Behavior links with app-id {} is null! Aborting.", aid);
 			return null;
 		}
 
@@ -105,21 +106,21 @@ public class BenchFlowDSLCreationAmqpHandler {
 
 		ApplicationAnnotation annotation;
 		try {
-			annotation = restTemplate.getForObject(Idpa.Annotation.GET.requestUrl(tag).get(), ApplicationAnnotation.class);
+			annotation = restTemplate.getForObject(Idpa.Annotation.GET.requestUrl(aid).get(), ApplicationAnnotation.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.error("Received a non-200 response: {} ({}) - {}", e.getStatusCode(), e.getStatusCode().getReasonPhrase(), e.getResponseBodyAsString());
 			return null;
 		}
 
 		if (annotation == null) {
-			LOGGER.error("Annotation with tag {} is null! Aborting.", tag);
+			LOGGER.error("Annotation with app-id {} is null! Aborting.", aid);
 			return null;
 		}
 
-		Application application = restTemplate.getForObject(Idpa.Application.GET.requestUrl(tag).get(), Application.class);
+		Application application = restTemplate.getForObject(Idpa.Application.GET.requestUrl(aid).get(), Application.class);
 
 		if (application == null) {
-			LOGGER.error("Application with tag {} is null! Aborting.", tag);
+			LOGGER.error("Application with app-id {} is null! Aborting.", aid);
 			return null;
 		}
 

@@ -1,7 +1,7 @@
 package org.continuity.idpa.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.continuity.idpa.StaticIdpaTestInstance.TAG;
+import static org.continuity.idpa.StaticIdpaTestInstance.APP_ID;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -74,43 +74,43 @@ public abstract class IdpaStorageManagerTest {
 
 	@Test
 	public void testMixed() throws JsonProcessingException, IOException {
-		appManager.saveOrUpdate(TAG, second().getApplication());
-		appManager.saveOrUpdate(TAG, first().getApplication());
-		annManager.saveOrUpdate(TAG, first().getApplication().getVersionOrTimestamp(), first().getAnnotation());
-		appManager.saveOrUpdate(TAG, third().getApplication());
-		annManager.saveOrUpdate(TAG, second().getApplication().getVersionOrTimestamp(), second().getAnnotation());
-		annManager.saveOrUpdate(TAG, third().getApplication().getVersionOrTimestamp(), third().getAnnotation());
-		appManager.saveOrUpdate(TAG, first_refined().getApplication());
-		annManager.saveOrUpdate(TAG, first_refined().getApplication().getVersionOrTimestamp(), first_refined().getAnnotation());
+		appManager.saveOrUpdate(APP_ID, second().getApplication());
+		appManager.saveOrUpdate(APP_ID, first().getApplication());
+		annManager.saveOrUpdate(APP_ID, first().getApplication().getVersionOrTimestamp(), first().getAnnotation());
+		appManager.saveOrUpdate(APP_ID, third().getApplication());
+		annManager.saveOrUpdate(APP_ID, second().getApplication().getVersionOrTimestamp(), second().getAnnotation());
+		annManager.saveOrUpdate(APP_ID, third().getApplication().getVersionOrTimestamp(), third().getAnnotation());
+		appManager.saveOrUpdate(APP_ID, first_refined().getApplication());
+		annManager.saveOrUpdate(APP_ID, first_refined().getApplication().getVersionOrTimestamp(), first_refined().getAnnotation());
 
 		checkResult(true);
 	}
 
 	@Test
 	public void testWithOverwriting() throws JsonProcessingException, IOException {
-		appManager.saveOrUpdate(TAG, second().getApplication());
-		appManager.saveOrUpdate(TAG, first().getApplication());
-		annManager.saveOrUpdate(TAG, first().getApplication().getVersionOrTimestamp(), first().getAnnotation());
-		appManager.saveOrUpdate(TAG, third().getApplication());
-		annManager.saveOrUpdate(TAG, second().getApplication().getVersionOrTimestamp(), second().getAnnotation());
-		annManager.saveOrUpdate(TAG, third().getApplication().getVersionOrTimestamp(), third().getAnnotation());
-		appManager.saveOrUpdate(TAG, first_refined().getApplication());
-		annManager.saveOrUpdate(TAG, first().getApplication().getVersionOrTimestamp(), first_refined().getAnnotation());
+		appManager.saveOrUpdate(APP_ID, second().getApplication());
+		appManager.saveOrUpdate(APP_ID, first().getApplication());
+		annManager.saveOrUpdate(APP_ID, first().getApplication().getVersionOrTimestamp(), first().getAnnotation());
+		appManager.saveOrUpdate(APP_ID, third().getApplication());
+		annManager.saveOrUpdate(APP_ID, second().getApplication().getVersionOrTimestamp(), second().getAnnotation());
+		annManager.saveOrUpdate(APP_ID, third().getApplication().getVersionOrTimestamp(), third().getAnnotation());
+		appManager.saveOrUpdate(APP_ID, first_refined().getApplication());
+		annManager.saveOrUpdate(APP_ID, first().getApplication().getVersionOrTimestamp(), first_refined().getAnnotation());
 
 		checkResult(false);
 	}
 
 	@Test
 	public void testWithBroken() throws IOException {
-		appManager.saveOrUpdate(TAG, first().getApplication());
-		annManager.saveOrUpdate(TAG, first().getApplication().getVersionOrTimestamp(), first().getAnnotation());
-		annManager.saveOrUpdate(TAG, first_refined().getApplication().getVersionOrTimestamp(), first_refined().getAnnotation());
+		appManager.saveOrUpdate(APP_ID, first().getApplication());
+		annManager.saveOrUpdate(APP_ID, first().getApplication().getVersionOrTimestamp(), first().getAnnotation());
+		annManager.saveOrUpdate(APP_ID, first_refined().getApplication().getVersionOrTimestamp(), first_refined().getAnnotation());
 
 		Application breakingApp = second().getApplication();
 		breakingApp.setVersionOrTimestamp(first_refined().getApplication().getVersionOrTimestamp());
-		appManager.saveOrUpdate(TAG, breakingApp);
+		appManager.saveOrUpdate(APP_ID, breakingApp);
 
-		annManager.saveOrUpdate(TAG, second().getApplication().getVersionOrTimestamp(), second().getAnnotation());
+		annManager.saveOrUpdate(APP_ID, second().getApplication().getVersionOrTimestamp(), second().getAnnotation());
 
 
 		checkApp(first(), first(), false);
@@ -124,15 +124,15 @@ public abstract class IdpaStorageManagerTest {
 
 		checkAnn(first(), first(), false);
 		checkAnn(first(), first(), true);
-		assertThat(annManager.isBroken(TAG, first().getApplication().getVersionOrTimestamp())).isFalse();
+		assertThat(annManager.isBroken(APP_ID, first().getApplication().getVersionOrTimestamp())).isFalse();
 
 		checkAnn(first_refined(), first_refined(), false);
 		checkAnn(first_refined(), first_refined(), true);
-		assertThat(annManager.isBroken(TAG, first_refined().getApplication().getVersionOrTimestamp())).isTrue();
+		assertThat(annManager.isBroken(APP_ID, first_refined().getApplication().getVersionOrTimestamp())).isTrue();
 
 		checkAnn(second(), second(), false);
 		checkAnn(second(), second(), true);
-		assertThat(annManager.isBroken(TAG, second().getApplication().getVersionOrTimestamp())).isFalse();
+		assertThat(annManager.isBroken(APP_ID, second().getApplication().getVersionOrTimestamp())).isFalse();
 	}
 
 	private void addAndCheck(IdpaTestInstance inst) throws JsonProcessingException, IOException {
@@ -144,10 +144,10 @@ public abstract class IdpaStorageManagerTest {
 	}
 
 	private void addAndCheck(IdpaTestInstance inst, IdpaTestInstance appCheck, IdpaTestInstance annCheck) throws JsonProcessingException, IOException {
-		appManager.saveOrUpdate(TAG, inst.getApplication());
-		checkEquality(appManager.read(TAG), appCheck.getApplication());
-		annManager.saveOrUpdate(TAG, inst.getApplication().getVersionOrTimestamp(), inst.getAnnotation());
-		checkEquality(annManager.read(TAG), annCheck.getAnnotation());
+		appManager.saveOrUpdate(APP_ID, inst.getApplication());
+		checkEquality(appManager.read(APP_ID), appCheck.getApplication());
+		annManager.saveOrUpdate(APP_ID, inst.getApplication().getVersionOrTimestamp(), inst.getAnnotation());
+		checkEquality(annManager.read(APP_ID), annCheck.getAnnotation());
 	}
 
 	private void checkApp(IdpaTestInstance timestampHolder, IdpaTestInstance expected, boolean delay) throws JsonProcessingException, IOException {
@@ -161,7 +161,7 @@ public abstract class IdpaStorageManagerTest {
 			timestamp = addSmallOffset(timestamp);
 		}
 
-		checkEquality(appManager.read(TAG, timestamp), expected);
+		checkEquality(appManager.read(APP_ID, timestamp), expected);
 	}
 
 	private void checkAnn(IdpaTestInstance timestampHolder, IdpaTestInstance expected, boolean delay) throws JsonProcessingException, IOException {
@@ -175,7 +175,7 @@ public abstract class IdpaStorageManagerTest {
 			timestamp = addSmallOffset(timestamp);
 		}
 
-		checkEquality(annManager.read(TAG, timestamp), expected);
+		checkEquality(annManager.read(APP_ID, timestamp), expected);
 	}
 
 	private void checkEquality(IdpaElement tested, IdpaElement orig) throws JsonProcessingException {

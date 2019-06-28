@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.continuity.idpa.AppId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,8 +74,8 @@ public abstract class FileStorage<T> implements ArtifactStorage<T> {
 	protected abstract boolean remove(Path dirPath, String id) throws IOException;
 
 	@Override
-	public String reserve(String tag) {
-		return put(emptyEntity, tag);
+	public String reserve(AppId aid) {
+		return put(emptyEntity, aid);
 	}
 
 	@Override
@@ -83,8 +84,8 @@ public abstract class FileStorage<T> implements ArtifactStorage<T> {
 	}
 
 	@Override
-	public String put(T entity, String tag) {
-		String id = getNextNumber() + DELIM + tag;
+	public String put(T entity, AppId aid) {
+		String id = getNextNumber() + DELIM + aid;
 
 		store(id, entity);
 
@@ -120,8 +121,8 @@ public abstract class FileStorage<T> implements ArtifactStorage<T> {
 	}
 
 	@Override
-	public String getTagForId(String id) {
-		return id.substring(id.indexOf(DELIM) + 1);
+	public AppId getAppIdForId(String id) {
+		return AppId.fromString(id.substring(id.indexOf(DELIM) + 1));
 	}
 
 	private int getNextNumber() {

@@ -80,25 +80,25 @@ public class RestApi {
 
 			public static final String ROOT = "/idpa";
 
-			/** {@value #ROOT}/{tag}/application */
+			/** {@value #ROOT}/{app-id}/application */
 			public static final RestEndpoint GET_APPLICATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_APPLICATION, RequestMethod.GET);
 
-			/** {@value #ROOT}/{tag}/annotation */
+			/** {@value #ROOT}/{app-id}/annotation */
 			public static final RestEndpoint GET_ANNOTATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_ANNOTATION, RequestMethod.GET);
 
-			/** {@value #ROOT}/{tag}/application */
+			/** {@value #ROOT}/{app-id}/application */
 			public static final RestEndpoint UPDATE_APPLICATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_APPLICATION, RequestMethod.POST);
 
-			/** {@value #ROOT}/{tag}/openapi/{version}/json */
+			/** {@value #ROOT}/{app-id}/openapi/{version}/json */
 			public static final RestEndpoint UPDATE_APP_FROM_OPEN_API_JSON = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_APP_FROM_OPEN_API_JSON, RequestMethod.POST);
 
-			/** {@value #ROOT}/{tag}/openapi/{version}/url */
+			/** {@value #ROOT}/{app-id}/openapi/{version}/url */
 			public static final RestEndpoint UPDATE_APP_FROM_OPEN_API_URL = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_APP_FROM_OPEN_API_URL, RequestMethod.POST);
 
-			/** {@value #ROOT}/{tag}/annotation */
+			/** {@value #ROOT}/{app-id}/annotation */
 			public static final RestEndpoint UPDATE_ANNOTATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_ANNOTATION, RequestMethod.POST);
 
-			/** {@value #ROOT}/{tag}/broken */
+			/** {@value #ROOT}/{app-id}/broken */
 			public static final RestEndpoint GET_BROKEN = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_BROKEN, RequestMethod.GET);
 
 			private Idpa() {
@@ -106,13 +106,13 @@ public class RestApi {
 
 			public static class Paths {
 
-				public static final String GET_APPLICATION = "/{tag}/application";
-				public static final String GET_ANNOTATION = "/{tag}/annotation";
-				public static final String UPDATE_APPLICATION = "/{tag}/application";
-				public static final String UPDATE_APP_FROM_OPEN_API_JSON = "/{tag}/openapi/{version}/json";
-				public static final String UPDATE_APP_FROM_OPEN_API_URL = "/{tag}/openapi/{version}/url";
-				public static final String UPDATE_ANNOTATION = "/{tag}/annotation";
-				public static final String GET_BROKEN = "/{tag}/broken";
+				public static final String GET_APPLICATION = "/{app-id}/application";
+				public static final String GET_ANNOTATION = "/{app-id}/annotation";
+				public static final String UPDATE_APPLICATION = "/{app-id}/application";
+				public static final String UPDATE_APP_FROM_OPEN_API_JSON = "/{app-id}/openapi/{version}/json";
+				public static final String UPDATE_APP_FROM_OPEN_API_URL = "/{app-id}/openapi/{version}/url";
+				public static final String UPDATE_ANNOTATION = "/{app-id}/annotation";
+				public static final String GET_BROKEN = "/{app-id}/broken";
 
 				private Paths() {
 				}
@@ -139,7 +139,7 @@ public class RestApi {
 			/** {@value #ROOT}/{type}/report/{id} */
 			public static final RestEndpoint DELETE_REPORT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.DELETE_REPORT, RequestMethod.DELETE);
 
-			/** {@value #ROOT}"/{type}/test/upload/{tag} */
+			/** {@value #ROOT}"/{type}/test/upload/{app-id} */
 			public static final RestEndpoint POST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.POST, RequestMethod.POST);
 
 			private Loadtest() {
@@ -153,7 +153,7 @@ public class RestApi {
 
 				public static final String DELETE_REPORT = "/{type}/test/{id}";
 
-				public static final String POST = "/{type}/test/upload/{tag}";
+				public static final String POST = "/{type}/test/upload/{app-id}";
 
 				private Paths() {
 				}
@@ -242,19 +242,19 @@ public class RestApi {
 
 			public static final String ROOT = "/application";
 
-			/** {@value #ROOT}/{tag} */
+			/** {@value #ROOT}/{app-id} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
-			/** {@value #ROOT}/{tag}/regex */
+			/** {@value #ROOT}/{app-id}/regex */
 			public static final RestEndpoint GET_AS_REGEX = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_AS_REGEX, RequestMethod.GET);
 
-			/** {@value #ROOT}/{tag}/delta */
+			/** {@value #ROOT}/{app-id}/delta */
 			public static final RestEndpoint GET_DELTA = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_DELTA, RequestMethod.GET);
 
-			/** {@value #ROOT}/{tag} */
+			/** {@value #ROOT}/{app-id} */
 			public static final RestEndpoint UPDATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE, RequestMethod.POST);
 
-			/** {@value #ROOT}/{tag}/workload-model */
+			/** {@value #ROOT}/{app-id}/workload-model */
 			public static final RestEndpoint UPDATE_FROM_WORKLOAD_MODEL = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_FROM_WORKLOAD_MODEL, RequestMethod.POST);
 
 			private Application() {
@@ -262,11 +262,11 @@ public class RestApi {
 
 			public static class Paths {
 
-				public static final String GET = "/{tag}";
-				public static final String GET_AS_REGEX = "/{tag}/regex";
-				public static final String GET_DELTA = "/{tag}/delta";
-				public static final String UPDATE = "/{tag}";
-				public static final String UPDATE_FROM_WORKLOAD_MODEL = "/{tag}/workload-model";
+				public static final String GET = "/{app-id}";
+				public static final String GET_AS_REGEX = "/{app-id}/regex";
+				public static final String GET_DELTA = "/{app-id}/delta";
+				public static final String UPDATE = "/{app-id}";
+				public static final String UPDATE_FROM_WORKLOAD_MODEL = "/{app-id}/workload-model";
 
 				private Paths() {
 				}
@@ -283,10 +283,10 @@ public class RestApi {
 
 			public static final String ROOT = "/openapi";
 
-			/** {@value #ROOT}/{tag}/{version}/json */
+			/** {@value #ROOT}/{app-id}/{version}/json */
 			public static final RestEndpoint UPDATE_FROM_JSON = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_FROM_JSON, RequestMethod.POST);
 
-			/** {@value #ROOT}/{tag}/{version}/url */
+			/** {@value #ROOT}/{app-id}/{version}/url */
 			public static final RestEndpoint UPDATE_FROM_URL = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_FROM_URL, RequestMethod.POST);
 
 			private OpenApi() {
@@ -294,8 +294,8 @@ public class RestApi {
 
 			public static class Paths {
 
-				public static final String UPDATE_FROM_JSON = "/{tag}/{version}/json";
-				public static final String UPDATE_FROM_URL = "/{tag}/{version}/url";
+				public static final String UPDATE_FROM_JSON = "/{app-id}/{version}/json";
+				public static final String UPDATE_FROM_URL = "/{app-id}/{version}/url";
 
 				private Paths() {
 				}
@@ -312,16 +312,16 @@ public class RestApi {
 
 			public static final String ROOT = "/annotation";
 
-			/** {@value #ROOT}/{tag} */
+			/** {@value #ROOT}/{app-id} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
-			/** {@value #ROOT}/{tag} */
+			/** {@value #ROOT}/{app-id} */
 			public static final RestEndpoint UPDATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE, RequestMethod.POST);
 
-			/** {@value #ROOT}/{tag} */
+			/** {@value #ROOT}/{app-id} */
 			public static final RestEndpoint UPLOAD = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPLOAD, RequestMethod.PUT);
 
-			/** {@value #ROOT}/{tag}/broken */
+			/** {@value #ROOT}/{app-id}/broken */
 			public static final RestEndpoint GET_BROKEN = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_BROKEN, RequestMethod.GET);
 
 			private Annotation() {
@@ -329,10 +329,10 @@ public class RestApi {
 
 			public static class Paths {
 
-				public static final String GET = "/{tag}";
-				public static final String UPDATE = "/{tag}";
-				public static final String UPLOAD = "/{tag}";
-				public static final String GET_BROKEN = "/{tag}/broken";
+				public static final String GET = "/{app-id}";
+				public static final String UPDATE = "/{app-id}";
+				public static final String UPLOAD = "/{app-id}";
+				public static final String GET_BROKEN = "/{app-id}/broken";
 
 				private Paths() {
 				}
@@ -418,7 +418,7 @@ public class RestApi {
 			/** {@value #ROOT}/{id} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
-			/** {@value #ROOT}/upload/{tag} */
+			/** {@value #ROOT}/upload/{app-id} */
 			public static final RestEndpoint POST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.POST, RequestMethod.POST);
 
 			private TestPlan() {
@@ -428,7 +428,7 @@ public class RestApi {
 
 				public static final String GET = "/{id}";
 
-				public static final String POST = "/upload/{tag}";
+				public static final String POST = "/upload/{app-id}";
 
 				private Paths() {
 				}
@@ -829,7 +829,7 @@ public class RestApi {
 			public static class Paths {
 
 				public static final String OVERVIEW = "/{id}";
-				public static final String UPLOAD = "/{tag}";
+				public static final String UPLOAD = "/{app-id}";
 				public static final String REMOVE = "/{id}";
 				public static final String GET_APPLICATION = "/{id}/application";
 				public static final String GET_ANNOTATION = "/{id}/annotation";
@@ -898,7 +898,7 @@ public class RestApi {
 		public static final Map<String, RestEndpoint> GET_LOAD_TEST = new HashMap<>();
 
 		/**
-		 * [load-test-type]/upload/{tag}
+		 * [load-test-type]/upload/{app-id}
 		 *
 		 * @see RestApi.JMeter.TestPlan#POST
 		 */

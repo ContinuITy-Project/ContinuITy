@@ -4,16 +4,18 @@ import java.util.Set;
 
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.dsl.description.ForecastInput;
+import org.continuity.idpa.AppId;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "goal", "mode", "tag", "testing-context", "options", "source", "forecast-input" })
+@JsonPropertyOrder({ "goal", "mode", "app-id", "testing-context", "options", "source", "forecast-input" })
 public class Order {
 
-	private String tag;
+	@JsonProperty("app-id")
+	private AppId appId;
 
 	private OrderGoal goal;
 
@@ -29,7 +31,7 @@ public class Order {
 
 	@JsonInclude(Include.NON_NULL)
 	private OrderOptions options;
-	
+
 	@JsonInclude(Include.NON_NULL)
 	@JsonProperty("forecast-input")
 	private ForecastInput forecastInput;
@@ -38,12 +40,12 @@ public class Order {
 	@JsonInclude(Include.NON_NULL)
 	private ModularizationOptions modularizationOptions;
 
-	public String getTag() {
-		return tag;
+	public AppId getAppId() {
+		return appId;
 	}
 
-	public void setTag(String tag) {
-		this.tag = tag;
+	public void setAppId(AppId appId) {
+		this.appId = appId;
 	}
 
 	public OrderGoal getGoal() {
@@ -93,7 +95,7 @@ public class Order {
 	public void setModularizationOptions(ModularizationOptions modularizationOptions) {
 		this.modularizationOptions = modularizationOptions;
 	}
-	
+
 	public ForecastInput getForecastInput() {
 		return forecastInput;
 	}

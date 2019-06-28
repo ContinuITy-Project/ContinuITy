@@ -17,6 +17,7 @@ import org.continuity.commons.utils.IntensityCalculationUtils;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.dsl.description.ForecastInput;
 import org.continuity.dsl.description.IntensityCalculationInterval;
+import org.continuity.idpa.AppId;
 import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.Point;
@@ -27,7 +28,7 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * Manager for calculating intensities and saving them into database.
- * 
+ *
  * @author Alper Hidiroglu
  *
  */
@@ -39,7 +40,7 @@ public class IntensitiesPipelineManager {
 
 	private InfluxDB influxDb;
 
-	private String tag;
+	private AppId aid;
 
 	private ForecastInput forecastInput;
 
@@ -66,10 +67,10 @@ public class IntensitiesPipelineManager {
 	/**
 	 * Constructor.
 	 */
-	public IntensitiesPipelineManager(RestTemplate restTemplate, InfluxDB influxDb, String tag, ForecastInput context) {
+	public IntensitiesPipelineManager(RestTemplate restTemplate, InfluxDB influxDb, AppId aid, ForecastInput context) {
 		this.restTemplate = restTemplate;
 		this.influxDb = influxDb;
-		this.tag = tag;
+		this.aid = aid;
 		this.forecastInput = context;
 	}
 
@@ -79,7 +80,7 @@ public class IntensitiesPipelineManager {
 
 	@SuppressWarnings("deprecation")
 	public void setupDatabase() {
-		String dbName = this.tag;
+		String dbName = this.aid.toString();
 		if (!influxDb.describeDatabases().contains(dbName)) {
 			influxDb.createDatabase(dbName);
 		}
@@ -125,7 +126,7 @@ public class IntensitiesPipelineManager {
 	/**
 	 * Calculates the intensities for one user group. Saves the intensities into database.
 	 * Timestamps are in nanoseconds.
-	 * 
+	 *
 	 * @param sessions
 	 * @return
 	 */
@@ -136,12 +137,12 @@ public class IntensitiesPipelineManager {
 		if(null == forecastInput.getForecastOptions().getInterval()) {
 			forecastInput.getForecastOptions().setInterval(IntensityCalculationInterval.SECOND);
 		}
-		
+
 		// The time range for which an intensity will be calculated
 		long rangeLength = forecastInput.getForecastOptions().getInterval().asNumber();
 
 		// rounds start time down
-		long roundedStartTime = startTime - startTime % rangeLength;
+		long roundedStartTime = startTime - (startTime % rangeLength);
 
 		long highestEndTime = 0;
 
@@ -159,8 +160,8 @@ public class IntensitiesPipelineManager {
 
 		// rounds highest end time up
 		long roundedHighestEndTime = highestEndTime;
-		if (highestEndTime % rangeLength != 0) {
-			roundedHighestEndTime = (highestEndTime - highestEndTime % rangeLength) + rangeLength;
+		if ((highestEndTime % rangeLength) != 0) {
+			roundedHighestEndTime = (highestEndTime - (highestEndTime % rangeLength)) + rangeLength;
 		}
 
 		long completePeriod = roundedHighestEndTime - roundedStartTime;
@@ -197,7 +198,7 @@ public class IntensitiesPipelineManager {
 
 	/**
 	 * Saves intensities into InfluxDB
-	 * 
+	 *
 	 * @param intensities
 	 */
 	@SuppressWarnings("rawtypes")

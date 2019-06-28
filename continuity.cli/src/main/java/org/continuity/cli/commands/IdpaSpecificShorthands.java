@@ -42,9 +42,9 @@ public class IdpaSpecificShorthands {
 
 	@ShellMethod(key = { "app init" }, value = "Shorthand for 'idpa app init'.")
 	@ShellMethodAvailability({ "appInitAvailability" })
-	public AttributedString initApplication(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
+	public AttributedString initApplication(@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("app init");
-		return shorthand.execute(tag);
+		return shorthand.execute(appId);
 	}
 
 	public Availability appInitAvailability() {
@@ -53,10 +53,11 @@ public class IdpaSpecificShorthands {
 
 	@ShellMethod(key = { "app create" }, value = "Shorthand for 'idpa app create'.")
 	@ShellMethodAvailability({ "appCreateAvailability" })
-	public AttributedString createIdpaApplication(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String openApiLocation, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag)
+	public AttributedString createIdpaApplication(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String openApiLocation,
+			@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId)
 			throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("app create");
-		return shorthand.execute(openApiLocation, tag);
+		return shorthand.execute(openApiLocation, appId);
 	}
 
 	public Availability appCreateAvailability() {
@@ -65,7 +66,8 @@ public class IdpaSpecificShorthands {
 
 	@ShellMethod(key = { "app update" }, value = "Shorthand for 'idpa app update'.")
 	@ShellMethodAvailability({ "appUpdateAvailability" })
-	public AttributedString updateIdpaApplication(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String openApiLocation, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
+	public AttributedString updateIdpaApplication(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String openApiLocation,
+			@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
 			@ShellOption(defaultValue = "false", value = { "--add", "-a" }, help = "Consider element additions.") boolean add,
 			@ShellOption(defaultValue = "false", value = { "--remove", "-r" }, help = "Consider element removals.") boolean remove,
 			@ShellOption(defaultValue = "false", value = { "--change", "-c" }, help = "Consider element changes.") boolean change,
@@ -73,7 +75,7 @@ public class IdpaSpecificShorthands {
 			@ShellOption(defaultValue = "false", value = { "--parameters", "-p" }, help = "Consider parameters.") boolean parameters,
 			@ShellOption(defaultValue = "false", value = { "--hide-ignored" }, help = "Consider parameters.") boolean hideIgnored) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("app update");
-		return shorthand.execute(openApiLocation, tag, add, remove, change, endpoints, parameters, hideIgnored);
+		return shorthand.execute(openApiLocation, appId, add, remove, change, endpoints, parameters, hideIgnored);
 	}
 
 	public Availability appUpdateAvailability() {
@@ -104,9 +106,9 @@ public class IdpaSpecificShorthands {
 
 	@ShellMethod(key = { "ann init" }, value = "Shorthand for 'idpa ann init'.")
 	@ShellMethodAvailability({ "annInitAvailability" })
-	public AttributedString initAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
+	public AttributedString initAnnotation(@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("ann init");
-		return shorthand.execute(tag);
+		return shorthand.execute(appId);
 	}
 
 	public Availability annInitAvailability() {
@@ -115,10 +117,10 @@ public class IdpaSpecificShorthands {
 
 	@ShellMethod(key = { "ann extract" }, value = "Shorthand for 'idpa ann extract'.")
 	@ShellMethodAvailability({ "annExtractAvailability" })
-	public AttributedString extractAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String logsFile, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
+	public AttributedString extractAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String logsFile, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
 			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String regex) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("ann extract");
-		return shorthand.execute(logsFile, tag, regex);
+		return shorthand.execute(logsFile, appId, regex);
 	}
 
 	public Availability annExtractAvailability() {
@@ -127,9 +129,9 @@ public class IdpaSpecificShorthands {
 
 	@ShellMethod(key = { "ann check" }, value = "Shorthand for 'idpa ann check'.")
 	@ShellMethodAvailability({ "annCheckAvailability" })
-	public AttributedString checkAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws Throwable {
+	public AttributedString checkAnnotation(@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("ann check");
-		return shorthand.execute(tag);
+		return shorthand.execute(appId);
 	}
 
 	public Availability annCheckAvailability() {

@@ -8,6 +8,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.continuity.commons.idpa.OpenApiToIdpaTransformer;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * Offers a REST API for updating application models from Open API specifications.
@@ -50,8 +54,8 @@ public class OpenApiController {
 	 * Parses the specified Open API JSON, transforms it to a {@link Application} and updates the
 	 * already stored application model.
 	 *
-	 * @param tag
-	 *            Tag of the application model.
+	 * @param aid
+	 *            App-id of the application model.
 	 * @param version
 	 *            Open API version (currently, only 2.0 is supported).
 	 * @param json
@@ -59,7 +63,8 @@ public class OpenApiController {
 	 * @return
 	 */
 	@RequestMapping(path = UPDATE_FROM_JSON, method = RequestMethod.POST)
-	public ResponseEntity<String> updateFromJson(@PathVariable String tag, @PathVariable String version, @RequestBody JsonNode json) {
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<String> updateFromJson(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String version, @RequestBody JsonNode json) {
 		Swagger swagger;
 
 		if ("2.0".equals(version)) {
@@ -70,15 +75,15 @@ public class OpenApiController {
 
 		Application system = transformer.transform(swagger);
 
-		return systemModelController.updateApplication(tag, system);
+		return systemModelController.updateApplication(aid, system);
 	}
 
 	/**
 	 * Reads the Open API specification from the specified URL, transforms it to a
 	 * {@link Application} and updates the already stored application model.
 	 *
-	 * @param tag
-	 *            Tag of the application model.
+	 * @param aid
+	 *            App-id of the application model.
 	 * @param version
 	 *            Open API version (currently, only 2.0 is supported).
 	 * @param url
@@ -86,7 +91,8 @@ public class OpenApiController {
 	 * @return
 	 */
 	@RequestMapping(path = UPDATE_FROM_URL, method = RequestMethod.POST)
-	public ResponseEntity<String> updateFromUrl(@PathVariable String tag, @PathVariable String version, @RequestBody String url) {
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<String> updateFromUrl(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String version, @RequestBody String url) {
 		try {
 			new URL(url);
 		} catch (MalformedURLException e) {
@@ -105,7 +111,7 @@ public class OpenApiController {
 
 		Application system = transformer.transform(swagger);
 
-		return systemModelController.updateApplication(tag, system);
+		return systemModelController.updateApplication(aid, system);
 	}
 
 }

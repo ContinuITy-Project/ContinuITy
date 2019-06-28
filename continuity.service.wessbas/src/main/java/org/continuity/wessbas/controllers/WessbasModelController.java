@@ -4,9 +4,9 @@ import static org.continuity.api.rest.RestApi.Wessbas.Model.ROOT;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_ANNOTATION;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.GET_APPLICATION;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.OVERVIEW;
-import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.UPLOAD;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.PERSIST;
 import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.REMOVE;
+import static org.continuity.api.rest.RestApi.Wessbas.Model.Paths.UPLOAD;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.wessbas.WessbasModelParser;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.continuity.wessbas.entities.WessbasBundle;
@@ -36,6 +37,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import springfox.documentation.annotations.ApiIgnore;
 import wessbas.commons.util.XmiEcoreHandler;
 
 /**
@@ -77,39 +81,40 @@ public class WessbasModelController {
 			return ResponseEntity.notFound().build();
 		}
 
-		String tag = storage.getTagForId(id);
+		AppId aid = storage.getAppIdForId(id);
 
-		return ResponseEntity.ok(new WorkloadModelPack(applicationName, id, tag));
+		return ResponseEntity.ok(new WorkloadModelPack(applicationName, id, aid));
 	}
-	
+
 	/**
-	 * Stores the provided workload model with the defined tag.
-	 * 
-	 * @param tag 
-	 * 				The tag of the stored model.
+	 * Stores the provided workload model with the defined app-id.
+	 *
+	 * @param aid
+	 *            The app-id of the stored model.
 	 * @param wessbasModel
-	 * 				The workload model.
+	 *            The workload model.
 	 * @return The new stored model.
 	 */
 	@RequestMapping(path = UPLOAD, method = RequestMethod.PUT)
-	public ResponseEntity<WorkloadModelPack> uploadModel(@PathVariable String tag, @RequestBody String workloadModel) {
-		
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<WorkloadModelPack> uploadModel(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestBody String workloadModel) {
+
 	    InputStream inputStream = new ByteArrayInputStream(workloadModel.getBytes());
-		
+
 		WessbasModelParser parser = new WessbasModelParser();
-		
+
 		m4jdsl.WorkloadModel wessbasModel;
 		try {
 			wessbasModel = parser.readWorkloadModel(inputStream);
 		} catch (IOException e) {
-			LOGGER.error("Exception while reading workload model with tag " + tag, e);
+			LOGGER.error("Exception while reading workload model with app-id " + aid, e);
 			throw new IllegalArgumentException("Exception while reading workload model! Content is not allowed.", e);
 		}
-		
-		WessbasBundle bundle = new WessbasBundle(new Date(), wessbasModel);
-		String storedItemId = storage.put(bundle, tag);
 
-		return ResponseEntity.ok(new WorkloadModelPack(applicationName, storedItemId, tag));
+		WessbasBundle bundle = new WessbasBundle(new Date(), wessbasModel);
+		String storedItemId = storage.put(bundle, aid);
+
+		return ResponseEntity.ok(new WorkloadModelPack(applicationName, storedItemId, aid));
 	}
 
 	/**

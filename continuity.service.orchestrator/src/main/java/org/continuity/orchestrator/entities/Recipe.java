@@ -11,6 +11,7 @@ import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.dsl.description.ForecastInput;
+import org.continuity.idpa.AppId;
 
 public class Recipe {
 
@@ -22,12 +23,12 @@ public class Recipe {
 
 	private int stepCounter = 1;
 
-	private final String tag;
+	private final AppId appId;
 
 	private LinkExchangeModel source;
 
 	private PropertySpecification properties;
-	
+
 	private ForecastInput forecastInput;
 
 	private final boolean longTermUse;
@@ -36,12 +37,12 @@ public class Recipe {
 
 	private ModularizationOptions modularizationOptions;
 
-	public Recipe(String orderId, String recipeId, String tag, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse, Set<String> testingContext, OrderOptions options,
+	public Recipe(String orderId, String recipeId, AppId aid, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse, Set<String> testingContext, OrderOptions options,
 			ModularizationOptions modularizationOptions, ForecastInput forecastInput) {
 		this.orderId = orderId;
 		this.recipeId = recipeId;
 		this.iterator = steps.listIterator(steps.size());
-		this.tag = tag;
+		this.appId = aid;
 		this.source = source;
 		this.longTermUse = longTermUse;
 		this.testingContext = testingContext;
@@ -66,8 +67,8 @@ public class Recipe {
 		return source;
 	}
 
-	public String getTag() {
-		return tag;
+	public AppId getAppId() {
+		return appId;
 	}
 
 	public boolean hasNext() {
@@ -84,7 +85,7 @@ public class Recipe {
 		String taskId = recipeId + "." + stepCounter++ + "-" + nextStep.getName();
 		TaskDescription task = new TaskDescription();
 		task.setTaskId(taskId);
-		task.setTag(tag);
+		task.setAppId(appId);
 		task.setSource(source);
 		task.setProperties(properties);
 		task.setForecastInput(forecastInput);
@@ -113,7 +114,7 @@ public class Recipe {
 			}
 		}
 	}
-	
+
 	public ForecastInput getForecastInput() {
 		return forecastInput;
 	}

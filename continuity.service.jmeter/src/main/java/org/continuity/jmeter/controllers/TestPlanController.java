@@ -12,6 +12,7 @@ import org.continuity.api.entities.config.LoadTestType;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MixedStorage;
+import org.continuity.idpa.AppId;
 import org.continuity.jmeter.transform.JMeterAnnotator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * REST endpoint for test plans.
@@ -70,26 +75,28 @@ public class TestPlanController {
 	 *
 	 * @param bundle
 	 *            {@link JMeterTestPlanBundle}
-	 * @param tag
-	 *            the corresponding tag
+	 * @param aid
+	 *            the corresponding app-id
 	 * @param annotate
 	 *            Indicates whether the test plan should be annotated with the IDPA stored for the
-	 *            specified tag.
+	 *            specified app-id.
 	 * @return a {@link LinkExchangeModel} containing the link
 	 */
 	@RequestMapping(value = POST, method = RequestMethod.POST)
-	public ResponseEntity<LinkExchangeModel> uploadTestPlan(@RequestBody JMeterTestPlanBundle bundle, @PathVariable String tag, @RequestParam(defaultValue = "false") boolean annotate) {
-		LOGGER.info("Received uploaded test plan with tag {}.", tag);
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<LinkExchangeModel> uploadTestPlan(@RequestBody JMeterTestPlanBundle bundle, @ApiIgnore @PathVariable("app-id") AppId aid,
+			@RequestParam(defaultValue = "false") boolean annotate) {
+		LOGGER.info("Received uploaded test plan with app-id {}.", aid);
 
 		if (annotate) {
-			LOGGER.info("Annotating test plan with tag {}.", tag);
+			LOGGER.info("Annotating test plan with app-id {}.", aid);
 
 			JMeterAnnotator annotator = new JMeterAnnotator(bundle.getTestPlan(), restTemplate);
-			ListedHashTree annotatedTestPlan = annotator.createAnnotatedTestPlan(Collections.singletonList(tag));
+			ListedHashTree annotatedTestPlan = annotator.createAnnotatedTestPlan(Collections.singletonList(aid));
 			bundle.setTestPlan(annotatedTestPlan);
 		}
 
-		String id = storage.put(bundle, tag);
+		String id = storage.put(bundle, aid);
 		return ResponseEntity.ok(new LinkExchangeModel().getLoadTestLinks().setType(LoadTestType.JMETER).setLink(RestApi.JMeter.TestPlan.GET.requestUrl(id).withoutProtocol().get()).parent());
 	}
 

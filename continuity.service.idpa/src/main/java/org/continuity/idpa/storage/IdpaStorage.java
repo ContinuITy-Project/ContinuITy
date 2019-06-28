@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.Idpa;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
@@ -79,56 +80,56 @@ public class IdpaStorage {
 		this.listeners.add(listener);
 	}
 
-	private void onApplicationChanged(String tag, VersionOrTimestamp version) {
-		listeners.forEach(l -> l.onApplicationChanged(tag, version));
+	private void onApplicationChanged(AppId aid, VersionOrTimestamp version) {
+		listeners.forEach(l -> l.onApplicationChanged(aid, version));
 	}
 
-	private void onAnnotationChanged(String tag, VersionOrTimestamp version) {
-		listeners.forEach(l -> l.onAnnotationChanged(tag, version));
+	private void onAnnotationChanged(AppId aid, VersionOrTimestamp version) {
+		listeners.forEach(l -> l.onAnnotationChanged(aid, version));
 	}
 
 	/**
-	 * Stores the specified application model with the specified tag.
+	 * Stores the specified application model with the specified app-id.
 	 *
-	 * @param tag
-	 *            The tag of the application model.
+	 * @param aid
+	 *            The app-id of the application model.
 	 * @param application
 	 *            The application model.
 	 * @throws IOException
 	 *             If errors during writing to files occur.
 	 */
-	public void save(String tag, Application application) throws IOException {
-		Path path = getDirPath(tag, application.getVersionOrTimestamp()).resolve(APPLICATION_FILE_NAME);
+	public void save(AppId aid, Application application) throws IOException {
+		Path path = getDirPath(aid, application.getVersionOrTimestamp()).resolve(APPLICATION_FILE_NAME);
 		appSerializer.writeToYaml(application, path);
 
 		LOGGER.debug("Wrote application model to {}.", path);
-		onApplicationChanged(tag, application.getVersionOrTimestamp());
+		onApplicationChanged(aid, application.getVersionOrTimestamp());
 	}
 
 	/**
-	 * Stores the specified annotation with the specified tag. Uses the version or timestamp of the
-	 * annotation, which needs to be present.
+	 * Stores the specified annotation with the specified app-id. Uses the version or timestamp of
+	 * the annotation, which needs to be present.
 	 *
-	 * @param tag
-	 *            The tag of the application model.
+	 * @param aid
+	 *            The app-id of the application model.
 	 * @param application
 	 *            The application model.
 	 * @throws IOException
 	 *             If errors during writing to files occur.
 	 */
-	public void save(String tag, ApplicationAnnotation annotation) throws IOException {
+	public void save(AppId aid, ApplicationAnnotation annotation) throws IOException {
 		if (annotation.getVersionOrTimestamp().isEmpty()) {
 			throw new IllegalArgumentException("Cannot store an annotation without a version or timestamp! Either needs to be set or passed as assitional argument.");
 		}
 
-		save(tag, annotation.getVersionOrTimestamp(), annotation);
+		save(aid, annotation.getVersionOrTimestamp(), annotation);
 	}
 
 	/**
-	 * Stores the specified annotation with the specified tag.
+	 * Stores the specified annotation with the specified app-id.
 	 *
-	 * @param tag
-	 *            The tag of the application model.
+	 * @param aid
+	 *            The app-id of the application model.
 	 * @param version
 	 *            The version or timestamp of the annotation.
 	 * @param application
@@ -136,76 +137,76 @@ public class IdpaStorage {
 	 * @throws IOException
 	 *             If errors during writing to files occur.
 	 */
-	private void save(String tag, VersionOrTimestamp version, ApplicationAnnotation annotation) throws IOException {
-		Path path = getDirPath(tag, version).resolve(ANNOTATION_FILE_NAME);
+	private void save(AppId aid, VersionOrTimestamp version, ApplicationAnnotation annotation) throws IOException {
+		Path path = getDirPath(aid, version).resolve(ANNOTATION_FILE_NAME);
 		annSerializer.writeToYaml(annotation, path);
 
 		LOGGER.debug("Wrote annotation model to {}.", path);
-		onAnnotationChanged(tag, version);
+		onAnnotationChanged(aid, version);
 	}
 
 	/**
-	 * Marks the annotation with the passed tag and version or timestamp to be broken.
+	 * Marks the annotation with the passed app-id and version or timestamp to be broken.
 	 *
-	 * @param tag
+	 * @param aid
 	 * @param version
 	 * @throws IOException
 	 */
-	public void markAsBroken(String tag, VersionOrTimestamp version) throws IOException {
-		Path path = getDirPath(tag, version).resolve(BROKEN_FILE_NAME);
+	public void markAsBroken(AppId aid, VersionOrTimestamp version) throws IOException {
+		Path path = getDirPath(aid, version).resolve(BROKEN_FILE_NAME);
 		Files.write(path, Collections.singletonList(BROKEN_CONTENT), StandardOpenOption.CREATE);
 	}
 
 	/**
-	 * Removes a potentially existing mark of the annotation with the passed tag and version or
+	 * Removes a potentially existing mark of the annotation with the passed app-id and version or
 	 * timestamp to be broken.
 	 *
-	 * @param tag
+	 * @param aid
 	 * @param version
 	 * @return {@code true} if there was a mark or {@code false} otherwise.
 	 * @throws IOException
 	 */
-	public boolean unmarkAsBroken(String tag, VersionOrTimestamp version) throws IOException {
-		Path path = getDirPath(tag, version).resolve(BROKEN_FILE_NAME);
+	public boolean unmarkAsBroken(AppId aid, VersionOrTimestamp version) throws IOException {
+		Path path = getDirPath(aid, version).resolve(BROKEN_FILE_NAME);
 		return Files.deleteIfExists(path);
 	}
 
 	/**
-	 * Returns whether the annotation with the passed tag and version or timestamp is marked as
+	 * Returns whether the annotation with the passed app-id and version or timestamp is marked as
 	 * broken.
 	 *
-	 * @param tag
+	 * @param aid
 	 * @return
 	 * @throws NotDirectoryException
 	 */
-	public boolean isBroken(String tag, VersionOrTimestamp version) {
-		return readLatestBefore(tag, version).checkAdditionalFlag(FLAG_BROKEN);
+	public boolean isBroken(AppId aid, VersionOrTimestamp version) {
+		return readLatestBefore(aid, version).checkAdditionalFlag(FLAG_BROKEN);
 	}
 
 	/**
 	 * Reads the latest IDPA.
 	 *
-	 * @param tag
-	 *            The tag of the IDPA.
+	 * @param aid
+	 *            The app-id of the IDPA.
 	 * @return An <b>immutable</b> IDPA.
 	 */
-	public Idpa readLatest(String tag) {
-		return readLatestBefore(tag, VersionOrTimestamp.MAX_VALUE);
+	public Idpa readLatest(AppId aid) {
+		return readLatestBefore(aid, VersionOrTimestamp.MAX_VALUE);
 	}
 
 	/**
 	 * Reads the latest IDPA that is older than the specified version.
 	 *
-	 * @param tag
-	 *            The tag of the IDPA.
+	 * @param aid
+	 *            The app-id of the IDPA.
 	 * @param version
 	 *            The version to compare with.
 	 * @return An <b>immutable</b> IDPA.
 	 * @throws IOException
 	 *             If an error during reading the IDPA occurs.
 	 */
-	public Idpa readLatestBefore(String tag, VersionOrTimestamp version) {
-		for (IdpaEntry entry : iterate(tag)) {
+	public Idpa readLatestBefore(AppId aid, VersionOrTimestamp version) {
+		for (IdpaEntry entry : iterate(aid)) {
 			if (!version.before(entry.getVersionOrTimestamp())) {
 				return entry;
 			}
@@ -217,18 +218,18 @@ public class IdpaStorage {
 	/**
 	 * Reads the oldest IDPA that is newer than the specified version.
 	 *
-	 * @param tag
-	 *            The tag of the IDPA.
+	 * @param aid
+	 *            The app-id of the IDPA.
 	 * @param version
 	 *            The version to compare with.
 	 * @return An <b>immutable</b> IDPA.
 	 * @throws IOException
 	 *             If an error during reading the IDPA occurs.
 	 */
-	public Idpa readOldestAfter(String tag, VersionOrTimestamp version) {
+	public Idpa readOldestAfter(AppId aid, VersionOrTimestamp version) {
 		IdpaEntry next = null;
 
-		for (IdpaEntry entry : iterate(tag)) {
+		for (IdpaEntry entry : iterate(aid)) {
 			if (!version.before(entry.getVersionOrTimestamp())) {
 				return next;
 			}
@@ -243,8 +244,8 @@ public class IdpaStorage {
 	 * Updates the version or timestamp of a application model. The new version is expected to be
 	 * before the old version.
 	 *
-	 * @param tag
-	 *            The tag of the application model.
+	 * @param aid
+	 *            The app-id of the application model.
 	 * @param oldVersion
 	 *            The old version or timestamp.
 	 * @param newVersion
@@ -256,44 +257,44 @@ public class IdpaStorage {
 	 * @throws IOException
 	 *             If something goes wrong during changing the version or timestamp.
 	 */
-	public void updateApplicationChange(String tag, VersionOrTimestamp oldVersion, VersionOrTimestamp newVersion) throws IllegalArgumentException, IOException {
+	public void updateApplicationChange(AppId aid, VersionOrTimestamp oldVersion, VersionOrTimestamp newVersion) throws IllegalArgumentException, IOException {
 		if (!newVersion.before(oldVersion)) {
-			throw new IllegalArgumentException("Cannot update application model with tag " + tag + " to version " + newVersion + "! This version is not before the original one: " + oldVersion);
+			throw new IllegalArgumentException("Cannot update application model with app-id " + aid + " to version " + newVersion + "! This version is not before the original one: " + oldVersion);
 		}
 
-		Idpa idpa = readLatestBefore(tag, oldVersion);
+		Idpa idpa = readLatestBefore(aid, oldVersion);
 		Application application = idpa.getApplication();
 
 		if (!oldVersion.equals(application.getVersionOrTimestamp())) {
-			throw new IllegalArgumentException("There is no application model with tag " + tag + " at version " + oldVersion + "!");
+			throw new IllegalArgumentException("There is no application model with app-id " + aid + " at version " + oldVersion + "!");
 		}
 
 		application.setVersionOrTimestamp(newVersion);
-		save(tag, application);
+		save(aid, application);
 
 		if (idpa.getAnnotation() != null) {
-			save(tag, newVersion, idpa.getAnnotation());
+			save(aid, newVersion, idpa.getAnnotation());
 		}
 
-		delete(tag, oldVersion);
+		delete(aid, oldVersion);
 	}
 
-	private void delete(String tag, VersionOrTimestamp version) throws IOException {
-		FileUtils.deleteDirectory(getDirPath(tag).resolve(version.toString()).toFile());
+	private void delete(AppId aid, VersionOrTimestamp version) throws IOException {
+		FileUtils.deleteDirectory(getDirPath(aid).resolve(version.toString()).toFile());
 	}
 
-	private Path getDirPath(String tag) throws NotDirectoryException {
-		Path dirPath = storagePath.resolve(tag);
+	private Path getDirPath(AppId aid) throws NotDirectoryException {
+		Path dirPath = storagePath.resolve(aid.toString());
 		checkAndCreateDirs(dirPath, true);
 		return dirPath;
 	}
 
-	private Path getDirPath(String tag, VersionOrTimestamp version) throws NotDirectoryException {
-		return getDirPath(tag, version, true);
+	private Path getDirPath(AppId aid, VersionOrTimestamp version) throws NotDirectoryException {
+		return getDirPath(aid, version, true);
 	}
 
-	private Path getDirPath(String tag, VersionOrTimestamp version, boolean createDirs) throws NotDirectoryException {
-		Path dirPath = getDirPath(tag).resolve(version.toString());
+	private Path getDirPath(AppId aid, VersionOrTimestamp version, boolean createDirs) throws NotDirectoryException {
+		Path dirPath = getDirPath(aid).resolve(version.toString());
 		checkAndCreateDirs(dirPath, createDirs);
 		return dirPath;
 	}
@@ -316,20 +317,20 @@ public class IdpaStorage {
 	 * created version. The models are traversed in descending order. That is, the newest model
 	 * comes first.
 	 *
-	 * @param tag
-	 *            The tag of the application models to be iterated.
+	 * @param aid
+	 *            The app-id of the application models to be iterated.
 	 * @return An iterator.
 	 */
-	public Iterable<IdpaEntry> iterate(String tag) {
-		return new ApplicationIterable(tag);
+	public Iterable<IdpaEntry> iterate(AppId aid) {
+		return new ApplicationIterable(aid);
 	}
 
 	private class ApplicationIterable implements Iterable<IdpaEntry> {
 
-		private final String tag;
+		private final AppId aid;
 
-		public ApplicationIterable(String tag) {
-			this.tag = tag;
+		public ApplicationIterable(AppId aid) {
+			this.aid = aid;
 		}
 
 		/**
@@ -338,9 +339,9 @@ public class IdpaStorage {
 		@Override
 		public Iterator<IdpaEntry> iterator() {
 			try {
-				return new ApplicationIterator(tag);
+				return new ApplicationIterator(aid);
 			} catch (NotDirectoryException e) {
-				LOGGER.error("Cannot iterate over application models of tag {}!", tag);
+				LOGGER.error("Cannot iterate over application models of app-id {}!", aid);
 				return null;
 			}
 		}
@@ -349,14 +350,14 @@ public class IdpaStorage {
 
 	private class ApplicationIterator implements Iterator<IdpaEntry> {
 
-		private final String tag;
+		private final AppId aid;
 		private final Iterator<VersionOrTimestamp> versionIterator;
 		private final Map<VersionOrTimestamp, Path> appPerVersion;
 
-		public ApplicationIterator(String tag) throws NotDirectoryException {
-			this.tag = tag;
+		public ApplicationIterator(AppId aid) throws NotDirectoryException {
+			this.aid = aid;
 
-			Path dir = getDirPath(tag);
+			Path dir = getDirPath(aid);
 			List<VersionOrTimestamp> versions = Arrays.stream(dir.toFile().list()).filter(d -> !d.startsWith(".")).map(this::extractVersion).filter(Objects::nonNull).collect(Collectors.toList());
 			Collections.sort(versions);
 			this.appPerVersion = findApplicationPerVersion(dir, versions);
@@ -408,9 +409,9 @@ public class IdpaStorage {
 
 			Path path;
 			try {
-				path = getDirPath(tag).resolve(folder);
+				path = getDirPath(aid).resolve(folder);
 			} catch (NotDirectoryException e) {
-				LOGGER.error("Could not read application {} for tag {}! Returning null.", folder, tag);
+				LOGGER.error("Could not read application {} for app-id {}! Returning null.", folder, aid);
 				LOGGER.error("Exception: ", e);
 				return null;
 			}

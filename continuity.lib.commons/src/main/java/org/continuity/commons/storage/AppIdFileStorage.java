@@ -4,20 +4,21 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import org.continuity.idpa.AppId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Stores artifacts on the file storages based on tags.
+ * Stores artifacts on the file storages based on app-ids.
  *
  * @author Henning Schulz
  *
  */
-public class TagFileStorage<T> {
+public class AppIdFileStorage<T> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(TagFileStorage.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(AppIdFileStorage.class);
 
 	private static final String FILE_EXT = ".json";
 
@@ -27,7 +28,7 @@ public class TagFileStorage<T> {
 
 	private final Class<T> artifactType;
 
-	public TagFileStorage(Path storagePath, Class<T> artifactType) {
+	public AppIdFileStorage(Path storagePath, Class<T> artifactType) {
 		this.storagePath = storagePath;
 		storagePath.toFile().mkdirs();
 
@@ -36,12 +37,12 @@ public class TagFileStorage<T> {
 		LOGGER.info("Using storage path {}.", storagePath.toAbsolutePath());
 	}
 
-	public void store(T artifact, String tag) throws IOException {
-		mapper.writerWithDefaultPrettyPrinter().writeValue(storagePath.resolve(tag + FILE_EXT).toFile(), artifact);
+	public void store(T artifact, AppId aid) throws IOException {
+		mapper.writerWithDefaultPrettyPrinter().writeValue(storagePath.resolve(aid + FILE_EXT).toFile(), artifact);
 	}
 
-	public T read(String tag) throws IOException {
-		File file = storagePath.resolve(tag + FILE_EXT).toFile();
+	public T read(AppId aid) throws IOException {
+		File file = storagePath.resolve(aid + FILE_EXT).toFile();
 
 		if (file.exists()) {
 			return mapper.readValue(file, artifactType);

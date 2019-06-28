@@ -2,28 +2,31 @@ package org.continuity.forecast.context;
 
 import java.util.List;
 
+import org.continuity.idpa.AppId;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * @author Alper Hidiroglu
  */
-@JsonPropertyOrder({ "tag", "covar-name", "values" })
+@JsonPropertyOrder({ "app-id", "covar-name", "values" })
 public class CovariateData {
-	
-	private String tag;
+
+	@JsonProperty("app-id")
+	private AppId appId;
 
 	@JsonProperty("covar-name")
 	private String covarName;
-	
+
 	private List<CovariateValue> values;
-	
-	public String getTag() {
-		return tag;
+
+	public AppId getAppId() {
+		return appId;
 	}
 
-	public void setTag(String tag) {
-		this.tag = tag;
+	public void setAppId(AppId appId) {
+		this.appId = appId;
 	}
 
 	public String getCovarName() {
@@ -41,10 +44,10 @@ public class CovariateData {
 	public void setValues(List<CovariateValue> values) {
 		this.values = values;
 	}
-	
+
 	@Override
 	public String toString() {
-		return "CovariateData [tag=" + tag + ", covarName=" + covarName + ", values=" + values + "]";
+		return "CovariateData [app-id=" + appId + ", covarName=" + covarName + ", values=" + values + "]";
 	}
 
 }
