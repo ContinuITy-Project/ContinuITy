@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.api.rest.CustomHeaders;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
@@ -31,7 +32,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiParam;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * @author Henning Schulz
@@ -57,15 +61,16 @@ public class AnnotationController {
 	 * Retrieves the latest annotation if it is not broken. If the timestamp is {@code null}, the
 	 * latest version will be returned.
 	 *
-	 * @param tag
-	 *            The tag of the annotation.
+	 * @param aid
+	 *            The app-id of the annotation.
 	 * @param version
 	 *            The timestamp for which the application model is searched (optional).
 	 * @return {@link ResponseEntity} holding the annotation. It will hold a header
 	 *         {@link CustomHeaders#BROKEN} indicating whether the IDPA is broken.
 	 */
 	@RequestMapping(path = GET, method = RequestMethod.GET)
-	public ResponseEntity<?> getAnnotation(@PathVariable("tag") String tag, @RequestParam(required = false) String version) {
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<?> getAnnotation(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) String version) {
 		VersionOrTimestamp vot = null;
 
 		if (version != null) {
@@ -82,40 +87,41 @@ public class AnnotationController {
 
 		try {
 			if (vot == null) {
-				annotation = storageManager.read(tag);
+				annotation = storageManager.read(aid);
 			} else {
-				annotation = storageManager.read(tag, vot);
+				annotation = storageManager.read(aid, vot);
 			}
 		} catch (IOException e) {
-			LOGGER.error("Error during getting annotation with tag " + tag, e);
+			LOGGER.error("Error during getting annotation with app-id " + aid, e);
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
 		if (annotation == null) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		} else {
-			boolean broken = ((vot == null) && storageManager.isBroken(tag)) || ((vot != null) && storageManager.isBroken(tag, vot));
+			boolean broken = ((vot == null) && storageManager.isBroken(aid)) || ((vot != null) && storageManager.isBroken(aid, vot));
 			return ResponseEntity.ok().header(CustomHeaders.BROKEN, Boolean.toString(broken)).body(annotation);
 		}
 	}
 
 	/**
-	 * Updates the annotation stored with the specified tag. If the annotation is invalid with
+	 * Updates the annotation stored with the specified app-id. If the annotation is invalid with
 	 * respect to the system model, it is rejected.
 	 *
-	 * @param tag
+	 * @param aid
 	 * @param version
 	 * @param annotation
 	 * @return
 	 */
 	@RequestMapping(path = UPDATE, method = RequestMethod.POST)
-	public ResponseEntity<String> updateAnnotation(@PathVariable("tag") String tag, @RequestBody ApplicationAnnotation annotation) {
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<String> updateAnnotation(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestBody ApplicationAnnotation annotation) {
 		AnnotationValidityReport report = null;
 
 		try {
-			report = storageManager.saveOrUpdate(tag, annotation);
+			report = storageManager.saveOrUpdate(aid, annotation);
 		} catch (IOException e) {
-			LOGGER.error("Error during updating annotation with tag {}!", tag);
+			LOGGER.error("Error during updating annotation with app-id {}!", aid);
 			e.printStackTrace();
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -128,18 +134,20 @@ public class AnnotationController {
 	}
 
 	/**
-	 * Updates the annotation stored with the specified tag. If the annotation is invalid with
+	 * Updates the annotation stored with the specified app-id. If the annotation is invalid with
 	 * respect to the system model, it is rejected.
 	 *
-	 * @param tag
-	 *            Tag of the annotation.
+	 * @param aid
+	 *            app-id of the annotation.
 	 * @param version
 	 * @param annotation
 	 *            The annotation model in YAML format.
 	 * @return
 	 */
 	@RequestMapping(path = UPLOAD, method = RequestMethod.PUT)
-	public ResponseEntity<String> updateAnnotationYaml(@PathVariable("tag") String tag, @ApiParam(value = "The annotation model in YAML format.", required = true) @RequestBody String annotation) {
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<String> updateAnnotationYaml(@ApiIgnore @PathVariable("app-id") AppId aid,
+			@ApiParam(value = "The annotation model in YAML format.", required = true) @RequestBody String annotation) {
 		AnnotationValidityReport report = null;
 
 		IdpaYamlSerializer<ApplicationAnnotation> serializer = new IdpaYamlSerializer<>(ApplicationAnnotation.class);
@@ -147,15 +155,15 @@ public class AnnotationController {
 		try {
 			idpaAnnotation = serializer.readFromYamlString(annotation);
 		} catch (IOException e) {
-			LOGGER.error("Exception during reading annotation model with tag {}!", tag);
+			LOGGER.error("Exception during reading annotation model with app-id {}!", aid);
 			LOGGER.error("Exception: ", e);
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
 		try {
-			report = storageManager.saveOrUpdate(tag, idpaAnnotation);
+			report = storageManager.saveOrUpdate(aid, idpaAnnotation);
 		} catch (IOException e) {
-			LOGGER.error("Error during updating annotation with tag {}!", tag);
+			LOGGER.error("Error during updating annotation with app-id {}!", aid);
 			LOGGER.error("Exception: ", e);
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -170,17 +178,18 @@ public class AnnotationController {
 	/**
 	 * Returns the timestamps of all annotations that are broken due to a certain application.
 	 *
-	 * @param tag
-	 *            The tag.
+	 * @param aid
+	 *            The app-id.
 	 * @param version
 	 *            The timestamp of the application.
 	 * @return A list with the timestamps of all broken annotations.
 	 */
 	@RequestMapping(path = GET_BROKEN, method = RequestMethod.GET)
-	public ResponseEntity<List<String>> getBroken(@PathVariable("tag") String tag, @RequestParam String version) {
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<List<String>> getBroken(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam String version) {
 		List<String> broken;
 		try {
-			broken = storageManager.getBrokenForApplication(tag, VersionOrTimestamp.fromString(version)).stream().map(VersionOrTimestamp::toString).collect(Collectors.toList());
+			broken = storageManager.getBrokenForApplication(aid, VersionOrTimestamp.fromString(version)).stream().map(VersionOrTimestamp::toString).collect(Collectors.toList());
 		} catch (ParseException e) {
 			LOGGER.error("Could not parse timestamp!", e);
 

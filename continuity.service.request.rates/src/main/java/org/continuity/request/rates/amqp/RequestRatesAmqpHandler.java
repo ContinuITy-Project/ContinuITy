@@ -78,7 +78,7 @@ public class RequestRatesAmqpHandler {
 	 */
 	@RabbitListener(queues = RabbitMqConfig.TASK_CREATE_QUEUE_NAME)
 	public void onMonitoringDataAvailable(TaskDescription task) {
-		LOGGER.info("Task {}: Received new task to be processed for tag '{}'", task.getTaskId(), task.getTag());
+		LOGGER.info("Task {}: Received new task to be processed for app-id '{}'", task.getTaskId(), task.getAppId());
 
 		TaskReport report;
 		MeasurementDataLinks link = task.getSource().getMeasurementDataLinks();
@@ -142,9 +142,9 @@ public class RequestRatesAmqpHandler {
 		} else {
 			Application application;
 			try {
-				application = restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(task.getTag()).get(), Application.class);
+				application = restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(task.getAppId()).get(), Application.class);
 			} catch (HttpStatusCodeException e) {
-				LOGGER.info("Could not get application model for tag {}. Response: {} - {}.", task.getTag(), e.getRawStatusCode(), e.getStatusCode().getReasonPhrase());
+				LOGGER.info("Could not get application model for app-id {}. Response: {} - {}.", task.getAppId(), e.getRawStatusCode(), e.getStatusCode().getReasonPhrase());
 				application = null;
 			}
 
@@ -152,11 +152,11 @@ public class RequestRatesAmqpHandler {
 		}
 
 		RequestRatesModel model = calculator.calculate(records);
-		String storageId = storage.put(model, task.getTag(), task.isLongTermUse());
+		String storageId = storage.put(model, task.getAppId(), task.isLongTermUse());
 
 		LOGGER.info("Task {}: Created a new request rates model with id '{}'.", task.getTaskId(), storageId);
 
-		WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getTag());
+		WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getAppId());
 		TaskReport report = TaskReport.successful(task.getTaskId(), responsePack);
 
 		if (calculator.useNames()) {

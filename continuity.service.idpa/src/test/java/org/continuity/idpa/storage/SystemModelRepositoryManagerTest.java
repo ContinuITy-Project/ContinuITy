@@ -9,14 +9,13 @@ import org.continuity.api.entities.report.ApplicationChange;
 import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.api.entities.report.ModelElementReference;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.Idpa;
 import org.continuity.idpa.StaticIdpaTestInstance;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.Endpoint;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.idpa.application.Parameter;
-import org.continuity.idpa.storage.ApplicationStorageManager;
-import org.continuity.idpa.storage.IdpaStorage;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -46,9 +45,9 @@ public class SystemModelRepositoryManagerTest {
 	}
 
 	private void testWithSameModel(Application systemModel) {
-		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, systemModel, null));
+		Mockito.when(repositoryMock.readLatestBefore(Mockito.any(), Mockito.any())).thenReturn(new Idpa(null, systemModel, null));
 
-		ApplicationChangeReport report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", systemModel);
+		ApplicationChangeReport report = manager.saveOrUpdate(AppId.fromString("SystemModelRepositoryManagerTest"), systemModel);
 		assertThat(report.getApplicationChanges()).as("Expect the changes of the report to be empty.").isEmpty();
 		assertThat(report.getIgnoredApplicationChanges()).as("Expect the ignored changes of the report to be empty.").isEmpty();
 	}
@@ -59,9 +58,9 @@ public class SystemModelRepositoryManagerTest {
 		Application secondModel = StaticIdpaTestInstance.SECOND.getApplication();
 		Application thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 
-		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
+		Mockito.when(repositoryMock.readLatestBefore(Mockito.any(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
 
-		ApplicationChangeReport report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", secondModel);
+		ApplicationChangeReport report = manager.saveOrUpdate(AppId.fromString("SystemModelRepositoryManagerTest"), secondModel);
 		assertThat(report.getApplicationChanges().stream().filter(change -> change.getType() == ApplicationChangeType.ENDPOINT_ADDED)).extracting(ApplicationChange::getChangedElement)
 				.extracting(ModelElementReference::getId).as("Expected that the interface logout has been added").containsExactly("logout");
 		assertThat(report.getApplicationChanges().stream().filter(change -> change.getType() != ApplicationChangeType.ENDPOINT_ADDED))
@@ -70,7 +69,7 @@ public class SystemModelRepositoryManagerTest {
 		assertThat(report.getIgnoredApplicationChanges()).as("Expect the ignored changes of the report to be empty.").isEmpty();
 
 		ArgumentCaptor<Application> modelCaptor = ArgumentCaptor.forClass(Application.class);
-		Mockito.verify(repositoryMock).save(Mockito.eq("SystemModelRepositoryManagerTest"), modelCaptor.capture());
+		Mockito.verify(repositoryMock).save(Mockito.eq(AppId.fromString("SystemModelRepositoryManagerTest")), modelCaptor.capture());
 		assertThat(modelCaptor.getValue().getTimestamp()).as("Expected the date of the second model").isEqualTo(secondModel.getTimestamp());
 		assertThat(modelCaptor.getValue().getEndpoints()).as("Expected the endpoints of the second model").isEqualTo(secondModel.getEndpoints());
 
@@ -79,9 +78,9 @@ public class SystemModelRepositoryManagerTest {
 		secondModel = StaticIdpaTestInstance.SECOND.getApplication();
 		thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 		Mockito.reset(repositoryMock);
-		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
+		Mockito.when(repositoryMock.readLatestBefore(Mockito.any(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
 
-		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", secondModel,
+		report = manager.saveOrUpdate(AppId.fromString("SystemModelRepositoryManagerTest"), secondModel,
 				EnumSet.of(ApplicationChangeType.ENDPOINT_ADDED, ApplicationChangeType.PARAMETER_ADDED, ApplicationChangeType.PARAMETER_REMOVED));
 		assertThat(report.getIgnoredApplicationChanges().stream().filter(change -> change.getType() == ApplicationChangeType.ENDPOINT_ADDED)).extracting(ApplicationChange::getChangedElement)
 				.extracting(ModelElementReference::getId).as("Expected that the interface logout has been added to the ignored changes").containsExactly("logout");
@@ -90,16 +89,16 @@ public class SystemModelRepositoryManagerTest {
 				.extracting(ModelElementReference::getId).containsExactlyInAnyOrder("logoutuser", "user");
 		assertThat(report.getApplicationChanges()).as("Expect the changes of the report to be empty.").isEmpty();
 
-		Mockito.verify(repositoryMock, Mockito.times(0)).save(Mockito.anyString(), Mockito.any(Application.class));
+		Mockito.verify(repositoryMock, Mockito.times(0)).save(Mockito.any(), Mockito.any(Application.class));
 
 		// Removing an interface at the same time
 		firstModel = StaticIdpaTestInstance.FIRST.getApplication();
 		secondModel = StaticIdpaTestInstance.SECOND.getApplication();
 		thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 		Mockito.reset(repositoryMock);
-		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
+		Mockito.when(repositoryMock.readLatestBefore(Mockito.any(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
 
-		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", thirdModel, EnumSet.of(ApplicationChangeType.ENDPOINT_ADDED));
+		report = manager.saveOrUpdate(AppId.fromString("SystemModelRepositoryManagerTest"), thirdModel, EnumSet.of(ApplicationChangeType.ENDPOINT_ADDED));
 		assertThat(report.getIgnoredApplicationChanges().stream().filter(change -> change.getType() == ApplicationChangeType.ENDPOINT_ADDED)).extracting(ApplicationChange::getChangedElement)
 				.extracting(ModelElementReference::getId).as("Expected that the interface logout has been added to the ignored changes").containsExactly("logout");
 		assertThat(report.getIgnoredApplicationChanges().stream().filter(change -> change.getType() != ApplicationChangeType.ENDPOINT_ADDED))
@@ -109,7 +108,7 @@ public class SystemModelRepositoryManagerTest {
 		assertThat(report.getApplicationChanges().stream().filter(change -> change.getType() != ApplicationChangeType.ENDPOINT_REMOVED)).extracting(ApplicationChange::getChangedElement)
 				.as("Expected that there are no other changes than the removal of login").isEmpty();
 
-		Mockito.verify(repositoryMock).save(Mockito.eq("SystemModelRepositoryManagerTest"), modelCaptor.capture());
+		Mockito.verify(repositoryMock).save(Mockito.eq(AppId.fromString("SystemModelRepositoryManagerTest")), modelCaptor.capture());
 		assertThat(modelCaptor.getValue().getEndpoints()).as("Expected the stored model to be empty").isEmpty();
 	}
 
@@ -119,15 +118,15 @@ public class SystemModelRepositoryManagerTest {
 		Application secondModel = StaticIdpaTestInstance.SECOND.getApplication();
 		Application thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 
-		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, secondModel, null));
+		Mockito.when(repositoryMock.readLatestBefore(Mockito.any(), Mockito.any())).thenReturn(new Idpa(null, secondModel, null));
 
-		ApplicationChangeReport report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", thirdModel);
+		ApplicationChangeReport report = manager.saveOrUpdate(AppId.fromString("SystemModelRepositoryManagerTest"), thirdModel);
 		assertThat(report.getApplicationChanges().stream().filter(change -> change.getType() == ApplicationChangeType.ENDPOINT_REMOVED)).extracting(ApplicationChange::getChangedElement)
 				.extracting(ModelElementReference::getId).as("Expected that the interface login has been removed").containsExactly("login");
 		assertThat(report.getIgnoredApplicationChanges()).as("Expect the ignored changes of the report to be empty.").isEmpty();
 
 		ArgumentCaptor<Application> modelCaptor = ArgumentCaptor.forClass(Application.class);
-		Mockito.verify(repositoryMock).save(Mockito.eq("SystemModelRepositoryManagerTest"), modelCaptor.capture());
+		Mockito.verify(repositoryMock).save(Mockito.eq(AppId.fromString("SystemModelRepositoryManagerTest")), modelCaptor.capture());
 		assertThat(modelCaptor.getValue().getTimestamp()).as("Expected the date of the third model").isEqualTo(thirdModel.getTimestamp());
 		assertThat(modelCaptor.getValue().getEndpoints()).as("Expected the endpoints of the third model").isEqualTo(thirdModel.getEndpoints());
 
@@ -138,9 +137,9 @@ public class SystemModelRepositoryManagerTest {
 		secondModel = StaticIdpaTestInstance.SECOND.getApplication();
 		thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 		Mockito.reset(repositoryMock);
-		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, secondModel, null));
+		Mockito.when(repositoryMock.readLatestBefore(Mockito.any(), Mockito.any())).thenReturn(new Idpa(null, secondModel, null));
 
-		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", thirdModel, EnumSet.of(ApplicationChangeType.ENDPOINT_REMOVED));
+		report = manager.saveOrUpdate(AppId.fromString("SystemModelRepositoryManagerTest"), thirdModel, EnumSet.of(ApplicationChangeType.ENDPOINT_REMOVED));
 		assertThat(report.getIgnoredApplicationChanges().stream().filter(change -> change.getType() == ApplicationChangeType.ENDPOINT_REMOVED)).extracting(ApplicationChange::getChangedElement)
 				.extracting(ModelElementReference::getId).as("Expected that the interface login has been removed as an ignored change").containsExactly("login");
 		assertThat(report.getIgnoredApplicationChanges().stream().filter(change -> change.getType() != ApplicationChangeType.ENDPOINT_REMOVED))
@@ -151,9 +150,9 @@ public class SystemModelRepositoryManagerTest {
 		secondModel = StaticIdpaTestInstance.SECOND.getApplication();
 		thirdModel = StaticIdpaTestInstance.THIRD.getApplication();
 		Mockito.reset(repositoryMock);
-		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
+		Mockito.when(repositoryMock.readLatestBefore(Mockito.any(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
 
-		report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", thirdModel, EnumSet.of(ApplicationChangeType.ENDPOINT_REMOVED));
+		report = manager.saveOrUpdate(AppId.fromString("SystemModelRepositoryManagerTest"), thirdModel, EnumSet.of(ApplicationChangeType.ENDPOINT_REMOVED));
 		assertThat(report.getIgnoredApplicationChanges().stream().filter(change -> change.getType() == ApplicationChangeType.ENDPOINT_REMOVED)).extracting(ApplicationChange::getChangedElement)
 				.extracting(ModelElementReference::getId).as("Expected that the interface login has been removed as an ignored change").containsExactly("login");
 		assertThat(report.getIgnoredApplicationChanges().stream().filter(change -> change.getType() != ApplicationChangeType.ENDPOINT_REMOVED))
@@ -163,7 +162,7 @@ public class SystemModelRepositoryManagerTest {
 		assertThat(report.getApplicationChanges().stream().filter(change -> change.getType() != ApplicationChangeType.ENDPOINT_ADDED)).extracting(ApplicationChange::getChangedElement)
 				.as("Expected that there are no other changes than the addition of logout").isEmpty();
 
-		Mockito.verify(repositoryMock).save(Mockito.eq("SystemModelRepositoryManagerTest"), modelCaptor.capture());
+		Mockito.verify(repositoryMock).save(Mockito.eq(AppId.fromString("SystemModelRepositoryManagerTest")), modelCaptor.capture());
 		assertThat(modelCaptor.getValue().getEndpoints()).extracting(Endpoint::getId).as("Expected the stored model to contain exactly the interfaces login and logout")
 				.containsExactlyInAnyOrder("login", "logout");
 	}
@@ -173,8 +172,8 @@ public class SystemModelRepositoryManagerTest {
 		Application firstModel = StaticIdpaTestInstance.FIRST.getApplication();
 		Application secondModel = StaticIdpaTestInstance.SECOND.getApplication();
 
-		Mockito.when(repositoryMock.readLatestBefore(Mockito.anyString(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
-		ApplicationChangeReport report = manager.saveOrUpdate("SystemModelRepositoryManagerTest", secondModel, EnumSet.of(ApplicationChangeType.PARAMETER_REMOVED));
+		Mockito.when(repositoryMock.readLatestBefore(Mockito.any(), Mockito.any())).thenReturn(new Idpa(null, firstModel, null));
+		ApplicationChangeReport report = manager.saveOrUpdate(AppId.fromString("SystemModelRepositoryManagerTest"), secondModel, EnumSet.of(ApplicationChangeType.PARAMETER_REMOVED));
 
 		assertThat(report.getApplicationChanges()).filteredOn(change -> change.getType() == ApplicationChangeType.PARAMETER_ADDED).extracting(ApplicationChange::getChangedElement)
 				.extracting(ModelElementReference::getId).containsExactly("logoutuser");
@@ -183,7 +182,7 @@ public class SystemModelRepositoryManagerTest {
 				.extracting(ModelElementReference::getId).containsExactly("user");
 
 		ArgumentCaptor<Application> modelCaptor = ArgumentCaptor.forClass(Application.class);
-		Mockito.verify(repositoryMock).save(Mockito.eq("SystemModelRepositoryManagerTest"), modelCaptor.capture());
+		Mockito.verify(repositoryMock).save(Mockito.eq(AppId.fromString("SystemModelRepositoryManagerTest")), modelCaptor.capture());
 
 		assertThat(modelCaptor.getValue().getEndpoints()).filteredOn(interf -> "login".equals(interf.getId())).extracting(interf -> (HttpEndpoint) interf).flatExtracting(Endpoint::getParameters)
 				.extracting(Parameter::getId).containsExactlyInAnyOrder("user", "logoutuser");

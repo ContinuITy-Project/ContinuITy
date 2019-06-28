@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.api.rest.RestApi;
 import org.continuity.api.rest.RestApi.Idpa;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.slf4j.Logger;
@@ -33,27 +34,27 @@ public class JMeterAnnotator {
 	 *
 	 *
 	 * @param testPlanPack
-	 * @param tags
+	 * @param appIds
 	 * @return
 	 */
-	public ListedHashTree createAnnotatedTestPlan(List<String> tags) {
+	public ListedHashTree createAnnotatedTestPlan(List<AppId> appIds) {
 		new UserDefinedDefaultVariablesCleanerAnnotator().cleanVariables(testPlan);
 
-		for (String tag : tags) {
+		for (AppId aid : appIds) {
 			ApplicationAnnotation annotation;
 			try {
-				annotation = restTemplate.getForObject(Idpa.Annotation.GET.requestUrl(tag).get(), ApplicationAnnotation.class);
+				annotation = restTemplate.getForObject(Idpa.Annotation.GET.requestUrl(aid).get(), ApplicationAnnotation.class);
 			} catch (HttpStatusCodeException e) {
 				LOGGER.error("Received a non-200 response: {} ({}) - {}", e.getStatusCode(), e.getStatusCode().getReasonPhrase(), e.getResponseBodyAsString());
 				continue;
 			}
 			if (annotation == null) {
-				LOGGER.error("Annotation with tag {} is null! Aborting.", tag);
+				LOGGER.error("Annotation with app-id {} is null! Aborting.", aid);
 				continue;
 			}
-			Application application = restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(tag).get(), Application.class);
+			Application application = restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid).get(), Application.class);
 			if (application == null) {
-				LOGGER.error("Application with tag {} is null! Aborting.", tag);
+				LOGGER.error("Application with app-id {} is null! Aborting.", aid);
 				continue;
 			}
 

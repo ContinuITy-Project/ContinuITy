@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.rest.RestApi;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.springframework.web.client.RestTemplate;
@@ -32,7 +33,7 @@ public class ModularizationUtils {
 	 *            The rest template to use for retrieving application models.
 	 * @return The list of target hosts.
 	 */
-	public static Collection<String> getTargetHostNames(Map<String, String> services, RestTemplate restTemplate) {
+	public static Collection<String> getTargetHostNames(Map<AppId, String> services, RestTemplate restTemplate) {
 		if (!services.values().contains("undefined")) {
 			return services.values();
 		} else {
@@ -53,7 +54,7 @@ public class ModularizationUtils {
 	 *            The rest template to use for retrieving application models.
 	 * @return The list of {@link Application}.
 	 */
-	public static Collection<Application> getServiceApplicationModels(Map<String, String> services, RestTemplate restTemplate) {
+	public static Collection<Application> getServiceApplicationModels(Map<AppId, String> services, RestTemplate restTemplate) {
 		return services.keySet().stream().map(t -> restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(t).get(), Application.class)).collect(Collectors.toList());
 	}
 

@@ -24,6 +24,7 @@ import org.continuity.cli.process.JMeterProcess;
 import org.continuity.cli.storage.OrderStorage;
 import org.continuity.cli.utils.ResponseBuilder;
 import org.continuity.commons.jmeter.TestPlanWriter;
+import org.continuity.idpa.AppId;
 import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -132,9 +133,9 @@ public class JMeterCommands {
 	}
 
 	@ShellMethod(key = { "jmeter upload" }, value = "Uploads a locally stored JMeter load test and potentially annotates it.")
-	public String uploadLoadTest(String loadTestPath, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
+	public String uploadLoadTest(String loadTestPath, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
 			@ShellOption(value = { "--annotate", "-a" }, defaultValue = "false") boolean annotate) throws IOException {
-		tag = contextManager.getTagOrFail(tag);
+		AppId aid = contextManager.getAppIdOrFail(appId);
 
 		String error = initTestPlanWriter(propertiesProvider.getProperty(KEY_JMETER_HOME));
 
@@ -171,14 +172,14 @@ public class JMeterCommands {
 		String continuityHost = propertiesProvider.getProperty(PropertiesProvider.KEY_URL);
 
 		ResponseEntity<LinkExchangeModel> response = restTemplate.postForEntity(
-				RestApi.Orchestrator.Loadtest.POST.requestUrl("jmeter", tag).withHost(continuityHost).withQuery("annotate", Boolean.toString(annotate)).get(), bundle,
+				RestApi.Orchestrator.Loadtest.POST.requestUrl("jmeter", aid).withHost(continuityHost).withQuery("annotate", Boolean.toString(annotate)).get(), bundle,
 				LinkExchangeModel.class);
 
 		if (response.getStatusCode().is2xxSuccessful()) {
-			return new StringBuilder().append("Successfully uploaded JMeter test plan with tag ").append(tag).append(" at ").append(testPlanDir.toAbsolutePath().toString()).append("\n")
+			return new StringBuilder().append("Successfully uploaded JMeter test plan with app-id ").append(aid).append(" at ").append(testPlanDir.toAbsolutePath().toString()).append("\n")
 					.append(mapper.writeValueAsString(response.getBody())).toString();
 		} else {
-			return new StringBuilder().append("Could not upload JMeter test plan with tag ").append(tag).append(" at ").append(testPlanDir.toAbsolutePath().toString()).append("\nResponse was: ")
+			return new StringBuilder().append("Could not upload JMeter test plan with app-id ").append(aid).append(" at ").append(testPlanDir.toAbsolutePath().toString()).append("\nResponse was: ")
 					.append(response.getStatusCodeValue()).append(" - ").append(response.getStatusCode()).append("\n").append(response.getBody()).toString();
 		}
 	}

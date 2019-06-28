@@ -26,6 +26,7 @@ import org.continuity.dsl.description.FutureNumbers;
 import org.continuity.dsl.description.FutureOccurrences;
 import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.dsl.description.Measurement;
+import org.continuity.idpa.AppId;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
@@ -35,7 +36,7 @@ import org.rosuda.JRI.Rengine;
 
 /**
  * Manager for the workload forecasting.
- * 
+ *
  * @author Alper Hidiroglu
  *
  */
@@ -45,12 +46,12 @@ public class ForecastPipelineManager {
 
 	private InfluxDB influxDb;
 
-	private String tag;
+	private AppId aid;
 
 	private ForecastInput forecastInput;
 
 	private int workloadIntensity;
-	
+
 	private IntensityCalculationInterval interval;
 
 
@@ -65,9 +66,9 @@ public class ForecastPipelineManager {
 	/**
 	 * Constructor.
 	 */
-	public ForecastPipelineManager(InfluxDB influxDb, String tag, ForecastInput forecastInput) {
+	public ForecastPipelineManager(InfluxDB influxDb, AppId aid, ForecastInput forecastInput) {
 		this.influxDb = influxDb;
-		this.tag = tag;
+		this.aid = aid;
 		this.forecastInput = forecastInput;
 		if(null == this.forecastInput.getForecastOptions().getInterval()) {
 			interval = IntensityCalculationInterval.SECOND;
@@ -77,7 +78,7 @@ public class ForecastPipelineManager {
 	}
 
 	public void setupDatabase() {
-		String dbName = this.tag;
+		String dbName = this.aid.toString();
 		influxDb.setDatabase(dbName);
 		influxDb.setRetentionPolicy("autogen");
 	}
@@ -96,7 +97,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Generates the forecast bundle.
-	 * 
+	 *
 	 * @param logs
 	 * @return
 	 * @throws IOException
@@ -114,7 +115,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Returns aggregated workload intensity and adapted behavior mix probabilities.
-	 * 
+	 *
 	 * @param bundleList
 	 * @return
 	 */
@@ -155,7 +156,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Forecasting the intensities for a user group using Prophet.
-	 * 
+	 *
 	 * @param i
 	 * @param re
 	 * @return
@@ -173,7 +174,7 @@ public class ForecastPipelineManager {
 		ArrayList<String> datesOfIntensities = new ArrayList<String>();
 		for (long timestamp : timestampsOfIntensities) {
 			Date date = new Date();
-			date.setTime((long) timestamp);
+			date.setTime(timestamp);
 			String resultDateFromTimestamp = sdf.format(date);
 			datesOfIntensities.add(resultDateFromTimestamp);
 		}
@@ -184,7 +185,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Counts amount of forecasted values subway.
-	 * 
+	 *
 	 * @param timestampsOfIntensities
 	 *            timestamps
 	 * @return the amount
@@ -206,7 +207,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Forecasting the intensities for a user group using Telescope.
-	 * 
+	 *
 	 * @param i
 	 * @param re
 	 * @return
@@ -224,7 +225,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Calculates historical and future covariates.
-	 * 
+	 *
 	 * @param timestampsOfIntensities
 	 * @param intensities
 	 * @return
@@ -240,7 +241,7 @@ public class ForecastPipelineManager {
 			long endTimeIntensities = timestampsOfIntensities.get(timestampsOfIntensities.size() - 1);
 
 			long endTimeForecast = this.forecastInput.getForecastOptions().getDateAsTimestamp();
-			
+
 			long interval = this.interval.asNumber() /NANOS_TO_MILLIS_FACTOR;
 
 			// Calculates considered future timestamps
@@ -349,7 +350,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Calculates occurrences for Strings.
-	 * 
+	 *
 	 * @param futureOccurrences
 	 * @param historicalOccurrences
 	 * @param timestamps
@@ -373,7 +374,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Calculates a HashMap containing all event (String) covariates.
-	 * 
+	 *
 	 * @param mCovar
 	 * @param startTime
 	 * @param endTimeIntensities
@@ -411,7 +412,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Calculates historical occurrences for doubles.
-	 * 
+	 *
 	 * @param mCovar
 	 * @param timestampsOfIntensities
 	 * @param startTime
@@ -432,7 +433,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Calculates future occurrences for doubles.
-	 * 
+	 *
 	 * @param mCovar
 	 * @param futureTimestamps
 	 * @param startTimeForecast
@@ -453,7 +454,7 @@ public class ForecastPipelineManager {
 	/**
 	 * Passes intensities dataset and covariates to Prophet which does the forecasting. Aggregates
 	 * the resulting intensities to one intensity value.
-	 * 
+	 *
 	 * @param datesOfIntensities
 	 * @param intensitiesOfUserGroup
 	 * @param size
@@ -508,7 +509,7 @@ public class ForecastPipelineManager {
 	/**
 	 * Passes intensities dataset and covariates to Telescope which does the forecasting. Aggregates
 	 * the resulting intensities to one intensity value.
-	 * 
+	 *
 	 * @param intensitiesOfUserGroup
 	 * @return
 	 */
@@ -546,15 +547,15 @@ public class ForecastPipelineManager {
 	/**
 	 * Aggregates the forecasted workload. TODO: Check other possibilities for workload aggregation.
 	 * Information should be passed by user.
-	 * 
+	 *
 	 * @param forecastedIntensities
 	 * @return
 	 */
 	private int aggregateWorkload(double[] forecastedIntensities) {
 		double maxIntensity = 0;
-		for (int i = 0; i < forecastedIntensities.length; i++) {
-			if (forecastedIntensities[i] > maxIntensity) {
-				maxIntensity = forecastedIntensities[i];
+		for (double forecastedIntensitie : forecastedIntensities) {
+			if (forecastedIntensitie > maxIntensity) {
+				maxIntensity = forecastedIntensitie;
 			}
 		}
 		return (int) Math.round(maxIntensity);
@@ -562,7 +563,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Calculates a covariate matrix. Such a matrix is an input to Telescope.
-	 * 
+	 *
 	 * @param string
 	 * @param covariates
 	 * @param re
@@ -594,7 +595,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Converts a milliseconds timestamp to UTC date as string.
-	 * 
+	 *
 	 * @param timestamp
 	 * @return
 	 */
@@ -606,14 +607,14 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Tests if values in a measurement are numerical.
-	 * 
+	 *
 	 * @param mCovar
 	 * @return
 	 */
 	private boolean identifyIfNumericValues(Measurement mCovar) {
 		String measurementName = mCovar.getMeasurement();
 		String queryString = "SELECT time, value FROM " + measurementName;
-		Query query = new Query(queryString, tag);
+		Query query = new Query(queryString, aid.toString());
 		QueryResult queryResult = influxDb.query(query);
 		Result result = queryResult.getResults().get(0);
 		if (result.getSeries() != null) {
@@ -627,7 +628,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Gets numeric values from database.
-	 * 
+	 *
 	 * @param covariateValues
 	 * @param covar
 	 * @param startTime
@@ -640,7 +641,7 @@ public class ForecastPipelineManager {
 		ArrayList<Pair<Long, Double>> measurements = new ArrayList<Pair<Long, Double>>();
 		String measurementName = covar.getMeasurement();
 		String queryString = "SELECT time, value FROM " + measurementName + " WHERE time >= '" + startTime + "' AND time <= '" + endTime + "'";
-		Query query = new Query(queryString, tag);
+		Query query = new Query(queryString, aid.toString());
 		QueryResult queryResult = influxDb.query(query);
 		for (Result result : queryResult.getResults()) {
 			if (result.getSeries() != null) {
@@ -664,7 +665,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Gets String values from database.
-	 * 
+	 *
 	 * @param covar
 	 * @param startTime
 	 * @param endTime
@@ -675,7 +676,7 @@ public class ForecastPipelineManager {
 		ArrayList<Pair<Long, String>> events = new ArrayList<Pair<Long, String>>();
 		String measurementName = covar.getMeasurement();
 		String queryString = "SELECT time, value FROM " + measurementName + " WHERE time >= '" + startTime + "' AND time <= '" + endTime + "'";
-		Query query = new Query(queryString, tag);
+		Query query = new Query(queryString, aid.toString());
 		QueryResult queryResult = influxDb.query(query);
 		for (Result result : queryResult.getResults()) {
 			if (result.getSeries() != null) {
@@ -699,7 +700,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Gets the intensities of a user group from database.
-	 * 
+	 *
 	 * @param userGroupId
 	 * @return
 	 */
@@ -710,7 +711,7 @@ public class ForecastPipelineManager {
 		ArrayList<Long> timestamps = new ArrayList<Long>();
 		ArrayList<Double> intensities = new ArrayList<Double>();
 		String measurementName = "userGroup" + userGroupId;
-		Query query = new Query("SELECT time, value FROM " + measurementName, tag);
+		Query query = new Query("SELECT time, value FROM " + measurementName, aid.toString());
 		QueryResult queryResult = influxDb.query(query);
 		for (Result result : queryResult.getResults()) {
 			if (result.getSeries() != null) {
@@ -735,7 +736,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Initializes Telescope.
-	 * 
+	 *
 	 * @param re
 	 */
 	private void initializeTelescope(Rengine re) {
@@ -757,7 +758,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Initializes Prophet.
-	 * 
+	 *
 	 * @param re
 	 */
 	private void initializeProphet(Rengine re) {
@@ -766,7 +767,7 @@ public class ForecastPipelineManager {
 
 	/**
 	 * Initializes Rengine.
-	 * 
+	 *
 	 * @return
 	 */
 	private Rengine initializeRengine() {

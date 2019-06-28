@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.commons.idpa.RequestUriMapper;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.rest.InspectITRestClient;
@@ -35,14 +36,14 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 	/**
 	 * Constructor
 	 *
-	 * @param tag
-	 *            the tag of the application
+	 * @param aid
+	 *            the app-id of the application
 	 * @param eurekaRestTemplate
 	 *            eureka rest template
 	 * @param cmrConfig
 	 */
-	public InspectITSessionLogsExtractor(String tag, RestTemplate eurekaRestTemplate, String cmrConfig) {
-		super(tag, eurekaRestTemplate);
+	public InspectITSessionLogsExtractor(AppId aid, RestTemplate eurekaRestTemplate, String cmrConfig) {
+		super(aid, eurekaRestTemplate);
 		this.cmrConfig = cmrConfig;
 	}
 
@@ -62,7 +63,7 @@ public class InspectITSessionLogsExtractor extends AbstractSessionLogsExtractor<
 
 		HashMap<String, List<HTTPRequestData>> sortedList = sortBySessionAndTimestamp(invocationSequences);
 
-		Application systemModel = retrieveApplicationModel(tag);
+		Application systemModel = retrieveApplicationModel(aid);
 		HashMap<String, Pair<String, String>> businessTransactions;
 
 		if (systemModel == null) {

@@ -8,12 +8,13 @@ import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.config.ModularizationApproach;
 import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.MeasurementDataLinkType;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.links.MeasurementDataLinkType;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MixedStorage;
+import org.continuity.idpa.AppId;
 import org.continuity.session.logs.config.RabbitMqConfig;
 import org.continuity.session.logs.managers.SessionLogsPipelineManager;
 import org.slf4j.Logger;
@@ -46,7 +47,7 @@ public class SessionLogsAmqpHandler {
 	@RabbitListener(queues = RabbitMqConfig.TASK_CREATE_QUEUE_NAME)
 	public void createSessionLogs(TaskDescription task) {
 		TaskReport report;
-		String tag = task.getTag();
+		AppId aid = task.getAppId();
 		String link = task.getSource().getMeasurementDataLinks().getLink();
 		boolean applyModularization = false;
 
@@ -57,32 +58,32 @@ public class SessionLogsAmqpHandler {
 		Date timestamp = task.getSource().getMeasurementDataLinks().getTimestamp();
 
 		if (!EnumSet.of(MeasurementDataLinkType.OPEN_XTRACE, MeasurementDataLinkType.INSPECTIT).contains(task.getSource().getMeasurementDataLinks().getLinkType())) {
-			LOGGER.error("Task {}: cannot create session logs for tag {}, link {}, and timestamp {}. External data type {} is not supported!", task.getTaskId(), tag, link, timestamp,
+			LOGGER.error("Task {}: cannot create session logs for app-id {}, link {}, and timestamp {}. External data type {} is not supported!", task.getTaskId(), aid, link, timestamp,
 					task.getSource().getMeasurementDataLinks().getLinkType());
 			report = TaskReport.error(task.getTaskId(), TaskError.ILLEGAL_TYPE);
 		}
-		if ((tag == null) || (link == null) || (timestamp == null)) {
-			LOGGER.error("Task {}: cannot create session logs for tag {}, link {}, and timestamp {}. All values are required!", task.getTaskId(), tag, link, timestamp);
+		if ((aid == null) || (link == null) || (timestamp == null)) {
+			LOGGER.error("Task {}: cannot create session logs for app-id {}, link {}, and timestamp {}. All values are required!", task.getTaskId(), aid, link, timestamp);
 			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {
 
-			SessionLogsPipelineManager manager = new SessionLogsPipelineManager(link, tag, plainRestTemplate, eurekaRestTemplate);
+			SessionLogsPipelineManager manager = new SessionLogsPipelineManager(link, aid, plainRestTemplate, eurekaRestTemplate);
 
 			String sessionLog;
 
 			if (applyModularization) {
-				LOGGER.info("Task {}: Creating modularized session logs for tags {} from data {} ...", task.getTaskId(), task.getModularizationOptions().getServices().keySet(), link);
+				LOGGER.info("Task {}: Creating modularized session logs for app-ids {} from data {} ...", task.getTaskId(), task.getModularizationOptions().getServices().keySet(), link);
 				sessionLog = manager.runPipeline(task.getSource().getMeasurementDataLinks().getLinkType(), task.getModularizationOptions().getServices());
 			} else {
-				LOGGER.info("Task {}: Creating session logs for tag {} from data {} ...", task.getTaskId(), tag, link);
+				LOGGER.info("Task {}: Creating session logs for app-id {} from data {} ...", task.getTaskId(), aid, link);
 				sessionLog = manager.runPipeline(task.getSource().getMeasurementDataLinks().getLinkType());
 			}
-			String id = storage.put(new SessionLogs(task.getSource().getMeasurementDataLinks().getTimestamp(), sessionLog), tag);
+			String id = storage.put(new SessionLogs(task.getSource().getMeasurementDataLinks().getTimestamp(), sessionLog), aid);
 			String sessionLink = RestApi.SessionLogs.GET.requestUrl(id).withoutProtocol().get();
 
 			report = TaskReport.successful(task.getTaskId(), new LinkExchangeModel().getSessionLogsLinks().setLink(sessionLink).parent());
 
-			LOGGER.info("Task {}: Session logs created for tag {} from data {}", task.getTaskId(), tag, link);
+			LOGGER.info("Task {}: Session logs created for app-id {} from data {}", task.getTaskId(), aid, link);
 		}
 
 		amqpTemplate.convertAndSend(AmqpApi.Global.EVENT_FINISHED.name(), AmqpApi.Global.EVENT_FINISHED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), report);

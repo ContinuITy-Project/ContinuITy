@@ -18,6 +18,7 @@ import org.continuity.api.rest.RestApi;
 import org.continuity.commons.jmeter.JMeterPropertiesCorrector;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.AppId;
 import org.continuity.jmeter.config.RabbitMqConfig;
 import org.continuity.jmeter.transform.JMeterAnnotator;
 import org.slf4j.Logger;
@@ -62,9 +63,9 @@ public class TestPlanCreationAmqpHandler {
 				LOGGER.error("The workload model at {} does not provide a link to JMeter!", workloadModelLink);
 				report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 			} else {
-				JMeterTestPlanBundle bundle = createAndGetLoadTest(workloadLinks, task.getTag(), task.getProperties(), task.getModularizationOptions());
+				JMeterTestPlanBundle bundle = createAndGetLoadTest(workloadLinks, task.getAppId(), task.getProperties(), task.getModularizationOptions());
 
-				String id = storage.put(bundle, task.getTag(), task.isLongTermUse());
+				String id = storage.put(bundle, task.getAppId(), task.isLongTermUse());
 				LOGGER.info("Task {}: Created a load test from {}.", task.getTaskId(), workloadModelLink);
 
 				report = TaskReport.successful(task.getTaskId(),
@@ -81,11 +82,11 @@ public class TestPlanCreationAmqpHandler {
 	 *
 	 * @param workloadLinks
 	 *            The links pointing to the workload model.
-	 * @param tag
-	 *            The tag to be used to retrieve the annotation.
+	 * @param aid
+	 *            The app-id to be used to retrieve the annotation.
 	 * @return The transformed JMeter test plan.
 	 */
-	private JMeterTestPlanBundle createAndGetLoadTest(LinkExchangeModel workloadLinks, String tag, PropertySpecification properties, ModularizationOptions modularizationOptions) {
+	private JMeterTestPlanBundle createAndGetLoadTest(LinkExchangeModel workloadLinks, AppId aid, PropertySpecification properties, ModularizationOptions modularizationOptions) {
 		JMeterTestPlanBundle testPlanPack = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadLinks.getWorkloadModelLinks().getJmeterLink()), JMeterTestPlanBundle.class);
 
 		ListedHashTree annotatedTestPlan = testPlanPack.getTestPlan();
@@ -93,10 +94,10 @@ public class TestPlanCreationAmqpHandler {
 
 		// Check if modularization is enabled in the order.
 		if (null != modularizationOptions) {
-			List<String> serviceTags = new ArrayList<String>(modularizationOptions.getServices().keySet());
-			annotatedTestPlan = annotator.createAnnotatedTestPlan(serviceTags);
+			List<AppId> serviceAppIds = new ArrayList<>(modularizationOptions.getServices().keySet());
+			annotatedTestPlan = annotator.createAnnotatedTestPlan(serviceAppIds);
 		} else {
-			annotatedTestPlan = annotator.createAnnotatedTestPlan(Arrays.asList(tag));
+			annotatedTestPlan = annotator.createAnnotatedTestPlan(Arrays.asList(aid));
 		}
 
 		if (properties == null) {

@@ -1,5 +1,7 @@
 package org.continuity.api.entities.config;
 
+import org.continuity.idpa.AppId;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -11,7 +13,7 @@ public class LoadTestConfiguration {
 	@JsonProperty("workload-link")
 	private String workloadModelLink;
 
-	private String tag;
+	private AppId appId;
 
 	@JsonProperty("num-users")
 	private int numUsers;
@@ -46,27 +48,27 @@ public class LoadTestConfiguration {
 	}
 
 	/**
-	 * Gets {@link #tag}.
+	 * Gets {@link #appId}.
 	 *
-	 * @return {@link #tag}
+	 * @return {@link #appId}
 	 */
-	public String getTag() {
-		return this.tag;
+	public AppId getAppId() {
+		return this.appId;
 	}
 
 	/**
-	 * Sets {@link #tag}.
+	 * Sets {@link #appId}.
 	 *
-	 * @param tag
-	 *            New value for {@link #tag}
+	 * @param appId
+	 *            New value for {@link #appId}
 	 */
-	public void setTag(String tag) {
-		this.tag = tag;
+	public void setAppId(AppId appId) {
+		this.appId = appId;
 	}
 
 	/**
 	 * Gets {@link #numUsers}.
-	 * 
+	 *
 	 * @return {@link #numUsers}
 	 */
 	public int getNumUsers() {
@@ -75,7 +77,7 @@ public class LoadTestConfiguration {
 
 	/**
 	 * Sets {@link #numUsers}.
-	 * 
+	 *
 	 * @param numUsers
 	 *            New value for {@link #numUsers}
 	 */
@@ -85,7 +87,7 @@ public class LoadTestConfiguration {
 
 	/**
 	 * Gets {@link #duration}.
-	 * 
+	 *
 	 * @return {@link #duration}
 	 */
 	public long getDuration() {
@@ -94,7 +96,7 @@ public class LoadTestConfiguration {
 
 	/**
 	 * Sets {@link #duration}.
-	 * 
+	 *
 	 * @param duration
 	 *            New value for {@link #duration}
 	 */
@@ -104,7 +106,7 @@ public class LoadTestConfiguration {
 
 	/**
 	 * Gets {@link #rampup}.
-	 * 
+	 *
 	 * @return {@link #rampup}
 	 */
 	public int getRampup() {
@@ -113,7 +115,7 @@ public class LoadTestConfiguration {
 
 	/**
 	 * Sets {@link #rampup}.
-	 * 
+	 *
 	 * @param rampup
 	 *            New value for {@link #rampup}
 	 */

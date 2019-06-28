@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.continuity.idpa.AppId;
+
 /**
  * A generic storage holding entities in a hash map in memory.
  *
@@ -14,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MemoryStorage<T> implements ArtifactStorage<T> {
 
-	private static final String TAG_DELIM = "-";
+	private static final String APP_ID_DELIM = "-";
 
 	private final AtomicInteger counter = new AtomicInteger(1);
 
@@ -24,8 +26,8 @@ public class MemoryStorage<T> implements ArtifactStorage<T> {
 	}
 
 	@Override
-	public String reserve(String tag) {
-		return tag + TAG_DELIM + Integer.toString(counter.getAndIncrement());
+	public String reserve(AppId aid) {
+		return aid + APP_ID_DELIM + Integer.toString(counter.getAndIncrement());
 	}
 
 	@Override
@@ -34,8 +36,8 @@ public class MemoryStorage<T> implements ArtifactStorage<T> {
 	}
 
 	@Override
-	public String put(T entity, String tag) {
-		String id = reserve(tag);
+	public String put(T entity, AppId aid) {
+		String id = reserve(aid);
 		putToReserved(id, entity);
 		return id;
 	}
@@ -51,8 +53,8 @@ public class MemoryStorage<T> implements ArtifactStorage<T> {
 	}
 
 	@Override
-	public String getTagForId(String id) {
-		return id.substring(0, id.lastIndexOf(TAG_DELIM));
+	public AppId getAppIdForId(String id) {
+		return AppId.fromString(id.substring(0, id.lastIndexOf(APP_ID_DELIM)));
 	}
 
 }

@@ -3,7 +3,7 @@ package org.continuity.api.amqp;
 import org.continuity.api.amqp.RoutingKeyFormatter.LoadTestType;
 import org.continuity.api.amqp.RoutingKeyFormatter.RecipeId;
 import org.continuity.api.amqp.RoutingKeyFormatter.ServiceName;
-import org.continuity.api.amqp.RoutingKeyFormatter.Tag;
+import org.continuity.api.amqp.RoutingKeyFormatter.AppId;
 import org.continuity.api.amqp.RoutingKeyFormatter.WorkloadType;
 
 /**
@@ -67,7 +67,7 @@ public class AmqpApi {
 
 		private static final String SCOPE = "sessionlogs";
 
-		public static final ExchangeDefinition<Tag> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(Tag.INSTANCE);
+		public static final ExchangeDefinition<AppId> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
 
 		private SessionLogs() {
 		}
@@ -124,7 +124,7 @@ public class AmqpApi {
 
 		private static final String SCOPE = "idpa";
 
-		public static final ExchangeDefinition<Tag> EVENT_CHANGED = ExchangeDefinition.event(SCOPE, "changed").nonDurable().autoDelete().withRoutingKey(Tag.INSTANCE);
+		public static final ExchangeDefinition<AppId> EVENT_CHANGED = ExchangeDefinition.event(SCOPE, "changed").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
 
 		private Idpa() {
 		}

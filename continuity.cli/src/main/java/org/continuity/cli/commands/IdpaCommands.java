@@ -40,6 +40,7 @@ import org.continuity.commons.idpa.AnnotationValidityChecker;
 import org.continuity.commons.idpa.ApplicationUpdater;
 import org.continuity.commons.idpa.OpenApiToIdpaTransformer;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
@@ -141,15 +142,15 @@ public class IdpaCommands {
 		}
 	}
 
-	@ShellMethod(key = { "idpa download" }, value = "Downloads and opens the IDPA with the specified tag.")
-	public AttributedString downloadIdpa(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws JsonGenerationException, JsonMappingException, IOException {
-		tag = contextManager.getTagOrFail(tag);
+	@ShellMethod(key = { "idpa download" }, value = "Downloads and opens the IDPA with the specified app-id.")
+	public AttributedString downloadIdpa(@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws JsonGenerationException, JsonMappingException, IOException {
+		AppId aid = contextManager.getAppIdOrFail(appId);
 
 		String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
 
 		ResponseEntity<Application> applicationResponse;
 		try {
-			applicationResponse = restTemplate.getForEntity(Idpa.GET_APPLICATION.requestUrl(tag).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(),
+			applicationResponse = restTemplate.getForEntity(Idpa.GET_APPLICATION.requestUrl(aid).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(),
 					Application.class);
 		} catch (HttpStatusCodeException e) {
 			applicationResponse = ResponseEntity.status(e.getStatusCode()).body(null);
@@ -157,7 +158,7 @@ public class IdpaCommands {
 
 		ResponseEntity<ApplicationAnnotation> annotationResponse;
 		try {
-			annotationResponse = restTemplate.getForEntity(Idpa.GET_ANNOTATION.requestUrl(tag).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(),
+			annotationResponse = restTemplate.getForEntity(Idpa.GET_ANNOTATION.requestUrl(aid).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(),
 					ApplicationAnnotation.class);
 		} catch (HttpStatusCodeException e) {
 			annotationResponse = ResponseEntity.status(e.getStatusCode()).body(null);
@@ -166,8 +167,8 @@ public class IdpaCommands {
 		ResponseBuilder response = new ResponseBuilder();
 
 		if (applicationResponse.getStatusCode().is2xxSuccessful()) {
-			saveApplicationModel(applicationResponse.getBody(), tag);
-			openApplicationModel(tag);
+			saveApplicationModel(applicationResponse.getBody(), aid);
+			openApplicationModel(aid);
 		} else if (applicationResponse.getStatusCode().is4xxClientError()) {
 			response.bold("There is no such application model!").newline();
 		} else {
@@ -176,8 +177,8 @@ public class IdpaCommands {
 		}
 
 		if (annotationResponse.getStatusCode().is2xxSuccessful()) {
-			saveAnnotation(annotationResponse.getBody(), tag);
-			openAnnotation(tag);
+			saveAnnotation(annotationResponse.getBody(), aid);
+			openAnnotation(aid);
 
 			List<String> brokenValues = annotationResponse.getHeaders().get(CustomHeaders.BROKEN);
 
@@ -191,37 +192,37 @@ public class IdpaCommands {
 					.error(annotationResponse.getStatusCode().getReasonPhrase()).error(")").newline();
 		}
 
-		return response.normal("Downloaded and opened the IDPA with tag ").normal(tag).normal(" and timestamp/version ").normal(contextManager.getCurrentVersionOrLatest()).normal(".").build();
+		return response.normal("Downloaded and opened the IDPA with app-id ").normal(aid).normal(" and version ").normal(contextManager.getCurrentVersionOrLatest()).normal(".").build();
 	}
 
-	@ShellMethod(key = { "idpa open" }, value = "Opens an already downloaded IDPA with the specified tag.")
-	public String openIdpa(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws IOException {
-		tag = contextManager.getTagOrFail(tag);
+	@ShellMethod(key = { "idpa open" }, value = "Opens an already downloaded IDPA with the specified app-id.")
+	public String openIdpa(@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws IOException {
+		AppId aid = contextManager.getAppIdOrFail(appId);
 
-		boolean appExists = openApplicationModel(tag);
-		boolean annExists = openAnnotation(tag);
+		boolean appExists = openApplicationModel(aid);
+		boolean annExists = openAnnotation(aid);
 
 		StringBuilder response = new StringBuilder();
 
 		if (appExists) {
-			response.append("Opened the IDPA application model with tag ").append(tag);
+			response.append("Opened the IDPA application model with app-id ").append(aid);
 		} else {
-			response.append("The IDPA application model with tag ").append(tag).append(" does not exist.");
+			response.append("The IDPA application model with app-id ").append(aid).append(" does not exist.");
 		}
 
 		response.append("\n");
 
 		if (annExists) {
-			response.append("Opened the IDPA annotation with tag ").append(tag);
+			response.append("Opened the IDPA annotation with app-id ").append(aid);
 		} else {
-			response.append("The IDPA annotation with tag ").append(tag).append(" does not exist.");
+			response.append("The IDPA annotation with app-id ").append(aid).append(" does not exist.");
 		}
 
 		return response.toString();
 	}
 
 	@ShellMethod(key = { "idpa app" }, value = "Goes to the 'idpa/app' context so that the shorthands can be used.")
-	public AttributedString goToIdpaAappContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String unknown) {
+	public AttributedString goToIdpaAappContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
 		if (Shorthand.DEFAULT_VALUE.equals(unknown)) {
 			contextManager.goToContext(context, appContext);
 			return null;
@@ -230,45 +231,46 @@ public class IdpaCommands {
 		}
 	}
 
-	@ShellMethod(key = { "idpa app init" }, value = "Initializes an application model with the specified tag.")
-	public String initApplication(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws JsonParseException, JsonMappingException, IOException {
-		tag = contextManager.getTagOrFail(tag);
+	@ShellMethod(key = { "idpa app init" }, value = "Initializes an application model with the specified app-id.")
+	public String initApplication(@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws JsonParseException, JsonMappingException, IOException {
+		AppId aid = contextManager.getAppIdOrFail(appId);
 
-		Application application = readApplicationModel(tag);
+		Application application = readApplicationModel(aid);
 
 		if (application != null) {
-			return "There is already an application model for tag " + tag + "!";
+			return "There is already an application model for app-id " + aid + "!";
 		} else {
 			application = new Application();
-			application.setId(tag);
+			application.setId(aid.toString());
 			application.setTimestamp(new Date());
 
-			saveApplicationModel(application, tag);
-			openApplicationModel(tag);
+			saveApplicationModel(application, aid);
+			openApplicationModel(aid);
 
 			return "Initialized and opened the annotation.";
 		}
 	}
 
 	@ShellMethod(key = { "idpa app create" }, value = "Creates an IDPA application model from an OpenApi.")
-	public String createIdpaApplication(String openApiLocation, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String tag)
+	public String createIdpaApplication(String openApiLocation, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId)
 			throws URISyntaxException, JsonGenerationException, JsonMappingException, IOException {
-		tag = contextManager.getTagOrFail(tag);
+		AppId aid = contextManager.getAppIdOrFail(appId);
 
 		Swagger swagger = readSwagger(openApiLocation);
 		Application application = openApiTransfomer.transform(swagger);
-		application.setId(tag);
+		application.setId(aid.toString());
 
-		saveApplicationModel(application, tag);
-		openApplicationModel(tag);
+		saveApplicationModel(application, aid);
+		openApplicationModel(aid);
 
-		return "Created and opened the application model with tag " + tag + " from the OpenAPI at " + openApiLocation;
+		return "Created and opened the application model with app-id " + aid + " from the OpenAPI at " + openApiLocation;
 	}
 
 	@ShellMethod(key = { "idpa app update" }, value = "Updates an IDPA application model from an OpenApi.")
 	public String updateIdpaApplication(
 			@ShellOption(help = "Location where the OpenAPI model can be found. Can be a URL or a file path. A file name can contain UNIX-like wildcards.") String openApiLocation,
-			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag, @ShellOption(defaultValue = "false", value = { "--add", "-a" }, help = "Consider element additions.") boolean add,
+			@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
+			@ShellOption(defaultValue = "false", value = { "--add", "-a" }, help = "Consider element additions.") boolean add,
 			@ShellOption(defaultValue = "false", value = { "--remove", "-r" }, help = "Consider element removals.") boolean remove,
 			@ShellOption(defaultValue = "false", value = { "--change", "-c" }, help = "Consider element changes.") boolean change,
 			@ShellOption(defaultValue = "false", value = { "--endpoints", "-e" }, help = "Consider endpoints.") boolean endpoints,
@@ -278,14 +280,14 @@ public class IdpaCommands {
 
 		StringBuilder response = new StringBuilder();
 
-		tag = contextManager.getTagOrFail(tag);
-		Application origApplication = readApplicationModel(tag);
+		AppId aid = contextManager.getAppIdOrFail(appId);
+		Application origApplication = readApplicationModel(aid);
 		Application updatedApplication = origApplication;
 		EnumSet<ApplicationChangeType> changeTypes = changeTypesFromBooleans(add, remove, change, endpoints, parameters);
 
 		if (!openApiLocation.startsWith("http")) {
 			for (File openApiFile : getAllFilesMatchingWildcards(openApiLocation)) {
-				ApplicationChangeReport report = updateApplicationModel(updatedApplication, openApiFile.getPath(), tag, changeTypes);
+				ApplicationChangeReport report = updateApplicationModel(updatedApplication, openApiFile.getPath(), aid, changeTypes);
 				updatedApplication = report.getUpdatedApplication();
 				report.setUpdatedApplication(null);
 
@@ -296,7 +298,7 @@ public class IdpaCommands {
 				response.append("Updated with ").append(openApiFile.getPath()).append(":\n").append(mapper.writeValueAsString(report));
 			}
 		} else {
-			ApplicationChangeReport report = updateApplicationModel(origApplication, openApiLocation, tag, changeTypes);
+			ApplicationChangeReport report = updateApplicationModel(origApplication, openApiLocation, aid, changeTypes);
 			updatedApplication = report.getUpdatedApplication();
 			report.setUpdatedApplication(null);
 
@@ -307,19 +309,19 @@ public class IdpaCommands {
 			response.append("Updated with ").append(openApiLocation).append(":\n").append(mapper.writeValueAsString(report));
 		}
 
-		String origTag = tag + "_old";
-		origApplication.setId(origTag);
+		AppId origAid = AppId.fromString(aid + "_old");
+		origApplication.setId(origAid.toString());
 
-		saveApplicationModel(origApplication, origTag);
-		saveApplicationModel(updatedApplication, tag);
+		saveApplicationModel(origApplication, origAid);
+		saveApplicationModel(updatedApplication, aid);
 
-		openApplicationModel(origTag);
-		openApplicationModel(tag);
+		openApplicationModel(origAid);
+		openApplicationModel(aid);
 
 		return response.toString();
 	}
 
-	private ApplicationChangeReport updateApplicationModel(Application origApplication, String openApiLocation, String tag, EnumSet<ApplicationChangeType> changeTypes)
+	private ApplicationChangeReport updateApplicationModel(Application origApplication, String openApiLocation, AppId aid, EnumSet<ApplicationChangeType> changeTypes)
 			throws JsonGenerationException, JsonMappingException, IOException {
 		Swagger swagger = readSwagger(openApiLocation);
 
@@ -327,41 +329,42 @@ public class IdpaCommands {
 
 		ApplicationChangeReport report = applicationUpdater.updateApplication(origApplication, newApplication, changeTypes);
 
-		String origTag = tag + "_old";
-		origApplication.setId(origTag);
+		AppId origAid = AppId.fromString(aid + "_old");
+		origApplication.setId(origAid.toString());
 
-		saveApplicationModel(origApplication, origTag);
-		saveApplicationModel(report.getUpdatedApplication(), tag);
+		saveApplicationModel(origApplication, origAid);
+		saveApplicationModel(report.getUpdatedApplication(), aid);
 
-		openApplicationModel(origTag);
-		openApplicationModel(tag);
+		openApplicationModel(origAid);
+		openApplicationModel(aid);
 
 		return report;
 	}
 
-	@ShellMethod(key = { "idpa app upload" }, value = "Uploads the application model with the specified tag. Can break the online stored annotation!")
-	public AttributedString uploadApplication(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "Tag of the application model. Can contain UNIX-like wildcards.") String pattern)
+	@ShellMethod(key = { "idpa app upload" }, value = "Uploads the application model with the specified app-id. Can break the online stored annotation!")
+	public AttributedString uploadApplication(
+			@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE, help = "App-id of the application model. Can contain UNIX-like wildcards.") String pattern)
 			throws JsonParseException, JsonMappingException, IOException {
-		pattern = contextManager.getTagOrFail(pattern);
+		AppId aidPattern = contextManager.getAppIdOrFail(pattern);
 
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
 		ResponseEntity<String> response;
-		List<String> tags = new ArrayList<>();
+		List<AppId> aids = new ArrayList<>();
 		ResponseBuilder responses = new ResponseBuilder();
 		boolean error = false;
 
-		for (File file : getAllFilesMatchingWildcards(workingDir + "/application-" + pattern + ".yml")) {
+		for (File file : getAllFilesMatchingWildcards(workingDir + "/application-" + aidPattern + ".yml")) {
 			Application application = appSerializer.readFromYaml(file);
 			String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
-			String tag = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
-			tags.add(tag);
+			String appId = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
+			aids.add(AppId.fromString(appId));
 			try {
-				response = restTemplate.postForEntity(Idpa.UPDATE_APPLICATION.requestUrl(tag).withHost(url).get(), application, String.class);
+				response = restTemplate.postForEntity(Idpa.UPDATE_APPLICATION.requestUrl(appId).withHost(url).get(), application, String.class);
 			} catch (HttpStatusCodeException e) {
 				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
 			}
 
-			responses.newline().bold(tag);
+			responses.newline().bold(appId);
 
 			if (!response.getStatusCode().is2xxSuccessful()) {
 				responses.error(" [ERROR]");
@@ -370,7 +373,7 @@ public class IdpaCommands {
 			responses.newline();
 
 			@SuppressWarnings("unchecked")
-			List<String> broken = restTemplate.getForObject(Idpa.GET_BROKEN.requestUrl(tag).withQuery(PARAM_VERSION, application.getVersionOrTimestamp().toString()).withHost(url).get(), List.class);
+			List<String> broken = restTemplate.getForObject(Idpa.GET_BROKEN.requestUrl(appId).withQuery(PARAM_VERSION, application.getVersionOrTimestamp().toString()).withHost(url).get(), List.class);
 
 			if ((broken != null) && (broken.size() > 0)) {
 				responses.error("The new application version broke the following annotations: ");
@@ -386,9 +389,9 @@ public class IdpaCommands {
 		}
 
 		if (error) {
-			return new ResponseBuilder().normal("Uploaded application models for tags ").normal(tags).normal(". ").error("Some of them resulted in errors:").newline().append(responses).build();
+			return new ResponseBuilder().normal("Uploaded application models for app-ids ").normal(aids).normal(". ").error("Some of them resulted in errors:").newline().append(responses).build();
 		} else {
-			return new ResponseBuilder().normal("Successfully uploaded application models for tags ").normal(tags).normal(":").newline().append(responses).build();
+			return new ResponseBuilder().normal("Successfully uploaded application models for app-ids ").normal(aids).normal(":").newline().append(responses).build();
 		}
 
 	}
@@ -403,15 +406,16 @@ public class IdpaCommands {
 		}
 	}
 
-	@ShellMethod(key = { "idpa ann upload" }, value = "Uploads the annotation with the specified tag.")
-	public AttributedString uploadAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "Tag of the annotation. Can contain UNIX-like wildcards.") String pattern)
+	@ShellMethod(key = { "idpa ann upload" }, value = "Uploads the annotation with the specified app-id.")
+	public AttributedString uploadAnnotation(
+			@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE, help = "App-ids of the annotation. Can contain UNIX-like wildcards.") String pattern)
 			throws JsonParseException, JsonMappingException, IOException, NumberFormatException, ParseException {
-		pattern = contextManager.getTagOrFail(pattern);
+		AppId aidPattern = contextManager.getAppIdOrFail(pattern);
 
 		ResponseBuilder resp = new ResponseBuilder();
 
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		List<String> tags = new ArrayList<String>();
+		List<AppId> aids = new ArrayList<>();
 		ResponseBuilder responses = new ResponseBuilder();
 		boolean error = false;
 
@@ -422,16 +426,16 @@ public class IdpaCommands {
 			resp.normal("No version set! Using the current time as fallback: ").bold(currVersion).newline();
 		}
 
-		for (File file : getAllFilesMatchingWildcards(workingDir + "/annotation-" + pattern + ".yml")) {
+		for (File file : getAllFilesMatchingWildcards(workingDir + "/annotation-" + aidPattern + ".yml")) {
 			ApplicationAnnotation annotation = annSerializer.readFromYaml(file);
 			String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
-			String tag = file.getName().substring("annotation-".length(), file.getName().length() - ".yml".length());
-			tags.add(tag);
+			String appId = file.getName().substring("annotation-".length(), file.getName().length() - ".yml".length());
+			aids.add(AppId.fromString(appId));
 
-			RequestBuilder req = Idpa.UPDATE_ANNOTATION.requestUrl(tag).withHost(url);
+			RequestBuilder req = Idpa.UPDATE_ANNOTATION.requestUrl(appId).withHost(url);
 
 			if (annotation.getVersionOrTimestamp().isEmpty()) {
-				resp.bold("Annotation '").normal(tag).bold("' has no version! Setting the current one as fallback: ").normal(currVersion);
+				resp.bold("Annotation '").normal(appId).bold("' has no version! Setting the current one as fallback: ").normal(currVersion).newline();
 				annotation.setVersionOrTimestamp(VersionOrTimestamp.fromString(currVersion));
 			}
 
@@ -442,7 +446,7 @@ public class IdpaCommands {
 				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
 			}
 
-			responses.newline().bold(tag);
+			responses.newline().bold(appId);
 
 			if (response.getStatusCode().is2xxSuccessful()) {
 				responses.newline().jsonAsYamlNormal(response.getBody());
@@ -453,9 +457,9 @@ public class IdpaCommands {
 		}
 
 		if (error) {
-			return resp.normal("Uploaded annotations for tags ").normal(tags).normal(". ").error("Some of them resulted in errors:").newline().append(responses).build();
+			return resp.normal("Uploaded annotations for app-ids ").normal(aids).normal(". ").error("Some of them resulted in errors:").newline().append(responses).build();
 		} else {
-			return resp.normal("Successfully uploaded annotations for tags ").normal(tags).normal(":").newline().append(responses).build();
+			return resp.normal("Successfully uploaded annotations for app-ids ").normal(aids).normal(":").newline().append(responses).build();
 		}
 	}
 
@@ -476,29 +480,29 @@ public class IdpaCommands {
 		return FileUtils.listFiles(searchDir, new WildcardFileFilter(filename), new AndFileFilter(DirectoryFileFilter.DIRECTORY, new RegexFileFilter(searchDir.getName())));
 	}
 
-	@ShellMethod(key = { "idpa ann init" }, value = "Initializes an annotation for the stored application model with the specified tag.")
-	public String initAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws JsonParseException, JsonMappingException, IOException {
-		tag = contextManager.getTagOrFail(tag);
+	@ShellMethod(key = { "idpa ann init" }, value = "Initializes an annotation for the stored application model with the specified app-id.")
+	public String initAnnotation(@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws JsonParseException, JsonMappingException, IOException {
+		AppId aid = contextManager.getAppIdOrFail(appId);
 
-		Application application = readApplicationModel(tag);
+		Application application = readApplicationModel(aid);
 		ApplicationAnnotation annotation = new AnnotationExtractor().extractAnnotation(application);
 
-		saveAnnotation(annotation, tag);
+		saveAnnotation(annotation, aid);
 
-		openApplicationModel(tag);
-		openAnnotation(tag);
+		openApplicationModel(aid);
+		openAnnotation(aid);
 
 		return "Initialized and opened the annotation.";
 	}
 
-	@ShellMethod(key = { "idpa ann extract" }, value = "Extracts an annotation for the stored application model with the specified tag from Apache request logs.")
-	public String extractAnnotation(String logsFile, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag,
+	@ShellMethod(key = { "idpa ann extract" }, value = "Extracts an annotation for the stored application model with the specified app-id from Apache request logs.")
+	public String extractAnnotation(String logsFile, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
 			@ShellOption(defaultValue = AccessLogEntry.DEFAULT_REGEX, help = "The regular expression used to extract the request method and path including the query. There should be one capture group per property in the mentioned order.") String regex)
 			throws IOException {
-		tag = contextManager.getTagOrFail(tag);
+		AppId aid = contextManager.getAppIdOrFail(appId);
 
-		Application application = readApplicationModel(tag);
-		ApplicationAnnotation annotation = readAnnotation(tag);
+		Application application = readApplicationModel(aid);
+		ApplicationAnnotation annotation = readAnnotation(aid);
 
 		if (application == null) {
 			return "There is no application model! Please create one first.";
@@ -523,21 +527,21 @@ public class IdpaCommands {
 		Application filteredApplication = extractor.getFilteredApplication();
 		Set<String> ignoredRequests = extractor.getIgnoredRequests();
 
-		saveAnnotation(annotation, tag);
-		openAnnotation(tag);
+		saveAnnotation(annotation, aid);
+		openAnnotation(aid);
 
-		saveApplicationModel(filteredApplication, tag + "-filtered");
-		openApplicationModel(tag + "-filtered");
+		saveApplicationModel(filteredApplication, AppId.fromString(aid + "-filtered"));
+		openApplicationModel(AppId.fromString(aid + "-filtered"));
 
 		return "Extracted and opened the annotation and the filtered application model.\nIgnored requests:\n" + ignoredRequests.stream().collect(Collectors.joining("\n"));
 	}
 
-	@ShellMethod(key = { "idpa ann check" }, value = "Checks whether the annotation with the specified tag fits to the respective application model.")
-	public String checkAnnotation(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String tag) throws IOException {
-		tag = contextManager.getTagOrFail(tag);
+	@ShellMethod(key = { "idpa ann check" }, value = "Checks whether the annotation with the specified app-id fits to the respective application model.")
+	public String checkAnnotation(@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws IOException {
+		AppId aid = contextManager.getAppIdOrFail(appId);
 
-		Application application = readApplicationModel(tag);
-		ApplicationAnnotation annotation = readAnnotation(tag);
+		Application application = readApplicationModel(aid);
+		ApplicationAnnotation annotation = readAnnotation(aid);
 
 		AnnotationValidityChecker checker = new AnnotationValidityChecker(application);
 		checker.checkAnnotation(annotation);
@@ -556,27 +560,27 @@ public class IdpaCommands {
 		return swagger;
 	}
 
-	private File saveApplicationModel(Application application, String tag) throws JsonGenerationException, JsonMappingException, IOException {
+	private File saveApplicationModel(Application application, AppId aid) throws JsonGenerationException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
+		File applicationFile = new File(workingDir + "/application-" + aid + ".yml");
 
 		appSerializer.writeToYaml(application, applicationFile);
 
 		return applicationFile;
 	}
 
-	private File saveAnnotation(ApplicationAnnotation annotation, String tag) throws JsonGenerationException, JsonMappingException, IOException {
+	private File saveAnnotation(ApplicationAnnotation annotation, AppId aid) throws JsonGenerationException, JsonMappingException, IOException {
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		File annotationFile = new File(workingDir + "/annotation-" + tag + ".yml");
+		File annotationFile = new File(workingDir + "/annotation-" + aid + ".yml");
 
 		annSerializer.writeToYaml(annotation, annotationFile);
 
 		return annotationFile;
 	}
 
-	private Application readApplicationModel(String tag) throws IOException {
+	private Application readApplicationModel(AppId aid) throws IOException {
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
+		File applicationFile = new File(workingDir + "/application-" + aid + ".yml");
 
 		if (applicationFile.exists()) {
 			return appSerializer.readFromYaml(applicationFile);
@@ -585,9 +589,9 @@ public class IdpaCommands {
 		}
 	}
 
-	private ApplicationAnnotation readAnnotation(String tag) throws IOException {
+	private ApplicationAnnotation readAnnotation(AppId aid) throws IOException {
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		File annotationFile = new File(workingDir + "/annotation-" + tag + ".yml");
+		File annotationFile = new File(workingDir + "/annotation-" + aid + ".yml");
 
 		if (annotationFile.exists()) {
 			return annSerializer.readFromYaml(annotationFile);
@@ -596,9 +600,9 @@ public class IdpaCommands {
 		}
 	}
 
-	private boolean openApplicationModel(String tag) throws IOException {
+	private boolean openApplicationModel(AppId aid) throws IOException {
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		File applicationFile = new File(workingDir + "/application-" + tag + ".yml");
+		File applicationFile = new File(workingDir + "/application-" + aid + ".yml");
 
 		if (applicationFile.exists()) {
 			Desktop.getDesktop().open(applicationFile);
@@ -607,9 +611,9 @@ public class IdpaCommands {
 		return applicationFile.exists();
 	}
 
-	private boolean openAnnotation(String tag) throws IOException {
+	private boolean openAnnotation(AppId aid) throws IOException {
 		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		File annotationFile = new File(workingDir + "/annotation-" + tag + ".yml");
+		File annotationFile = new File(workingDir + "/annotation-" + aid + ".yml");
 
 		if (annotationFile.exists()) {
 			Desktop.getDesktop().open(annotationFile);

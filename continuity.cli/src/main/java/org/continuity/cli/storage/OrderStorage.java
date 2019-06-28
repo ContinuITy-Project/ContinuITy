@@ -41,7 +41,7 @@ public class OrderStorage {
 	private String latest = null;
 
 	public String newOrder(Order order) throws JsonGenerationException, JsonMappingException, IOException {
-		String id = counter.getAndIncrement() + "-" + order.getGoal().toPrettyString() + "-" + order.getTag();
+		String id = counter.getAndIncrement() + "-" + order.getGoal().toPrettyString() + "-" + order.getAppId();
 
 		File orderFile = getOrderDir(id).resolve(ORDER_FILE).toFile();
 		mapper.writeValue(orderFile, order);

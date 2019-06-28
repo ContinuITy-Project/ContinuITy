@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStyle;
@@ -28,16 +29,16 @@ public class CliContextManager implements PromptProvider {
 
 	private final Stack<CliContext> context = new Stack<>();
 
-	private String currentTag;
+	private AppId currentAppId;
 
 	private String currentVersion;
 
-	public void setCurrentTag(String currentTag) {
-		this.currentTag = currentTag;
+	public void setCurrentAppId(AppId currentAppId) {
+		this.currentAppId = currentAppId;
 	}
 
-	public String getCurrentTag() {
-		return currentTag;
+	public AppId getCurrentAppId() {
+		return currentAppId;
 	}
 
 	public void setCurrentVersion(String currentVersion) {
@@ -61,23 +62,23 @@ public class CliContextManager implements PromptProvider {
 	}
 
 	/**
-	 * Gets a tag out of the input or throws an {@link IllegalArgumentException} if no tag can be
-	 * determined.
+	 * Gets an app-id out of the input or throws an {@link IllegalArgumentException} if no app-id
+	 * can be determined.
 	 *
-	 * @param passedTag
-	 *            A tag received from a command.
-	 * @return The tag if present and not equal to {@link Shorthand#DEFAULT_VALUE} or the current
-	 *         tag otherwise.
+	 * @param passedAid
+	 *            An app-id received from a command.
+	 * @return The app-id if present and not equal to {@link Shorthand#DEFAULT_VALUE} or the current
+	 *         app-id otherwise.
 	 */
-	public String getTagOrFail(String passedTag) {
-		if (Shorthand.DEFAULT_VALUE.equals(passedTag)) {
-			if (currentTag == null) {
-				throw new IllegalArgumentException("Cannot use the default tag. There is no tag set! Please call 'tag set <your tag>' first or define it as a parameter of the command.");
+	public AppId getAppIdOrFail(String passedAid) {
+		if (Shorthand.DEFAULT_VALUE.equals(passedAid)) {
+			if (currentAppId == null) {
+				throw new IllegalArgumentException("Cannot use the default app-id. There is no app-id set! Please call 'app-id set <your app-id>' first or define it as a parameter of the command.");
 			} else {
-				return currentTag;
+				return currentAppId;
 			}
 		} else {
-			return passedTag;
+			return AppId.fromString(passedAid);
 		}
 	}
 
@@ -161,9 +162,9 @@ public class CliContextManager implements PromptProvider {
 			builder.append(contextString);
 		}
 
-		if (currentTag != null) {
+		if (currentAppId != null) {
 			builder.append(" (");
-			builder.append(currentTag);
+			builder.append(currentAppId);
 			builder.append("@").append(getCurrentVersionOrLatest());
 			builder.append(")");
 		} else if (currentVersion != null) {
