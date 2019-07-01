@@ -57,17 +57,17 @@ public class IdpaController {
 	 *
 	 * @param aid
 	 *            The app-id of the application.
-	 * @param timestamp
-	 *            The timestamp for which the application is requested.
+	 * @param version
+	 *            The version for which the application is requested.
 	 * @return The application model.
 	 */
 	@RequestMapping(path = GET_APPLICATION, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<Application> getApplication(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) String timestamp) {
+	public ResponseEntity<Application> getApplication(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) String version) {
 		RequestBuilder req = Idpa.Application.GET.requestUrl(aid);
 
-		if (timestamp != null) {
-			req = req.withQuery("timestamp", timestamp);
+		if (version != null) {
+			req = req.withQuery("version", version);
 		}
 
 		return restTemplate.getForEntity(req.get(), Application.class);
@@ -78,18 +78,18 @@ public class IdpaController {
 	 *
 	 * @param aid
 	 *            The app-id of the annotation.
-	 * @param timestamp
-	 *            The timestamp for which the annotation is requested.
+	 * @param version
+	 *            The version for which the annotation is requested.
 	 * @return The annotation.
 	 */
 	@RequestMapping(path = GET_ANNOTATION, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<ApplicationAnnotation> getAnnotation(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) String timestamp) {
+	public ResponseEntity<ApplicationAnnotation> getAnnotation(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) String version) {
 		try {
 			RequestBuilder req = Idpa.Annotation.GET.requestUrl(aid);
 
-			if (timestamp != null) {
-				req = req.withQuery("timestamp", timestamp);
+			if (version != null) {
+				req = req.withQuery("version", version);
 			}
 
 			return restTemplate.getForEntity(req.get(), ApplicationAnnotation.class);
@@ -192,9 +192,9 @@ public class IdpaController {
 	 */
 	@RequestMapping(path = UPDATE_ANNOTATION, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> updateAnnotation(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam String timestamp, @RequestBody ApplicationAnnotation annotation) {
+	public ResponseEntity<String> updateAnnotation(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestBody ApplicationAnnotation annotation) {
 		try {
-			return restTemplate.postForEntity(Idpa.Annotation.UPDATE.requestUrl(aid).withQuery("timestamp", timestamp).get(), annotation, String.class);
+			return restTemplate.postForEntity(Idpa.Annotation.UPDATE.requestUrl(aid).get(), annotation, String.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.warn("Updating the annotation with app-id {} resulted in a {} - {} response!", aid, e.getStatusCode(), e.getStatusCode().getReasonPhrase());
 			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
@@ -202,21 +202,21 @@ public class IdpaController {
 	}
 
 	/**
-	 * Returns the timestamps of all annotations that are broken due to a certain application.
+	 * Returns the versions of all annotations that are broken due to a certain application.
 	 *
 	 * @param aid
 	 *            The app-id.
-	 * @param timestamp
-	 *            The timestamp of the application.
-	 * @return A list with the timestamps of all broken annotations - formatted as JSON string.
+	 * @param version
+	 *            The version of the application.
+	 * @return A list with the versions of all broken annotations - formatted as JSON string.
 	 */
 	@RequestMapping(path = GET_BROKEN, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> getBroken(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam String timestamp) {
+	public ResponseEntity<String> getBroken(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam String version) {
 		try {
-			return restTemplate.getForEntity(Idpa.Annotation.GET_BROKEN.requestUrl(aid).withQuery("timestamp", timestamp).get(), String.class);
+			return restTemplate.getForEntity(Idpa.Annotation.GET_BROKEN.requestUrl(aid).withQuery("version", version).get(), String.class);
 		} catch (HttpStatusCodeException e) {
-			LOGGER.warn("Getting the broken states for the application with app-id {} and timestamp {} resulted in a {} - {} response!", aid, timestamp, e.getStatusCode(),
+			LOGGER.warn("Getting the broken states for the application with app-id {} and version {} resulted in a {} - {} response!", aid, version, e.getStatusCode(),
 					e.getStatusCode().getReasonPhrase());
 			return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
 		}
