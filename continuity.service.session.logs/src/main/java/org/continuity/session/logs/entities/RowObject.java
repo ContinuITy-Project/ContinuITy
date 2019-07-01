@@ -1,42 +1,44 @@
 package org.continuity.session.logs.entities;
 
+import com.univocity.parsers.annotations.Headers;
 import com.univocity.parsers.annotations.Parsed;
 
+@Headers(write = true)
 public class RowObject {
-	
+
 	@Parsed(field = "session-id")
 	private String sessionID;
 
 	@Parsed(field = "user-name")
 	private String userName;
-	
-	@Parsed(field = "business-transaction")
-	private String businessTransaction;
-	
-	@Parsed(field = "request-start-time")
+
+	@Parsed(field = "endpoint")
+	private String endpoint;
+
+	@Parsed(field = "start-time")
 	private String requestStartTime;
-	
-	@Parsed(field = "request-end-time")
+
+	@Parsed(field = "end-time")
 	private String requestEndTime;
-	
+
 	@Parsed(field = "request-url")
 	private String requestURL;
-	
+
 	@Parsed(field = "port")
 	private String port;
-	
-	@Parsed(field = "host-ip")
+
+	@Parsed(field = "host")
 	private String hostIP;
-	
+
 	@Parsed(field = "protocol")
 	private String protocol;
-	
+
 	@Parsed(field = "method")
 	private String method;
-	
+
 	@Parsed(field = "parameter")
 	private String parameter;
-	
+
 	@Parsed(field = "encoding")
 	private String encoding;
 
@@ -57,11 +59,11 @@ public class RowObject {
 	}
 
 	public String getBusinessTransaction() {
-		return businessTransaction;
+		return endpoint;
 	}
 
 	public void setBusinessTransaction(String businessTransaction) {
-		this.businessTransaction = businessTransaction;
+		this.endpoint = businessTransaction;
 	}
 
 	public String getRequestStartTime() {
@@ -139,7 +141,7 @@ public class RowObject {
 	@Override
 	public String toString() {
 		return "RowObject [sessionID=" + sessionID + ", userName=" + userName + ", businessTransaction="
-				+ businessTransaction + ", requestStartTime=" + requestStartTime + ", requestEndTime=" + requestEndTime
+				+ endpoint + ", requestStartTime=" + requestStartTime + ", requestEndTime=" + requestEndTime
 				+ ", requestURL=" + requestURL + ", port=" + port + ", hostIP=" + hostIP + ", protocol=" + protocol
 				+ ", method=" + method + ", parameter=" + parameter + ", encoding=" + encoding + "]";
 	}

@@ -1,6 +1,5 @@
 package org.continuity.forecast.amqp;
 
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,6 +17,7 @@ import org.continuity.forecast.config.RabbitMqConfig;
 import org.continuity.forecast.controllers.ForecastController;
 import org.continuity.forecast.managers.ForecastPipelineManager;
 import org.continuity.forecast.managers.IntensitiesPipelineManager;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.slf4j.Logger;
@@ -50,7 +50,7 @@ public class ForecastAmqpHandler {
 	private MixedStorage<ForecastBundle> storage;
 
 	@Autowired
-	private ConcurrentHashMap<String, Pair<Date, Integer>> dateAndAmountOfUsersStorage;
+	private ConcurrentHashMap<String, Pair<VersionOrTimestamp, Integer>> dateAndAmountOfUsersStorage;
 
 	@Value("${spring.application.name}")
 	private String applicationName;
@@ -85,7 +85,7 @@ public class ForecastAmqpHandler {
 			if(statusChanged) {
 				IntensitiesPipelineManager intensitiesPipelineManager = new IntensitiesPipelineManager(restTemplate, influxDb, task.getAppId(), task.getForecastInput());
 				intensitiesPipelineManager.runPipeline(linkToSessions);
-				Pair<Date, Integer> dateAndAmountOfUserGroups = intensitiesPipelineManager.getDateAndAmountOfUserGroups();
+				Pair<VersionOrTimestamp, Integer> dateAndAmountOfUserGroups = intensitiesPipelineManager.getDateAndAmountOfUserGroups();
 				dateAndAmountOfUsersStorage.put(pathParams.get(0), dateAndAmountOfUserGroups);
 			}
 

@@ -12,6 +12,7 @@ import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.dsl.description.ForecastInput;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 
 public class Recipe {
 
@@ -25,6 +26,8 @@ public class Recipe {
 
 	private final AppId appId;
 
+	private final VersionOrTimestamp version;
+
 	private LinkExchangeModel source;
 
 	private PropertySpecification properties;
@@ -37,12 +40,14 @@ public class Recipe {
 
 	private ModularizationOptions modularizationOptions;
 
-	public Recipe(String orderId, String recipeId, AppId aid, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse, Set<String> testingContext, OrderOptions options,
+	public Recipe(String orderId, String recipeId, AppId aid, VersionOrTimestamp version, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse, Set<String> testingContext,
+			OrderOptions options,
 			ModularizationOptions modularizationOptions, ForecastInput forecastInput) {
 		this.orderId = orderId;
 		this.recipeId = recipeId;
 		this.iterator = steps.listIterator(steps.size());
 		this.appId = aid;
+		this.version = version;
 		this.source = source;
 		this.longTermUse = longTermUse;
 		this.testingContext = testingContext;
@@ -86,6 +91,7 @@ public class Recipe {
 		TaskDescription task = new TaskDescription();
 		task.setTaskId(taskId);
 		task.setAppId(appId);
+		task.setVersion(version);
 		task.setSource(source);
 		task.setProperties(properties);
 		task.setForecastInput(forecastInput);

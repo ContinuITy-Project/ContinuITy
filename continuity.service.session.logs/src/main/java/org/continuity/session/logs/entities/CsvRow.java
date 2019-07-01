@@ -1,10 +1,9 @@
-package org.continuity.request.rates.entities;
+package org.continuity.session.logs.entities;
 
 import java.io.ByteArrayInputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -31,10 +30,13 @@ public class CsvRow {
 
 	private static final String DEFAULT_ENCODING = "<no-encoding>";
 
-	@Parsed
+	@Parsed(field = "session-id")
+	private String sessionId;
+
+	@Parsed(field = "start")
 	private String startDate;
 
-	@Parsed
+	@Parsed(field = "end")
 	private String endDate;
 
 	@Parsed
@@ -173,6 +175,8 @@ public class CsvRow {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 
+		builder.append(sessionId);
+		builder.append(",");
 		builder.append(startDate);
 		builder.append(",");
 		builder.append(endDate);
@@ -196,44 +200,6 @@ public class CsvRow {
 		builder.append(headers);
 
 		return builder.toString();
-	}
-
-	public RequestRecord toRecord() {
-		RequestRecord record = new RequestRecord();
-
-		if (startDate != null) {
-			try {
-				record.setStartDate(DATE_FORMAT.parse(startDate));
-			} catch (ParseException e) {
-				LOGGER.error("Cannot parse start date!", e);
-			}
-		}
-
-		if (endDate != null) {
-			try {
-				record.setEndDate(DATE_FORMAT.parse(endDate));
-			} catch (ParseException e) {
-				LOGGER.error("Cannot parse end date!", e);
-			}
-		}
-
-		record.setName(name);
-		record.setDomain(domain);
-		record.setPort(port);
-		record.setPath(path);
-		record.setMethod(method);
-		record.setEncoding(encoding);
-		record.setProtocol(protocol);
-
-		if (parameters != null) {
-			record.setParameters(Arrays.asList(parameters.split("\\&")));
-		}
-
-		if (headers != null) {
-			record.setHeaders(Arrays.asList(headers.split("\\&")));
-		}
-
-		return record;
 	}
 
 	public static List<CsvRow> listFromString(String requestLogs) {

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.continuity.api.entities.config.LoadTestType;
 import org.continuity.api.entities.config.ModularizationApproach;
 import org.continuity.api.entities.config.ModularizationOptions;
@@ -21,7 +23,6 @@ import org.continuity.api.entities.config.OrderMode;
 import org.continuity.api.entities.config.OrderOptions;
 import org.continuity.api.entities.config.WorkloadModelType;
 import org.continuity.api.entities.links.LinkExchangeModel;
-import org.continuity.api.entities.links.MeasurementDataLinkType;
 import org.continuity.api.entities.links.SessionsStatus;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
@@ -39,6 +40,7 @@ import org.continuity.dsl.description.ForecastOptions;
 import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.dsl.description.Measurement;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -210,6 +212,20 @@ public class OrderCommands {
 			order.setAppId(contextManager.getCurrentAppId());
 		}
 
+		String version;
+
+		if (contextManager.getCurrentVersion() == null) {
+			version = "v0.0.0";
+		} else {
+			version = contextManager.getCurrentVersion();
+		}
+
+		try {
+			order.setVersion(VersionOrTimestamp.fromString(version));
+		} catch (NumberFormatException | ParseException e) {
+			e.printStackTrace();
+		}
+
 		order.setTestingContext(Collections.singleton("CONTEXT"));
 
 		OrderOptions options = new OrderOptions();
@@ -236,7 +252,7 @@ public class OrderCommands {
 		modularizationOptions.setModularizationApproach(ModularizationApproach.SESSION_LOGS);
 		order.setModularizationOptions(modularizationOptions);
 		LinkExchangeModel links = new LinkExchangeModel();
-		links.getMeasurementDataLinks().setLink("LINK_TO_DATA").setTimestamp(new Date(0)).setLinkType(MeasurementDataLinkType.OPEN_XTRACE);
+		links.getTraceLinks().setFrom(DateUtils.addHours(new Date(), 1)).setTo(new Date());
 		links.getSessionLogsLinks().setLink("SESSION_LOGS_LINK");
 		links.getSessionsBundlesLinks().setLink("SESSIONS_BUNDLES_LINKS").setStatus(SessionsStatus.NOT_CHANGED);
 		links.getForecastLinks().setLink("FORECAST_LINKS");

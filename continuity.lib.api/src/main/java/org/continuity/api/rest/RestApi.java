@@ -3,6 +3,7 @@ package org.continuity.api.rest;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.continuity.api.entities.links.MeasurementDataType;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
@@ -659,33 +660,91 @@ public class RestApi {
 
 		public static final String SERVICE_NAME = "session-logs";
 
-		public static final String ROOT = "/sessions";
-
-		/** {@value #ROOT}/{id} */
-		public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
-
-		/** {@value #ROOT}/create */
-		public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.POST);
-
 		private SessionLogs() {
 		}
 
-		public static class Paths {
+		public static class Sessions {
 
-			public static final String GET = "/{id}";
+			public static final String ROOT = "/sessions";
 
-			public static final String CREATE = "/create";
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
-			private Paths() {
+			/** {@value #ROOT}/create */
+			public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.POST);
+
+			private Sessions() {
+			}
+
+			public static class Paths {
+
+				public static final String GET = "/{id}";
+
+				public static final String CREATE = "/create";
+
+				private Paths() {
+				}
+			}
+
+			public static class QueryParameters {
+
+				public static final String ADD_PRE_POST_PROCESSING = "add-pre-post-processing";
+
+				private QueryParameters() {
+				}
 			}
 		}
 
-		public static class QueryParameters {
+		public static class MeasurementData {
 
-			public static final String ADD_PRE_POST_PROCESSING = "add-pre-post-processing";
+			public static final String ROOT = "/measurement-data";
 
-			private QueryParameters() {
+			/** {@value #ROOT}/{app-id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			/** {@value #ROOT}/{app-id}/{version} */
+			public static final RestEndpoint GET_VERSION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_VERSION, RequestMethod.GET);
+
+			/** {@value #ROOT}/{app-id}/{version}/link */
+			public static final RestEndpoint PUSH_LINK = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_LINK, RequestMethod.POST);
+
+			/** {@value #ROOT}/{app-id}/{version}/open-xtrace */
+			public static final RestEndpoint PUSH_OPEN_XTRACE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_OPEN_XTRACE, RequestMethod.POST);
+
+			/** {@value #ROOT}/{app-id}/{version}/access-logs */
+			public static final RestEndpoint PUSH_ACCESS_LOGS = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_ACCESS_LOGS, RequestMethod.POST);
+
+			/** {@value #ROOT}/{app-id}/{version}/csv */
+			public static final RestEndpoint PUSH_CSV = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_CSV, RequestMethod.POST);
+
+			/** {@value #ROOT}/{app-id}/{version}/{type} */
+			public static final Map<MeasurementDataType, RestEndpoint> PUSH_FOR_TYPE = new HashMap<>();
+
+			static {
+				PUSH_FOR_TYPE.put(MeasurementDataType.OPEN_XTRACE, PUSH_OPEN_XTRACE);
+				PUSH_FOR_TYPE.put(MeasurementDataType.ACCESS_LOGS, PUSH_ACCESS_LOGS);
+				PUSH_FOR_TYPE.put(MeasurementDataType.CSV, PUSH_CSV);
 			}
+
+			public static class Paths {
+
+				public static final String GET = "/{app-id}";
+
+				public static final String GET_VERSION = "/{app-id}/{version}";
+
+				public static final String PUSH_LINK = "/{app-id}/{version}/link";
+
+				public static final String PUSH_OPEN_XTRACE = "/{app-id}/{version}/open-xtrace";
+
+				public static final String PUSH_ACCESS_LOGS = "/{app-id}/{version}/access-logs";
+
+				public static final String PUSH_CSV = "/{app-id}/{version}/csv";
+
+				private Paths() {
+				}
+
+			}
+
 		}
 
 	}

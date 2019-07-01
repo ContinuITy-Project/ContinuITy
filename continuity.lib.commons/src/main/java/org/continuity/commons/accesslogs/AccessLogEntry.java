@@ -135,7 +135,8 @@ public class AccessLogEntry {
 					entry.setUserAgent(matcher.group(group));
 					break;
 				case "responseTime":
-					entry.setResponseTime(Long.parseLong(matcher.group(group)));
+					String responseTime = matcher.group(group);
+					entry.setResponseTime(responseTime == null ? 0 : Long.parseLong(responseTime));
 					break;
 				default:
 					break;

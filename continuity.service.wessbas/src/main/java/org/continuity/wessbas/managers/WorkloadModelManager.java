@@ -67,7 +67,7 @@ public class WorkloadModelManager {
 			workloadModel = null;
 		}
 
-		return new WessbasBundle(forecastBundle.getTimestamp(), workloadModel);
+		return new WessbasBundle(forecastBundle.getVersion(), workloadModel);
 	}
 
 	/**

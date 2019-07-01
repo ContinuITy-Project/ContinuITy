@@ -27,6 +27,7 @@ import org.continuity.dsl.description.FutureOccurrences;
 import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.dsl.description.Measurement;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
@@ -88,7 +89,7 @@ public class ForecastPipelineManager {
 	 *
 	 * @return The generated forecast bundle.
 	 */
-	public ForecastBundle runPipeline(Pair<Date, Integer> dateAndAmountOfUsers) {
+	public ForecastBundle runPipeline(Pair<VersionOrTimestamp, Integer> dateAndAmountOfUsers) {
 		setupDatabase();
 		ForecastBundle forecastBundle = generateForecastBundle(dateAndAmountOfUsers);
 
@@ -104,13 +105,13 @@ public class ForecastPipelineManager {
 	 * @throws ExtractionException
 	 * @throws ParseException
 	 */
-	private ForecastBundle generateForecastBundle(Pair<Date, Integer> dateAndAmountOfUsers) {
+	private ForecastBundle generateForecastBundle(Pair<VersionOrTimestamp, Integer> dateAndAmountOfUsers) {
 		// initialize intensity
 		this.workloadIntensity = 1;
 		// updates also the workload intensity
 		LinkedList<Double> probabilities = forecastWorkload(dateAndAmountOfUsers.getValue());
 		// forecast result
-		return new ForecastBundle(dateAndAmountOfUsers.getKey(), this.workloadIntensity, probabilities);
+		return new ForecastBundle(dateAndAmountOfUsers.getFirst(), this.workloadIntensity, probabilities);
 	}
 
 	/**

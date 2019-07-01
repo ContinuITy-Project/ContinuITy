@@ -44,7 +44,7 @@ public class WessbasAmqpHandler {
 
 	@Autowired
 	private MixedStorage<WessbasBundle> storage;
-	
+
 	@Autowired
 	private MixedStorage<BehaviorModelPack> storageBehav;
 
@@ -66,23 +66,25 @@ public class WessbasAmqpHandler {
 
 		TaskReport report;
 
-		if (task.getSource().getSessionLogsLinks().getLink() == null && task.getSource().getForecastLinks().getLink() == null) {
+		if ((task.getSource().getSessionLogsLinks().getLink() == null) && (task.getSource().getForecastLinks().getLink() == null)) {
 			LOGGER.error("Task {}: Session logs link and forecast link is missing for app-id {}!", task.getTaskId(), task.getAppId());
 			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {
 			WessbasBundle workloadModel = null;
+
 			if(task.getSource().getForecastLinks().getLink() != null) {
 				WorkloadModelManager modelManager = new WorkloadModelManager(restTemplate);
-				
+
 				List<String> pathParams = RestApi.Wessbas.SessionsBundles.GET.parsePathParameters(task.getSource().getSessionsBundlesLinks().getLink());
 				BehaviorModelPack behaviorModelPack = storageBehav.get(pathParams.get(0));
 				Path pathToBehaviorFiles = behaviorModelPack.getPathToBehaviorModelFiles();
-				
+
 				workloadModel = modelManager.runPipeline(task.getSource().getForecastLinks().getLink(), pathToBehaviorFiles);
 			} else {
 				WessbasPipelineManager pipelineManager = new WessbasPipelineManager(restTemplate);
 				workloadModel = pipelineManager.runPipeline(task, task.getProperties().getIntensityCalculationInterval());
 			}
+
 			if (workloadModel == null) {
 				LOGGER.info("Task {}: Could not create a new workload model for app-id '{}'.", task.getTaskId(), task.getAppId());
 

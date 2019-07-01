@@ -34,8 +34,8 @@ public class SessionLogsController {
 	 */
 	@RequestMapping(path = GET, method = RequestMethod.GET)
 	public ResponseEntity<SessionLogs> getSessionLogs(@PathVariable String id) {
-		LOGGER.info("Trying to get the session logs from {}", RestApi.SessionLogs.GET.requestUrl(id).get());
-		return restTemplate.getForEntity(RestApi.SessionLogs.GET.requestUrl(id).get(), SessionLogs.class);
+		LOGGER.info("Trying to get the session logs from {}", RestApi.SessionLogs.Sessions.GET.requestUrl(id).get());
+		return restTemplate.getForEntity(RestApi.SessionLogs.Sessions.GET.requestUrl(id).get(), SessionLogs.class);
 	}
 
 }

@@ -7,22 +7,19 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.config.ModularizationApproach;
 import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.MeasurementDataLinkType;
-import org.continuity.api.entities.links.MeasurementDataLinks;
-import org.continuity.api.entities.report.TaskError;
+import org.continuity.api.entities.links.TraceLinks;
 import org.continuity.api.entities.report.TaskReport;
+import org.continuity.api.rest.RequestBuilder;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.openxtrace.OpenXtraceTracer;
-import org.continuity.commons.storage.CsvFileStorage;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.utils.ModularizationUtils;
-import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.application.Application;
 import org.continuity.request.rates.config.RabbitMqConfig;
-import org.continuity.request.rates.entities.CsvRow;
 import org.continuity.request.rates.entities.RequestRecord;
 import org.continuity.request.rates.entities.WorkloadModelPack;
 import org.continuity.request.rates.model.RequestRatesModel;
@@ -37,7 +34,6 @@ import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcess
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -57,14 +53,7 @@ public class RequestRatesAmqpHandler {
 	private RestTemplate restTemplate;
 
 	@Autowired
-	@Qualifier("plainRestTemplate")
-	private RestTemplate plainRestTemplate;
-
-	@Autowired
 	private MixedStorage<RequestRatesModel> storage;
-
-	@Autowired
-	private CsvFileStorage<CsvRow> requestLogsStorage;
 
 	@Value("${spring.application.name}")
 	private String applicationName;
@@ -81,55 +70,44 @@ public class RequestRatesAmqpHandler {
 		LOGGER.info("Task {}: Received new task to be processed for app-id '{}'", task.getTaskId(), task.getAppId());
 
 		TaskReport report;
-		MeasurementDataLinks link = task.getSource().getMeasurementDataLinks();
+		TraceLinks link = task.getSource().getTraceLinks();
 
-		if (link.getLinkType() == MeasurementDataLinkType.CSV) {
-			LOGGER.info("Task {}: Processing CSV data...", task.getTaskId());
+		RequestBuilder reqBuilder;
 
-			List<CsvRow> csvRecords;
-
-			if (link.getLink().startsWith(applicationName)) {
-				List<String> pathParams = RestApi.RequestRates.RequestLogs.GET.parsePathParameters(link.getLink());
-				csvRecords = requestLogsStorage.get(pathParams.get(0));
-			} else {
-				String csvString = restTemplate.getForObject(WebUtils.addProtocolIfMissing(link.getLink()), String.class);
-				csvRecords = CsvRow.listFromString(csvString);
-			}
-
-			List<RequestRecord> records = csvRecords.stream().map(CsvRow::toRecord).collect(Collectors.toList());
-
-			report = processRequests(records, task, false, null);
-		} else if (link.getLinkType() == MeasurementDataLinkType.OPEN_XTRACE) {
-			LOGGER.info("Task {}: Processing OPEN.xtrace data...", task.getTaskId());
-
-			Iterable<Trace> traces = OPENxtraceUtils.getOPENxtraces(task.getSource(), plainRestTemplate);
-			LOGGER.info("Task {}: Retrieved OPEN.xtrace data.", task.getTaskId());
-
-			boolean applyModularization = false;
-
-			if (null != task.getModularizationOptions()) {
-				ModularizationOptions modularizationOptions = task.getModularizationOptions();
-				applyModularization = modularizationOptions.getModularizationApproach().equals(ModularizationApproach.REQUESTS);
-			}
-
-			List<HTTPRequestProcessingImpl> requestsOfInterest;
-
-			if (applyModularization) {
-				Collection<String> targetHostNames = ModularizationUtils.getTargetHostNames(task.getModularizationOptions().getServices(), restTemplate);
-
-				requestsOfInterest = StreamSupport.stream(traces.spliterator(), false).map(Trace::getRoot).map(SubTrace::getRoot).map(root -> OpenXtraceTracer.forRootAndHosts(root, targetHostNames))
-						.map(OpenXtraceTracer::extractSubtraces).flatMap(List::stream).collect(Collectors.toList());
-			} else {
-				requestsOfInterest = StreamSupport.stream(traces.spliterator(), false).map(Trace::getRoot).map(SubTrace::getRoot).map(OpenXtraceTracer::forRoot).map(OpenXtraceTracer::extractSubtraces)
-						.flatMap(List::stream).collect(Collectors.toList());
-			}
-
-			List<RequestRecord> records = requestsOfInterest.stream().map(this::traceToRequestRecord).collect(Collectors.toList());
-			report = processRequests(records, task, applyModularization, task.getModularizationOptions());
+		if (task.getVersion() == null) {
+			reqBuilder = RestApi.SessionLogs.MeasurementData.GET.requestUrl(task.getAppId());
 		} else {
-			LOGGER.error("Task {}: Cannot process measurement data of type {}!", task.getTaskId(), link.getLinkType());
-			report = TaskReport.error(task.getTaskId(), TaskError.ILLEGAL_TYPE);
+			reqBuilder = RestApi.SessionLogs.MeasurementData.GET_VERSION.requestUrl(task.getAppId(), task.getVersion());
 		}
+
+		LOGGER.info("Task {}: Processing OPEN.xtrace data...", task.getTaskId());
+
+		Iterable<Trace> traces = OPENxtraceUtils
+				.getOPENxtraces(reqBuilder.withQueryIfNotEmpty("from", ApiFormats.DATE_FORMAT.format(link.getFrom())).withQueryIfNotEmpty("to", ApiFormats.DATE_FORMAT.format(link.getTo())).get(),
+						restTemplate);
+		LOGGER.info("Task {}: Retrieved OPEN.xtrace data.", task.getTaskId());
+
+		boolean applyModularization = false;
+
+		if (null != task.getModularizationOptions()) {
+			ModularizationOptions modularizationOptions = task.getModularizationOptions();
+			applyModularization = modularizationOptions.getModularizationApproach().equals(ModularizationApproach.REQUESTS);
+		}
+
+		List<HTTPRequestProcessingImpl> requestsOfInterest;
+
+		if (applyModularization) {
+			Collection<String> targetHostNames = ModularizationUtils.getTargetHostNames(task.getModularizationOptions().getServices(), restTemplate);
+
+			requestsOfInterest = StreamSupport.stream(traces.spliterator(), false).map(Trace::getRoot).map(SubTrace::getRoot).map(root -> OpenXtraceTracer.forRootAndHosts(root, targetHostNames))
+					.map(OpenXtraceTracer::extractSubtraces).flatMap(List::stream).collect(Collectors.toList());
+		} else {
+			requestsOfInterest = StreamSupport.stream(traces.spliterator(), false).map(Trace::getRoot).map(SubTrace::getRoot).map(OpenXtraceTracer::forRoot).map(OpenXtraceTracer::extractSubtraces)
+					.flatMap(List::stream).collect(Collectors.toList());
+		}
+
+		List<RequestRecord> records = requestsOfInterest.stream().map(this::traceToRequestRecord).collect(Collectors.toList());
+		report = processRequests(records, task, applyModularization, task.getModularizationOptions());
 
 		amqpTemplate.convertAndSend(AmqpApi.Global.EVENT_FINISHED.name(), AmqpApi.Global.EVENT_FINISHED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), report);
 	}

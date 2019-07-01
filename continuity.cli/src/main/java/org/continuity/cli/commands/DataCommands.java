@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
+import org.continuity.api.entities.links.MeasurementDataType;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
@@ -28,9 +29,9 @@ import org.springframework.shell.standard.ShellOption;
  *
  */
 @ShellComponent
-public class AccesslogsCommands {
+public class DataCommands {
 
-	private static final String CONTEXT_NAME = "accesslogs";
+	private static final String CONTEXT_NAME = "data";
 
 	private final CliContext context = new CliContext(CONTEXT_NAME, //
 			new Shorthand("unify", this, "createUnifiedCsv", String.class, String.class) //
@@ -54,7 +55,22 @@ public class AccesslogsCommands {
 		}
 	}
 
-	@ShellMethod(key = { "accesslogs unify" }, value = "Creates a unified CSV holding the required information for session logs creation based on an application model.")
+	@ShellMethod(key = { "data upload" }, value = "Uploads data of a certain type (open-xtrace, access-logs, csv) for later use.")
+	public AttributedString upload(String path, @ShellOption(defaultValue = "open-xtrace") String type, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
+			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String version) {
+		MeasurementDataType mType = MeasurementDataType.fromPrettyString(type);
+
+		if (mType == null) {
+			return new ResponseBuilder().error("Unknown measurement data type ").boldError(type).error("!").build();
+		}
+
+		// TODO: get app-id & version; read file contents (relative to wd); upload; report about
+		// link/time range.
+
+		return new ResponseBuilder().error("This command is currently not implemented!").build();
+	}
+
+	@ShellMethod(key = { "data unify" }, value = "Creates a unified CSV from access logs holding the required information for session logs creation based on an application model.")
 	public String createUnifiedCsv(String pathToAccessLogs, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws IOException {
 		AppId aid = contextManager.getAppIdOrFail(appId);
 
