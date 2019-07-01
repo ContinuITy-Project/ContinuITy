@@ -1,33 +1,31 @@
 package org.continuity.api.entities.artifact;
 
-import java.util.Date;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import org.continuity.idpa.VersionOrTimestamp;
 
 public class SessionsBundlePack {
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH-mm-ss-SSSX")
-	private Date timestamp;
+
+	private VersionOrTimestamp version;
 
 	private List<SessionsBundle> sessionsBundles;
 
-	public SessionsBundlePack(Date timestamp, List<SessionsBundle> sessionsBundles) {
+	public SessionsBundlePack(VersionOrTimestamp version, List<SessionsBundle> sessionsBundles) {
 		super();
-		this.timestamp = timestamp;
+		this.version = version;
 		this.sessionsBundles = sessionsBundles;
 	}
-	
+
 	public SessionsBundlePack() {
-		
-	}
-	
-	public Date getTimestamp() {
-		return timestamp;
+
 	}
 
-	public void setTimestamp(Date timestamp) {
-		this.timestamp = timestamp;
+	public VersionOrTimestamp getVersion() {
+		return version;
+	}
+
+	public void setVersion(VersionOrTimestamp version) {
+		this.version = version;
 	}
 
 	public List<SessionsBundle> getSessionsBundles() {

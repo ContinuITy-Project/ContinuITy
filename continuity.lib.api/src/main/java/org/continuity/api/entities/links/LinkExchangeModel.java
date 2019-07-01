@@ -3,6 +3,7 @@ package org.continuity.api.entities.links;
 import java.lang.reflect.Field;
 
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -19,15 +20,19 @@ public class LinkExchangeModel {
 	@JsonInclude(Include.NON_NULL)
 	private AppId appId;
 
+	@JsonProperty(value = "version", required = false)
+	@JsonInclude(Include.NON_NULL)
+	private VersionOrTimestamp version;
+
 	@JsonProperty(value = "idpa", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
 	@JsonManagedReference
 	private final IdpaLinks idpaLinks = new IdpaLinks(this);
 
-	@JsonProperty(value = "measurement-data", required = false)
+	@JsonProperty(value = "traces", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
 	@JsonManagedReference
-	private final MeasurementDataLinks measurementDataLinks = new MeasurementDataLinks(this);
+	private final TraceLinks traceLinks = new TraceLinks(this);
 
 	@JsonProperty(value = "session-logs", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
@@ -63,12 +68,21 @@ public class LinkExchangeModel {
 		return this;
 	}
 
+	public VersionOrTimestamp getVersion() {
+		return version;
+	}
+
+	public LinkExchangeModel setVersion(VersionOrTimestamp version) {
+		this.version = version;
+		return this;
+	}
+
 	public IdpaLinks getIdpaLinks() {
 		return idpaLinks;
 	}
 
-	public MeasurementDataLinks getMeasurementDataLinks() {
-		return measurementDataLinks;
+	public TraceLinks getTraceLinks() {
+		return traceLinks;
 	}
 
 	public SessionLogsLinks getSessionLogsLinks() {

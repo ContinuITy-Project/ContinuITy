@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -82,7 +81,7 @@ public class WessbasPipelineManager {
 	public WessbasBundle runPipeline(TaskDescription task, IntensityCalculationInterval interval) {
 		String sessionLogsLink = task.getSource().getSessionLogsLinks().getLink();
 		if ("dummy".equals(sessionLogsLink)) {
-			return new WessbasBundle(new Date(), WessbasDslInstance.DVDSTORE_PARSED.get());
+			return new WessbasBundle(task.getVersion(), WessbasDslInstance.DVDSTORE_PARSED.get());
 		}
 
 		SessionLogs sessionLog;
@@ -109,7 +108,7 @@ public class WessbasPipelineManager {
 			return null;
 		}
 
-		return new WessbasBundle(sessionLog.getDataTimestamp(), workloadModel);
+		return new WessbasBundle(task.getVersion(), workloadModel);
 	}
 
 	/**
@@ -147,7 +146,7 @@ public class WessbasPipelineManager {
 		// Apply Modularization
 		WorkloadModularizationManager modularizationManager = new WorkloadModularizationManager(restTemplate);
 		BehaviorModelPack behaviorModelPack = new BehaviorModelPack(sessionsBundles, workingDir);
-		modularizationManager.runPipeline(task.getAppId(), task.getSource(), behaviorModelPack, task.getModularizationOptions().getServices());
+		modularizationManager.runPipeline(task.getAppId(), task.getVersion(), task.getSource(), behaviorModelPack, task.getModularizationOptions().getServices());
 
 		Properties behaviorProperties = new Properties();
 		behaviorProperties.load(Files.newInputStream(workingDir.resolve("behaviormodelextractor").resolve("behaviormix.txt")));

@@ -1,10 +1,9 @@
 package org.continuity.session.logs.controllers;
 
-import static org.continuity.api.rest.RestApi.SessionLogs.Paths.CREATE;
-import static org.continuity.api.rest.RestApi.SessionLogs.Paths.GET;
-import static org.continuity.api.rest.RestApi.SessionLogs.QueryParameters.ADD_PRE_POST_PROCESSING;
+import static org.continuity.api.rest.RestApi.SessionLogs.Sessions.Paths.CREATE;
+import static org.continuity.api.rest.RestApi.SessionLogs.Sessions.Paths.GET;
+import static org.continuity.api.rest.RestApi.SessionLogs.Sessions.QueryParameters.ADD_PRE_POST_PROCESSING;
 
-import java.util.Date;
 import java.util.List;
 
 import org.continuity.api.entities.artifact.SessionLogs;
@@ -12,6 +11,7 @@ import org.continuity.api.entities.artifact.SessionLogsInput;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.session.logs.extractor.ModularizedOPENxtraceSessionLogsExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ import open.xtrace.OPENxtraceUtils;
  *
  */
 @RestController()
-@RequestMapping(RestApi.SessionLogs.ROOT)
+@RequestMapping(RestApi.SessionLogs.Sessions.ROOT)
 public class SessionLogsController {
 
 	@Autowired
@@ -82,6 +82,6 @@ public class SessionLogsController {
 		List<Trace> traces = OPENxtraceUtils.deserializeIntoTraceList(sessionLogsInput.getSerializedTraces());
 		String sessionLogs = extractor.getSessionLogs(traces);
 
-		return ResponseEntity.ok(new SessionLogs(new Date(), sessionLogs));
+		return ResponseEntity.ok(new SessionLogs(VersionOrTimestamp.MIN_VALUE, sessionLogs));
 	}
 }

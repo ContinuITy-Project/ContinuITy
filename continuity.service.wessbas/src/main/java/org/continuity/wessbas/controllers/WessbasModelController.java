@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,6 +20,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.wessbas.WessbasModelParser;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.application.Application;
 import org.continuity.wessbas.entities.WessbasBundle;
@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.ApiImplicitParam;
@@ -97,7 +98,7 @@ public class WessbasModelController {
 	 */
 	@RequestMapping(path = UPLOAD, method = RequestMethod.PUT)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<WorkloadModelPack> uploadModel(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestBody String workloadModel) {
+	public ResponseEntity<WorkloadModelPack> uploadModel(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) VersionOrTimestamp version, @RequestBody String workloadModel) {
 
 	    InputStream inputStream = new ByteArrayInputStream(workloadModel.getBytes());
 
@@ -111,7 +112,7 @@ public class WessbasModelController {
 			throw new IllegalArgumentException("Exception while reading workload model! Content is not allowed.", e);
 		}
 
-		WessbasBundle bundle = new WessbasBundle(new Date(), wessbasModel);
+		WessbasBundle bundle = new WessbasBundle(version, wessbasModel);
 		String storedItemId = storage.put(bundle, aid);
 
 		return ResponseEntity.ok(new WorkloadModelPack(applicationName, storedItemId, aid));
@@ -188,8 +189,8 @@ public class WessbasModelController {
 			annotationExtractor.init(bundle.getWorkloadModel(), id);
 
 			systemModel = annotationExtractor.extractSystemModel();
-			if (bundle.getTimestamp() != null) {
-				systemModel.setTimestamp(bundle.getTimestamp());
+			if (bundle.getVersion() != null) {
+				systemModel.setVersionOrTimestamp(bundle.getVersion());
 			}
 
 			annotation = annotationExtractor.extractInitialAnnotation();

@@ -1,34 +1,32 @@
 package org.continuity.wessbas.entities;
 
-import java.util.Date;
+import org.continuity.idpa.VersionOrTimestamp;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import m4jdsl.WorkloadModel;
 
 public class WessbasBundle {
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH-mm-ss-SSSX")
-	private Date timestamp;
+	private VersionOrTimestamp version;
 
 	@JsonIgnore
 	private WorkloadModel workloadModel;
 
-	public WessbasBundle(Date timestamp, WorkloadModel workloadModel) {
-		this.timestamp = timestamp;
+	public WessbasBundle(VersionOrTimestamp version, WorkloadModel workloadModel) {
+		this.version = version;
 		this.workloadModel = workloadModel;
 	}
 
 	public WessbasBundle() {
 	}
 
-	public Date getTimestamp() {
-		return timestamp;
+	public VersionOrTimestamp getVersion() {
+		return version;
 	}
 
-	public void setTimestamp(Date timestamp) {
-		this.timestamp = timestamp;
+	public void setVersion(VersionOrTimestamp version) {
+		this.version = version;
 	}
 
 	public WorkloadModel getWorkloadModel() {

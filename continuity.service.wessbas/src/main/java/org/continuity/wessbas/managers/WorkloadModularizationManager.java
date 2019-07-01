@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
+import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.artifact.SessionLogsInput;
 import org.continuity.api.entities.artifact.SessionsBundle;
@@ -29,9 +30,11 @@ import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
 import org.continuity.api.entities.artifact.markovbehavior.MarkovChain;
 import org.continuity.api.entities.artifact.markovbehavior.NormalDistribution;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.rest.RequestBuilder;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.wessbas.entities.BehaviorModelPack;
@@ -138,9 +141,20 @@ public class WorkloadModularizationManager {
 		LOGGER.info("Set working directory to {}", workingDir);
 	}
 
-	public void runPipeline(AppId aid, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, Map<AppId, String> services) {
+	public void runPipeline(AppId aid, VersionOrTimestamp version, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, Map<AppId, String> services) {
 		List<SessionsBundle> sessionBundles = behaviorModelPack.getSessionsBundlePack().getSessionsBundles();
-		List<HTTPRequestProcessingImpl> httpCallables = OPENxtraceUtils.extractHttpRequestCallables(OPENxtraceUtils.getOPENxtraces(linkExchangeModel, plainRestTemplate));
+
+		RequestBuilder reqBuilder;
+
+		if (version == null) {
+			reqBuilder = RestApi.SessionLogs.MeasurementData.GET.requestUrl(aid);
+		} else {
+			reqBuilder = RestApi.SessionLogs.MeasurementData.GET_VERSION.requestUrl(aid, version);
+		}
+
+		String traceLink = reqBuilder.withQuery("from", ApiFormats.DATE_FORMAT.format(linkExchangeModel.getTraceLinks().getFrom()))
+				.withQuery("to", ApiFormats.DATE_FORMAT.format(linkExchangeModel.getTraceLinks().getTo())).get();
+		List<HTTPRequestProcessingImpl> httpCallables = OPENxtraceUtils.extractHttpRequestCallables(OPENxtraceUtils.getOPENxtraces(traceLink, plainRestTemplate));
 		Application application = eurekaRestTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid).get(), Application.class);
 
 		MarkovBehaviorModel behaviorModel = new MarkovBehaviorModel();
@@ -297,7 +311,7 @@ public class WorkloadModularizationManager {
 		}
 
 		SessionLogsInput input = new SessionLogsInput(services, jsonArray.toString());
-		String createSessionLogsLink = RestApi.SessionLogs.CREATE.requestUrl().withQuery(RestApi.SessionLogs.QueryParameters.ADD_PRE_POST_PROCESSING, "true").get();
+		String createSessionLogsLink = RestApi.SessionLogs.Sessions.CREATE.requestUrl().withQuery(RestApi.SessionLogs.Sessions.QueryParameters.ADD_PRE_POST_PROCESSING, "true").get();
 		return eurekaRestTemplate.postForObject(createSessionLogsLink, input, SessionLogs.class);
 	}
 

@@ -2,11 +2,10 @@ package org.continuity.wessbas.managers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Date;
-
 import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.DirectListInput;
 import org.continuity.idpa.application.Application;
@@ -23,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
 
 public class UrlPartParametersTest {
 
-	private static final SessionLogs SESSION_LOG = new SessionLogs(new Date(),
+	private static final SessionLogs SESSION_LOG = new SessionLogs(VersionOrTimestamp.MIN_VALUE,
 			"123;\"fooRequest\":1:42:/foo/{bar}:8080:localhost:HTTP/1.1:GET:abc=123&URL_PART_bar=hi:<no-encoding>;\"fooRequest\":43:50:/foo/{bar}:8080:localhost:HTTP/1.1:GET:URL_PART_bar=hello:<no-encoding>");
 
 	private RestTemplate restMock;

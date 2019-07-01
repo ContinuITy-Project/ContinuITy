@@ -1,32 +1,27 @@
 package org.continuity.api.entities.artifact;
 
-import java.util.Date;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.continuity.idpa.VersionOrTimestamp;
 
 public class SessionLogs {
 
-	@JsonProperty("data-timestamp")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH-mm-ss-SSSX")
-	private Date dataTimestamp;
+	private VersionOrTimestamp version;
 
 	private String logs;
 
-	public SessionLogs(Date dataTimestamp, String logs) {
-		this.dataTimestamp = dataTimestamp;
+	public SessionLogs(VersionOrTimestamp version, String logs) {
+		this.version = version;
 		this.logs = logs;
 	}
 
 	public SessionLogs() {
 	}
 
-	public Date getDataTimestamp() {
-		return dataTimestamp;
+	public VersionOrTimestamp getVersion() {
+		return version;
 	}
 
-	public void setDataTimestamp(Date dataTimestamp) {
-		this.dataTimestamp = dataTimestamp;
+	public void setVersion(VersionOrTimestamp version) {
+		this.version = version;
 	}
 
 	public String getLogs() {
