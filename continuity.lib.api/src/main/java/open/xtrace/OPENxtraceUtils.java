@@ -1,16 +1,15 @@
 package open.xtrace;
 
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.continuity.api.entities.links.LinkExchangeModel;
-import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Trace;
@@ -18,9 +17,8 @@ import org.spec.research.open.xtrace.api.core.callables.Callable;
 import org.spec.research.open.xtrace.api.core.callables.NestingCallable;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.RemoteInvocationImpl;
-import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceDeserializer;
-import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializationFactory;
-import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializationFormat;
+import org.spec.research.open.xtrace.dflt.impl.serialization.realizations.JsonOPENxtraceDeserializer;
+import org.spec.research.open.xtrace.dflt.impl.serialization.realizations.JsonOPENxtraceSerializer;
 import org.springframework.web.client.RestTemplate;
 
 public class OPENxtraceUtils {
@@ -33,28 +31,82 @@ public class OPENxtraceUtils {
 
 	private static final String COOKIES_KEY = "cookie";
 
+	private static JsonOPENxtraceSerializer serializer;
+
+	private static JsonOPENxtraceDeserializer deserializer;
+
+	private static JsonOPENxtraceSerializer initAndGetSerializer() {
+		if (serializer == null) {
+			synchronized (OPENxtraceUtils.class) {
+				if (serializer == null) {
+					serializer = new JsonOPENxtraceSerializer();
+				}
+			}
+		}
+
+		return serializer;
+	}
+
+	private static JsonOPENxtraceDeserializer initAndGetDeserializer() {
+		if (deserializer == null) {
+			synchronized (OPENxtraceUtils.class) {
+				if (deserializer == null) {
+					deserializer = new JsonOPENxtraceDeserializer();
+				}
+			}
+		}
+
+		return deserializer;
+	}
+
 	/**
 	 * Deserializes a given String into a list of traces
 	 *
 	 * @return an Iterable of Traces
 	 */
 	public static List<Trace> deserializeIntoTraceList(String openxtrace) {
-		JSONArray traceArray = new JSONArray(openxtrace);
-		StringBuilder traceBuilder = new StringBuilder();
+		JsonOPENxtraceDeserializer deserializer = initAndGetDeserializer();
 
-		for (int i = 0; i < traceArray.length(); i++) {
-			traceBuilder.append(traceArray.getJSONObject(i));
-			traceBuilder.append("\n");
+		try {
+			return deserializer.deserialize(openxtrace);
+		} catch (IOException e) {
+			LOGGER.error("Could not deserialize trace list! Returning null.", e);
+			return null;
 		}
-		OPENxtraceDeserializer deserializer = OPENxtraceSerializationFactory.getInstance().getDeserializer(OPENxtraceSerializationFormat.JSON);
-		deserializer.setSource(new ByteArrayInputStream(traceBuilder.toString().getBytes()));
-		Trace trace = deserializer.readNext();
-		List<Trace> traces = new ArrayList<Trace>();
-		while (null != trace) {
-			traces.add(trace);
-			trace = deserializer.readNext();
+	}
+
+	/**
+	 * Deserializes a single JSON string to a {@link Trace}.
+	 *
+	 * @param traceJson
+	 *            The JSON representation of the trace.
+	 * @return The deserializes trace.
+	 */
+	public static Trace deserializeToTrace(String traceJson) {
+		JsonOPENxtraceDeserializer deserializer = initAndGetDeserializer();
+		try {
+			return deserializer.deserialize(new StringBuilder().append("[").append(traceJson).append("]").toString()).get(0);
+		} catch (IOException e) {
+			LOGGER.error("Could not deserialize trace! Returning null.", e);
+			return null;
 		}
-		return traces;
+	}
+
+	public static String serializeTraceListToJsonString(List<Trace> traces) {
+		JsonOPENxtraceSerializer serializer = initAndGetSerializer();
+		return serializer.serialize(traces);
+	}
+
+	/**
+	 * Serializes a single trace into a string.
+	 *
+	 * @param trace
+	 * @return
+	 */
+	public static String serializeTraceToJsonString(Trace trace) {
+		JsonOPENxtraceSerializer serializer = initAndGetSerializer();
+		String json = serializer.serialize(Collections.singletonList(trace)).trim();
+		return json.substring(1, json.length() - 1);
 	}
 
 	/**
@@ -109,8 +161,8 @@ public class OPENxtraceUtils {
 	 *
 	 * @return list of traces
 	 */
-	public static Iterable<Trace> getOPENxtraces(LinkExchangeModel source, RestTemplate restTemplate) {
-		String openxtrace = restTemplate.getForObject(source.getMeasurementDataLinks().getLink(), String.class);
+	public static List<Trace> getOPENxtraces(String url, RestTemplate restTemplate) {
+		String openxtrace = restTemplate.getForObject(url, String.class);
 		List<Trace> traces = OPENxtraceUtils.deserializeIntoTraceList(openxtrace);
 		return (traces);
 	}

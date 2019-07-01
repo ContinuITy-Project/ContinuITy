@@ -11,9 +11,9 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.commons.storage.AppIdFileStorage;
 import org.continuity.commons.storage.ArtifactStorage;
 import org.continuity.commons.storage.JsonFileStorage;
-import org.continuity.commons.storage.AppIdFileStorage;
 import org.continuity.idpa.AppId;
 import org.continuity.orchestrator.entities.TestingContextMapping;
 import org.slf4j.Logger;
@@ -130,7 +130,8 @@ public class TestingContextStorage {
 	private boolean overlap(LinkExchangeModel first, LinkExchangeModel second) {
 		boolean overlap = false;
 
-		overlap |= (first.getMeasurementDataLinks().getLink() != null) && Objects.equals(first.getMeasurementDataLinks().getLink(), second.getMeasurementDataLinks().getLink());
+		overlap |= (first.getTraceLinks().getFrom() != null) && Objects.equals(first.getTraceLinks().getFrom(), second.getTraceLinks().getFrom());
+		overlap |= (first.getTraceLinks().getTo() != null) && Objects.equals(first.getTraceLinks().getTo(), second.getTraceLinks().getTo());
 		overlap |= (first.getSessionLogsLinks().getLink() != null) && Objects.equals(first.getSessionLogsLinks().getLink(), second.getSessionLogsLinks().getLink());
 		overlap |= (first.getWorkloadModelLinks().getLink() != null) && Objects.equals(first.getWorkloadModelLinks().getLink(), second.getWorkloadModelLinks().getLink());
 		overlap |= (first.getLoadTestLinks().getLink() != null) && Objects.equals(first.getLoadTestLinks().getLink(), second.getLoadTestLinks().getLink());

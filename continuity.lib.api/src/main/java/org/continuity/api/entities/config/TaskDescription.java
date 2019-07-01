@@ -3,6 +3,7 @@ package org.continuity.api.entities.config;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.dsl.description.ForecastInput;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -17,6 +18,8 @@ public class TaskDescription {
 
 	@JsonProperty("app-id")
 	private AppId appId;
+
+	private VersionOrTimestamp version;
 
 	private LinkExchangeModel source;
 
@@ -45,6 +48,14 @@ public class TaskDescription {
 
 	public void setAppId(AppId appId) {
 		this.appId = appId;
+	}
+
+	public VersionOrTimestamp getVersion() {
+		return version;
+	}
+
+	public void setVersion(VersionOrTimestamp version) {
+		this.version = version;
 	}
 
 	public LinkExchangeModel getSource() {

@@ -40,6 +40,7 @@ import org.continuity.commons.storage.MemoryStorage;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.dsl.description.ForecastInput;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.orchestrator.entities.CreationStep;
 import org.continuity.orchestrator.entities.DummyStep;
 import org.continuity.orchestrator.entities.OrderReportCounter;
@@ -132,14 +133,16 @@ public class OrchestrationController {
 
 			for (Map.Entry<Set<String>, Set<LinkExchangeModel>> entry : sources.entrySet()) {
 				for (LinkExchangeModel source : entry.getValue()) {
-					createAndSubmitRecipe(orderId, order.getAppId(), order.getGoal(), order.getMode(), order.getOptions(),  order.getForecastInput(), entry.getKey(), source, order.getModularizationOptions());
+					createAndSubmitRecipe(orderId, order.getAppId(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getForecastInput(), entry.getKey(), source,
+							order.getModularizationOptions());
 				}
 			}
 		} else {
 			declareResponseQueue(orderId);
 			orderCounterStorage.putToReserved(orderId, new OrderReportCounter(orderId, 1));
 
-			createAndSubmitRecipe(orderId, order.getAppId(), order.getGoal(), order.getMode(), order.getOptions(),  order.getForecastInput(), order.getTestingContext(), order.getSource(), order.getModularizationOptions());
+			createAndSubmitRecipe(orderId, order.getAppId(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getForecastInput(), order.getTestingContext(),
+					order.getSource(), order.getModularizationOptions());
 		}
 
 		OrderResponse response = new OrderResponse();
@@ -151,7 +154,8 @@ public class OrchestrationController {
 		return ResponseEntity.accepted().body(response);
 	}
 
-	private void createAndSubmitRecipe(String orderId, AppId aid, OrderGoal goal, OrderMode mode, OrderOptions options, ForecastInput forecastInput, Set<String> testingContext,
+	private void createAndSubmitRecipe(String orderId, AppId aid, VersionOrTimestamp version, OrderGoal goal, OrderMode mode, OrderOptions options, ForecastInput forecastInput,
+			Set<String> testingContext,
 			LinkExchangeModel source, ModularizationOptions modularizationOptions) {
 		boolean useTestingContext = ((testingContext != null) && !testingContext.isEmpty());
 
@@ -183,7 +187,7 @@ public class OrchestrationController {
 
 		LOGGER.info("{} Processing new recipe with goal {}...", LoggingUtils.formatPrefix(orderId, recipeId), goal);
 
-		Recipe recipe = new Recipe(orderId, recipeId, aid, recipeSteps, source, useTestingContext, testingContext, options, modularizationOptions, forecastInput);
+		Recipe recipe = new Recipe(orderId, recipeId, aid, version, recipeSteps, source, useTestingContext, testingContext, options, modularizationOptions, forecastInput);
 
 		if (recipe.hasNext()) {
 			recipeStorage.putToReserved(recipeId, recipe);
@@ -382,7 +386,7 @@ public class OrchestrationController {
 		LinkExchangeModel external = new LinkExchangeModel();
 
 		if (internal.getSessionLogsLinks().getLink() != null) {
-			List<String> params = RestApi.SessionLogs.GET.parsePathParameters(internal.getSessionLogsLinks().getLink());
+			List<String> params = RestApi.SessionLogs.Sessions.GET.parsePathParameters(internal.getSessionLogsLinks().getLink());
 
 			if (params != null) {
 				external.getSessionLogsLinks().setLink(RestApi.Orchestrator.SessionLogs.GET.requestUrl(params.get(0)).withHost(host).get());

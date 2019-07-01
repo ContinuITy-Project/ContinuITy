@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,6 +14,7 @@ import org.continuity.api.entities.artifact.SessionsBundle;
 import org.continuity.api.entities.artifact.SessionsBundlePack;
 import org.continuity.api.entities.artifact.SimplifiedSession;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestClientException;
@@ -28,7 +28,7 @@ import net.sf.markov4jmeter.m4jdslmodelgenerator.GeneratorException;
 import wessbas.commons.parser.ParseException;
 
 /**
- * 
+ *
  * @author Alper Hidiroglu
  *
  */
@@ -63,7 +63,7 @@ public class BehaviorMixManager {
 
 		LOGGER.info("Set working directory to {}", workingDir);
 	}
-	
+
 	/**
 	 * Constructor.
 	 */
@@ -95,7 +95,7 @@ public class BehaviorMixManager {
 
 		try {
 			mix = convertSessionLogIntoBehaviorMix(sessionLog.getLogs());
-			sessionsBundles = extractSessions(sessionLog.getDataTimestamp(), mix);
+			sessionsBundles = extractSessions(sessionLog.getVersion(), mix);
 
 		} catch (Exception e) {
 			LOGGER.error("Could not create the Behavior Mix!", e);
@@ -108,7 +108,7 @@ public class BehaviorMixManager {
 
 	/**
 	 * Runs the pipeline and returns a SessionsBundlePack that holds a list of SessionBundles.
-	 * 
+	 *
 	 * @param sessionLogs
 	 *            the {@link SessionLogs}
 	 * @return the session logs
@@ -119,7 +119,7 @@ public class BehaviorMixManager {
 
 		try {
 			mix = convertSessionLogIntoBehaviorMix(sessionLogs.getLogs());
-			sessionsBundles = extractSessions(sessionLogs.getDataTimestamp(), mix);
+			sessionsBundles = extractSessions(sessionLogs.getVersion(), mix);
 
 		} catch (Exception e) {
 			LOGGER.error("Could not create the Behavior Mix!", e);
@@ -145,7 +145,7 @@ public class BehaviorMixManager {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param sessionLog
 	 * @return
 	 * @throws IOException
@@ -158,7 +158,7 @@ public class BehaviorMixManager {
 
 	/**
 	 * Creates the Behavior Mix and writes the corresponding files.
-	 * 
+	 *
 	 * @param sessionLogsPath
 	 * @return
 	 * @throws IOException
@@ -179,12 +179,12 @@ public class BehaviorMixManager {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param mix
 	 * @return
 	 */
-	private SessionsBundlePack extractSessions(Date timestamp, BehaviorMix mix) {
-		SessionsBundlePack sessionsBundles = new SessionsBundlePack(timestamp, new LinkedList<SessionsBundle>());
+	private SessionsBundlePack extractSessions(VersionOrTimestamp version, BehaviorMix mix) {
+		SessionsBundlePack sessionsBundles = new SessionsBundlePack(version, new LinkedList<>());
 		for (int i = 0; i < mix.getEntries().size(); i++) {
 			List<SimplifiedSession> simplifiedSessions = new LinkedList<SimplifiedSession>();
 			for (Session session : mix.getEntries().get(i).getSessions()) {

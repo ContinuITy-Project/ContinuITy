@@ -33,7 +33,7 @@ public class WessbasFileStorage extends FileStorage<WessbasBundle> {
 		Path idDir = toIdDir(dirPath, id);
 		idDir.toFile().mkdirs();
 
-		if ((entity != null) && (entity.getWorkloadModel() != null) && (entity.getTimestamp() != null)) {
+		if ((entity != null) && (entity.getWorkloadModel() != null) && (entity.getVersion() != null)) {
 			// For reserving a slot, an empty bundle is passed. In this case, only the folder should
 			// be created.
 

@@ -1,7 +1,6 @@
 package org.continuity.forecast.managers;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -18,6 +17,7 @@ import org.continuity.commons.utils.WebUtils;
 import org.continuity.dsl.description.ForecastInput;
 import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.Point;
@@ -44,13 +44,13 @@ public class IntensitiesPipelineManager {
 
 	private ForecastInput forecastInput;
 
-	private Pair<Date, Integer> dateAndAmountOfUserGroups;
+	private Pair<VersionOrTimestamp, Integer> dateAndAmountOfUserGroups;
 
-	public Pair<Date, Integer> getDateAndAmountOfUserGroups() {
+	public Pair<VersionOrTimestamp, Integer> getDateAndAmountOfUserGroups() {
 		return dateAndAmountOfUserGroups;
 	}
 
-	public void setDateAndAmountOfUserGroups(Pair<Date, Integer> dateAndAmountOfUsers) {
+	public void setDateAndAmountOfUserGroups(Pair<VersionOrTimestamp, Integer> dateAndAmountOfUsers) {
 		this.dateAndAmountOfUserGroups = dateAndAmountOfUsers;
 	}
 
@@ -100,9 +100,9 @@ public class IntensitiesPipelineManager {
 			LOGGER.error("Error when retrieving sessions!", e);
 		}
 
-		Date date = sessionsBundles.getTimestamp();
+		VersionOrTimestamp date = sessionsBundles.getVersion();
 		int amountOfUsers = sessionsBundles.getSessionsBundles().size();
-		Pair<Date, Integer> pairDateUserGroupAmount = new Pair<>(date, amountOfUsers);
+		Pair<VersionOrTimestamp, Integer> pairDateUserGroupAmount = new Pair<>(date, amountOfUsers);
 		setDateAndAmountOfUserGroups(pairDateUserGroupAmount);
 
 		influxDb.enableBatch(BatchOptions.DEFAULTS);
