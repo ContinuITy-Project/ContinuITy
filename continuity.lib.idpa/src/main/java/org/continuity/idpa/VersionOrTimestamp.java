@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
+import java.util.TimeZone;
 
 import org.continuity.idpa.application.Application;
 
@@ -36,6 +37,10 @@ public class VersionOrTimestamp implements Comparable<VersionOrTimestamp> {
 	public static final VersionOrTimestamp MIN_VALUE = new VersionOrTimestamp(new Date(0));
 
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(Application.DATE_FORMAT);
+
+	static {
+		DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+	}
 
 	private final Date timestamp;
 
