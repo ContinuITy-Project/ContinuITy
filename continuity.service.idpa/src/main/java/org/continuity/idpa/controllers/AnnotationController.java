@@ -58,13 +58,13 @@ public class AnnotationController {
 	}
 
 	/**
-	 * Retrieves the latest annotation if it is not broken. If the timestamp is {@code null}, the
+	 * Retrieves the latest annotation if it is not broken. If the version is {@code null}, the
 	 * latest version will be returned.
 	 *
 	 * @param aid
 	 *            The app-id of the annotation.
 	 * @param version
-	 *            The timestamp for which the application model is searched (optional).
+	 *            The version for which the application model is searched (optional).
 	 * @return {@link ResponseEntity} holding the annotation. It will hold a header
 	 *         {@link CustomHeaders#BROKEN} indicating whether the IDPA is broken.
 	 */
@@ -176,13 +176,13 @@ public class AnnotationController {
 	}
 
 	/**
-	 * Returns the timestamps of all annotations that are broken due to a certain application.
+	 * Returns the versions of all annotations that are broken due to a certain application.
 	 *
 	 * @param aid
 	 *            The app-id.
 	 * @param version
-	 *            The timestamp of the application.
-	 * @return A list with the timestamps of all broken annotations.
+	 *            The version of the application.
+	 * @return A list with the versions of all broken annotations.
 	 */
 	@RequestMapping(path = GET_BROKEN, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
@@ -190,10 +190,10 @@ public class AnnotationController {
 		List<String> broken;
 		try {
 			broken = storageManager.getBrokenForApplication(aid, VersionOrTimestamp.fromString(version)).stream().map(VersionOrTimestamp::toString).collect(Collectors.toList());
-		} catch (ParseException e) {
-			LOGGER.error("Could not parse timestamp!", e);
+		} catch (ParseException | NumberFormatException e) {
+			LOGGER.error("Could not parse version or timestamp!", e);
 
-			return ResponseEntity.badRequest().body(Arrays.asList("Illegally formatted timestamp: " + version));
+			return ResponseEntity.badRequest().body(Arrays.asList("Illegally formatted version or timestamp: " + version));
 		}
 
 		return ResponseEntity.ok(broken);

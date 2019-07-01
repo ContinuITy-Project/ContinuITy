@@ -78,13 +78,13 @@ public class ApplicationController {
 	}
 
 	/**
-	 * Retrieves the current application model. If the timestamp is {@code null}, the latest version
+	 * Retrieves the current application model. If the version is {@code null}, the latest version
 	 * will be returned.
 	 *
 	 * @param aid
 	 *            The app-id of the application.
 	 * @param version
-	 *            The timestamp for which the application model is searched (optional).
+	 *            The version for which the application model is searched (optional).
 	 * @return The current application model.
 	 */
 	@RequestMapping(path = GET, method = RequestMethod.GET)
