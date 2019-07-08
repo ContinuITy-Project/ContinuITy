@@ -37,9 +37,16 @@ public class GenericShorthands {
 	@ShellMethod(key = { "upload" }, value = "Shorthand for '<context> upload'. Available in 'idpa app', 'idpa ann', and 'jmeter'.")
 	@ShellMethodAvailability({ "uploadAvailability" })
 	public AttributedString upload(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg1, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg2,
+			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg3, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg4,
 			@ShellOption(value = { "--annotate", "-a" }, defaultValue = "false") boolean annotate) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("upload");
-		return shorthand.execute(arg1, arg2, annotate);
+
+		// Quick fix due to limitations of Spring Shell
+		if (shorthand.getCommandName().startsWith("data")) {
+			return shorthand.execute(arg1, arg2, arg3, arg4);
+		} else {
+			return shorthand.execute(arg1, arg2, annotate);
+		}
 	}
 
 	public Availability uploadAvailability() {
