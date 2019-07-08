@@ -147,7 +147,7 @@ public class Shorthand implements Comparable<Shorthand> {
 		if (DEFAULT_VALUE.equals(value)) {
 			String defaultValue = getDefaultValue(paramIndex);
 
-			if (defaultValue == null) {
+			if ((defaultValue == null) || "__NONE__".equals(defaultValue)) {
 				try {
 					throw new ParameterMissingResolutionException(
 							ParameterDescription.outOf(MethodParameter.forExecutable(getMethod(), paramIndex)).keys(Collections.singletonList(getParameterName(paramIndex))));

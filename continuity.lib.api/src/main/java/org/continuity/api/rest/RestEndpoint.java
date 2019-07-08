@@ -27,7 +27,7 @@ public class RestEndpoint {
 
 	private RestEndpoint(String serviceName, String root, List<StringOrPar> elements, RequestMethod method) {
 		this.serviceName = serviceName;
-		this.root = root;
+		this.root = root == null ? "" : root;
 		this.elements = elements;
 		this.method = method;
 	}
@@ -62,6 +62,15 @@ public class RestEndpoint {
 		}
 
 		return new RestEndpoint(serviceName, root, elements, method);
+	}
+
+	/**
+	 * Returns whether this endpoint has a root element.
+	 *
+	 * @return {@code true} if it has a root element.
+	 */
+	public boolean hasRoot() {
+		return !"".equals(root);
 	}
 
 	/**
@@ -122,17 +131,22 @@ public class RestEndpoint {
 	public List<String> parsePathParameters(String link) {
 		String[] linkElements = normalizeLink(link).split("\\/");
 
-		// Endpoint is serviceName/root/elements
-		if (linkElements.length != (elements.size() + 2)) {
+		// Endpoint is serviceName/[root/]elements
+		if (linkElements.length != (elements.size() + (hasRoot() ? 2 : 1))) {
 			return null;
 		}
 
-		if (!root.equals(linkElements[1]) && !root.equals("/" + linkElements[1])) {
-			return null;
+		int i = 1;
+
+		if (hasRoot()) {
+			if (!root.equals(linkElements[1]) && !root.equals("/" + linkElements[1])) {
+				return null;
+			}
+
+			i++;
 		}
 
 		List<String> params = new ArrayList<>();
-		int i = 2;
 
 		for (StringOrPar stringOrPar : elements) {
 			if (stringOrPar.isPar()) {

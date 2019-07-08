@@ -4,23 +4,16 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.AndFileFilter;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.RegexFileFilter;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.report.AnnotationValidityReport;
 import org.continuity.api.entities.report.ApplicationChangeReport;
@@ -39,6 +32,7 @@ import org.continuity.commons.idpa.AnnotationFromAccessLogsExtractor;
 import org.continuity.commons.idpa.AnnotationValidityChecker;
 import org.continuity.commons.idpa.ApplicationUpdater;
 import org.continuity.commons.idpa.OpenApiToIdpaTransformer;
+import org.continuity.commons.utils.FileUtils;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
@@ -286,7 +280,7 @@ public class IdpaCommands {
 		EnumSet<ApplicationChangeType> changeTypes = changeTypesFromBooleans(add, remove, change, endpoints, parameters);
 
 		if (!openApiLocation.startsWith("http")) {
-			for (File openApiFile : getAllFilesMatchingWildcards(openApiLocation)) {
+			for (File openApiFile : FileUtils.getAllFilesMatchingWildcards(openApiLocation)) {
 				ApplicationChangeReport report = updateApplicationModel(updatedApplication, openApiFile.getPath(), aid, changeTypes);
 				updatedApplication = report.getUpdatedApplication();
 				report.setUpdatedApplication(null);
@@ -341,6 +335,7 @@ public class IdpaCommands {
 		return report;
 	}
 
+	@SuppressWarnings("unchecked")
 	@ShellMethod(key = { "idpa app upload" }, value = "Uploads the application model with the specified app-id. Can break the online stored annotation!")
 	public AttributedString uploadApplication(
 			@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE, help = "App-id of the application model. Can contain UNIX-like wildcards.") String pattern)
@@ -353,7 +348,7 @@ public class IdpaCommands {
 		ResponseBuilder responses = new ResponseBuilder();
 		boolean error = false;
 
-		for (File file : getAllFilesMatchingWildcards(workingDir + "/application-" + aidPattern + ".yml")) {
+		for (File file : FileUtils.getAllFilesMatchingWildcards(workingDir + "/application-" + aidPattern + ".yml")) {
 			Application application = appSerializer.readFromYaml(file);
 			String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
 			String appId = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
@@ -372,8 +367,14 @@ public class IdpaCommands {
 
 			responses.newline();
 
-			@SuppressWarnings("unchecked")
-			List<String> broken = restTemplate.getForObject(Idpa.GET_BROKEN.requestUrl(appId).withQuery(PARAM_VERSION, application.getVersionOrTimestamp().toString()).withHost(url).get(), List.class);
+			List<String> broken = null;
+
+			try {
+				broken = restTemplate.getForObject(Idpa.GET_BROKEN.requestUrl(appId).withQuery(PARAM_VERSION, application.getVersionOrTimestamp().toString()).withHost(url).get(), List.class);
+			} catch (HttpStatusCodeException e) {
+				responses.error("Error when checking broken annotations! ").boldError(e.getStatusCode()).error(" (").error(e.getStatusCode().getReasonPhrase()).error(") - ")
+						.error(e.getResponseBodyAsString()).newline();
+			}
 
 			if ((broken != null) && (broken.size() > 0)) {
 				responses.error("The new application version broke the following annotations: ");
@@ -426,7 +427,7 @@ public class IdpaCommands {
 			resp.normal("No version set! Using the current time as fallback: ").bold(currVersion).newline();
 		}
 
-		for (File file : getAllFilesMatchingWildcards(workingDir + "/annotation-" + aidPattern + ".yml")) {
+		for (File file : FileUtils.getAllFilesMatchingWildcards(workingDir + "/annotation-" + aidPattern + ".yml")) {
 			ApplicationAnnotation annotation = annSerializer.readFromYaml(file);
 			String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
 			String appId = file.getName().substring("annotation-".length(), file.getName().length() - ".yml".length());
@@ -461,23 +462,6 @@ public class IdpaCommands {
 		} else {
 			return resp.normal("Successfully uploaded annotations for app-ids ").normal(aids).normal(":").newline().append(responses).build();
 		}
-	}
-
-	private Collection<File> getAllFilesMatchingWildcards(String wildcards) {
-		File searchDir;
-		int indexBeforeFile = wildcards.lastIndexOf(FileSystems.getDefault().getSeparator());
-
-		String filename;
-
-		if (indexBeforeFile < 0) {
-			searchDir = new File("./");
-			filename = wildcards;
-		} else {
-			searchDir = new File(wildcards.substring(0, indexBeforeFile));
-			filename = wildcards.substring(indexBeforeFile + 1);
-		}
-
-		return FileUtils.listFiles(searchDir, new WildcardFileFilter(filename), new AndFileFilter(DirectoryFileFilter.DIRECTORY, new RegexFileFilter(searchDir.getName())));
 	}
 
 	@ShellMethod(key = { "idpa ann init" }, value = "Initializes an annotation for the stored application model with the specified app-id.")
