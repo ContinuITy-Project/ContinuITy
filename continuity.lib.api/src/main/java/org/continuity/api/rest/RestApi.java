@@ -81,25 +81,25 @@ public class RestApi {
 
 			public static final String ROOT = "/idpa";
 
-			/** {@value #ROOT}/{app-id}/application */
+			/** {@value #ROOT}/application/{app-id} */
 			public static final RestEndpoint GET_APPLICATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_APPLICATION, RequestMethod.GET);
 
-			/** {@value #ROOT}/{app-id}/annotation */
+			/** {@value #ROOT}/annotation/{app-id} */
 			public static final RestEndpoint GET_ANNOTATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_ANNOTATION, RequestMethod.GET);
 
-			/** {@value #ROOT}/{app-id}/application */
+			/** {@value #ROOT}/application/{app-id} */
 			public static final RestEndpoint UPDATE_APPLICATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_APPLICATION, RequestMethod.POST);
 
-			/** {@value #ROOT}/{app-id}/openapi/{version}/json */
+			/** {@value #ROOT}/openapi/{app-id}/{version}/json */
 			public static final RestEndpoint UPDATE_APP_FROM_OPEN_API_JSON = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_APP_FROM_OPEN_API_JSON, RequestMethod.POST);
 
-			/** {@value #ROOT}/{app-id}/openapi/{version}/url */
+			/** {@value #ROOT}/openapi/{app-id}/{version}/url */
 			public static final RestEndpoint UPDATE_APP_FROM_OPEN_API_URL = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_APP_FROM_OPEN_API_URL, RequestMethod.POST);
 
-			/** {@value #ROOT}/{app-id}/annotation */
+			/** {@value #ROOT}/annotation/{app-id} */
 			public static final RestEndpoint UPDATE_ANNOTATION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_ANNOTATION, RequestMethod.POST);
 
-			/** {@value #ROOT}/{app-id}/broken */
+			/** {@value #ROOT}/annotation/{app-id}/broken */
 			public static final RestEndpoint GET_BROKEN = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_BROKEN, RequestMethod.GET);
 
 			private Idpa() {
@@ -107,13 +107,13 @@ public class RestApi {
 
 			public static class Paths {
 
-				public static final String GET_APPLICATION = "/{app-id}/application";
-				public static final String GET_ANNOTATION = "/{app-id}/annotation";
-				public static final String UPDATE_APPLICATION = "/{app-id}/application";
-				public static final String UPDATE_APP_FROM_OPEN_API_JSON = "/{app-id}/openapi/{version}/json";
-				public static final String UPDATE_APP_FROM_OPEN_API_URL = "/{app-id}/openapi/{version}/url";
-				public static final String UPDATE_ANNOTATION = "/{app-id}/annotation";
-				public static final String GET_BROKEN = "/{app-id}/broken";
+				public static final String GET_APPLICATION = "/application/{app-id}";
+				public static final String GET_ANNOTATION = "/annotation/{app-id}";
+				public static final String UPDATE_APPLICATION = "/application/{app-id}";
+				public static final String UPDATE_APP_FROM_OPEN_API_JSON = "/openapi/{app-id}/{version}/json";
+				public static final String UPDATE_APP_FROM_OPEN_API_URL = "/openapi/{app-id}/{version}/url";
+				public static final String UPDATE_ANNOTATION = "/annotation/{app-id}";
+				public static final String GET_BROKEN = "/annotation/{app-id}/broken";
 
 				private Paths() {
 				}
@@ -129,9 +129,9 @@ public class RestApi {
 		 */
 		public static class Loadtest {
 
-			public static final String ROOT = "/loadtest";
+			public static final String ROOT = "";
 
-			/** {@value #ROOT}/{type}/test/{id} */
+			/** {@value #ROOT}/{type}/loadtest/{id} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
 
 			/** {@value #ROOT}/{type}/report/{id} */
@@ -140,7 +140,7 @@ public class RestApi {
 			/** {@value #ROOT}/{type}/report/{id} */
 			public static final RestEndpoint DELETE_REPORT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.DELETE_REPORT, RequestMethod.DELETE);
 
-			/** {@value #ROOT}"/{type}/test/upload/{app-id} */
+			/** {@value #ROOT}"/{type}/loadtest/upload/{app-id} */
 			public static final RestEndpoint POST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.POST, RequestMethod.POST);
 
 			private Loadtest() {
@@ -148,16 +148,74 @@ public class RestApi {
 
 			public static class Paths {
 
-				public static final String GET = "/{type}/test/{id}";
+				public static final String GET = "/{type}/loadtest/{id}";
 
 				public static final String REPORT = "/{type}/report/{id}";
 
-				public static final String DELETE_REPORT = "/{type}/test/{id}";
+				public static final String DELETE_REPORT = "/{type}/report/{id}";
 
-				public static final String POST = "/{type}/test/upload/{app-id}";
+				public static final String POST = "/{type}/loadtest/upload/{app-id}";
 
 				private Paths() {
 				}
+			}
+
+		}
+
+		/**
+		 * Measurement data API of the orchestration service.
+		 *
+		 * @author Henning Schulz
+		 *
+		 */
+		public static class MeasurementData {
+
+			public static final String ROOT = "/measurement-data";
+
+			/** {@value #ROOT}/{app-id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			/** {@value #ROOT}/{app-id}/{version} */
+			public static final RestEndpoint GET_VERSION = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_VERSION, RequestMethod.GET);
+
+			/** {@value #ROOT}/{app-id}/{version}/link */
+			public static final RestEndpoint PUSH_LINK = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_LINK, RequestMethod.POST);
+
+			/** {@value #ROOT}/{app-id}/{version}/open-xtrace */
+			public static final RestEndpoint PUSH_OPEN_XTRACE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_OPEN_XTRACE, RequestMethod.POST);
+
+			/** {@value #ROOT}/{app-id}/{version}/access-logs */
+			public static final RestEndpoint PUSH_ACCESS_LOGS = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_ACCESS_LOGS, RequestMethod.POST);
+
+			/** {@value #ROOT}/{app-id}/{version}/csv */
+			public static final RestEndpoint PUSH_CSV = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_CSV, RequestMethod.POST);
+
+			/** {@value #ROOT}/{app-id}/{version}/{type} */
+			public static final Map<MeasurementDataType, RestEndpoint> PUSH_FOR_TYPE = new HashMap<>();
+
+			static {
+				PUSH_FOR_TYPE.put(MeasurementDataType.OPEN_XTRACE, PUSH_OPEN_XTRACE);
+				PUSH_FOR_TYPE.put(MeasurementDataType.ACCESS_LOGS, PUSH_ACCESS_LOGS);
+				PUSH_FOR_TYPE.put(MeasurementDataType.CSV, PUSH_CSV);
+			}
+
+			public static class Paths {
+
+				public static final String GET = "/{app-id}";
+
+				public static final String GET_VERSION = "/{app-id}/{version}";
+
+				public static final String PUSH_LINK = "/{app-id}/{version}/link";
+
+				public static final String PUSH_OPEN_XTRACE = "/{app-id}/{version}/open-xtrace";
+
+				public static final String PUSH_ACCESS_LOGS = "/{app-id}/{version}/access-logs";
+
+				public static final String PUSH_CSV = "/{app-id}/{version}/csv";
+
+				private Paths() {
+				}
+
 			}
 
 		}
@@ -196,7 +254,7 @@ public class RestApi {
 		 */
 		public static class WorkloadModel {
 
-			public static final String ROOT = "/workloadmodel";
+			public static final String ROOT = "";
 
 			/** {@value #ROOT}/{type}/model/{id} */
 			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
@@ -658,7 +716,7 @@ public class RestApi {
 	 */
 	public static class SessionLogs {
 
-		public static final String SERVICE_NAME = "session-logs";
+		public static final String SERVICE_NAME = "sessions";
 
 		private SessionLogs() {
 		}

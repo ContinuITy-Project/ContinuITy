@@ -61,6 +61,18 @@ public class CliContextManager implements PromptProvider {
 		return currentVersion == null ? DEFAULT_VERSION : currentVersion;
 	}
 
+	public String getVersionOrFail(String passedVersion) {
+		if (Shorthand.DEFAULT_VALUE.equals(passedVersion)) {
+			if (currentAppId == null) {
+				throw new IllegalArgumentException("Cannot use the default version. There is no version set! Please call 'version <your app-id>' first or define it as a parameter of the command.");
+			} else {
+				return currentVersion;
+			}
+		} else {
+			return passedVersion;
+		}
+	}
+
 	/**
 	 * Gets an app-id out of the input or throws an {@link IllegalArgumentException} if no app-id
 	 * can be determined.
@@ -73,7 +85,7 @@ public class CliContextManager implements PromptProvider {
 	public AppId getAppIdOrFail(String passedAid) {
 		if (Shorthand.DEFAULT_VALUE.equals(passedAid)) {
 			if (currentAppId == null) {
-				throw new IllegalArgumentException("Cannot use the default app-id. There is no app-id set! Please call 'app-id set <your app-id>' first or define it as a parameter of the command.");
+				throw new IllegalArgumentException("Cannot use the default app-id. There is no app-id set! Please call 'app-id <your app-id>' first or define it as a parameter of the command.");
 			} else {
 				return currentAppId;
 			}
