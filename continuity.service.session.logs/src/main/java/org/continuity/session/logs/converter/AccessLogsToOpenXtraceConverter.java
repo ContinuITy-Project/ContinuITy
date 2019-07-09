@@ -4,7 +4,6 @@ import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.continuity.commons.accesslogs.AccessLogEntry;
@@ -30,15 +29,13 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AccessLogsToOpenXtraceConverter.class);
 
-	private final Random rand = new Random();
-
 	@Override
 	public List<Trace> convert(List<AccessLogEntry> accessLogs) {
 		return accessLogs.stream().map(this::convert).collect(Collectors.toList());
 	}
 
 	private Trace convert(AccessLogEntry entry) {
-		TraceImpl trace = new TraceImpl(rand.nextLong());
+		TraceImpl trace = new TraceImpl(entry.hashCode());
 		trace.setRoot(createSubTrace(trace, entry));
 		return trace;
 	}
@@ -69,7 +66,7 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 		request.setUri(entry.getPath());
 		request.setRequestMethod(HTTPMethod.valueOf(entry.getRequestMethod().toUpperCase()));
 		request.setResponseCode(entry.getStatusCode());
-		request.setResponseTime(entry.getResponseTime());
+		request.setResponseTime(entry.getResponseTime() * MICROS_TO_NANOS);
 		request.setHTTPParameters(formatParameters(entry.getRequestParameters()));
 
 		OPENxtraceUtils.setSessionId(request, entry.getUser());
