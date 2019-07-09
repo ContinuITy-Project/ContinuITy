@@ -1,6 +1,7 @@
 package org.continuity.session.logs.config;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.config.session.logs.SessionLogsConfiguration;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -25,6 +26,8 @@ public class RabbitMqConfig {
 	public static final String TASK_CREATE_QUEUE_NAME = "continuity.sessionlogs.task.sessionlogs.create";
 
 	public static final String TASK_CREATE_ROUTING_KEY = "#";
+
+	public static final String EVENT_CONFIG_AVAILABLE_NAME = "continuity.sessionlogs.event.orchestrator.configavailable";
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -75,6 +78,21 @@ public class RabbitMqConfig {
 	@Bean
 	Binding taskCreateBinding() {
 		return BindingBuilder.bind(taskCreateQueue()).to(taskCreateExchange()).with(TASK_CREATE_ROUTING_KEY);
+	}
+
+	@Bean
+	TopicExchange eventConfigAvailableExchange() {
+		return AmqpApi.Orchestrator.EVENT_CONFIG_AVAILABLE.create();
+	}
+
+	@Bean
+	Queue eventConfigAvailableQueue() {
+		return QueueBuilder.nonDurable(EVENT_CONFIG_AVAILABLE_NAME).build();
+	}
+
+	@Bean
+	Binding eventConfigAvailableBinding() {
+		return BindingBuilder.bind(eventConfigAvailableQueue()).to(eventConfigAvailableExchange()).with(SessionLogsConfiguration.SERVICE);
 	}
 
 	@Bean

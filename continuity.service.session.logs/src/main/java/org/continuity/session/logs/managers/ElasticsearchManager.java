@@ -78,6 +78,7 @@ public class ElasticsearchManager {
 		traces.stream().map(t -> new TraceRecord(version, t)).map(this::writeToString).filter(Objects::nonNull).forEach(json -> {
 			request.add(new IndexRequest(toTraceIndex(aid)).source(json, XContentType.JSON));
 		});
+		// TODO: set ID with .id(t.getTraceId())
 
 		BulkResponse response = client.bulk(request, RequestOptions.DEFAULT);
 
