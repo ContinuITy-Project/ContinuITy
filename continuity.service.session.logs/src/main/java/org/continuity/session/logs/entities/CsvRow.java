@@ -1,11 +1,11 @@
 package org.continuity.session.logs.entities;
 
 import java.io.ByteArrayInputStream;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Objects;
 
+import org.continuity.api.entities.ApiFormats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +25,6 @@ import com.univocity.parsers.csv.CsvParserSettings;
 public class CsvRow {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CsvRow.class);
-
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSSX");
 
 	private static final String DEFAULT_ENCODING = "<no-encoding>";
 
@@ -65,6 +63,14 @@ public class CsvRow {
 
 	@Parsed
 	private String headers;
+
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
+	}
 
 	public String getStartDate() {
 		return startDate;
@@ -157,11 +163,11 @@ public class CsvRow {
 	public boolean checkDates() {
 		try {
 			if (startDate != null) {
-				DATE_FORMAT.parse(startDate);
+				ApiFormats.DATE_FORMAT.parse(startDate);
 			}
 
 			if (endDate != null) {
-				DATE_FORMAT.parse(endDate);
+				ApiFormats.DATE_FORMAT.parse(endDate);
 			}
 		} catch (ParseException e) {
 			LOGGER.error("Cannot parse date!", e);
@@ -214,6 +220,27 @@ public class CsvRow {
 		parser.parse(new ByteArrayInputStream(requestLogs.getBytes()));
 
 		return rowProcessor.getBeans();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(domain, encoding, endDate, headers, method, name, parameters, path, port, protocol, sessionId, startDate);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof CsvRow)) {
+			return false;
+		}
+
+		CsvRow other = (CsvRow) obj;
+		return Objects.equals(domain, other.domain) && Objects.equals(encoding, other.encoding) && Objects.equals(endDate, other.endDate) && Objects.equals(headers, other.headers)
+				&& Objects.equals(method, other.method) && Objects.equals(name, other.name) && Objects.equals(parameters, other.parameters) && Objects.equals(path, other.path)
+				&& Objects.equals(port, other.port) && Objects.equals(protocol, other.protocol) && Objects.equals(sessionId, other.sessionId) && Objects.equals(startDate, other.startDate);
 	}
 
 }
