@@ -7,6 +7,7 @@ import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -86,6 +87,10 @@ public class ResponseBuilder {
 
 	public ResponseBuilder jsonAsYamlError(String json) {
 		return error(transformJsonToYaml(json));
+	}
+
+	public ResponseBuilder appendStatusCode(HttpStatus status) {
+		return error(" ").boldError(status).boldError(" (").boldError(status.getReasonPhrase()).boldError(") ");
 	}
 
 	private String transformJsonToYaml(String json) {
