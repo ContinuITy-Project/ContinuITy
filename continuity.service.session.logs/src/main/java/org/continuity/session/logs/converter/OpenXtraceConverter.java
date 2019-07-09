@@ -13,6 +13,10 @@ import org.spec.research.open.xtrace.api.core.Trace;
  */
 public interface OpenXtraceConverter<T> {
 
+	public static final long MILLIS_TO_NANOS = 1000000;
+
+	public static final long MICROS_TO_NANOS = 1000;
+
 	/**
 	 * Converts a list of data to OPEN.xtrace.
 	 *

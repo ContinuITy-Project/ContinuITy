@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,8 +41,7 @@ public class AccessLogEntry {
 
 	private static final Pattern DEFAULT_PATTERN = Pattern.compile(DEFAULT_REGEX);
 
-	private static final String[] FIELDS = { "host", "remoteName", "user", "accessTime", "requestMethod", "path", "protocol", "statusCode", "responseBytes", "referer", "userAgent",
-			"responseTime" };
+	private static final String[] FIELDS = { "host", "remoteName", "user", "accessTime", "requestMethod", "path", "protocol", "statusCode", "responseBytes", "referer", "userAgent", "responseTime" };
 
 	private static final String DEFAULT_DATE_FORMAT = "dd/MMM/yyyy:HH:mm:ss Z";
 
@@ -291,6 +291,10 @@ public class AccessLogEntry {
 		this.userAgent = userAgent;
 	}
 
+	/**
+	 *
+	 * @return Response time in microseconds.
+	 */
 	public long getResponseTime() {
 		return responseTime;
 	}
@@ -338,6 +342,30 @@ public class AccessLogEntry {
 		} else {
 			return formatForCsv(params.stream().map(ParameterRecord::toString).collect(Collectors.joining("&")));
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(accessTime, body, endpoint, formParameters, host, path, protocol, referer, remoteName, requestMethod, requestParameters, responseBytes, responseTime, statusCode,
+				urlParameters, user, userAgent);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof AccessLogEntry)) {
+			return false;
+		}
+
+		AccessLogEntry other = (AccessLogEntry) obj;
+		return Objects.equals(accessTime, other.accessTime) && Objects.equals(body, other.body) && Objects.equals(endpoint, other.endpoint) && Objects.equals(formParameters, other.formParameters)
+				&& Objects.equals(host, other.host) && Objects.equals(path, other.path) && Objects.equals(protocol, other.protocol) && Objects.equals(referer, other.referer)
+				&& Objects.equals(remoteName, other.remoteName) && Objects.equals(requestMethod, other.requestMethod) && Objects.equals(requestParameters, other.requestParameters)
+				&& (responseBytes == other.responseBytes) && (responseTime == other.responseTime) && (statusCode == other.statusCode) && Objects.equals(urlParameters, other.urlParameters)
+				&& Objects.equals(user, other.user) && Objects.equals(userAgent, other.userAgent);
 	}
 
 }
