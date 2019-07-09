@@ -25,9 +25,9 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "download" }, value = "Shorthand for '<context> download'. Available in 'idpa' and 'jmeter'.")
 	@ShellMethodAvailability({ "downloadAvailability" })
-	public AttributedString download(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String link) throws Throwable {
+	public AttributedString download(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String link, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg2) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("download");
-		return shorthand.execute(link);
+		return shorthand.execute(link, arg2);
 	}
 
 	public Availability downloadAvailability() {

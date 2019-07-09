@@ -76,6 +76,11 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
+	TopicExchange eventConfigAvailableExchange() {
+		return AmqpApi.Orchestrator.EVENT_CONFIG_AVAILABLE.create();
+	}
+
+	@Bean
 	Queue eventFailedQueue() {
 		return QueueBuilder.nonDurable(EVENT_FAILED_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
