@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.continuity.commons.accesslogs.AccessLogEntry;
 import org.continuity.commons.accesslogs.ParameterRecord;
 import org.slf4j.Logger;
@@ -29,6 +30,12 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AccessLogsToOpenXtraceConverter.class);
 
+	private final boolean hashSessionId;
+
+	public AccessLogsToOpenXtraceConverter(boolean hashSessionId) {
+		this.hashSessionId = hashSessionId;
+	}
+
 	@Override
 	public List<Trace> convert(List<AccessLogEntry> accessLogs) {
 		return accessLogs.stream().map(this::convert).collect(Collectors.toList());
@@ -43,10 +50,8 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 	private SubTraceImpl createSubTrace(TraceImpl trace, AccessLogEntry entry) {
 		SubTraceImpl subTrace = new SubTraceImpl(trace.getTraceId(), null, trace);
 
-		String[] hostAndPort = entry.getHost().split("\\:");
-		int port = hostAndPort.length > 1 ? Integer.parseInt(hostAndPort[1]) : 80;
+		LocationImpl location = new LocationImpl(null, 0, null, null, entry.getEndpoint());
 
-		LocationImpl location = new LocationImpl(hostAndPort[0], port, null, null, entry.getEndpoint());
 		subTrace.setLocation(location);
 
 		subTrace.setRoot(createCallable(subTrace, entry));
@@ -69,7 +74,7 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 		request.setResponseTime(entry.getResponseTime() * MICROS_TO_NANOS);
 		request.setHTTPParameters(formatParameters(entry.getRequestParameters()));
 
-		OPENxtraceUtils.setSessionId(request, entry.getUser());
+		OPENxtraceUtils.setSessionId(request, hashSessionId ? DigestUtils.sha256Hex(entry.getClientHost()) : entry.getClientHost());
 
 		return request;
 	}

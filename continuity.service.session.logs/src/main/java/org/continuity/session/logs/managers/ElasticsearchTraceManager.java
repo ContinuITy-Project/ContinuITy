@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.http.HttpHost;
+import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
@@ -21,8 +21,6 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -42,18 +40,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Henning Schulz
  *
  */
-public class ElasticsearchManager {
+public class ElasticsearchTraceManager extends ElasticsearchScrollingManager {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchManager.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchTraceManager.class);
 
 	private static final long SCROLL_MINUTES = 1;
 
-	private final RestHighLevelClient client;
-
 	private final ObjectMapper mapper;
 
-	public ElasticsearchManager(String host, ObjectMapper mapper) {
-		this.client = new RestHighLevelClient(RestClient.builder(new HttpHost(host, 9200, "http"), new HttpHost(host, 9300, "http")));
+	public ElasticsearchTraceManager(String host, ObjectMapper mapper) {
+		super(host);
 		this.mapper = mapper;
 	}
 
@@ -75,19 +71,18 @@ public class ElasticsearchManager {
 	public void storeTraces(AppId aid, VersionOrTimestamp version, List<Trace> traces) throws IOException {
 		BulkRequest request = new BulkRequest();
 
-		traces.stream().map(t -> new TraceRecord(version, t)).map(this::writeToString).filter(Objects::nonNull).forEach(json -> {
-			request.add(new IndexRequest(toTraceIndex(aid)).source(json, XContentType.JSON));
+		traces.stream().map(t -> new TraceRecord(version, t)).map(this::serializeTrace).filter(Objects::nonNull).forEach(json -> {
+			request.add(new IndexRequest(toTraceIndex(aid)).source(json.getLeft(), XContentType.JSON).id(Long.toString(json.getRight())));
 		});
-		// TODO: set ID with .id(t.getTraceId())
 
 		BulkResponse response = client.bulk(request, RequestOptions.DEFAULT);
 
 		LOGGER.info("The bulk request to app-id {} and version {} took {} and resulted in status {}.", aid, version, response.getTook(), response.status());
 	}
 
-	private String writeToString(TraceRecord record) {
+	private Pair<String, Long> serializeTrace(TraceRecord record) {
 		try {
-			return mapper.writeValueAsString(record);
+			return Pair.of(mapper.writeValueAsString(record), record.getTrace().getTraceId());
 		} catch (JsonProcessingException e) {
 			LOGGER.error("Could not write TraceRecord to JSON string!", e);
 			return null;
@@ -119,7 +114,12 @@ public class ElasticsearchManager {
 			query = query.must(QueryBuilders.matchQuery("version", version.toString()));
 		}
 
-		query.must(QueryBuilders.rangeQuery("trace.rootOfTrace.rootOfSubTrace.timeStamp").from(from == null ? null : from.getTime(), false).to(to == null ? null : to.getTime(), true));
+		if ((from != null) && (to != null)) {
+			query.must(QueryBuilders.rangeQuery("trace.rootOfTrace.rootOfSubTrace.timeStamp").from(from.getTime(), false).to(to.getTime(), true));
+		} else {
+			LOGGER.warn("The provided time range ({} - {}) contains null elements! Ignoring.", from, to);
+		}
+
 		search.source(new SearchSourceBuilder().query(query).size(10000)); // This is the maximum
 
 		search.scroll(TimeValue.timeValueMinutes(SCROLL_MINUTES));
@@ -146,12 +146,11 @@ public class ElasticsearchManager {
 		}
 
 		SearchHits hits = response.getHits();
+		String scrollId = response.getScrollId();
 
 		LOGGER.info("Scroll #{} took {} and is {}.", scrollNumber, response.getTook(), response.status());
 
 		if (hits.getHits().length > 0) {
-			String scrollId = response.getScrollId();
-
 			List<Trace> traces = new ArrayList<>();
 			Arrays.stream(hits.getHits()).map(SearchHit::getSourceAsString).map(this::readFromString).filter(Objects::nonNull).forEach(traces::add);
 
@@ -160,6 +159,7 @@ public class ElasticsearchManager {
 			return traces;
 		} else {
 			LOGGER.info("Reached end of scroll.");
+			clearScroll(scrollId);
 			return Collections.emptyList();
 		}
 	}
@@ -180,7 +180,7 @@ public class ElasticsearchManager {
 	}
 
 	private String toTraceIndex(AppId aid) {
-		return aid + ".traces";
+		return aid.dropService() + ".traces";
 	}
 
 }

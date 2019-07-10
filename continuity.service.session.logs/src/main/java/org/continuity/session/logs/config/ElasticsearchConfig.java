@@ -1,6 +1,7 @@
 package org.continuity.session.logs.config;
 
-import org.continuity.session.logs.managers.ElasticsearchManager;
+import org.continuity.session.logs.managers.ElasticsearchSessionManager;
+import org.continuity.session.logs.managers.ElasticsearchTraceManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +12,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ElasticsearchConfig {
 
 	@Bean(destroyMethod = "destroy")
-	public ElasticsearchManager elasticsearchManager(@Value("${elasticsearch.host:localhost}") String host, ObjectMapper mapper) {
-		return new ElasticsearchManager(host, mapper);
+	public ElasticsearchTraceManager elasticsearchTraceManager(@Value("${elasticsearch.host:localhost}") String host, ObjectMapper mapper) {
+		return new ElasticsearchTraceManager(host, mapper);
+	}
+
+	@Bean(destroyMethod = "destroy")
+	public ElasticsearchSessionManager elasticsearchSessionManager(@Value("${elasticsearch.host:localhost}") String host, ObjectMapper mapper) {
+		return new ElasticsearchSessionManager(host, mapper);
 	}
 
 }

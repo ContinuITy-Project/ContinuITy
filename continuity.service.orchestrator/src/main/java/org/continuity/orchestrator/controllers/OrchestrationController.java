@@ -262,7 +262,7 @@ public class OrchestrationController {
 
 		switch (goal) {
 		case CREATE_SESSION_LOGS:
-			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.SessionLogs.TASK_CREATE, AmqpApi.SessionLogs.TASK_CREATE.formatRoutingKey().of(aid.toString()),
+			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.SessionLogs.TASK_CREATE, AmqpApi.SessionLogs.TASK_CREATE.formatRoutingKey().of(aid),
 					isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getLink));
 			break;
 		case CREATE_BEHAVIOR_MIX:

@@ -42,7 +42,7 @@ public class ConfigurationAmqpHandler {
 		try {
 			configs = restTemplate.getForObject(RestApi.Orchestrator.Configuration.GET_ALL.requestUrl(SessionLogsConfiguration.SERVICE).get(), SessionLogsConfiguration[].class);
 		} catch (RestClientException | IllegalStateException e) {
-			LOGGER.warn("Could not retrieve the initial configuration - {}: {}! This can be normal during startup. Starting with empty configurations.", e.getClass(), e.getMessage());
+			LOGGER.warn("Could not retrieve the initial configuration - {}: {}! This can be normal during startup. Starting with empty configurations.", e.getClass().getName(), e.getMessage());
 			configs = new SessionLogsConfiguration[] {};
 		}
 
