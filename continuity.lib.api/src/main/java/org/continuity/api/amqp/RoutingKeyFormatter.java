@@ -1,5 +1,10 @@
 package org.continuity.api.amqp;
 
+import java.text.ParseException;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.continuity.idpa.VersionOrTimestamp;
+
 /**
  * A formatter for AMQP routing keys.
  *
@@ -35,7 +40,7 @@ public interface RoutingKeyFormatter {
 	}
 
 	/**
-	 * Use a app-id as routing key.
+	 * Use an app-id as routing key.
 	 *
 	 * @author Henning Schulz
 	 *
@@ -48,14 +53,63 @@ public interface RoutingKeyFormatter {
 		}
 
 		/**
-		 * Use a app-id as routing key.
+		 * Use an app-id as routing key.
 		 *
 		 * @param appId
 		 *            The app-id.
 		 * @return The formatted routing key.
 		 */
-		public String of(String appId) {
-			return appId;
+		public String of(org.continuity.idpa.AppId appId) {
+			return appId.toString();
+		}
+
+	}
+
+	/**
+	 * Use an app-id and a version as routing key.
+	 *
+	 * @author Henning Schulz
+	 *
+	 */
+	public static class AppIdAndVersion implements RoutingKeyFormatter {
+
+		public static AppIdAndVersion INSTANCE = new AppIdAndVersion();
+
+		private AppIdAndVersion() {
+		}
+
+		/**
+		 * Use an app-id and a version as routing key.
+		 *
+		 * @param appId
+		 *            The app-id.
+		 * @param version
+		 *            The version.
+		 * @return The formatted routing key.
+		 */
+		public String of(org.continuity.idpa.AppId appId, VersionOrTimestamp version) {
+			return appId.toString() + "." + version.toString().replace(".", "_");
+		}
+
+		/**
+		 * Transforms a routingKey formatted with this formatter back to an app-id and a version.
+		 *
+		 * @param routingKey
+		 *            The routing key.
+		 * @return A pair of the app-id and the version.
+		 */
+		public Pair<org.continuity.idpa.AppId, VersionOrTimestamp> from(String routingKey) {
+			int index = routingKey.lastIndexOf(".");
+			org.continuity.idpa.AppId aid = org.continuity.idpa.AppId.fromString(routingKey.substring(0, index));
+			VersionOrTimestamp version;
+			try {
+				version = VersionOrTimestamp.fromString(routingKey.substring(index + 1).replace("_", "."));
+			} catch (NumberFormatException | ParseException e) {
+				e.printStackTrace();
+				version = null;
+			}
+
+			return Pair.of(aid, version);
 		}
 
 	}

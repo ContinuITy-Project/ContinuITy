@@ -76,6 +76,10 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 	public T getOrDefault(AppId aid) {
 		T config = getConfiguration(aid);
 
+		if ((config == null) && !aid.isAll()) {
+			getConfiguration(aid.dropService());
+		}
+
 		if (config == null) {
 			try {
 				config = constructor.newInstance();

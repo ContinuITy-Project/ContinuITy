@@ -31,3 +31,10 @@ zuul:
       stripPrefix: false
     request-rates: /request-rates/**
     wessbas: /wessbas/**
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 300000

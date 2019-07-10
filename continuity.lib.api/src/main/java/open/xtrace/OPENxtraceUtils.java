@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.Callable;
+import org.spec.research.open.xtrace.api.core.callables.HTTPRequestProcessing;
 import org.spec.research.open.xtrace.api.core.callables.NestingCallable;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.RemoteInvocationImpl;
@@ -184,6 +185,21 @@ public class OPENxtraceUtils {
 		}
 
 		return sessionId;
+	}
+
+	/**
+	 * Extracts the session id from cookies
+	 *
+	 * @param cookieString
+	 *            the cookies of the request
+	 * @return the session id
+	 */
+	public static String extractSessionIdFromCookies(HTTPRequestProcessing callable) {
+		if (callable.getHTTPHeaders().isPresent() && callable.getHTTPHeaders().get().containsKey("cookie")) {
+			return extractSessionIdFromCookies(callable.getHTTPHeaders().get().get("cookie"));
+		} else {
+			return null;
+		}
 	}
 
 	public static void setSessionId(HTTPRequestProcessingImpl proc, String sessionId) {

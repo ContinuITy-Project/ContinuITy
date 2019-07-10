@@ -9,7 +9,6 @@ import static org.continuity.api.rest.RestApi.SessionLogs.MeasurementData.Paths.
 import static org.continuity.api.rest.RestApi.SessionLogs.MeasurementData.Paths.PUSH_OPEN_XTRACE;
 
 import java.io.IOException;
-import java.net.URI;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,8 +16,11 @@ import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeoutException;
 
+import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
+import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.MeasurementDataSpec;
+import org.continuity.api.entities.config.session.logs.SessionLogsConfiguration;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.accesslogs.AccessLogEntry;
 import org.continuity.idpa.AppId;
@@ -26,10 +28,11 @@ import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.session.logs.converter.AccessLogsToOpenXtraceConverter;
 import org.continuity.session.logs.converter.CsvRowToOpenXtraceConverter;
 import org.continuity.session.logs.entities.CsvRow;
-import org.continuity.session.logs.managers.ElasticsearchManager;
+import org.continuity.session.logs.managers.ElasticsearchTraceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Trace;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -64,11 +67,13 @@ public class MeasurementDataController {
 	private RestTemplate plainRestTemplate;
 
 	@Autowired
-	private ElasticsearchManager manager;
+	private AmqpTemplate amqpTemplate;
 
-	private final AccessLogsToOpenXtraceConverter accessLogsConverter = new AccessLogsToOpenXtraceConverter();
+	@Autowired
+	private ElasticsearchTraceManager manager;
 
-	private final CsvRowToOpenXtraceConverter csvConverter = new CsvRowToOpenXtraceConverter();
+	@Autowired
+	private ConfigurationProvider<SessionLogsConfiguration> configProvider;
 
 	@RequestMapping(value = GET, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
@@ -144,6 +149,8 @@ public class MeasurementDataController {
 			return ResponseEntity.badRequest().body("Improperly formatted link: " + spec.getLink());
 		}
 
+		LOGGER.info("Received link to {} for {}@{}.", spec.getType().toPrettyString(), aid, version);
+
 		switch (spec.getType()) {
 		case ACCESS_LOGS:
 			String accessLogs = plainRestTemplate.getForObject(spec.getLink(), String.class);
@@ -165,8 +172,8 @@ public class MeasurementDataController {
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<String> pushOpenXtraces(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String tracesAsJson)
 			throws IOException {
-		List<Trace> traces = OPENxtraceUtils.deserializeIntoTraceList(tracesAsJson);
-		return storeTraces(aid, version, traces);
+		LOGGER.info("Received OPEN.xtraces for {}@{}.", aid, version);
+		return storeTraces(aid, version, tracesAsJson, null, null);
 	}
 
 	@RequestMapping(value = PUSH_ACCESS_LOGS, method = RequestMethod.POST)
@@ -174,13 +181,15 @@ public class MeasurementDataController {
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<String> pushAccessLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String accessLogs)
 			throws IOException {
+		LOGGER.info("Received access logs for {}@{}.", aid, version);
+
 		List<AccessLogEntry> parsedLogs = new ArrayList<>();
 
 		for (String line : accessLogs.split("\\n")) {
 			parsedLogs.add(AccessLogEntry.fromLogLine(line));
 		}
 
-		List<Trace> traces = accessLogsConverter.convert(parsedLogs);
+		List<Trace> traces = new AccessLogsToOpenXtraceConverter(configProvider.getOrDefault(aid).isHashSessionId()).convert(parsedLogs);
 		return storeTraces(aid, version, traces);
 	}
 
@@ -189,15 +198,15 @@ public class MeasurementDataController {
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<String> pushCsv(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String csvContent)
 			throws IOException {
+		LOGGER.info("Received CSV for {}@{}.", aid, version);
+
 		List<CsvRow> csvRows = CsvRow.listFromString(csvContent);
 
-		List<Trace> traces = csvConverter.convert(csvRows);
+		List<Trace> traces = new CsvRowToOpenXtraceConverter(configProvider.getOrDefault(aid).isHashSessionId()).convert(csvRows);
 		return storeTraces(aid, version, traces);
 	}
 
 	private ResponseEntity<String> storeTraces(AppId aid, VersionOrTimestamp version, List<Trace> traces) throws IOException {
-		manager.storeTraces(aid, version, traces);
-
 		Date from = null;
 		Date to = null;
 
@@ -212,10 +221,28 @@ public class MeasurementDataController {
 			to = new Date(toOpt.getAsLong());
 		}
 
-		String link = RestApi.SessionLogs.MeasurementData.GET_VERSION.requestUrl(aid, version).withQuery("from", ApiFormats.DATE_FORMAT.format(from)).withQuery("to", ApiFormats.DATE_FORMAT.format(to))
+		String tracesAsJson = OPENxtraceUtils.serializeTraceListToJsonString(traces);
+
+		return storeTraces(aid, version, tracesAsJson, from, to);
+	}
+
+	private ResponseEntity<String> storeTraces(AppId aid, VersionOrTimestamp version, String tracesAsJson, Date from, Date to) {
+		amqpTemplate.convertAndSend(AmqpApi.SessionLogs.TASK_PROCESS_TRACES.name(), AmqpApi.SessionLogs.TASK_PROCESS_TRACES.formatRoutingKey().of(aid, version), tracesAsJson);
+
+		LOGGER.info("{}@{} Forwarded traces to AMQP handler.", aid, version);
+
+		String link = RestApi.SessionLogs.MeasurementData.GET_VERSION.requestUrl(aid, version).withQueryIfNotEmpty("from", formatOrNull(from)).withQueryIfNotEmpty("to", formatOrNull(to))
 				.withoutProtocol().get();
 
-		return ResponseEntity.created(URI.create("http://" + link)).body(link);
+		return ResponseEntity.accepted().body(link);
+	}
+
+	private String formatOrNull(Date date) {
+		if (date == null) {
+			return null;
+		} else {
+			return ApiFormats.DATE_FORMAT.format(date);
+		}
 	}
 
 }

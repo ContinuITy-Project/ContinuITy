@@ -37,6 +37,10 @@ dependencies {
 	compile 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.2.0'
 	compile 'org.elasticsearch:elasticsearch:7.2.0'
 	
+	// For SHA256
+	
+	compile("commons-codec:commons-codec:1.11")
+	
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 	
 	// Required for Eclipse
