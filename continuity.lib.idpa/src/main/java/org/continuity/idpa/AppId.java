@@ -2,6 +2,7 @@ package org.continuity.idpa;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
@@ -46,6 +47,33 @@ public class AppId implements Comparable<AppId> {
 
 	public String getService() {
 		return service;
+	}
+
+	@JsonIgnore
+	public boolean isAll() {
+		return (this.service == null) || SERVICE_ALL.equals(this.service);
+	}
+
+	/**
+	 * Creates a new AppId with the same application but a different service.
+	 *
+	 * @param service
+	 *            The new service.
+	 * @return The new AppId.
+	 */
+	@JsonIgnore
+	public AppId withService(String service) {
+		return new AppId(this.application, service);
+	}
+
+	/**
+	 * Creates a new AppId with the same application but no service.
+	 *
+	 * @return The new AppId.
+	 */
+	@JsonIgnore
+	public AppId dropService() {
+		return new AppId(this.application, SERVICE_ALL);
 	}
 
 	@Override

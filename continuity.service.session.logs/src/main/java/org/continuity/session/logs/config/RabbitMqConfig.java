@@ -29,6 +29,10 @@ public class RabbitMqConfig {
 
 	public static final String EVENT_CONFIG_AVAILABLE_NAME = "continuity.sessionlogs.event.orchestrator.configavailable";
 
+	public static final String TASK_PROCESS_TRACES_QUEUE_NAME = "continuity.sessionlogs.task.sessionlogs.process_traces";
+
+	public static final String TASK_PROCESS_TRACES_ROUTING_KEY = "#";
+
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
 	// General
@@ -98,6 +102,21 @@ public class RabbitMqConfig {
 	@Bean
 	TopicExchange taskFinishedExchange() {
 		return AmqpApi.Global.EVENT_FINISHED.create();
+	}
+
+	@Bean
+	TopicExchange taskProcessTracesExchange() {
+		return AmqpApi.SessionLogs.TASK_PROCESS_TRACES.create();
+	}
+
+	@Bean
+	Queue taskProcessTracesQueue() {
+		return QueueBuilder.nonDurable(TASK_PROCESS_TRACES_QUEUE_NAME).build();
+	}
+
+	@Bean
+	Binding taskProcessTracesBinding() {
+		return BindingBuilder.bind(taskProcessTracesQueue()).to(taskProcessTracesExchange()).with(TASK_PROCESS_TRACES_ROUTING_KEY);
 	}
 
 	// Dead letter exchange and queue

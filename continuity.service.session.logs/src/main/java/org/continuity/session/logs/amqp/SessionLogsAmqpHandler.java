@@ -19,7 +19,7 @@ import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.session.logs.config.RabbitMqConfig;
 import org.continuity.session.logs.extractor.ModularizedOPENxtraceSessionLogsExtractor;
 import org.continuity.session.logs.extractor.OPENxtraceSessionLogsExtractor;
-import org.continuity.session.logs.managers.ElasticsearchManager;
+import org.continuity.session.logs.managers.ElasticsearchTraceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Trace;
@@ -41,7 +41,7 @@ public class SessionLogsAmqpHandler {
 	private AmqpTemplate amqpTemplate;
 
 	@Autowired
-	private ElasticsearchManager elasticManager;
+	private ElasticsearchTraceManager elasticManager;
 
 	@Autowired
 	private MixedStorage<SessionLogs> storage;

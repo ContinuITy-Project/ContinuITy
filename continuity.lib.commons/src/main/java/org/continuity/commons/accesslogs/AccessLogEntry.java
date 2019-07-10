@@ -34,20 +34,21 @@ public class AccessLogEntry {
 			"requestParameters", "urlParameters", "body").stream().collect(Collectors.joining(CSV_DELIMITER));
 
 	/**
-	 * host remoteName user [accessTime] "requestMethod path protocol" statusCode responseBytes
-	 * "referer" "userAgent" responseTime
+	 * clientHost remoteName user [accessTime] "requestMethod path protocol" statusCode
+	 * responseBytes "referer" "userAgent" responseTime
 	 */
 	public static final String DEFAULT_REGEX = "([^ ]+) ([^ ]+) ([^ ]+) \\[([^\\]]+)\\] \"([A-Z]+) ([^\"]+) ([^\"]+)\" (\\d+) (-|\\d+)(?: \"([^\"]+)\")?(?: \"([^\"]+)\")?(?: (\\d+))?";
 
 	private static final Pattern DEFAULT_PATTERN = Pattern.compile(DEFAULT_REGEX);
 
-	private static final String[] FIELDS = { "host", "remoteName", "user", "accessTime", "requestMethod", "path", "protocol", "statusCode", "responseBytes", "referer", "userAgent", "responseTime" };
+	private static final String[] FIELDS = { "clientHost", "remoteName", "user", "accessTime", "requestMethod", "path", "protocol", "statusCode", "responseBytes", "referer", "userAgent",
+			"responseTime" };
 
 	private static final String DEFAULT_DATE_FORMAT = "dd/MMM/yyyy:HH:mm:ss Z";
 
 	private String endpoint;
 
-	private String host;
+	private String clientHost;
 
 	private String remoteName;
 
@@ -91,8 +92,8 @@ public class AccessLogEntry {
 
 			for (int group = 1; group <= matcher.groupCount(); group++) {
 				switch (FIELDS[group - 1]) {
-				case "host":
-					entry.setHost(matcher.group(group));
+				case "clientHost":
+					entry.setClientHost(matcher.group(group));
 					break;
 				case "remoteName":
 					entry.setRemoteName(matcher.group(group));
@@ -158,12 +159,12 @@ public class AccessLogEntry {
 		this.endpoint = endpoint;
 	}
 
-	public String getHost() {
-		return host;
+	public String getClientHost() {
+		return clientHost;
 	}
 
-	public void setHost(String host) {
-		this.host = host;
+	public void setClientHost(String clientHost) {
+		this.clientHost = clientHost;
 	}
 
 	public String getRemoteName() {
@@ -313,7 +314,7 @@ public class AccessLogEntry {
 		row = row.append(formatForCsv(endpoint)).append(CSV_DELIMITER);
 		row = row.append(formatForCsv(accessTime)).append(CSV_DELIMITER);
 		row = row.append(responseTime).append(CSV_DELIMITER);
-		row = row.append(formatForCsv(host)).append(CSV_DELIMITER);
+		row = row.append(formatForCsv(clientHost)).append(CSV_DELIMITER);
 		row = row.append(formatForCsv(remoteName)).append(CSV_DELIMITER);
 		row = row.append(formatForCsv(user)).append(CSV_DELIMITER);
 		row = row.append(formatForCsv(requestMethod)).append(CSV_DELIMITER);
@@ -346,7 +347,7 @@ public class AccessLogEntry {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(accessTime, body, endpoint, formParameters, host, path, protocol, referer, remoteName, requestMethod, requestParameters, responseBytes, responseTime, statusCode,
+		return Objects.hash(accessTime, body, endpoint, formParameters, clientHost, path, protocol, referer, remoteName, requestMethod, requestParameters, responseBytes, responseTime, statusCode,
 				urlParameters, user, userAgent);
 	}
 
@@ -362,7 +363,7 @@ public class AccessLogEntry {
 
 		AccessLogEntry other = (AccessLogEntry) obj;
 		return Objects.equals(accessTime, other.accessTime) && Objects.equals(body, other.body) && Objects.equals(endpoint, other.endpoint) && Objects.equals(formParameters, other.formParameters)
-				&& Objects.equals(host, other.host) && Objects.equals(path, other.path) && Objects.equals(protocol, other.protocol) && Objects.equals(referer, other.referer)
+				&& Objects.equals(clientHost, other.clientHost) && Objects.equals(path, other.path) && Objects.equals(protocol, other.protocol) && Objects.equals(referer, other.referer)
 				&& Objects.equals(remoteName, other.remoteName) && Objects.equals(requestMethod, other.requestMethod) && Objects.equals(requestParameters, other.requestParameters)
 				&& (responseBytes == other.responseBytes) && (responseTime == other.responseTime) && (statusCode == other.statusCode) && Objects.equals(urlParameters, other.urlParameters)
 				&& Objects.equals(user, other.user) && Objects.equals(userAgent, other.userAgent);

@@ -144,7 +144,8 @@ public class ApplicationStorageManager {
 	 *             If an error occurs during reading.
 	 */
 	public Application read(AppId aid, VersionOrTimestamp version) throws IOException {
-		return repository.readLatestBefore(aid, version).getApplication();
+		Idpa idpa = repository.readLatestBefore(aid, version);
+		return idpa == null ? null : idpa.getApplication();
 	}
 
 	/**

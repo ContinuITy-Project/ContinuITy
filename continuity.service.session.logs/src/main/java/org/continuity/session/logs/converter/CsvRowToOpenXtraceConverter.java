@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.session.logs.entities.CsvRow;
@@ -31,6 +32,12 @@ import open.xtrace.OPENxtraceUtils;
 public class CsvRowToOpenXtraceConverter implements OpenXtraceConverter<CsvRow> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CsvRowToOpenXtraceConverter.class);
+
+	private final boolean hashSessionId;
+
+	public CsvRowToOpenXtraceConverter(boolean hashSessionId) {
+		this.hashSessionId = hashSessionId;
+	}
 
 	@Override
 	public List<Trace> convert(List<CsvRow> data) {
@@ -70,7 +77,7 @@ public class CsvRowToOpenXtraceConverter implements OpenXtraceConverter<CsvRow> 
 		request.setRequestMethod(HTTPMethod.valueOf(row.getMethod().toUpperCase()));
 		request.setHTTPParameters(formatParameters(row.getParameters()));
 
-		OPENxtraceUtils.setSessionId(request, row.getSessionId());
+		OPENxtraceUtils.setSessionId(request, hashSessionId ? DigestUtils.sha256Hex(row.getSessionId()) : row.getSessionId());
 
 		return request;
 	}

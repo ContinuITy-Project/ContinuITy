@@ -9,7 +9,9 @@ import static org.continuity.api.rest.RestApi.Idpa.Application.Paths.UPDATE_FROM
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -78,27 +80,27 @@ public class ApplicationController {
 	}
 
 	/**
-	 * Retrieves the current application model. If the version is {@code null}, the latest version
-	 * will be returned.
+	 * Retrieves the application model for the given version. If the version is {@code null}, the
+	 * latest version will be returned.
 	 *
 	 * @param aid
 	 *            The app-id of the application.
 	 * @param version
 	 *            The version for which the application model is searched (optional).
-	 * @return The current application model.
+	 * @param services
+	 *            A list of services. If it is present, a list of application models per service
+	 *            will be returned.
+	 * @return The application model for the app-id and version or a list of application models if
+	 *         {@code services} is present.
+	 * @throws IOException
 	 */
 	@RequestMapping(path = GET, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<Application> getApplication(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) String version) {
-		if (version == null) {
-			try {
-				return ResponseEntity.ok(manager.read(aid));
-			} catch (IOException e) {
-				LOGGER.error("An exception occured during reading!", e);
-				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-			}
-		} else {
-			VersionOrTimestamp vot;
+	public ResponseEntity<?> getApplication(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) String version,
+			@RequestParam(required = false) List<String> services) throws IOException {
+		VersionOrTimestamp vot = null;
+
+		if (version != null) {
 			try {
 				vot = VersionOrTimestamp.fromString(version);
 			} catch (ParseException | NumberFormatException e) {
@@ -106,13 +108,32 @@ public class ApplicationController {
 				LOGGER.error("Exception:", e);
 				return ResponseEntity.badRequest().build();
 			}
+		}
 
-			try {
-				return ResponseEntity.ok(manager.read(aid, vot));
-			} catch (IOException e) {
-				LOGGER.error("An exception occured during reading!", e);
-				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		if ((services == null) || services.isEmpty()) {
+			Application app = readAppWithVersionIfExisting(aid, vot);
+
+			if (app != null) {
+				return ResponseEntity.ok(app);
+			} else {
+				return ResponseEntity.notFound().build();
 			}
+		} else {
+			List<Application> apps = new ArrayList<>();
+
+			for (String service : services) {
+				apps.add(readAppWithVersionIfExisting(aid.withService(service), vot));
+			}
+
+			return ResponseEntity.ok(apps);
+		}
+	}
+
+	private Application readAppWithVersionIfExisting(AppId aid, VersionOrTimestamp vot) throws IOException {
+		if (vot == null) {
+			return manager.read(aid);
+		} else {
+			return manager.read(aid, vot);
 		}
 	}
 
@@ -227,7 +248,7 @@ public class ApplicationController {
 
 		if (report.changed()) {
 			try {
-				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(aid.toString()),
+				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(aid),
 						new ApplicationModelLink(applicationName, aid, report.getBeforeChange()));
 			} catch (AmqpException e) {
 				LOGGER.error("Could not send the system model with app-id {} to the {} exchange!", aid, AmqpApi.Idpa.EVENT_CHANGED.name());
@@ -347,7 +368,7 @@ public class ApplicationController {
 
 		if (report.changed()) {
 			try {
-				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(aid.toString()),
+				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(aid),
 						new ApplicationModelLink(applicationName, aid, report.getBeforeChange()));
 			} catch (AmqpException e) {
 				LOGGER.error("Could not send the system model with app-id {} to the {} exchange!", aid, AmqpApi.Idpa.EVENT_CHANGED.name());
