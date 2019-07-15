@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionRequest;
@@ -30,10 +31,13 @@ public class SessionUpdater {
 
 	private final long maxSessionPauseMicros;
 
-	public SessionUpdater(VersionOrTimestamp version, List<String> services, long maxSessionPauseMicros) {
+	private final boolean forceFinish;
+
+	public SessionUpdater(VersionOrTimestamp version, List<String> services, long maxSessionPauseMicros, boolean forceFinish) {
 		this.version = version;
 		this.services = services;
 		this.maxSessionPauseMicros = maxSessionPauseMicros;
+		this.forceFinish = forceFinish;
 	}
 
 	/**
@@ -49,6 +53,9 @@ public class SessionUpdater {
 		int numOld = oldSessions.size();
 		int numNew = 0;
 		AtomicInteger numFinished = new AtomicInteger(0);
+		int numDuplicate = 0;
+		int numRedirect = 0;
+		int numError = 0;
 
 		Collections.sort(requests);
 		Map<String, Session> sessionPerId = oldSessions.stream().collect(Collectors.toMap(Session::getId, s -> s));
@@ -78,6 +85,12 @@ public class SessionUpdater {
 			if (!session.getRequests().contains(req)) {
 				if (!session.isFresh() && (req.getStartMicros() < session.getStartMicros())) {
 					LOGGER.error("Cannot add request {} to non-fresh session {}! Start date is before session start date! Ignoring the request.", req, session);
+					numError++;
+					continue;
+				}
+
+				if ((session.getRequests().size() > 0) && isRedirect(session.getRequests().floor(req))) {
+					numRedirect++;
 					continue;
 				}
 
@@ -85,21 +98,36 @@ public class SessionUpdater {
 
 				newSessions.add(session);
 				maxDate = Math.max(maxDate, req.getEndMicros());
+			} else {
+				numDuplicate++;
 			}
 		}
 
 		int numUpdated = newSessions.size() - numNew;
 
-		final long sessionHorizon = maxDate - maxSessionPauseMicros;
-		sessionPerId.values().stream().filter(s -> (s.getEndMicros() < sessionHorizon)).forEach(s -> {
+		Stream<Session> toBeFinished;
+
+		if (forceFinish) {
+			toBeFinished = sessionPerId.values().stream();
+		} else {
+			final long sessionHorizon = maxDate - maxSessionPauseMicros;
+			toBeFinished = sessionPerId.values().stream().filter(s -> (s.getEndMicros() < sessionHorizon));
+		}
+
+		toBeFinished.forEach(s -> {
 			s.setFinished(true);
 			newSessions.add(s);
 			numFinished.incrementAndGet();
 		});
 
-		LOGGER.info("Session clustering done. old: {}, updated: {}, new: {}, finished: {}", numOld, numUpdated, numNew, numFinished);
+		LOGGER.info("Session clustering done. old: {}, updated: {}, new: {}, finished: {}, ignored (redirect): {}, ignored (duplicate): {}, ignored (error): {}", numOld, numUpdated, numNew,
+				numFinished, numRedirect, numDuplicate, numError);
 
 		return newSessions;
+	}
+
+	private boolean isRedirect(SessionRequest request) {
+		return (request.getExtendedInformation() != null) && ((request.getExtendedInformation().getResponseCode() / 100) == 3);
 	}
 
 	private Session createFreshSession(String sessionId) {

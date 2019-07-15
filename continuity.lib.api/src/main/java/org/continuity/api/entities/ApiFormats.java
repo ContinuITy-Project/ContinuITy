@@ -1,7 +1,9 @@
 package org.continuity.api.entities;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.TimeZone;
 
 /**
@@ -19,6 +21,22 @@ public class ApiFormats {
 	}
 
 	private ApiFormats() {
+	}
+
+	public static String formatOrNull(Date date) {
+		if (date == null) {
+			return null;
+		} else {
+			return DATE_FORMAT.format(date);
+		}
+	}
+
+	public static Date parseOrNull(String source) throws ParseException {
+		if (source == null) {
+			return null;
+		} else {
+			return DATE_FORMAT.parse(source);
+		}
 	}
 
 }

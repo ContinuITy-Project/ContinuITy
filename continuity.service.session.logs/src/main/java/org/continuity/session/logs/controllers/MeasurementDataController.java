@@ -25,6 +25,7 @@ import org.continuity.api.rest.RestApi;
 import org.continuity.commons.accesslogs.AccessLogEntry;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
+import org.continuity.session.logs.config.RabbitMqConfig;
 import org.continuity.session.logs.converter.AccessLogsToOpenXtraceConverter;
 import org.continuity.session.logs.converter.CsvRowToOpenXtraceConverter;
 import org.continuity.session.logs.entities.CsvRow;
@@ -143,7 +144,8 @@ public class MeasurementDataController {
 	@RequestMapping(value = PUSH_LINK, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> pushDataViaLink(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody MeasurementDataSpec spec)
+	public ResponseEntity<String> pushDataViaLink(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody MeasurementDataSpec spec,
+			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
 		if (ResourceUtils.isUrl(spec.getLink())) {
 			return ResponseEntity.badRequest().body("Improperly formatted link: " + spec.getLink());
@@ -154,13 +156,13 @@ public class MeasurementDataController {
 		switch (spec.getType()) {
 		case ACCESS_LOGS:
 			String accessLogs = plainRestTemplate.getForObject(spec.getLink(), String.class);
-			return pushAccessLogs(aid, version, accessLogs);
+			return pushAccessLogs(aid, version, accessLogs, finish);
 		case OPEN_XTRACE:
 			String tracesAsJson = plainRestTemplate.getForObject(spec.getLink(), String.class);
-			return pushOpenXtraces(aid, version, tracesAsJson);
+			return pushOpenXtraces(aid, version, tracesAsJson, finish);
 		case CSV:
 			String csvContent = plainRestTemplate.getForObject(spec.getLink(), String.class);
-			return pushCsv(aid, version, csvContent);
+			return pushCsv(aid, version, csvContent, finish);
 		case INSPECTIT:
 		default:
 			return ResponseEntity.badRequest().body("Unsupported measurement data type: " + spec.getType().toPrettyString());
@@ -170,16 +172,18 @@ public class MeasurementDataController {
 	@RequestMapping(value = PUSH_OPEN_XTRACE, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> pushOpenXtraces(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String tracesAsJson)
+	public ResponseEntity<String> pushOpenXtraces(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String tracesAsJson,
+			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
 		LOGGER.info("Received OPEN.xtraces for {}@{}.", aid, version);
-		return storeTraces(aid, version, tracesAsJson, null, null);
+		return storeTraces(aid, version, tracesAsJson, null, null, finish);
 	}
 
 	@RequestMapping(value = PUSH_ACCESS_LOGS, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> pushAccessLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String accessLogs)
+	public ResponseEntity<String> pushAccessLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String accessLogs,
+			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
 		LOGGER.info("Received access logs for {}@{}.", aid, version);
 
@@ -190,23 +194,24 @@ public class MeasurementDataController {
 		}
 
 		List<Trace> traces = new AccessLogsToOpenXtraceConverter(configProvider.getOrDefault(aid).isHashSessionId()).convert(parsedLogs);
-		return storeTraces(aid, version, traces);
+		return storeTraces(aid, version, traces, finish);
 	}
 
 	@RequestMapping(value = PUSH_CSV, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> pushCsv(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String csvContent)
+	public ResponseEntity<String> pushCsv(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String csvContent,
+			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
 		LOGGER.info("Received CSV for {}@{}.", aid, version);
 
 		List<CsvRow> csvRows = CsvRow.listFromString(csvContent);
 
 		List<Trace> traces = new CsvRowToOpenXtraceConverter(configProvider.getOrDefault(aid).isHashSessionId()).convert(csvRows);
-		return storeTraces(aid, version, traces);
+		return storeTraces(aid, version, traces, finish);
 	}
 
-	private ResponseEntity<String> storeTraces(AppId aid, VersionOrTimestamp version, List<Trace> traces) throws IOException {
+	private ResponseEntity<String> storeTraces(AppId aid, VersionOrTimestamp version, List<Trace> traces, boolean finish) throws IOException {
 		Date from = null;
 		Date to = null;
 
@@ -223,11 +228,14 @@ public class MeasurementDataController {
 
 		String tracesAsJson = OPENxtraceUtils.serializeTraceListToJsonString(traces);
 
-		return storeTraces(aid, version, tracesAsJson, from, to);
+		return storeTraces(aid, version, tracesAsJson, from, to, finish);
 	}
 
-	private ResponseEntity<String> storeTraces(AppId aid, VersionOrTimestamp version, String tracesAsJson, Date from, Date to) {
-		amqpTemplate.convertAndSend(AmqpApi.SessionLogs.TASK_PROCESS_TRACES.name(), AmqpApi.SessionLogs.TASK_PROCESS_TRACES.formatRoutingKey().of(aid, version), tracesAsJson);
+	private ResponseEntity<String> storeTraces(AppId aid, VersionOrTimestamp version, String tracesAsJson, Date from, Date to, boolean finish) {
+		amqpTemplate.convertAndSend(AmqpApi.SessionLogs.TASK_PROCESS_TRACES.name(), AmqpApi.SessionLogs.TASK_PROCESS_TRACES.formatRoutingKey().of(aid, version), tracesAsJson, message -> {
+			message.getMessageProperties().setHeader(RabbitMqConfig.HEADER_FINISH, finish);
+			return message;
+		});
 
 		LOGGER.info("{}@{} Forwarded traces to AMQP handler.", aid, version);
 

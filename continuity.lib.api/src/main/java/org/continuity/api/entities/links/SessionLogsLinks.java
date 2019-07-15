@@ -8,9 +8,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SessionLogsLinks extends AbstractLinks<SessionLogsLinks> {
 
-	@JsonProperty(value = "link", required = false)
+	@JsonProperty(value = "simple-link", required = false)
 	@JsonInclude(Include.NON_NULL)
-	private String link;
+	private String simpleLink;
+
+	@JsonProperty(value = "extended-link", required = false)
+	@JsonInclude(Include.NON_NULL)
+	private String extendedLink;
 
 	public SessionLogsLinks(LinkExchangeModel parent) {
 		super(parent);
@@ -20,14 +24,24 @@ public class SessionLogsLinks extends AbstractLinks<SessionLogsLinks> {
 		this(null);
 	}
 
-	public String getLink() {
-		return link;
+	public String getSimpleLink() {
+		return simpleLink;
 	}
 
-	public SessionLogsLinks setLink(String sessionLogsLink) {
-		this.link = sessionLogsLink;
+	public SessionLogsLinks setSimpleLink(String simpleLink) {
+		this.simpleLink = simpleLink;
 		return this;
 	}
+
+	public String getExtendedLink() {
+		return extendedLink;
+	}
+
+	public SessionLogsLinks setExtendedLink(String extendedLink) {
+		this.extendedLink = extendedLink;
+		return this;
+	}
+
 
 	@Override
 	public boolean isEmpty() {

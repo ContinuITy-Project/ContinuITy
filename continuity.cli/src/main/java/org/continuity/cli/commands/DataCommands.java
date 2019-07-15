@@ -43,7 +43,7 @@ public class DataCommands {
 
 	private final CliContext context = new CliContext(CONTEXT_NAME, //
 			new Shorthand("unify", this, "createUnifiedCsv", String.class, String.class), //
-			new Shorthand("upload", this, "upload", String.class, String.class, String.class, String.class) //
+			new Shorthand("upload", this, "upload", String.class, String.class, String.class, String.class, boolean.class) //
 	);
 
 	@Autowired
@@ -70,7 +70,7 @@ public class DataCommands {
 	@ShellMethod(key = { "data upload" }, value = "Uploads data of a certain type (open-xtrace, access-logs, csv) for later use.")
 	public AttributedString upload(@ShellOption(help = "Location where the data can be found. Can be a URL or a file path. A file name can contain UNIX-like wildcards.") String path,
 			@ShellOption(defaultValue = "open-xtrace") String type, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
-			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String version) throws IOException {
+			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String version, @ShellOption(value = { "--finish", "-f" }, defaultValue = "false") boolean finish) throws IOException {
 		MeasurementDataType mType = MeasurementDataType.fromPrettyString(type);
 
 		if (mType == null) {
@@ -92,7 +92,8 @@ public class DataCommands {
 			spec.setType(mType);
 
 			try {
-				response = restTemplate.postForEntity(RestApi.Orchestrator.MeasurementData.PUSH_LINK.requestUrl(aid, version).withHost(url).get(), spec, String.class);
+				response = restTemplate.postForEntity(RestApi.Orchestrator.MeasurementData.PUSH_LINK.requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(), spec,
+						String.class);
 			} catch (HttpStatusCodeException e) {
 				response = new ResponseEntity<String>(e.getResponseBodyAsString(), e.getStatusCode());
 			}
@@ -105,7 +106,9 @@ public class DataCommands {
 				String content = new String(Files.readAllBytes(file.toPath()));
 
 				try {
-					response = restTemplate.postForEntity(RestApi.Orchestrator.MeasurementData.PUSH_FOR_TYPE.get(mType).requestUrl(aid, version).withHost(url).get(), content, String.class);
+					response = restTemplate.postForEntity(
+							RestApi.Orchestrator.MeasurementData.PUSH_FOR_TYPE.get(mType).requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(), content,
+							String.class);
 				} catch (HttpStatusCodeException e) {
 					response = new ResponseEntity<String>(e.getResponseBodyAsString(), e.getStatusCode());
 				}

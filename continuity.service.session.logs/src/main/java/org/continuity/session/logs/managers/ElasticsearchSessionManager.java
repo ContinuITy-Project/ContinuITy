@@ -13,6 +13,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.session.Session;
+import org.continuity.api.entities.artifact.session.SessionView;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -23,6 +24,8 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.core.CountRequest;
+import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -83,7 +86,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 
 	private Pair<String, String> serializeSession(Session session) {
 		try {
-			return Pair.of(mapper.writeValueAsString(session), session.getId() + "_" + session.getStartMicros());
+			return Pair.of(mapper.writerWithView(SessionView.Extended.class).writeValueAsString(session), session.getUniqueId());
 		} catch (JsonProcessingException e) {
 			LOGGER.error("Could not write TraceRecord to JSON string!", e);
 			return null;
@@ -110,22 +113,8 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 	 */
 	public List<Session> readSessionsInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException, TimeoutException {
 		SearchRequest search = new SearchRequest(toSessionIndex(aid));
-
-		BoolQueryBuilder query = QueryBuilders.boolQuery();
-
-		if (version != null) {
-			query = query.must(QueryBuilders.matchQuery("version", version.toString()));
-		}
-
-		query.must(QueryBuilders.matchQuery("tailoring", Session.convertTailoringToString(tailoring)));
-
-		if ((from != null) && (to != null)) {
-			query.must(QueryBuilders.rangeQuery("start-micros").from(from.getTime() * 1000, false).to(to.getTime() * 1000, true));
-		} else {
-			LOGGER.warn("The provided time range ({} - {}) contains null elements! Ignoring.", from, to);
-		}
-
-		search.source(new SearchSourceBuilder().query(query).size(10000)); // This is the maximum
+		search.source(createRangeSearch(version, tailoring, from, to).size(10000)); // This is the
+																					// maximum
 
 		search.scroll(TimeValue.timeValueMinutes(SCROLL_MINUTES));
 
@@ -141,6 +130,57 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 		LOGGER.info("The search request to app-id {}, version {}, and time range {} - {} resulted in {}.", aid, version, formatOrNull(from), formatOrNull(to), hits.getTotalHits());
 
 		return processSearchResponse(response, aid, version, 0);
+	}
+
+	/**
+	 * Counts all sessions within a given range.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param version
+	 *            The version or timestamp. Can be {@code null}. In this case, it will be ignored.
+	 * @param tailoring
+	 *            The list of services to which the sessions are tailored. Use a singleton list with
+	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
+	 * @param from
+	 *            The start date of the range.
+	 * @param to
+	 *            The end date of the range.
+	 * @return The number of sessions in the range.
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	public long countSessionsInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException {
+		CountRequest count = new CountRequest(toSessionIndex(aid));
+		count.source(createRangeSearch(version, tailoring, from, to));
+
+		CountResponse response;
+		try {
+			response = client.count(count, RequestOptions.DEFAULT);
+		} catch (ElasticsearchStatusException e) {
+			LOGGER.info("Could not find any sessions for app-id {} and version {} in time range {} - {}: {}", aid, version, formatOrNull(from), formatOrNull(to), e.getMessage());
+			return 0;
+		}
+
+		return response.getCount();
+	}
+
+	private SearchSourceBuilder createRangeSearch(VersionOrTimestamp version, List<String> tailoring, Date from, Date to) {
+		BoolQueryBuilder query = QueryBuilders.boolQuery();
+
+		if (version != null) {
+			query = query.must(QueryBuilders.matchQuery("version", version.toString()));
+		}
+
+		query.must(QueryBuilders.matchQuery("tailoring", Session.convertTailoringToString(tailoring)));
+
+		if ((from != null) && (to != null)) {
+			query.must(QueryBuilders.rangeQuery("start-micros").from(from.getTime() * 1000, false).to(to.getTime() * 1000, true));
+		} else {
+			LOGGER.warn("The provided time range ({} - {}) contains null elements! Ignoring.", from, to);
+		}
+
+		return new SearchSourceBuilder().query(query);
 	}
 
 	private String formatOrNull(Date date) {
@@ -234,7 +274,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 	}
 
 	private String toSessionIndex(AppId aid) {
-		return aid + ".sessions";
+		return aid.dropService() + ".sessions";
 	}
 
 }

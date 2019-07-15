@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.lang3.Range;
-import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.artifact.SessionsBundlePack;
 import org.continuity.api.entities.artifact.SimplifiedSession;
 import org.continuity.api.entities.config.ModularizationApproach;
@@ -26,6 +25,10 @@ import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -79,14 +82,17 @@ public class WessbasPipelineManager {
 	 * @return The generated workload model.
 	 */
 	public WessbasBundle runPipeline(TaskDescription task, IntensityCalculationInterval interval) {
-		String sessionLogsLink = task.getSource().getSessionLogsLinks().getLink();
+		String sessionLogsLink = task.getSource().getSessionLogsLinks().getExtendedLink();
 		if ("dummy".equals(sessionLogsLink)) {
 			return new WessbasBundle(task.getVersion(), WessbasDslInstance.DVDSTORE_PARSED.get());
 		}
 
-		SessionLogs sessionLog;
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Collections.singletonList(MediaType.TEXT_PLAIN));
+
+		String sessionLog;
 		try {
-			sessionLog = restTemplate.getForObject(WebUtils.addProtocolIfMissing(sessionLogsLink), SessionLogs.class);
+			sessionLog = restTemplate.exchange(WebUtils.addProtocolIfMissing(sessionLogsLink), HttpMethod.GET, new HttpEntity<>(headers), String.class).getBody();
 		} catch (RestClientException e) {
 			LOGGER.error("Error when retrieving the session logs!", e);
 			return null;
@@ -100,7 +106,7 @@ public class WessbasPipelineManager {
 				workloadModel = convertSessionLogIntoWessbasDSLInstanceUsingModularization(sessionLog, task, interval);
 
 			} else {
-				workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog.getLogs(), interval);
+				workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog, interval);
 
 			}
 		} catch (Exception e) {
@@ -135,16 +141,17 @@ public class WessbasPipelineManager {
 	 * @throws GeneratorException
 	 * @throws SecurityException
 	 */
-	private WorkloadModel convertSessionLogIntoWessbasDSLInstanceUsingModularization(SessionLogs sessionLogs, TaskDescription task, IntensityCalculationInterval interval) throws IOException, SecurityException, GeneratorException {
+	private WorkloadModel convertSessionLogIntoWessbasDSLInstanceUsingModularization(String sessionLogs, TaskDescription task, IntensityCalculationInterval interval)
+			throws IOException, SecurityException, GeneratorException {
 		// set 1 as default and configure actual number on demand
-		Properties intensityProps = createWorkloadIntensity(sessionLogs.getLogs(), interval);
+		Properties intensityProps = createWorkloadIntensity(sessionLogs, interval);
 
 		//Apply Behavior Mix generation
-		BehaviorMixManager behaviorManager = new BehaviorMixManager(restTemplate, workingDir);
+		BehaviorMixManager behaviorManager = new BehaviorMixManager(restTemplate, task.getVersion(), workingDir);
 		SessionsBundlePack sessionsBundles = behaviorManager.runPipeline(sessionLogs);
 
 		// Apply Modularization
-		WorkloadModularizationManager modularizationManager = new WorkloadModularizationManager(restTemplate);
+		WorkloadModularizationManager modularizationManager = new WorkloadModularizationManager(restTemplate, task.getAppId(), task.getVersion());
 		BehaviorModelPack behaviorModelPack = new BehaviorModelPack(sessionsBundles, workingDir);
 		modularizationManager.runPipeline(task.getAppId(), task.getVersion(), task.getSource(), behaviorModelPack, task.getModularizationOptions().getServices());
 

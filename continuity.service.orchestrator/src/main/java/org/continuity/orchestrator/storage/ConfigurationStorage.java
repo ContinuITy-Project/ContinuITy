@@ -139,6 +139,10 @@ public class ConfigurationStorage {
 	}
 
 	private ServiceConfiguration readCatched(Path file) {
+		if (file.getFileName().toString().startsWith(".")) {
+			return null;
+		}
+
 		try {
 			return mapper.readValue(file.toFile(), ServiceConfiguration.class);
 		} catch (IOException e) {
