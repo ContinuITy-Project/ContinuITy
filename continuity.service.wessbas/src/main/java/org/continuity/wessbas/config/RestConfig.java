@@ -1,6 +1,7 @@
 package org.continuity.wessbas.config;
 
 import org.continuity.commons.idpa.AppIdConverter;
+import org.continuity.commons.idpa.VersionOrTimestampConverter;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,11 @@ public class RestConfig {
 	@Bean
 	AppIdConverter appIdConverter() {
 		return new AppIdConverter();
+	}
+
+	@Bean
+	VersionOrTimestampConverter versionOrTimestampConverter() {
+		return new VersionOrTimestampConverter();
 	}
 
 }

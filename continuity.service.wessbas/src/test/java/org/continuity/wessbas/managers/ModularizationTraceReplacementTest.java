@@ -43,7 +43,7 @@ public class ModularizationTraceReplacementTest {
 	public void setup() throws NoSuchMethodException, SecurityException {
 		random = new Random(3546);
 
-		manager = new WorkloadModularizationManager(null);
+		manager = new WorkloadModularizationManager(null, null, null);
 		method = WorkloadModularizationManager.class.getDeclaredMethod("getTracesPerState", List.class, Application.class);
 		method.setAccessible(true);
 

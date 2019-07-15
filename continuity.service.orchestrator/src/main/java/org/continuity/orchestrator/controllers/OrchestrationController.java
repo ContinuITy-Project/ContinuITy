@@ -155,8 +155,7 @@ public class OrchestrationController {
 	}
 
 	private void createAndSubmitRecipe(String orderId, AppId aid, VersionOrTimestamp version, OrderGoal goal, OrderMode mode, OrderOptions options, ForecastInput forecastInput,
-			Set<String> testingContext,
-			LinkExchangeModel source, ModularizationOptions modularizationOptions) {
+			Set<String> testingContext, LinkExchangeModel source, ModularizationOptions modularizationOptions) {
 		boolean useTestingContext = ((testingContext != null) && !testingContext.isEmpty());
 
 		if (useTestingContext) {
@@ -250,6 +249,11 @@ public class OrchestrationController {
 		return links -> Arrays.stream(functions).map(f -> f.apply(links)).reduce((a, b) -> a && b).get();
 	}
 
+	@SafeVarargs
+	private final Function<LinkExchangeModel, Boolean> or(Function<LinkExchangeModel, Boolean>... functions) {
+		return links -> Arrays.stream(functions).map(f -> f.apply(links)).reduce((a, b) -> a || b).get();
+	}
+
 	@RequestMapping(path = RESULT, method = RequestMethod.GET)
 	public ResponseEntity<OrderReport> getResultWithoutWaiting(@PathVariable("id") String orderId, HttpServletRequest servletRequest) {
 		LOGGER.info("{} Trying to get result without waiting...", LoggingUtils.formatPrefix(orderId));
@@ -263,7 +267,7 @@ public class OrchestrationController {
 		switch (goal) {
 		case CREATE_SESSION_LOGS:
 			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.SessionLogs.TASK_CREATE, AmqpApi.SessionLogs.TASK_CREATE.formatRoutingKey().of(aid),
-					isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getLink));
+					or(isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getSimpleLink), isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getExtendedLink)));
 			break;
 		case CREATE_BEHAVIOR_MIX:
 			WorkloadModelType workloadType;
@@ -302,8 +306,7 @@ public class OrchestrationController {
 				loadTestType = options.getLoadTestType();
 			}
 
-			check = all(isPresent(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getLink),
-					isEqual(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getType, loadTestType));
+			check = all(isPresent(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getLink), isEqual(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getType, loadTestType));
 
 			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.LoadTest.TASK_CREATE, AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(loadTestType.toPrettyString()), check);
 			break;
@@ -385,13 +388,23 @@ public class OrchestrationController {
 	private LinkExchangeModel transfromToExternalLinks(LinkExchangeModel internal, String host) {
 		LinkExchangeModel external = new LinkExchangeModel();
 
-		if (internal.getSessionLogsLinks().getLink() != null) {
-			List<String> params = RestApi.SessionLogs.Sessions.GET.parsePathParameters(internal.getSessionLogsLinks().getLink());
+		if (internal.getSessionLogsLinks().getSimpleLink() != null) {
+			List<String> params = RestApi.SessionLogs.Sessions.GET_SIMPLE.parsePathParameters(internal.getSessionLogsLinks().getSimpleLink());
 
 			if (params != null) {
-				external.getSessionLogsLinks().setLink(RestApi.Orchestrator.SessionLogs.GET.requestUrl(params.get(0)).withHost(host).get());
+				external.getSessionLogsLinks().setSimpleLink(RestApi.Orchestrator.SessionLogs.GET_SIMPLE.requestUrl(params.get(0), params.get(1)).withHost(host).get());
 			} else {
-				LOGGER.warn("The link {} does not match the endpoint {}!", internal.getSessionLogsLinks().getLink(), RestApi.Orchestrator.SessionLogs.GET.genericPath());
+				LOGGER.warn("The link {} does not match the endpoint {}!", internal.getSessionLogsLinks().getSimpleLink(), RestApi.Orchestrator.SessionLogs.GET_SIMPLE.genericPath());
+			}
+		}
+
+		if (internal.getSessionLogsLinks().getExtendedLink() != null) {
+			List<String> params = RestApi.SessionLogs.Sessions.GET_EXTENDED.parsePathParameters(internal.getSessionLogsLinks().getExtendedLink());
+
+			if (params != null) {
+				external.getSessionLogsLinks().setExtendedLink(RestApi.Orchestrator.SessionLogs.GET_EXTENDED.requestUrl(params.get(0), params.get(1)).withHost(host).get());
+			} else {
+				LOGGER.warn("The link {} does not match the endpoint {}!", internal.getSessionLogsLinks().getSimpleLink(), RestApi.Orchestrator.SessionLogs.GET_EXTENDED.genericPath());
 			}
 		}
 

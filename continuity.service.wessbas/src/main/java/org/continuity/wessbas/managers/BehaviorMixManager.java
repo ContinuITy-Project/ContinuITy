@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.artifact.SessionsBundle;
 import org.continuity.api.entities.artifact.SessionsBundlePack;
 import org.continuity.api.entities.artifact.SimplifiedSession;
@@ -40,6 +39,8 @@ public class BehaviorMixManager {
 
 	private final Path workingDir;
 
+	private final VersionOrTimestamp version;
+
 	public Path getWorkingDir() {
 		return workingDir;
 	}
@@ -47,8 +48,9 @@ public class BehaviorMixManager {
 	/**
 	 * Constructor.
 	 */
-	public BehaviorMixManager(RestTemplate restTemplate) {
+	public BehaviorMixManager(RestTemplate restTemplate, VersionOrTimestamp version) {
 		this.restTemplate = restTemplate;
+		this.version = version;
 
 		Path tmpDir;
 		try {
@@ -67,9 +69,10 @@ public class BehaviorMixManager {
 	/**
 	 * Constructor.
 	 */
-	public BehaviorMixManager(RestTemplate restTemplate, Path workingDir) {
+	public BehaviorMixManager(RestTemplate restTemplate, VersionOrTimestamp version, Path workingDir) {
 		this.restTemplate = restTemplate;
 		this.workingDir = workingDir;
+		this.version = version;
 	}
 
 	/**
@@ -83,9 +86,9 @@ public class BehaviorMixManager {
 	 */
 	public SessionsBundlePack runPipeline(String sessionLogsLink) {
 
-		SessionLogs sessionLog;
+		String sessionLog;
 		try {
-			sessionLog = restTemplate.getForObject(WebUtils.addProtocolIfMissing(sessionLogsLink), SessionLogs.class);
+			sessionLog = restTemplate.getForObject(WebUtils.addProtocolIfMissing(sessionLogsLink), String.class);
 		} catch (RestClientException e) {
 			LOGGER.error("Error when retrieving the session logs!", e);
 			return null;
@@ -94,32 +97,8 @@ public class BehaviorMixManager {
 		SessionsBundlePack sessionsBundles;
 
 		try {
-			mix = convertSessionLogIntoBehaviorMix(sessionLog.getLogs());
-			sessionsBundles = extractSessions(sessionLog.getVersion(), mix);
-
-		} catch (Exception e) {
-			LOGGER.error("Could not create the Behavior Mix!", e);
-			mix = null;
-			sessionsBundles = null;
-		}
-
-		return sessionsBundles;
-	}
-
-	/**
-	 * Runs the pipeline and returns a SessionsBundlePack that holds a list of SessionBundles.
-	 *
-	 * @param sessionLogs
-	 *            the {@link SessionLogs}
-	 * @return the session logs
-	 */
-	public SessionsBundlePack runPipeline(SessionLogs sessionLogs) {
-		BehaviorMix mix;
-		SessionsBundlePack sessionsBundles;
-
-		try {
-			mix = convertSessionLogIntoBehaviorMix(sessionLogs.getLogs());
-			sessionsBundles = extractSessions(sessionLogs.getVersion(), mix);
+			mix = convertSessionLogIntoBehaviorMix(sessionLog);
+			sessionsBundles = extractSessions(version, mix);
 
 		} catch (Exception e) {
 			LOGGER.error("Could not create the Behavior Mix!", e);
