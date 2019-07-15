@@ -40,7 +40,7 @@ public class BehaviorMixCreationAmqpHandler {
 
 	@Autowired
 	private MixedStorage<BehaviorModelPack> storage;
-	
+
 //	@Autowired
 //	private ConcurrentHashMap<String, Path> pathStorage;
 
@@ -62,12 +62,12 @@ public class BehaviorMixCreationAmqpHandler {
 
 		TaskReport report;
 
-		if (task.getSource().getSessionLogsLinks().getLink() == null) {
+		if (task.getSource().getSessionLogsLinks().getExtendedLink() == null) {
 			LOGGER.error("Task {}: Session logs link is missing for app-id {}!", task.getTaskId(), task.getAppId());
 			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {
-			BehaviorMixManager behaviorManager = new BehaviorMixManager(restTemplate);
-			SessionsBundlePack sessionsBundles = behaviorManager.runPipeline(task.getSource().getSessionLogsLinks().getLink());
+			BehaviorMixManager behaviorManager = new BehaviorMixManager(restTemplate, task.getVersion());
+			SessionsBundlePack sessionsBundles = behaviorManager.runPipeline(task.getSource().getSessionLogsLinks().getExtendedLink());
 			BehaviorModelPack behaviorModelPack = new BehaviorModelPack(sessionsBundles, behaviorManager.getWorkingDir());
 
 			if (sessionsBundles == null) {
@@ -75,12 +75,12 @@ public class BehaviorMixCreationAmqpHandler {
 
 				report = TaskReport.error(task.getTaskId(), TaskError.INTERNAL_ERROR);
 			} else {
-				
+
 				String storageId = storage.put(behaviorModelPack, task.getAppId(), task.isLongTermUse());
 				String behaviorModelPackLink = RestApi.Wessbas.SessionsBundles.GET.requestUrl(storageId).withoutProtocol().get();
 
 				report = TaskReport.successful(task.getTaskId(), new LinkExchangeModel().getSessionsBundlesLinks().setLink(behaviorModelPackLink).parent());
-				
+
 				LOGGER.info("Task {}: Created a new sessions-bundle-pack with id '{}'.", task.getTaskId(), storageId);
 			}
 		}

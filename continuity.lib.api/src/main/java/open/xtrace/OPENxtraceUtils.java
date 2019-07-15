@@ -8,14 +8,18 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spec.research.open.xtrace.api.core.Location;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.Callable;
 import org.spec.research.open.xtrace.api.core.callables.HTTPRequestProcessing;
 import org.spec.research.open.xtrace.api.core.callables.NestingCallable;
+import org.spec.research.open.xtrace.dflt.impl.core.LocationImpl;
+import org.spec.research.open.xtrace.dflt.impl.core.SubTraceImpl;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.RemoteInvocationImpl;
 import org.spec.research.open.xtrace.dflt.impl.serialization.realizations.JsonOPENxtraceDeserializer;
@@ -250,6 +254,43 @@ public class OPENxtraceUtils {
 		});
 
 		return builder.substring(0, builder.length() - 1).toString();
+	}
+
+	/**
+	 * Gets the business transaction associated with the given callable.
+	 *
+	 * @param callable
+	 * @return An optional holding the business transaction if present.
+	 */
+	public static Optional<String> getBusinessTransaction(HTTPRequestProcessing callable) {
+		if ((callable.getContainingSubTrace() != null) && (callable.getContainingSubTrace().getLocation() != null)) {
+			return callable.getContainingSubTrace().getLocation().getBusinessTransaction();
+		} else {
+			return Optional.empty();
+		}
+	}
+
+	/**
+	 * Sets the business transaction of a callable. Assumes the default implementation. The callable
+	 * must have a containing sub trace.
+	 *
+	 * @param callable
+	 * @param bt
+	 *            The business transaction.
+	 */
+	public static void setBusinessTransaction(HTTPRequestProcessing callable, String bt) {
+		if (callable.getContainingSubTrace() == null) {
+			throw new IllegalArgumentException("Cannot add business transaction without containing sub trace!");
+		}
+
+		Location location = callable.getContainingSubTrace().getLocation();
+
+		if (location == null) {
+			location = new LocationImpl();
+			((SubTraceImpl) callable.getContainingSubTrace()).setLocation(location);
+		}
+
+		((LocationImpl) location).setBusinessTransaction(bt);
 	}
 
 }

@@ -33,6 +33,8 @@ public class RabbitMqConfig {
 
 	public static final String TASK_PROCESS_TRACES_ROUTING_KEY = "#";
 
+	public static final String HEADER_FINISH = "continuity.finish";
+
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
 	// General

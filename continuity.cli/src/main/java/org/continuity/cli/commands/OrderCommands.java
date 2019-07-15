@@ -253,7 +253,8 @@ public class OrderCommands {
 		order.setModularizationOptions(modularizationOptions);
 		LinkExchangeModel links = new LinkExchangeModel();
 		links.getTraceLinks().setFrom(DateUtils.addHours(new Date(), 1)).setTo(new Date());
-		links.getSessionLogsLinks().setLink("SESSION_LOGS_LINK");
+		links.getSessionLogsLinks().setSimpleLink("SIMPLE_SESSION_LOGS_LINK");
+		links.getSessionLogsLinks().setExtendedLink("EXTENDED_SESSION_LOGS_LINK");
 		links.getSessionsBundlesLinks().setLink("SESSIONS_BUNDLES_LINKS").setStatus(SessionsStatus.NOT_CHANGED);
 		links.getForecastLinks().setLink("FORECAST_LINKS");
 		links.getWorkloadModelLinks().setType(WorkloadModelType.WESSBAS).setLink("WORKLOAD_MODEL_LINK");

@@ -132,7 +132,8 @@ public class TestingContextStorage {
 
 		overlap |= (first.getTraceLinks().getFrom() != null) && Objects.equals(first.getTraceLinks().getFrom(), second.getTraceLinks().getFrom());
 		overlap |= (first.getTraceLinks().getTo() != null) && Objects.equals(first.getTraceLinks().getTo(), second.getTraceLinks().getTo());
-		overlap |= (first.getSessionLogsLinks().getLink() != null) && Objects.equals(first.getSessionLogsLinks().getLink(), second.getSessionLogsLinks().getLink());
+		overlap |= (first.getSessionLogsLinks().getSimpleLink() != null) && Objects.equals(first.getSessionLogsLinks().getSimpleLink(), second.getSessionLogsLinks().getSimpleLink());
+		overlap |= (first.getSessionLogsLinks().getExtendedLink() != null) && Objects.equals(first.getSessionLogsLinks().getExtendedLink(), second.getSessionLogsLinks().getExtendedLink());
 		overlap |= (first.getWorkloadModelLinks().getLink() != null) && Objects.equals(first.getWorkloadModelLinks().getLink(), second.getWorkloadModelLinks().getLink());
 		overlap |= (first.getLoadTestLinks().getLink() != null) && Objects.equals(first.getLoadTestLinks().getLink(), second.getLoadTestLinks().getLink());
 

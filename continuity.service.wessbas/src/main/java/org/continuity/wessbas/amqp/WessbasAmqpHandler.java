@@ -66,7 +66,7 @@ public class WessbasAmqpHandler {
 
 		TaskReport report;
 
-		if ((task.getSource().getSessionLogsLinks().getLink() == null) && (task.getSource().getForecastLinks().getLink() == null)) {
+		if ((task.getSource().getSessionLogsLinks().getExtendedLink() == null) && (task.getSource().getForecastLinks().getLink() == null)) {
 			LOGGER.error("Task {}: Session logs link and forecast link is missing for app-id {}!", task.getTaskId(), task.getAppId());
 			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {

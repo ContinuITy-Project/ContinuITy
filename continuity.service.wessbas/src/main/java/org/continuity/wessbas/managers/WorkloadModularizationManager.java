@@ -22,7 +22,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.continuity.api.entities.ApiFormats;
-import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.artifact.SessionLogsInput;
 import org.continuity.api.entities.artifact.SessionsBundle;
 import org.continuity.api.entities.artifact.SimplifiedSession;
@@ -116,16 +115,22 @@ public class WorkloadModularizationManager {
 	 */
 	private CSVHandler csvHandler;
 
+	private final AppId aid;
+
+	private final VersionOrTimestamp version;
+
 	/**
 	 * Constructor
 	 *
 	 * @param restTemplate
 	 *            Eureka rest template
 	 */
-	public WorkloadModularizationManager(RestTemplate eurekaRestTemplate) {
+	public WorkloadModularizationManager(RestTemplate eurekaRestTemplate, AppId aid, VersionOrTimestamp version) {
 		this.eurekaRestTemplate = eurekaRestTemplate;
 		this.plainRestTemplate = new RestTemplate();
 		this.csvHandler = new CSVHandler(CSVHandler.LINEBREAK_TYPE_UNIX);
+		this.aid = aid;
+		this.version = version;
 
 		Path tmpDir;
 		try {
@@ -228,9 +233,9 @@ public class WorkloadModularizationManager {
 			return;
 		}
 
-		SessionLogs sessionLogs = getModularizedSessionLogs(traces, services);
+		String sessionLogs = getModularizedSessionLogs(traces, services);
 
-		if (sessionLogs.getLogs().isEmpty()) {
+		if (sessionLogs.isEmpty()) {
 			LOGGER.info("Removing state {}.", state);
 			double[] responseTimeSample = traces.stream().map(Trace::getRoot).map(SubTrace::getRoot).map(HTTPRequestProcessingImpl.class::cast).mapToDouble(r -> r.getResponseTime() / 1000000D)
 					.toArray();
@@ -254,8 +259,8 @@ public class WorkloadModularizationManager {
 		}
 	}
 
-	private MarkovChain createSubMarkovChain(String rootState, SessionLogs sessionLogs, String behaviorId) {
-		if (sessionLogs.getLogs().isEmpty()) {
+	private MarkovChain createSubMarkovChain(String rootState, String sessionLogs, String behaviorId) {
+		if (sessionLogs.isEmpty()) {
 			return null;
 		}
 
@@ -265,7 +270,7 @@ public class WorkloadModularizationManager {
 		BehaviorModelExtractor extractor = new BehaviorModelExtractor();
 		String[][] behaviorModel = null;
 		try {
-			Files.write(modularizedSessionLogsPath.resolve("sessions.dat"), Collections.singletonList(sessionLogs.getLogs()), StandardOpenOption.CREATE);
+			Files.write(modularizedSessionLogsPath.resolve("sessions.dat"), Collections.singletonList(sessionLogs), StandardOpenOption.CREATE);
 			extractor.init(null, null, 0);
 			// "simple" will generate a single behavior model (behaviormodel.csv)
 			extractor.extract(modularizedSessionLogsPath.resolve("sessions.dat").toString(), modularizedSessionLogsPath.toString(), "simple");
@@ -286,9 +291,9 @@ public class WorkloadModularizationManager {
 	 *            the input traces
 	 * @param services
 	 *            the services, which are going to be targeted
-	 * @return {@link SessionLogs}
+	 * @return The session logs as string.
 	 */
-	private SessionLogs getModularizedSessionLogs(List<Trace> traces, Map<AppId, String> services) {
+	private String getModularizedSessionLogs(List<Trace> traces, Map<AppId, String> services) {
 		OPENxtraceSerializer serializer = OPENxtraceSerializationFactory.getInstance().getSerializer(OPENxtraceSerializationFormat.JSON);
 		OutputStream stream = new ByteArrayOutputStream();
 		serializer.prepare(stream);
@@ -311,8 +316,8 @@ public class WorkloadModularizationManager {
 		}
 
 		SessionLogsInput input = new SessionLogsInput(services, jsonArray.toString());
-		String createSessionLogsLink = RestApi.SessionLogs.Sessions.CREATE.requestUrl().withQuery(RestApi.SessionLogs.Sessions.QueryParameters.ADD_PRE_POST_PROCESSING, "true").get();
-		return eurekaRestTemplate.postForObject(createSessionLogsLink, input, SessionLogs.class);
+		String createSessionLogsLink = RestApi.SessionLogs.Sessions.CREATE.requestUrl(aid, version).withQuery(RestApi.SessionLogs.Sessions.QueryParameters.ADD_PRE_POST_PROCESSING, "true").get();
+		return eurekaRestTemplate.postForObject(createSessionLogsLink, input, String.class);
 	}
 
 	private Map<String, List<Trace>> getTracesPerState(List<HTTPRequestProcessingImpl> filteredCallables, Application application) {

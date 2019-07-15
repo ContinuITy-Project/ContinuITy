@@ -2,10 +2,8 @@ package org.continuity.wessbas.managers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.continuity.api.entities.artifact.SessionLogs;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
-import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.DirectListInput;
 import org.continuity.idpa.application.Application;
@@ -18,21 +16,23 @@ import org.continuity.wessbas.transform.annotation.AnnotationFromWessbasExtracto
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 public class UrlPartParametersTest {
 
-	private static final SessionLogs SESSION_LOG = new SessionLogs(VersionOrTimestamp.MIN_VALUE,
-			"123;\"fooRequest\":1:42:/foo/{bar}:8080:localhost:HTTP/1.1:GET:abc=123&URL_PART_bar=hi:<no-encoding>;\"fooRequest\":43:50:/foo/{bar}:8080:localhost:HTTP/1.1:GET:URL_PART_bar=hello:<no-encoding>");
+	private static final String SESSION_LOG = "123;\"fooRequest\":1:42:/foo/{bar}:8080:localhost:HTTP/1.1:GET:abc=123&URL_PART_bar=hi:<no-encoding>;\"fooRequest\":43:50:/foo/{bar}:8080:localhost:HTTP/1.1:GET:URL_PART_bar=hello:<no-encoding>";
 
 	private RestTemplate restMock;
 
 	private WessbasPipelineManager manager;
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
 		restMock = Mockito.mock(RestTemplate.class);
 		Mockito.when(restMock.getForObject(Mockito.anyString(), Mockito.any())).thenReturn(SESSION_LOG);
+		Mockito.when(restMock.exchange(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(Class.class))).thenReturn(ResponseEntity.ok(SESSION_LOG));
 
 		manager = new WessbasPipelineManager(restMock);
 	}
@@ -41,7 +41,7 @@ public class UrlPartParametersTest {
 	public void testTransformationFromSessionLog() {
 		TaskDescription task = new TaskDescription();
 		LinkExchangeModel  source = new LinkExchangeModel();
-		source.getSessionLogsLinks().setLink("");
+		source.getSessionLogsLinks().setExtendedLink("");
 		task.setSource(source);
 		WessbasBundle bundle = manager.runPipeline(task, null);
 

@@ -2,17 +2,21 @@ package org.continuity.api.entities.artifact.session;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.NavigableSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,7 +34,11 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
  *
  */
 @JsonPropertyOrder({ "id", "version", "start-micros", "end-micros", "finished", "tailoring", "requests" })
+@JsonView(SessionView.Simple.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Session {
+
+	private static final String DELIM = ";";
 
 	private String id;
 
@@ -49,9 +57,11 @@ public class Session {
 
 	@JsonSerialize(using = TailoringSerializer.class)
 	@JsonDeserialize(using = TailoringDeserializer.class)
+	@JsonView(SessionView.Simple.class)
 	private List<String> tailoring;
 
-	private Set<SessionRequest> requests = new TreeSet<>();
+	@JsonView(SessionView.Simple.class)
+	private NavigableSet<SessionRequest> requests = new TreeSet<>();
 
 	public String getId() {
 		return id;
@@ -59,6 +69,11 @@ public class Session {
 
 	public void setId(String id) {
 		this.id = id;
+	}
+
+	@JsonIgnore
+	public String getUniqueId() {
+		return new StringBuilder().append(id).append("_").append(startMicros).toString();
 	}
 
 	public VersionOrTimestamp getVersion() {
@@ -109,7 +124,7 @@ public class Session {
 		this.tailoring = tailoring;
 	}
 
-	public Set<SessionRequest> getRequests() {
+	public NavigableSet<SessionRequest> getRequests() {
 		return requests;
 	}
 
@@ -123,8 +138,7 @@ public class Session {
 		this.endMicros = Math.max(this.endMicros, request.getEndMicros());
 	}
 
-	@JsonDeserialize(as = TreeSet.class)
-	public void setRequests(Set<SessionRequest> requests) {
+	public void setRequests(NavigableSet<SessionRequest> requests) {
 		this.requests = requests;
 	}
 
@@ -133,9 +147,19 @@ public class Session {
 		return convertTailoringToString(tailoring);
 	}
 
+	@JsonIgnore
+	public String toSimpleLog() {
+		return getUniqueId() + DELIM + requests.stream().map(SessionRequest::toSimpleLog).collect(Collectors.joining(DELIM));
+	}
+
+	@JsonIgnore
+	public String toExtensiveLog() {
+		return getUniqueId() + DELIM + requests.stream().map(SessionRequest::toExtensiveLog).collect(Collectors.joining(DELIM));
+	}
+
 	@Override
 	public int hashCode() {
-		return Objects.hash(endMicros, finished, id, requests, startMicros, tailoring, version);
+		return Objects.hash(id, tailoring, version, startMicros);
 	}
 
 	@Override
@@ -159,11 +183,20 @@ public class Session {
 	}
 
 	public static String convertTailoringToString(List<String> tailoring) {
+		if ((tailoring == null) || tailoring.isEmpty()) {
+			return AppId.SERVICE_ALL;
+		}
+
+		Collections.sort(tailoring);
+
 		return tailoring.stream().collect(Collectors.joining("."));
 	}
 
 	public static List<String> convertStringToTailoring(String tailoring) {
-		return Arrays.asList(tailoring.split("\\."));
+		List<String> list = Arrays.asList(tailoring.split("\\."));
+		Collections.sort(list);
+
+		return list;
 	}
 
 	public static class TailoringSerializer extends StdSerializer<List<String>> {
