@@ -33,14 +33,15 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
  * @author Henning Schulz
  *
  */
-@JsonPropertyOrder({ "id", "version", "start-micros", "end-micros", "finished", "tailoring", "requests" })
+@JsonPropertyOrder({ "unique-id", "session-id", "version", "start-micros", "end-micros", "finished", "tailoring", "requests" })
 @JsonView(SessionView.Simple.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Session {
 
 	private static final String DELIM = ";";
 
-	private String id;
+	@JsonProperty("session-id")
+	private String sessionId;
 
 	private VersionOrTimestamp version;
 
@@ -63,17 +64,17 @@ public class Session {
 	@JsonView(SessionView.Simple.class)
 	private NavigableSet<SessionRequest> requests = new TreeSet<>();
 
-	public String getId() {
-		return id;
+	public String getSessionId() {
+		return sessionId;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
 	}
 
-	@JsonIgnore
+	@JsonProperty("unique-id")
 	public String getUniqueId() {
-		return new StringBuilder().append(id).append("_").append(startMicros).toString();
+		return new StringBuilder().append(sessionId).append("_").append(startMicros).toString();
 	}
 
 	public VersionOrTimestamp getVersion() {
@@ -159,7 +160,7 @@ public class Session {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, tailoring, version, startMicros);
+		return Objects.hash(sessionId, tailoring, version, startMicros);
 	}
 
 	@Override
@@ -173,13 +174,14 @@ public class Session {
 		}
 
 		Session other = (Session) obj;
-		return (endMicros == other.endMicros) && (finished == other.finished) && Objects.equals(id, other.id) && Objects.equals(requests, other.requests) && (startMicros == other.startMicros)
+		return (endMicros == other.endMicros) && (finished == other.finished) && Objects.equals(sessionId, other.sessionId) && Objects.equals(requests, other.requests)
+				&& (startMicros == other.startMicros)
 				&& Objects.equals(tailoring, other.tailoring) && Objects.equals(version, other.version);
 	}
 
 	@Override
 	public String toString() {
-		return new StringBuilder().append(id).append(" (").append(startMicros).append(" - ").append(endMicros).append(")").toString();
+		return new StringBuilder().append(getUniqueId()).append(" (").append(startMicros).append(" - ").append(endMicros).append(")").toString();
 	}
 
 	public static String convertTailoringToString(List<String> tailoring) {
