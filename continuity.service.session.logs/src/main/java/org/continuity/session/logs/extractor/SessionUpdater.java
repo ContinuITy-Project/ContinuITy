@@ -58,7 +58,7 @@ public class SessionUpdater {
 		int numError = 0;
 
 		Collections.sort(requests);
-		Map<String, Session> sessionPerId = oldSessions.stream().collect(Collectors.toMap(Session::getId, s -> s));
+		Map<String, Session> sessionPerId = oldSessions.stream().collect(Collectors.toMap(Session::getSessionId, s -> s));
 
 		Set<Session> newSessions = new HashSet<>();
 		long maxDate = 0;
@@ -134,7 +134,7 @@ public class SessionUpdater {
 		Session session = new Session();
 
 		session.setFresh(true);
-		session.setId(sessionId);
+		session.setSessionId(sessionId);
 		session.setVersion(version);
 		session.setTailoring(services);
 
