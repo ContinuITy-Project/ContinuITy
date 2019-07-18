@@ -1,0 +1,74 @@
+{
+    "properties": {
+        "unique-id": {
+            "type": "keyword"
+        },
+        "session-id": {
+            "type": "keyword"
+        },
+        "version": {
+            "type": "keyword"
+        },
+        "start-micros": {
+            "type": "long"
+        },
+        "end-micros": {
+            "type": "long"
+        },
+        "finished": {
+            "type": "boolean"
+        },
+        "tailoring": {
+            "type": "keyword"
+        },
+        "requests": {
+            "properties": {
+                "endpoint": {
+                    "type": "keyword"
+                },
+                "id": {
+                    "type": "keyword"
+                },
+                "start-micros": {
+                    "type": "long"
+                },
+                "end-micros": {
+                    "type": "long"
+                },
+                "trace-id": {
+                    "type": "long"
+                },
+                "extended-information": {
+                    "properties": {
+                        "encoding": {
+                            "type": "text",
+                            "index": false
+                        },
+                        "host": {
+                            "type": "keyword"
+                        },
+                        "method": {
+                            "type": "keyword"
+                        },
+                        "parameters": {
+                            "type": "text",
+                            "index": false
+                        },
+                        "port": {
+                            "type": "long"
+                        },
+                        "protocol": {
+                            "type": "text"
+                        },
+                        "responseCode": {
+                            "type": "long"
+                        },
+                        "uri": {
+                            "type": "text"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

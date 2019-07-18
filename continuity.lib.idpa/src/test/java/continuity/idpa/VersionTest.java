@@ -47,6 +47,16 @@ public class VersionTest {
 		testJson("42");
 	}
 
+	@Test
+	public void testNormalizedString() {
+		assertThat(fromString("v1").toNormalizedString()).isEqualTo("v1");
+		assertThat(fromString("v1.0").toNormalizedString()).isEqualTo("v1");
+		assertThat(fromString("v1.0.3.0.0").toNormalizedString()).isEqualTo("v1.0.3");
+		assertThat(fromString("1.0").toNormalizedString()).isEqualTo("v1");
+		assertThat(fromString("v0.1").toNormalizedString()).isEqualTo("v0.1");
+		assertThat(fromString("v0.1.0").toNormalizedString()).isEqualTo("v0.1");
+	}
+
 	private void testYaml(String v) throws NumberFormatException, IOException {
 		VersionHolder orig = new VersionHolder();
 		orig.setVersion(fromString(v));

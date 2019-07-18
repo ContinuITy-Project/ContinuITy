@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -110,6 +112,30 @@ public class Version implements Comparable<Version> {
 	@Override
 	public String toString() {
 		return stringRepresentation;
+	}
+
+	/**
+	 * Returns a string that is guaranteed to be equal to the normalized string of equal versions.
+	 * Can be different from the originally specified version.
+	 *
+	 * @return The string representation.
+	 */
+	public String toNormalizedString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("v");
+
+		ListIterator<Integer> iterator = segments.listIterator(segments.size());
+
+		while (iterator.hasPrevious() && (iterator.previous() == 0)) {
+		}
+
+		if (iterator.hasNext()) {
+			iterator.next();
+		}
+
+		builder.append(segments.stream().limit(iterator.nextIndex()).map(Objects::toString).collect(Collectors.joining(".")));
+
+		return builder.toString();
 	}
 
 	/**

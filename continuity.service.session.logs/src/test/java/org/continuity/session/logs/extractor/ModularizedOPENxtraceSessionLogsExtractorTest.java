@@ -11,14 +11,15 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.continuity.api.entities.artifact.session.Session;
+import org.continuity.api.entities.artifact.session.SessionRequest;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.session.logs.entities.TraceRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.HTTPMethod;
 import org.spec.research.open.xtrace.dflt.impl.core.LocationImpl;
 import org.spec.research.open.xtrace.dflt.impl.core.SubTraceImpl;
@@ -38,6 +39,8 @@ public class ModularizedOPENxtraceSessionLogsExtractorTest {
 	private static final int MILLIS_TO_NANOS = 1000000;
 
 	private List<String> services;
+
+	private VersionOrTimestamp version;
 
 	private RequestTailorer tailorerWithPrePostProcessing;
 
@@ -65,7 +68,7 @@ public class ModularizedOPENxtraceSessionLogsExtractorTest {
 				.thenReturn(ResponseEntity.ok(new Application[] { generateSimpleApplicationModel("carts"), generateSimpleApplicationModel("orders") }));
 
 		AppId aid = AppId.fromString("test");
-		VersionOrTimestamp version = VersionOrTimestamp.fromString("v1");
+		version = VersionOrTimestamp.fromString("v1");
 
 		tailorerWithPrePostProcessing = new RequestTailorer(aid, version, restTemplate, true);
 		tailorerWithoutPrePostProcessing = new RequestTailorer(aid, version, restTemplate, false);
@@ -112,21 +115,19 @@ public class ModularizedOPENxtraceSessionLogsExtractorTest {
 	}
 
 	private String generateSessionLogs(RequestTailorer tailorer) {
-		Trace trace1 = generateTrace("carts", 0, 1000*MILLIS_TO_NANOS, 100, 700*MILLIS_TO_NANOS); //preTime: 100 postTime: 200
-		Trace trace2 = generateTrace("carts", 1000, 1000*MILLIS_TO_NANOS, 1200, 700*MILLIS_TO_NANOS); //preTime: 200 postTime: 100
-		Trace trace3 = generateTrace("carts", 2000, 1000*MILLIS_TO_NANOS, 2100, 400*MILLIS_TO_NANOS); //preTime: 100 postTime: 500
+		TraceRecord trace1 = generateTrace("carts", 0, 1000*MILLIS_TO_NANOS, 100, 700*MILLIS_TO_NANOS); //preTime: 100 postTime: 200
+		TraceRecord trace2 = generateTrace("carts", 1000, 1000*MILLIS_TO_NANOS, 1200, 700*MILLIS_TO_NANOS); //preTime: 200 postTime: 100
+		TraceRecord trace3 = generateTrace("carts", 2000, 1000*MILLIS_TO_NANOS, 2100, 400*MILLIS_TO_NANOS); //preTime: 100 postTime: 500
 
-		Trace trace4 = generateTrace("orders", 3000, 1000*MILLIS_TO_NANOS, 3100, 700*MILLIS_TO_NANOS); //preTime: 100 postTime: 200
-		Trace trace5 = generateTrace("orders", 4000, 1000*MILLIS_TO_NANOS, 4200, 700*MILLIS_TO_NANOS); //preTime: 200 postTime: 100
-		Trace trace6 = generateTrace("orders", 5000, 1000*MILLIS_TO_NANOS, 5100, 400*MILLIS_TO_NANOS); //preTime: 100 postTime: 500
+		TraceRecord trace4 = generateTrace("orders", 3000, 1000*MILLIS_TO_NANOS, 3100, 700*MILLIS_TO_NANOS); //preTime: 100 postTime: 200
+		TraceRecord trace5 = generateTrace("orders", 4000, 1000*MILLIS_TO_NANOS, 4200, 700*MILLIS_TO_NANOS); //preTime: 200 postTime: 100
+		TraceRecord trace6 = generateTrace("orders", 5000, 1000*MILLIS_TO_NANOS, 5100, 400*MILLIS_TO_NANOS); //preTime: 100 postTime: 500
 
-		Trace trace7 = generateTrace("user", 0, 1000*MILLIS_TO_NANOS, 100, 700*MILLIS_TO_NANOS); //preTime: 500 postTime: 500
-		Trace trace8 = generateTrace("user", 1000, 1000*MILLIS_TO_NANOS, 1200, 700*MILLIS_TO_NANOS); //preTime: 500 postTime: 500
-		Trace trace9 = generateTrace("user", 2000, 1000*MILLIS_TO_NANOS, 2100, 400*MILLIS_TO_NANOS); //preTime: 500 postTime: 500
+		List<TraceRecord> traces = Arrays.asList(trace1, trace2, trace3, trace4, trace5, trace6);
 
-		List<Trace> traces = Arrays.asList(trace1, trace2, trace3, trace4, trace5, trace6, trace7, trace8, trace9);
+		List<SessionRequest> requests = tailorer.tailorTraces(services, traces);
 
-		return updater.updateSessions(Collections.emptyList(), tailorer.tailorTraces(services, traces)).stream().map(Session::toExtensiveLog).collect(Collectors.joining("\n"));
+		return updater.updateSessions(Collections.emptyList(), requests).stream().map(Session::toExtensiveLog).collect(Collectors.joining("\n"));
 	}
 
 	/**
@@ -138,7 +139,7 @@ public class ModularizedOPENxtraceSessionLogsExtractorTest {
 	 * @param durationOfModularizedCallable
 	 * @return
 	 */
-	private Trace generateTrace(String targetService, long timeStampOfRootCallable, long durationOfRootCallable, long timeStampOfModularizedCallable, long durationOfModularizedCallable) {
+	private TraceRecord generateTrace(String targetService, long timeStampOfRootCallable, long durationOfRootCallable, long timeStampOfModularizedCallable, long durationOfModularizedCallable) {
 		TraceImpl trace = new TraceImpl(1);
 		SubTraceImpl subtraceFrontEnd = new SubTraceImpl(1,null, trace);
 		subtraceFrontEnd.setLocation(new LocationImpl("front-end", 80, "linux", "sock-shop", "getCarts"));
@@ -170,7 +171,7 @@ public class ModularizedOPENxtraceSessionLogsExtractorTest {
 		httpRequestProcessingCarts.setResponseCode(200);
 		subTraceCarts.setRoot(httpRequestProcessingCarts);
 
-		return trace;
+		return new TraceRecord(version, trace);
 	}
 
 	/**

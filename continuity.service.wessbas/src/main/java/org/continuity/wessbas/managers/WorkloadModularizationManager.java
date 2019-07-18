@@ -1,57 +1,37 @@
 package org.continuity.wessbas.managers;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.continuity.api.entities.ApiFormats;
-import org.continuity.api.entities.artifact.SessionLogsInput;
 import org.continuity.api.entities.artifact.SessionsBundle;
 import org.continuity.api.entities.artifact.SimplifiedSession;
 import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
-import org.continuity.api.entities.artifact.markovbehavior.MarkovChain;
 import org.continuity.api.entities.artifact.markovbehavior.NormalDistribution;
+import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
+import org.continuity.api.entities.config.SessionTailoringDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
-import org.continuity.api.rest.RequestBuilder;
 import org.continuity.api.rest.RestApi;
-import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
-import org.continuity.idpa.application.Application;
-import org.continuity.idpa.application.HttpEndpoint;
 import org.continuity.wessbas.entities.BehaviorModelPack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spec.research.open.xtrace.api.core.SubTrace;
-import org.spec.research.open.xtrace.api.core.Trace;
-import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
-import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializationFactory;
-import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializationFormat;
-import org.spec.research.open.xtrace.dflt.impl.serialization.OPENxtraceSerializer;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
-import net.sf.markov4jmeter.behaviormodelextractor.BehaviorModelExtractor;
-import net.sf.markov4jmeter.behaviormodelextractor.extraction.ExtractionException;
 import net.sf.markov4jmeter.testplangenerator.util.CSVHandler;
-import open.xtrace.OPENxtraceUtils;
-import wessbas.commons.parser.ParseException;
 
 /**
  * Manager which modularizes the Behavior Models
@@ -91,19 +71,10 @@ public class WorkloadModularizationManager {
 	 */
 	private static final String FILE_EXT = ".csv";
 
-	private static final String SESSION_ID_PREFIX = "generated_";
-
-	private final AtomicLong sessionIdCounter = new AtomicLong(0);
-
 	/**
 	 * Eureka rest template
 	 */
 	private RestTemplate eurekaRestTemplate;
-
-	/**
-	 * Plain rest template
-	 */
-	private RestTemplate plainRestTemplate;
 
 	/**
 	 * The current working directory
@@ -127,7 +98,6 @@ public class WorkloadModularizationManager {
 	 */
 	public WorkloadModularizationManager(RestTemplate eurekaRestTemplate, AppId aid, VersionOrTimestamp version) {
 		this.eurekaRestTemplate = eurekaRestTemplate;
-		this.plainRestTemplate = new RestTemplate();
 		this.csvHandler = new CSVHandler(CSVHandler.LINEBREAK_TYPE_UNIX);
 		this.aid = aid;
 		this.version = version;
@@ -146,27 +116,14 @@ public class WorkloadModularizationManager {
 		LOGGER.info("Set working directory to {}", workingDir);
 	}
 
-	public void runPipeline(AppId aid, VersionOrTimestamp version, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, Map<AppId, String> services) {
+	public void runPipeline(VersionOrTimestamp version, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, Map<AppId, String> services) {
 		List<SessionsBundle> sessionBundles = behaviorModelPack.getSessionsBundlePack().getSessionsBundles();
-
-		RequestBuilder reqBuilder;
-
-		if (version == null) {
-			reqBuilder = RestApi.SessionLogs.MeasurementData.GET.requestUrl(aid);
-		} else {
-			reqBuilder = RestApi.SessionLogs.MeasurementData.GET_VERSION.requestUrl(aid, version);
-		}
-
-		String traceLink = reqBuilder.withQuery("from", ApiFormats.DATE_FORMAT.format(linkExchangeModel.getTraceLinks().getFrom()))
-				.withQuery("to", ApiFormats.DATE_FORMAT.format(linkExchangeModel.getTraceLinks().getTo())).get();
-		List<HTTPRequestProcessingImpl> httpCallables = OPENxtraceUtils.extractHttpRequestCallables(OPENxtraceUtils.getOPENxtraces(traceLink, plainRestTemplate));
-		Application application = eurekaRestTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid).get(), Application.class);
 
 		MarkovBehaviorModel behaviorModel = new MarkovBehaviorModel();
 
 		for (SessionsBundle sessionBundle : sessionBundles) {
 			try {
-				behaviorModel.addMarkovChain(modularizeUserGroup(application, sessionBundle, behaviorModelPack, services, httpCallables));
+				behaviorModel.addMarkovChain(modularizeUserGroup(sessionBundle, behaviorModelPack, services));
 			} catch (IOException e) {
 				LOGGER.error("Could not modularize behavior model!", e);
 			}
@@ -174,7 +131,7 @@ public class WorkloadModularizationManager {
 
 		behaviorModel.synchronizeMarkovChains();
 
-		for (MarkovChain chain : behaviorModel.getMarkovChains()) {
+		for (RelativeMarkovChain chain : behaviorModel.getMarkovChains()) {
 			String behaviorFile = behaviorModelPack.getPathToBehaviorModelFiles().resolve("behaviormodelextractor").resolve(chain.getId() + FILE_EXT).toFile().toString();
 			LOGGER.info("Storing the modularized behavior model to {}...", behaviorFile);
 
@@ -200,18 +157,18 @@ public class WorkloadModularizationManager {
 	 * @throws NullPointerException
 	 * @throws FileNotFoundException
 	 */
-	private MarkovChain modularizeUserGroup(Application application, SessionsBundle sessionBundle, BehaviorModelPack behaviorModelPack, Map<AppId, String> services,
-			List<HTTPRequestProcessingImpl> httpCallables) throws FileNotFoundException, IOException {
+	private RelativeMarkovChain modularizeUserGroup(SessionsBundle sessionBundle, BehaviorModelPack behaviorModelPack, Map<AppId, String> serviceMap) throws FileNotFoundException, IOException {
 		LOGGER.info("Modularizing behavior model {} at path {}...", sessionBundle.getBehaviorId(), behaviorModelPack.getPathToBehaviorModelFiles());
 
 		String behaviorFile = behaviorModelPack.getPathToBehaviorModelFiles().resolve("behaviormodelextractor").resolve(FILENAME + sessionBundle.getBehaviorId() + FILE_EXT).toFile().toString();
-		MarkovChain markovChain = MarkovChain.fromCsv(csvHandler.readValues(behaviorFile));
+		RelativeMarkovChain markovChain = RelativeMarkovChain.fromCsv(csvHandler.readValues(behaviorFile));
 		markovChain.setId(FILENAME + sessionBundle.getBehaviorId());
 
-		Map<String, List<Trace>> tracesPerState = getTracesPerState(filterTraces(httpCallables, sessionBundle), application);
+		List<String> services = serviceMap.keySet().stream().map(AppId::getService).collect(Collectors.toList());
 
 		for (String state : markovChain.getRequestStates()) {
-			modularizeMarkovState(markovChain, state, tracesPerState.get(state), application, services);
+			RelativeMarkovChain subChain = retrieveSubChain(aid, state, version, services, sessionBundle);
+			modularizeMarkovState(markovChain, state, subChain);
 		}
 
 		LOGGER.info("Modularization of {} done.", behaviorModelPack.getPathToBehaviorModelFiles());
@@ -219,128 +176,54 @@ public class WorkloadModularizationManager {
 		return markovChain;
 	}
 
-	private List<HTTPRequestProcessingImpl> filterTraces(List<HTTPRequestProcessingImpl> httpCallables, SessionsBundle sessionBundle) {
-		List<String> sessionIds = sessionBundle.getSessions().stream().map(SimplifiedSession::getId).collect(Collectors.toList());
+	private RelativeMarkovChain retrieveSubChain(AppId aid, String state, VersionOrTimestamp version, List<String> services, SessionsBundle sessionBundle) {
+		SessionTailoringDescription description = createTailoringDescription(aid, state, version, services, sessionBundle);
 
-		return httpCallables.stream()
-				.filter(p -> p.getHTTPHeaders().get().containsKey("cookie") && sessionIds.contains(OPENxtraceUtils.extractSessionIdFromCookies(p.getHTTPHeaders().get().get("cookie"))))
-				.collect(Collectors.toList());
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+		HttpEntity<SessionTailoringDescription> entity = new HttpEntity<SessionTailoringDescription>(description, headers);
+
+		ResponseEntity<RelativeMarkovChain> response;
+		try {
+			response = eurekaRestTemplate.exchange(RestApi.SessionLogs.BehaviorModel.CREATE.requestUrl().get(), HttpMethod.POST, entity, RelativeMarkovChain.class);
+		} catch (HttpStatusCodeException e) {
+			LOGGER.error("Could not retrieve tailored Markov chain!", e);
+			LOGGER.warn("Ignoring tailoring of state {}.", state);
+			return null;
+		}
+
+		return response.getBody();
 	}
 
-	private void modularizeMarkovState(MarkovChain markovChain, String state, List<Trace> traces, Application application, Map<AppId, String> services) {
-		if ((traces == null) || traces.isEmpty()) {
+	private SessionTailoringDescription createTailoringDescription(AppId aid, String state, VersionOrTimestamp version, List<String> services, SessionsBundle sessionBundle) {
+		List<String> sessionIds = sessionBundle.getSessions().stream().map(SimplifiedSession::getId).collect(Collectors.toList());
+
+		SessionTailoringDescription description = new SessionTailoringDescription();
+
+		description.setAid(aid);
+		description.setRootEndpoint(state);
+		description.setVersion(version);
+		description.setTailoring(services);
+		description.setIncludePrePostProcessing(true);
+		description.setSessionIds(sessionIds);
+
+		return description;
+	}
+
+	private void modularizeMarkovState(RelativeMarkovChain markovChain, String state, RelativeMarkovChain subChain) {
+		if ((subChain == null) || ((subChain.getNumberOfRequestStates() == 1) && subChain.getRequestStates().contains(state))) {
 			LOGGER.info("Keeping state {}.", state);
 			return;
 		}
 
-		String sessionLogs = getModularizedSessionLogs(traces, services);
-
-		if (sessionLogs.isEmpty()) {
+		if (subChain.getNumberOfRequestStates() == 0) {
 			LOGGER.info("Removing state {}.", state);
-			double[] responseTimeSample = traces.stream().map(Trace::getRoot).map(SubTrace::getRoot).map(HTTPRequestProcessingImpl.class::cast).mapToDouble(r -> r.getResponseTime() / 1000000D)
-					.toArray();
-			markovChain.removeState(state, NormalDistribution.fromSample(responseTimeSample));
+			NormalDistribution responseTime = subChain.getTransition(RelativeMarkovChain.INITIAL_STATE, RelativeMarkovChain.FINAL_STATE).getThinkTime();
+			markovChain.removeState(state, responseTime);
 		} else {
 			LOGGER.info("Replacing state {}.", state);
-			MarkovChain subChain = createSubMarkovChain(state, sessionLogs, markovChain.getId());
-
-			removePrePostProcessingState("PRE_PROCESSING#", subChain);
-			removePrePostProcessingState("POST_PROCESSING#", subChain);
-
 			markovChain.replaceState(state, subChain);
 		}
-	}
-
-	private void removePrePostProcessingState(String prefix, MarkovChain chain) {
-		int removed = chain.removeStates(s -> s.startsWith(prefix), NormalDistribution.ZERO);
-
-		if (removed != 1) {
-			LOGGER.warn("Expected to remove 1 state with prefix {} but were {} states actually!", prefix, removed);
-		}
-	}
-
-	private MarkovChain createSubMarkovChain(String rootState, String sessionLogs, String behaviorId) {
-		if (sessionLogs.isEmpty()) {
-			return null;
-		}
-
-		Path modularizedSessionLogsPath = workingDir.resolve(behaviorId).resolve(rootState);
-		modularizedSessionLogsPath.toFile().mkdirs();
-
-		BehaviorModelExtractor extractor = new BehaviorModelExtractor();
-		String[][] behaviorModel = null;
-		try {
-			Files.write(modularizedSessionLogsPath.resolve("sessions.dat"), Collections.singletonList(sessionLogs), StandardOpenOption.CREATE);
-			extractor.init(null, null, 0);
-			// "simple" will generate a single behavior model (behaviormodel.csv)
-			extractor.extract(modularizedSessionLogsPath.resolve("sessions.dat").toString(), modularizedSessionLogsPath.toString(), "simple");
-			behaviorModel = csvHandler.readValues(modularizedSessionLogsPath.resolve(FILENAME + FILE_EXT).toFile().toString());
-
-			LOGGER.info("Created behavior model for {}.", rootState);
-		} catch (IOException | ExtractionException | ParseException e) {
-			LOGGER.error("Could not create behavior model", e);
-		}
-
-		return MarkovChain.fromCsv(behaviorModel);
-	}
-
-	/**
-	 * Retrieves new session logs from session logs service
-	 *
-	 * @param traces
-	 *            the input traces
-	 * @param services
-	 *            the services, which are going to be targeted
-	 * @return The session logs as string.
-	 */
-	private String getModularizedSessionLogs(List<Trace> traces, Map<AppId, String> services) {
-		OPENxtraceSerializer serializer = OPENxtraceSerializationFactory.getInstance().getSerializer(OPENxtraceSerializationFormat.JSON);
-		OutputStream stream = new ByteArrayOutputStream();
-		serializer.prepare(stream);
-		for (Trace trace : traces) {
-			serializer.writeTrace(trace);
-		}
-		serializer.close();
-
-		// Convert the outputstream to a json array
-		BufferedReader bufReader = new BufferedReader(new StringReader(stream.toString()));
-		String line = null;
-		ArrayNode jsonArray = new ArrayNode(JsonNodeFactory.instance);
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			while ((line = bufReader.readLine()) != null) {
-				jsonArray.add(mapper.readTree(line));
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		SessionLogsInput input = new SessionLogsInput(services, jsonArray.toString());
-		String createSessionLogsLink = RestApi.SessionLogs.Sessions.CREATE.requestUrl(aid, version).withQuery(RestApi.SessionLogs.Sessions.QueryParameters.ADD_PRE_POST_PROCESSING, "true").get();
-		return eurekaRestTemplate.postForObject(createSessionLogsLink, input, String.class);
-	}
-
-	private Map<String, List<Trace>> getTracesPerState(List<HTTPRequestProcessingImpl> filteredCallables, Application application) {
-		Map<String, List<Trace>> requestsToReplaceMap = new HashMap<String, List<Trace>>();
-		RequestUriMapper uriMapper = new RequestUriMapper(application);
-
-		for (HTTPRequestProcessingImpl httpRequestProcessingImpl : filteredCallables) {
-			HttpEndpoint endpoint = uriMapper.map(httpRequestProcessingImpl.getUri(), httpRequestProcessingImpl.getRequestMethod().get().name());
-
-			if (endpoint != null) {
-				List<Trace> traces = requestsToReplaceMap.get(endpoint.getId());
-
-				if (traces == null) {
-					traces = new ArrayList<>();
-					requestsToReplaceMap.put(endpoint.getId(), traces);
-				}
-
-				OPENxtraceUtils.setSessionId(httpRequestProcessingImpl, SESSION_ID_PREFIX + sessionIdCounter.getAndIncrement());
-				traces.add(httpRequestProcessingImpl.getContainingSubTrace().getContainingTrace());
-			}
-		}
-
-		return requestsToReplaceMap;
 	}
 
 }

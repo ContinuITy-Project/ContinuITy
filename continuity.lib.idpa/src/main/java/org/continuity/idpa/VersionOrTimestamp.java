@@ -105,6 +105,20 @@ public class VersionOrTimestamp implements Comparable<VersionOrTimestamp> {
 	}
 
 	/**
+	 * Returns a string that is guaranteed to be equal to the normalized string of equal versions.
+	 * Can be different from the originally specified version.
+	 *
+	 * @return The string representation.
+	 */
+	public String toNormalizedString() {
+		if (isVersion()) {
+			return version == null ? "[null/empty]" : version.toNormalizedString();
+		} else {
+			return DATE_FORMAT.format(timestamp);
+		}
+	}
+
+	/**
 	 * {@inheritDoc} <br>
 	 * <br>
 	 *
@@ -168,6 +182,21 @@ public class VersionOrTimestamp implements Comparable<VersionOrTimestamp> {
 		@Override
 		public void serialize(VersionOrTimestamp value, JsonGenerator gen, SerializerProvider provider) throws IOException {
 			gen.writeString(value.toString());
+		}
+
+	}
+
+	public static class NormalizedSerializer extends StdSerializer<VersionOrTimestamp> {
+
+		private static final long serialVersionUID = -273473244168915329L;
+
+		protected NormalizedSerializer() {
+			super(VersionOrTimestamp.class);
+		}
+
+		@Override
+		public void serialize(VersionOrTimestamp value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+			gen.writeString(value.toNormalizedString());
 		}
 
 	}

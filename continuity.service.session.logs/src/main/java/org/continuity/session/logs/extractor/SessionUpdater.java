@@ -49,7 +49,7 @@ public class SessionUpdater {
 	 *            The requests to be used for updating.
 	 * @return A list of updated sessions. Will only contain sessions that have been changed.
 	 */
-	public Set<Session> updateSessions(List<Session> oldSessions, List<SessionRequest> requests) {
+	public Set<Session> updateSessions(List<Session> oldSessions, List<? extends SessionRequest> requests) {
 		int numOld = oldSessions.size();
 		int numNew = 0;
 		AtomicInteger numFinished = new AtomicInteger(0);

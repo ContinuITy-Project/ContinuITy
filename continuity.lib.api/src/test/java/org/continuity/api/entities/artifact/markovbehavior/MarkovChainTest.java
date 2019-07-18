@@ -21,13 +21,13 @@ public class MarkovChainTest {
 	@Test
 	public void testSpecialNumbers() throws IOException {
 		String[][] csv = MarkovChainTestInstance.SPECIAL_NUMBERS.getCsv();
-		MarkovChain chain = MarkovChain.fromCsv(csv);
+		RelativeMarkovChain chain = RelativeMarkovChain.fromCsv(csv);
 		System.out.println(chain);
 	}
 
 	private void testReadWrite(MarkovChainTestInstance instance) throws IOException {
 		String[][] csv = instance.getCsv();
-		MarkovChain chain = MarkovChain.fromCsv(csv);
+		RelativeMarkovChain chain = RelativeMarkovChain.fromCsv(csv);
 
 		assertThat(chain.toCsv()).isEqualTo(csv);
 	}
@@ -35,7 +35,7 @@ public class MarkovChainTest {
 	@Test
 	public void testRemoveState() throws IOException {
 		String[][] origCsv = MarkovChainTestInstance.SIMPLE.getCsv();
-		MarkovChain chain = MarkovChain.fromCsv(origCsv);
+		RelativeMarkovChain chain = RelativeMarkovChain.fromCsv(origCsv);
 
 		chain.removeState("a", NormalDistribution.ZERO);
 
@@ -53,15 +53,15 @@ public class MarkovChainTest {
 		testRenameState(MarkovChainTestInstance.SOCK_SHOP, "getCatalogueItemUsingGET");
 		testRenameState(MarkovChainTestInstance.SOCK_SHOP, "loginUsingGET");
 
-		testRenameState(MarkovChainTestInstance.SIMPLE, MarkovChain.INITIAL_STATE);
-		testRenameState(MarkovChainTestInstance.SIMPLE, MarkovChain.FINAL_STATE);
-		testRenameState(MarkovChainTestInstance.SOCK_SHOP, MarkovChain.INITIAL_STATE);
-		testRenameState(MarkovChainTestInstance.SOCK_SHOP, MarkovChain.FINAL_STATE);
+		testRenameState(MarkovChainTestInstance.SIMPLE, RelativeMarkovChain.INITIAL_STATE);
+		testRenameState(MarkovChainTestInstance.SIMPLE, RelativeMarkovChain.FINAL_STATE);
+		testRenameState(MarkovChainTestInstance.SOCK_SHOP, RelativeMarkovChain.INITIAL_STATE);
+		testRenameState(MarkovChainTestInstance.SOCK_SHOP, RelativeMarkovChain.FINAL_STATE);
 	}
 
 	private void testRenameState(MarkovChainTestInstance instance, String state) throws IOException {
 		String[][] csv = instance.getCsv();
-		MarkovChain chain = MarkovChain.fromCsv(csv);
+		RelativeMarkovChain chain = RelativeMarkovChain.fromCsv(csv);
 
 		chain.renameState(state, state + "2");
 		chain.renameState(state + "2", state);
@@ -73,9 +73,9 @@ public class MarkovChainTest {
 	public void testAddSubChain() throws IOException {
 		String[][] origCsv = MarkovChainTestInstance.SIMPLE.getCsv();
 		String[][] insertCsv = MarkovChainTestInstance.SIMPLE_INSERT.getCsv();
-		MarkovChain chain = MarkovChain.fromCsv(origCsv);
+		RelativeMarkovChain chain = RelativeMarkovChain.fromCsv(origCsv);
 		chain.setId("orig");
-		MarkovChain insert = MarkovChain.fromCsv(insertCsv);
+		RelativeMarkovChain insert = RelativeMarkovChain.fromCsv(insertCsv);
 		insert.setId("insert");
 
 		chain.replaceState("a", insert);
@@ -93,14 +93,14 @@ public class MarkovChainTest {
 
 	private void testThinkTimeAfterStateRemovals(MarkovChainTestInstance instance, double expectedThinkTime) throws IOException {
 		String[][] csv = instance.getCsv();
-		MarkovChain chain = MarkovChain.fromCsv(csv);
+		RelativeMarkovChain chain = RelativeMarkovChain.fromCsv(csv);
 
 		for (String state : chain.getRequestStates()) {
 			chain.removeState(state, NormalDistribution.ZERO);
 		}
 
 		assertThat(chain.getRequestStates()).isEmpty();
-		assertThat(chain.getTransition(MarkovChain.INITIAL_STATE, MarkovChain.FINAL_STATE).getThinkTime().getMean()).isEqualTo(expectedThinkTime, Offset.offset(0.01));
+		assertThat(chain.getTransition(RelativeMarkovChain.INITIAL_STATE, RelativeMarkovChain.FINAL_STATE).getThinkTime().getMean()).isEqualTo(expectedThinkTime, Offset.offset(0.01));
 	}
 
 	@Test
@@ -113,15 +113,15 @@ public class MarkovChainTest {
 		String[][] origCsv = origInstance.getCsv();
 		String[][] insertCsv = insertInstance.getCsv();
 
-		MarkovChain insert = MarkovChain.fromCsv(insertCsv);
+		RelativeMarkovChain insert = RelativeMarkovChain.fromCsv(insertCsv);
 		NormalDistribution insertDuration = calculateDuration(insert);
-		MarkovChain chain = MarkovChain.fromCsv(origCsv);
+		RelativeMarkovChain chain = RelativeMarkovChain.fromCsv(origCsv);
 		chain.removeState(state, insertDuration);
 		NormalDistribution origDuration = calculateDuration(chain);
 
-		chain = MarkovChain.fromCsv(origCsv);
+		chain = RelativeMarkovChain.fromCsv(origCsv);
 		chain.setId("orig");
-		insert = MarkovChain.fromCsv(insertCsv);
+		insert = RelativeMarkovChain.fromCsv(insertCsv);
 		insert.setId("insert");
 
 		chain.replaceState(state, insert);
@@ -132,12 +132,12 @@ public class MarkovChainTest {
 		// convolution
 	}
 
-	private NormalDistribution calculateDuration(MarkovChain chain) {
+	private NormalDistribution calculateDuration(RelativeMarkovChain chain) {
 		for (String state : chain.getRequestStates()) {
 			chain.removeState(state, NormalDistribution.ZERO);
 		}
 
-		return chain.getTransition(MarkovChain.INITIAL_STATE, MarkovChain.FINAL_STATE).getThinkTime();
+		return chain.getTransition(RelativeMarkovChain.INITIAL_STATE, RelativeMarkovChain.FINAL_STATE).getThinkTime();
 	}
 
 }

@@ -43,6 +43,7 @@ public class Session {
 	@JsonProperty("session-id")
 	private String sessionId;
 
+	@JsonSerialize(using = VersionOrTimestamp.NormalizedSerializer.class)
 	private VersionOrTimestamp version;
 
 	@JsonProperty("start-micros")
