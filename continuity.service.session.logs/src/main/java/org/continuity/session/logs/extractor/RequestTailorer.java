@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.artifact.session.ExtendedRequestInformation;
 import org.continuity.api.entities.artifact.session.SessionRequest;
 import org.continuity.api.rest.RestApi;
@@ -23,14 +22,11 @@ import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.session.logs.entities.TraceRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Location;
-import org.spec.research.open.xtrace.api.core.Trace;
-import org.spec.research.open.xtrace.api.core.callables.HTTPMethod;
 import org.spec.research.open.xtrace.api.core.callables.HTTPRequestProcessing;
-import org.spec.research.open.xtrace.dflt.impl.core.LocationImpl;
-import org.spec.research.open.xtrace.dflt.impl.core.SubTraceImpl;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -56,8 +52,6 @@ public class RequestTailorer {
 
 	private final boolean addPrePostProcessing;
 
-	private final RequestUriMapper rootMapper;
-
 	/**
 	 *
 	 * @param aid
@@ -75,17 +69,6 @@ public class RequestTailorer {
 		this.version = version;
 		this.restTemplate = restTemplate;
 		this.addPrePostProcessing = addPrePostProcessing;
-
-		Application rootApp;
-		try {
-			rootApp = restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid).withQuery("version", version.toString()).get(), Application.class);
-		} catch (HttpStatusCodeException e) {
-			LOGGER.error("Could not get root application for app-id {} and version {}! {} ({}): {}", aid.dropService(), version, e.getStatusCode(), e.getStatusCode().getReasonPhrase(),
-					e.getResponseBodyAsString());
-			rootApp = null;
-		}
-
-		rootMapper = rootApp == null ? null : new RequestUriMapper(rootApp);
 	}
 
 	/**
@@ -110,7 +93,7 @@ public class RequestTailorer {
 	 *            The traces to be tailored.
 	 * @return A list of {@link SessionRequest}s per tailored requests.
 	 */
-	public List<SessionRequest> tailorTraces(List<String> services, List<Trace> traces) {
+	public List<SessionRequest> tailorTraces(List<String> services, List<TraceRecord> traces) {
 		ResponseEntity<Application[]> response;
 		try {
 			response = restTemplate.getForEntity(
@@ -146,66 +129,45 @@ public class RequestTailorer {
 		return requests;
 	}
 
-	private List<HTTPRequestProcessingImpl> extractChildRequests(Trace trace, List<String> targetHostNames) {
+	private List<RequestBundle> extractChildRequests(TraceRecord trace, List<String> targetHostNames) {
 		OpenXtraceTracer tracer;
 
 		if (targetHostNames.isEmpty()) {
-			tracer = OpenXtraceTracer.forRoot(trace.getRoot().getRoot());
+			tracer = OpenXtraceTracer.forRoot(trace.getTrace().getRoot().getRoot());
 		} else {
-			tracer = OpenXtraceTracer.forRootAndHosts(trace.getRoot().getRoot(), targetHostNames);
+			tracer = OpenXtraceTracer.forRootAndHosts(trace.getTrace().getRoot().getRoot(), targetHostNames);
 		}
 
-		List<HTTPRequestProcessingImpl> childCallables = tracer.extractSubtraces();
+		List<RequestBundle> childCallables = tracer.extractSubtraces().stream().map(this::normalBundle).collect(Collectors.toList());
 
-		if (addPrePostProcessing && !targetHostNames.isEmpty() && (childCallables.size() > 0)) {
-			List<HTTPRequestProcessingImpl> rootCallables = OpenXtraceTracer.forRoot(trace.getRoot().getRoot()).extractSubtraces();
+		if (addPrePostProcessing) {
+			List<HTTPRequestProcessingImpl> rootCallables = OpenXtraceTracer.forRoot(trace.getTrace().getRoot().getRoot()).extractSubtraces();
 
 			if (rootCallables.size() > 0) {
 				HTTPRequestProcessingImpl firstRoot = rootCallables.get(0);
 				HTTPRequestProcessingImpl lastRoot = rootCallables.get(rootCallables.size() - 1);
 
-				childCallables.add(0, toPrePostProcessing(firstRoot, true));
-				childCallables.add(toPrePostProcessing(lastRoot, false));
+				childCallables.add(0, preBundle(firstRoot, trace.getRawEndpoint()));
+				childCallables.add(postBundle(lastRoot, trace.getRawEndpoint()));
 			}
 		}
+
+		childCallables.forEach(b -> b.setTraceId(trace.getTrace().getTraceId()));
 
 		return childCallables;
 	}
 
-	private HTTPRequestProcessingImpl toPrePostProcessing(HTTPRequestProcessingImpl root, boolean pre) {
-		SubTraceImpl subTrace = new SubTraceImpl();
-		subTrace.setLocation(root.getContainingSubTrace() == null ? new LocationImpl() : root.getContainingSubTrace().getLocation());
-		HTTPRequestProcessingImpl newRoot = new HTTPRequestProcessingImpl(null, subTrace);
-		OPENxtraceUtils.setSessionId(newRoot, OPENxtraceUtils.extractSessionIdFromCookies(root));
-		newRoot.setResponseTime(0);
-		newRoot.setUri(root.getUri());
-		newRoot.setRequestMethod(root.getRequestMethod().orElse(HTTPMethod.GET));
-
-		String prefix;
-
-		if (pre) {
-			newRoot.setTimestamp(root.getTimestamp());
-			prefix = SessionRequest.PREFIX_PRE_PROCESSING;
-		} else {
-			newRoot.setTimestamp(root.getExitTime());
-			prefix = SessionRequest.PREFIX_POST_PROCESSING;
-		}
-
-		newRoot.setIdentifier(prefix);
-
-		return newRoot;
-	}
-
-	private SessionRequest mapToSession(Pair<HTTPRequestProcessingImpl, HttpEndpoint> cae) {
-		HTTPRequestProcessingImpl callable = cae.getLeft();
-		HttpEndpoint endpoint = cae.getRight();
+	private SessionRequest mapToSession(RequestBundle bundle) {
+		HTTPRequestProcessingImpl callable = bundle.getCallable();
+		HttpEndpoint endpoint = bundle.getEndpoint();
 
 		SessionRequest request = new SessionRequest();
 
 		request.setSessionId(OPENxtraceUtils.extractSessionIdFromCookies(callable));
-		request.setEndpoint(getPrefix(callable).append(endpoint.getId()).toString());
-		request.setStartMicros(callable.getTimestamp() * 1000);
-		request.setEndMicros(callable.getExitTime() * 1000);
+		request.setEndpoint(bundle.getEndpointName());
+		request.setTraceId(bundle.getTraceId());
+		request.setStartMicros(bundle.getStartMicros());
+		request.setEndMicros(bundle.getEndMicros());
 
 		if (callable.getIdentifier().isPresent()) {
 			request.setId(callable.getIdentifier().get().toString());
@@ -216,18 +178,6 @@ public class RequestTailorer {
 		addExtendedInformation(request, callable, endpoint);
 
 		return request;
-	}
-
-	private StringBuilder getPrefix(HTTPRequestProcessingImpl callable) {
-		StringBuilder builder = new StringBuilder();
-
-		String identifier = callable.getIdentifier().orElse("").toString();
-
-		if (SessionRequest.isPrePostProcessing(identifier)) {
-			builder.append(identifier);
-		}
-
-		return builder;
 	}
 
 	private void addExtendedInformation(SessionRequest request, HTTPRequestProcessing callable, HttpEndpoint endpoint) {
@@ -347,28 +297,26 @@ public class RequestTailorer {
 			mappers = applications.stream().map(RequestUriMapper::new).collect(Collectors.toList());
 		}
 
-		private Pair<HTTPRequestProcessingImpl, HttpEndpoint> mapToEndpoint(HTTPRequestProcessingImpl callable) {
-			if (SessionRequest.isPrePostProcessing(callable.getIdentifier().orElse("").toString())) {
-				HttpEndpoint endpoint = null;
+		/**
+		 * Maps the (non-pre/post) requests to endpoints.
+		 *
+		 * @param bundle
+		 * @return A bundle containing the endpoint or {@code null} if there is no appropriate
+		 *         endpoint.
+		 */
+		private RequestBundle mapToEndpoint(RequestBundle bundle) {
+			if (bundle.isPrePost()) {
+				return bundle;
+			} else {
+				for (RequestUriMapper uriMapper : mappers) {
+					HttpEndpoint endpoint = uriMapper.map(bundle.getCallable().getUri(), bundle.getCallable().getRequestMethod().get().name());
 
-				if (rootMapper != null) {
-					endpoint = rootMapper.map(callable.getUri(), callable.getRequestMethod().get().name());
-				}
+					Location location = bundle.getCallable().getContainingSubTrace().getLocation();
 
-				if (endpoint == null) {
-					endpoint = defaultEndpoint(OPENxtraceUtils.getBusinessTransaction(callable));
-				}
-
-				return Pair.of(callable, endpoint);
-			}
-
-			for (RequestUriMapper uriMapper : mappers) {
-				HttpEndpoint endpoint = uriMapper.map(callable.getUri(), callable.getRequestMethod().get().name());
-
-				Location location = callable.getContainingSubTrace().getLocation();
-
-				if ((endpoint != null) && areEqualOrNull(endpoint.getDomain(), location.getHost()) && areEqualOrNull(endpoint.getPort(), Integer.toString(location.getPort()))) {
-					return Pair.of(callable, endpoint);
+					if ((endpoint != null) && areEqualOrNull(endpoint.getDomain(), location.getHost()) && areEqualOrNull(endpoint.getPort(), Integer.toString(location.getPort()))) {
+						bundle.setEndpoint(endpoint);
+						return bundle;
+					}
 				}
 			}
 
@@ -391,6 +339,95 @@ public class RequestTailorer {
 
 	private boolean areEqualOrNull(Object expected, Object tested) {
 		return (expected == null) || expected.equals(tested);
+	}
+
+	private RequestBundle normalBundle(HTTPRequestProcessingImpl callable) {
+		return new RequestBundle(callable, null, false, false);
+	}
+
+	private RequestBundle preBundle(HTTPRequestProcessingImpl callable, HttpEndpoint rootEndpoint) {
+		if (rootEndpoint == null) {
+			rootEndpoint = defaultEndpoint(OPENxtraceUtils.getBusinessTransaction(callable));
+		}
+
+		return new RequestBundle(callable, rootEndpoint, true, false);
+	}
+
+	private RequestBundle postBundle(HTTPRequestProcessingImpl callable, HttpEndpoint rootEndpoint) {
+		if (rootEndpoint == null) {
+			rootEndpoint = defaultEndpoint(OPENxtraceUtils.getBusinessTransaction(callable));
+		}
+
+		return new RequestBundle(callable, rootEndpoint, false, true);
+	}
+
+	private class RequestBundle {
+
+		private long traceId;
+
+		private final HTTPRequestProcessingImpl callable;
+
+		private HttpEndpoint endpoint;
+
+		private final boolean pre;
+
+		private final boolean post;
+
+		public RequestBundle(HTTPRequestProcessingImpl callable, HttpEndpoint endpoint, boolean pre, boolean post) {
+			this.callable = callable;
+			this.endpoint = endpoint;
+			this.pre = pre;
+			this.post = post;
+		}
+
+		public long getTraceId() {
+			return traceId;
+		}
+
+		public void setTraceId(long traceId) {
+			this.traceId = traceId;
+		}
+
+		public HttpEndpoint getEndpoint() {
+			return endpoint;
+		}
+
+		public void setEndpoint(HttpEndpoint endpoint) {
+			this.endpoint = endpoint;
+		}
+
+		public String getEndpointName() {
+			if (isPrePost()) {
+				return new StringBuilder().append(pre ? SessionRequest.PREFIX_PRE_PROCESSING : SessionRequest.PREFIX_POST_PROCESSING).append(endpoint.getId()).toString();
+			} else {
+				return endpoint.getId();
+			}
+		}
+
+		public HTTPRequestProcessingImpl getCallable() {
+			return callable;
+		}
+
+		public boolean isPrePost() {
+			return pre || post;
+		}
+
+		public long getStartMicros() {
+			if (post) {
+				return callable.getExitTime() * 1000;
+			} else {
+				return callable.getTimestamp() * 1000;
+			}
+		}
+
+		public long getEndMicros() {
+			if (pre) {
+				return callable.getTimestamp() * 1000;
+			} else {
+				return callable.getExitTime() * 1000;
+			}
+		}
+
 	}
 
 }

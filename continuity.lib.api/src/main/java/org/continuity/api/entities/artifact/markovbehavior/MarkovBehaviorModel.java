@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Common format for Markov-chain-based behavior models. Comprises several {@link MarkovChain}s.
+ * Common format for Markov-chain-based behavior models. Comprises several {@link RelativeMarkovChain}s.
  *
  * @author Henning Schulz
  *
@@ -21,14 +21,14 @@ public class MarkovBehaviorModel {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MarkovBehaviorModel.class);
 
-	private List<MarkovChain> markovChains;
+	private List<RelativeMarkovChain> markovChains;
 
 	/**
 	 * Returns the comprised Markov chains.
 	 *
-	 * @return A list of {@link MarkovChain}.
+	 * @return A list of {@link RelativeMarkovChain}.
 	 */
-	public List<MarkovChain> getMarkovChains() {
+	public List<RelativeMarkovChain> getMarkovChains() {
 		return markovChains;
 	}
 
@@ -36,9 +36,9 @@ public class MarkovBehaviorModel {
 	 * Sets the Markov chains.
 	 *
 	 * @param markovChains
-	 *            A list of {@link MarkovChain}.
+	 *            A list of {@link RelativeMarkovChain}.
 	 */
-	public void setMarkovChains(List<MarkovChain> markovChains) {
+	public void setMarkovChains(List<RelativeMarkovChain> markovChains) {
 		this.markovChains = markovChains;
 	}
 
@@ -46,9 +46,9 @@ public class MarkovBehaviorModel {
 	 * Adds a Markov chain.
 	 *
 	 * @param chain
-	 *            The {@link MarkovChain} to be added.
+	 *            The {@link RelativeMarkovChain} to be added.
 	 */
-	public void addMarkovChain(MarkovChain chain) {
+	public void addMarkovChain(RelativeMarkovChain chain) {
 		if (markovChains == null) {
 			markovChains = new ArrayList<>();
 		}
@@ -57,13 +57,13 @@ public class MarkovBehaviorModel {
 	}
 
 	/**
-	 * Ensures that all contained {@link MarkovChain}s have the same set of states.
+	 * Ensures that all contained {@link RelativeMarkovChain}s have the same set of states.
 	 */
 	public void synchronizeMarkovChains() {
 		Map<String, Set<String>> statesPerChain = markovChains.stream().map(c -> Pair.of(c.getId(), new HashSet<>(c.getRequestStates()))).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
 		Set<String> allStates = statesPerChain.values().stream().flatMap(Set::stream).distinct().collect(Collectors.toSet());
 
-		for (MarkovChain chain : markovChains) {
+		for (RelativeMarkovChain chain : markovChains) {
 			Set<String> remainingStates = new HashSet<>(allStates);
 			remainingStates.removeAll(statesPerChain.get(chain.getId()));
 

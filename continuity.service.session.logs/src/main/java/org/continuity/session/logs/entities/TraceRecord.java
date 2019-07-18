@@ -1,10 +1,19 @@
 package org.continuity.session.logs.entities;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 import org.continuity.idpa.VersionOrTimestamp;
+import org.continuity.idpa.application.HttpEndpoint;
 import org.spec.research.open.xtrace.api.core.Trace;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,9 +26,23 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import open.xtrace.OPENxtraceUtils;
 
+@JsonPropertyOrder({ "endpoint", "version", "unique-session-ids", "cluster-id", "trace" })
 public class TraceRecord {
 
+	@JsonSerialize(using = VersionOrTimestamp.NormalizedSerializer.class)
 	private VersionOrTimestamp version;
+
+	private String endpoint;
+
+	@JsonIgnore
+	private HttpEndpoint rawEndpoint;
+
+	@JsonProperty("unique-session-ids")
+	private Set<String> uniqueSessionIds;
+
+	@JsonProperty("cluster-id")
+	@JsonInclude(Include.NON_ABSENT)
+	private Optional<Long> clusterId;
 
 	@JsonSerialize(using = TraceSerializer.class)
 	@JsonDeserialize(using = TraceDeserializer.class)
@@ -31,6 +54,7 @@ public class TraceRecord {
 	public TraceRecord(VersionOrTimestamp version, Trace trace) {
 		this.version = version;
 		this.trace = trace;
+		this.uniqueSessionIds = new HashSet<>();
 	}
 
 	public VersionOrTimestamp getVersion() {
@@ -39,6 +63,47 @@ public class TraceRecord {
 
 	public void setVersion(VersionOrTimestamp version) {
 		this.version = version;
+	}
+
+	public String getEndpoint() {
+		return endpoint;
+	}
+
+	public void setEndpoint(String endpoint) {
+		this.endpoint = endpoint;
+	}
+
+	public HttpEndpoint getRawEndpoint() {
+		return rawEndpoint;
+	}
+
+	public void setRawEndpoint(HttpEndpoint rawEndpoint) {
+		this.rawEndpoint = rawEndpoint;
+		this.endpoint = rawEndpoint.getId();
+	}
+
+	public Set<String> getUniqueSessionIds() {
+		return uniqueSessionIds;
+	}
+
+	public void setUniqueSessionIds(Set<String> uniqueSessionIds) {
+		this.uniqueSessionIds = uniqueSessionIds;
+	}
+
+	public void addUniqueSessionIds(Set<String> uniqueSessionIds) {
+		if (uniqueSessionIds == null) {
+			uniqueSessionIds = new HashSet<>();
+		}
+
+		this.uniqueSessionIds.addAll(uniqueSessionIds);
+	}
+
+	public Optional<Long> getClusterId() {
+		return clusterId;
+	}
+
+	public void setClusterId(Optional<Long> clusterId) {
+		this.clusterId = clusterId;
 	}
 
 	public Trace getTrace() {

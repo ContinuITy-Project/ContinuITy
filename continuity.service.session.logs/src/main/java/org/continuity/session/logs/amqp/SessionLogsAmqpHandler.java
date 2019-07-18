@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.session.Session;
+import org.continuity.api.entities.config.ModularizationApproach;
 import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
@@ -48,7 +49,7 @@ public class SessionLogsAmqpHandler {
 
 		List<String> services;
 
-		if (null != task.getModularizationOptions()) {
+		if ((null != task.getModularizationOptions()) && (task.getModularizationOptions().getModularizationApproach() == ModularizationApproach.SESSION_LOGS)) {
 			ModularizationOptions modularizationOptions = task.getModularizationOptions();
 			services = modularizationOptions.getServices().keySet().stream().map(AppId::getService).collect(Collectors.toList());
 		} else {

@@ -12,11 +12,9 @@ import java.util.List;
 import org.continuity.api.entities.artifact.SessionsBundle;
 import org.continuity.api.entities.artifact.SessionsBundlePack;
 import org.continuity.api.entities.artifact.SimplifiedSession;
-import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import net.sf.markov4jmeter.behavior.BehaviorMix;
@@ -84,15 +82,7 @@ public class BehaviorMixManager {
 	 *
 	 * @return The generated workload model.
 	 */
-	public SessionsBundlePack runPipeline(String sessionLogsLink) {
-
-		String sessionLog;
-		try {
-			sessionLog = restTemplate.getForObject(WebUtils.addProtocolIfMissing(sessionLogsLink), String.class);
-		} catch (RestClientException e) {
-			LOGGER.error("Error when retrieving the session logs!", e);
-			return null;
-		}
+	public SessionsBundlePack runPipeline(String sessionLog) {
 		BehaviorMix mix;
 		SessionsBundlePack sessionsBundles;
 
