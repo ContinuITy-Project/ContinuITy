@@ -1,0 +1,97 @@
+{
+  "dynamic": false,
+  "properties": {
+    "endpoint": {
+      "type": "keyword"
+    },
+    "unique-session-ids": {
+      "type": "keyword"
+    },
+    "version": {
+      "type": "keyword"
+    },
+    "trace": {
+      "properties": {
+        "@class": {
+          "type": "keyword"
+        },
+        "exclusiveTime": {
+          "type": "long"
+        },
+        "responseTime": {
+          "type": "long"
+        },
+        "rootOfTrace": {
+          "properties": {
+            "@class": {
+              "type": "keyword"
+            },
+            "application": {
+              "type": "keyword"
+            },
+            "businessTransaction": {
+              "type": "keyword"
+            },
+            "exclusiveTime": {
+              "type": "long"
+            },
+            "host": {
+              "type": "keyword"
+            },
+            "identifier": {
+              "type": "text"
+            },
+            "port": {
+              "type": "long"
+            },
+            "responseTime": {
+              "type": "long"
+            },
+            "rootOfSubTrace": {
+              "properties": {
+                "@class": {
+                  "type": "keyword"
+                },
+                "HTTPHeaders": {
+                  "properties": {
+                    "cookie": {
+                      "type": "text",
+                      "index": false
+                    }
+                  }
+                },
+                "exclusiveTime": {
+                  "type": "long"
+                },
+                "exitTime": {
+                  "type": "long"
+                },
+                "identifier": {
+                  "type": "text"
+                },
+                "requestMethod": {
+                  "type": "keyword"
+                },
+                "responseCode": {
+                  "type": "long"
+                },
+                "responseTime": {
+                  "type": "long"
+                },
+                "timeStamp": {
+                  "type": "long"
+                },
+                "uri": {
+                  "type": "text"
+                }
+              }
+            },
+            "subTraceId": {
+              "type": "long"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonView;
  * @author Henning Schulz
  *
  */
-@JsonPropertyOrder({ "id", "endpoint", "start-micros", "end-micros" })
+@JsonPropertyOrder({ "id", "endpoint", "trace-id", "start-micros", "end-micros", "extended-information" })
 @JsonView(SessionView.Simple.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SessionRequest implements Comparable<SessionRequest> {
@@ -28,6 +28,9 @@ public class SessionRequest implements Comparable<SessionRequest> {
 	private String id;
 
 	private String endpoint;
+
+	@JsonProperty("trace-id")
+	private long traceId;
 
 	@JsonProperty("start-micros")
 	private long startMicros;
@@ -86,6 +89,14 @@ public class SessionRequest implements Comparable<SessionRequest> {
 
 	public void setEndpoint(String endpoint) {
 		this.endpoint = endpoint;
+	}
+
+	public long getTraceId() {
+		return traceId;
+	}
+
+	public void setTraceId(long traceId) {
+		this.traceId = traceId;
 	}
 
 	public long getStartMicros() {

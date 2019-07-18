@@ -52,8 +52,8 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 
 	private final ObjectMapper mapper;
 
-	public ElasticsearchSessionManager(String host, ObjectMapper mapper) {
-		super(host);
+	public ElasticsearchSessionManager(String host, ObjectMapper mapper) throws IOException {
+		super(host, "session");
 
 		this.mapper = mapper;
 	}
@@ -73,6 +73,8 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 	 * @throws IOException
 	 */
 	public void storeOrUpdateSessions(AppId aid, Collection<Session> sessions) throws IOException {
+		initIndex(toSessionIndex(aid));
+
 		BulkRequest request = new BulkRequest();
 
 		sessions.stream().map(this::serializeSession).filter(Objects::nonNull).forEach(json -> {
@@ -112,6 +114,10 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 	 * @throws TimeoutException
 	 */
 	public List<Session> readSessionsInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException, TimeoutException {
+		if (!indexExists(toSessionIndex(aid))) {
+			return Collections.emptyList();
+		}
+
 		SearchRequest search = new SearchRequest(toSessionIndex(aid));
 		search.source(createRangeSearch(version, tailoring, from, to).size(10000)); // This is the
 																					// maximum
@@ -151,6 +157,10 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 	 * @throws TimeoutException
 	 */
 	public long countSessionsInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException {
+		if (!indexExists(toSessionIndex(aid))) {
+			return 0;
+		}
+
 		CountRequest count = new CountRequest(toSessionIndex(aid));
 		count.source(createRangeSearch(version, tailoring, from, to));
 
@@ -169,10 +179,10 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 		BoolQueryBuilder query = QueryBuilders.boolQuery();
 
 		if (version != null) {
-			query = query.must(QueryBuilders.matchQuery("version", version.toString()));
+			query = query.must(QueryBuilders.termQuery("version", version.toNormalizedString()));
 		}
 
-		query.must(QueryBuilders.matchQuery("tailoring", Session.convertTailoringToString(tailoring)));
+		query.must(QueryBuilders.termQuery("tailoring", Session.convertTailoringToString(tailoring)));
 
 		if ((from != null) && (to != null)) {
 			query.must(QueryBuilders.rangeQuery("start-micros").from(from.getTime() * 1000, false).to(to.getTime() * 1000, true));
@@ -206,16 +216,20 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager {
 	 * @throws IOException
 	 */
 	public List<Session> readOpenSessions(AppId aid, VersionOrTimestamp version, List<String> tailoring) throws IOException, TimeoutException {
+		if (!indexExists(toSessionIndex(aid))) {
+			return Collections.emptyList();
+		}
+
 		SearchRequest search = new SearchRequest(toSessionIndex(aid));
 
 		BoolQueryBuilder query = QueryBuilders.boolQuery();
 
 		if (version != null) {
-			query = query.must(QueryBuilders.matchQuery("version", version.toString()));
+			query = query.must(QueryBuilders.termQuery("version", version.toNormalizedString()));
 		}
 
-		query.must(QueryBuilders.matchQuery("tailoring", Session.convertTailoringToString(tailoring)));
-		query.must(QueryBuilders.matchQuery("finished", false));
+		query.must(QueryBuilders.termQuery("tailoring", Session.convertTailoringToString(tailoring)));
+		query.must(QueryBuilders.termQuery("finished", false));
 		search.source(new SearchSourceBuilder().query(query).size(10000)); // This is the maximum
 
 		search.scroll(TimeValue.timeValueMinutes(SCROLL_MINUTES));
