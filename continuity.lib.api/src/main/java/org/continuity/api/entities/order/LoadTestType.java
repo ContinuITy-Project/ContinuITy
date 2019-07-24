@@ -1,4 +1,4 @@
-package org.continuity.api.entities.config;
+package org.continuity.api.entities.order;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

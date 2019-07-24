@@ -1,7 +1,7 @@
 package org.continuity.request.rates.entities;
 
-import org.continuity.api.entities.config.WorkloadModelType;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.order.WorkloadModelType;
 import org.continuity.api.rest.RestApi.RequestRates;
 import org.continuity.idpa.AppId;
 

@@ -20,19 +20,19 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
 import org.continuity.api.amqp.AmqpApi;
-import org.continuity.api.entities.config.LoadTestType;
-import org.continuity.api.entities.config.ModularizationOptions;
-import org.continuity.api.entities.config.Order;
-import org.continuity.api.entities.config.OrderGoal;
-import org.continuity.api.entities.config.OrderMode;
-import org.continuity.api.entities.config.OrderOptions;
-import org.continuity.api.entities.config.WorkloadModelType;
 import org.continuity.api.entities.links.ForecastLinks;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.links.LoadTestLinks;
 import org.continuity.api.entities.links.SessionLogsLinks;
 import org.continuity.api.entities.links.SessionsBundlesLinks;
 import org.continuity.api.entities.links.WorkloadModelLinks;
+import org.continuity.api.entities.order.LoadTestType;
+import org.continuity.api.entities.order.Order;
+import org.continuity.api.entities.order.OrderGoal;
+import org.continuity.api.entities.order.OrderMode;
+import org.continuity.api.entities.order.OrderOptions;
+import org.continuity.api.entities.order.ServiceSpecification;
+import org.continuity.api.entities.order.WorkloadModelType;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.api.rest.RestApi;
@@ -133,16 +133,16 @@ public class OrchestrationController {
 
 			for (Map.Entry<Set<String>, Set<LinkExchangeModel>> entry : sources.entrySet()) {
 				for (LinkExchangeModel source : entry.getValue()) {
-					createAndSubmitRecipe(orderId, order.getAppId(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getForecastInput(), entry.getKey(), source,
-							order.getModularizationOptions());
+					createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getForecastInput(),
+							entry.getKey(), source);
 				}
 			}
 		} else {
 			declareResponseQueue(orderId);
 			orderCounterStorage.putToReserved(orderId, new OrderReportCounter(orderId, 1));
 
-			createAndSubmitRecipe(orderId, order.getAppId(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getForecastInput(), order.getTestingContext(),
-					order.getSource(), order.getModularizationOptions());
+			createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getForecastInput(),
+					order.getTestingContext(), order.getSource());
 		}
 
 		OrderResponse response = new OrderResponse();
@@ -154,8 +154,8 @@ public class OrchestrationController {
 		return ResponseEntity.accepted().body(response);
 	}
 
-	private void createAndSubmitRecipe(String orderId, AppId aid, VersionOrTimestamp version, OrderGoal goal, OrderMode mode, OrderOptions options, ForecastInput forecastInput,
-			Set<String> testingContext, LinkExchangeModel source, ModularizationOptions modularizationOptions) {
+	private void createAndSubmitRecipe(String orderId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, OrderGoal goal, OrderMode mode, OrderOptions options,
+			ForecastInput forecastInput, Set<String> testingContext, LinkExchangeModel source) {
 		boolean useTestingContext = ((testingContext != null) && !testingContext.isEmpty());
 
 		if (useTestingContext) {
@@ -186,7 +186,7 @@ public class OrchestrationController {
 
 		LOGGER.info("{} Processing new recipe with goal {}...", LoggingUtils.formatPrefix(orderId, recipeId), goal);
 
-		Recipe recipe = new Recipe(orderId, recipeId, aid, version, recipeSteps, source, useTestingContext, testingContext, options, modularizationOptions, forecastInput);
+		Recipe recipe = new Recipe(orderId, recipeId, aid, services, version, recipeSteps, source, useTestingContext, testingContext, options, forecastInput);
 
 		if (recipe.hasNext()) {
 			recipeStorage.putToReserved(recipeId, recipe);

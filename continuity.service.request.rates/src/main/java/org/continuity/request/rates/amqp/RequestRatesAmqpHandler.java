@@ -8,16 +8,15 @@ import java.util.stream.StreamSupport;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
-import org.continuity.api.entities.config.ModularizationApproach;
-import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.TraceLinks;
+import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RequestBuilder;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.openxtrace.OpenXtraceTracer;
 import org.continuity.commons.storage.MixedStorage;
-import org.continuity.commons.utils.ModularizationUtils;
+import org.continuity.commons.utils.TailoringUtils;
 import org.continuity.idpa.application.Application;
 import org.continuity.request.rates.config.RabbitMqConfig;
 import org.continuity.request.rates.entities.RequestRecord;
@@ -87,17 +86,13 @@ public class RequestRatesAmqpHandler {
 						restTemplate);
 		LOGGER.info("Task {}: Retrieved OPEN.xtrace data.", task.getTaskId());
 
-		boolean applyModularization = false;
-
-		if (null != task.getModularizationOptions()) {
-			ModularizationOptions modularizationOptions = task.getModularizationOptions();
-			applyModularization = modularizationOptions.getModularizationApproach().equals(ModularizationApproach.REQUESTS);
-		}
+		List<ServiceSpecification> services = task.getEffectiveServices();
+		boolean applyModularization = TailoringUtils.doTailoring(services);
 
 		List<HTTPRequestProcessingImpl> requestsOfInterest;
 
 		if (applyModularization) {
-			Collection<String> targetHostNames = ModularizationUtils.getTargetHostNames(task.getModularizationOptions().getServices(), restTemplate);
+			Collection<String> targetHostNames = TailoringUtils.getTargetHostNames(services, restTemplate);
 
 			requestsOfInterest = StreamSupport.stream(traces.spliterator(), false).map(Trace::getRoot).map(SubTrace::getRoot).map(root -> OpenXtraceTracer.forRootAndHosts(root, targetHostNames))
 					.map(OpenXtraceTracer::extractSubtraces).flatMap(List::stream).collect(Collectors.toList());
@@ -107,16 +102,16 @@ public class RequestRatesAmqpHandler {
 		}
 
 		List<RequestRecord> records = requestsOfInterest.stream().map(this::traceToRequestRecord).collect(Collectors.toList());
-		report = processRequests(records, task, applyModularization, task.getModularizationOptions());
+		report = processRequests(records, task, applyModularization, services);
 
 		amqpTemplate.convertAndSend(AmqpApi.Global.EVENT_FINISHED.name(), AmqpApi.Global.EVENT_FINISHED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), report);
 	}
 
-	private TaskReport processRequests(List<RequestRecord> records, TaskDescription task, boolean modularize, ModularizationOptions modularizationOptions) {
+	private TaskReport processRequests(List<RequestRecord> records, TaskDescription task, boolean modularize, List<ServiceSpecification> services) {
 		RequestRatesCalculator calculator;
 
 		if (modularize) {
-			calculator = new ModularizingRequestRatesCalculator(ModularizationUtils.getServiceApplicationModels(modularizationOptions.getServices(), restTemplate));
+			calculator = new ModularizingRequestRatesCalculator(TailoringUtils.getServiceApplicationModels(services, restTemplate));
 		} else {
 			Application application;
 			try {

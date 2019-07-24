@@ -2,9 +2,9 @@ package org.continuity.benchflow.amqp;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.artifact.BehaviorModel;
-import org.continuity.api.entities.config.LoadTestType;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.order.LoadTestType;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;

@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 
-import org.continuity.api.entities.config.LoadTestType;
-import org.continuity.api.entities.config.WorkloadModelType;
+import org.continuity.api.entities.order.LoadTestType;
+import org.continuity.api.entities.order.WorkloadModelType;
 import org.continuity.idpa.AppId;
 import org.junit.Before;
 import org.junit.Test;

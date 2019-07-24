@@ -5,8 +5,8 @@ import static org.junit.Assert.fail;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.continuity.api.entities.config.OrderGoal;
-import org.continuity.api.entities.config.OrderMode;
+import org.continuity.api.entities.order.OrderGoal;
+import org.continuity.api.entities.order.OrderMode;
 import org.junit.Test;
 
 public class CyclesValidationTest {

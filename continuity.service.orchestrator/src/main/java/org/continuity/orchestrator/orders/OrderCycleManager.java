@@ -7,11 +7,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.continuity.api.entities.order.OrderGoal;
+import org.continuity.api.entities.order.OrderMode;
+
 import java.util.Optional;
 import java.util.Set;
-
-import org.continuity.api.entities.config.OrderGoal;
-import org.continuity.api.entities.config.OrderMode;
 
 /**
  * Manages possible cycles through the pipeline.

@@ -2,8 +2,8 @@ package org.continuity.orchestrator.orders;
 
 import java.util.List;
 
-import org.continuity.api.entities.config.OrderGoal;
-import org.continuity.api.entities.config.OrderMode;
+import org.continuity.api.entities.order.OrderGoal;
+import org.continuity.api.entities.order.OrderMode;
 
 public class OrderCycle {
 

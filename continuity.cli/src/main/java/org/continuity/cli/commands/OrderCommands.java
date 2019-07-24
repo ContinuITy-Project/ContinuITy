@@ -7,23 +7,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang.time.DateUtils;
-import org.continuity.api.entities.config.LoadTestType;
-import org.continuity.api.entities.config.ModularizationApproach;
-import org.continuity.api.entities.config.ModularizationOptions;
-import org.continuity.api.entities.config.Order;
-import org.continuity.api.entities.config.OrderGoal;
-import org.continuity.api.entities.config.OrderMode;
-import org.continuity.api.entities.config.OrderOptions;
-import org.continuity.api.entities.config.WorkloadModelType;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.links.SessionsStatus;
+import org.continuity.api.entities.order.LoadTestType;
+import org.continuity.api.entities.order.Order;
+import org.continuity.api.entities.order.OrderGoal;
+import org.continuity.api.entities.order.OrderMode;
+import org.continuity.api.entities.order.OrderOptions;
+import org.continuity.api.entities.order.ServiceSpecification;
+import org.continuity.api.entities.order.TailoringApproach;
+import org.continuity.api.entities.order.WorkloadModelType;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.api.rest.RestApi;
@@ -212,6 +210,8 @@ public class OrderCommands {
 			order.setAppId(contextManager.getCurrentAppId());
 		}
 
+		order.setServices(Arrays.asList(ServiceSpecification.fromString("SERVICE_OVERRIDING_APP_ID")));
+
 		String version;
 
 		if (contextManager.getCurrentVersion() == null) {
@@ -226,8 +226,6 @@ public class OrderCommands {
 			e.printStackTrace();
 		}
 
-		order.setTestingContext(Collections.singleton("CONTEXT"));
-
 		OrderOptions options = new OrderOptions();
 		options.setDuration(60);
 		options.setNumUsers(1);
@@ -235,6 +233,7 @@ public class OrderCommands {
 		options.setLoadTestType(LoadTestType.JMETER);
 		options.setWorkloadModelType(WorkloadModelType.WESSBAS);
 		options.setIntensityCalculationInterval(IntensityCalculationInterval.MINUTE);
+		options.setTailoringApproach(TailoringApproach.LOG_BASED);
 		order.setOptions(options);
 
 		Measurement measurement = new Measurement("Name of measurement containing contextual data");
@@ -244,13 +243,6 @@ public class OrderCommands {
 		ForecastInput forecastInput = new ForecastInput(covariates, forecastOpt);
 		order.setForecastInput(forecastInput);
 
-		ModularizationOptions modularizationOptions = new ModularizationOptions();
-		HashMap<AppId, String> services = new HashMap<>();
-		services.put(AppId.fromString("APP_ID_1"), "HOSTNAME1");
-		services.put(AppId.fromString("APP_ID_2"), "HOSTNAME2");
-		modularizationOptions.setServices(services);
-		modularizationOptions.setModularizationApproach(ModularizationApproach.SESSION_LOGS);
-		order.setModularizationOptions(modularizationOptions);
 		LinkExchangeModel links = new LinkExchangeModel();
 		links.getTraceLinks().setFrom(DateUtils.addHours(new Date(), 1)).setTo(new Date());
 		links.getSessionLogsLinks().setSimpleLink("SIMPLE_SESSION_LOGS_LINK");

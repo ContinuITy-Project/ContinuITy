@@ -2,7 +2,7 @@ package org.continuity.api.entities.links;
 
 import java.lang.reflect.Field;
 
-import org.continuity.api.entities.config.WorkloadModelType;
+import org.continuity.api.entities.order.WorkloadModelType;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

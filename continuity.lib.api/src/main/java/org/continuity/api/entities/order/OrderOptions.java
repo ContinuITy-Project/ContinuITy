@@ -1,7 +1,8 @@
-package org.continuity.api.entities.config;
+package org.continuity.api.entities.order;
 
 import org.continuity.dsl.description.IntensityCalculationInterval;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,10 +26,14 @@ public class OrderOptions {
 
 	@JsonInclude(Include.NON_NULL)
 	private Integer rampup;
-	
+
 	@JsonProperty("intensity-calculation-interval")
 	@JsonInclude(Include.NON_NULL)
 	private IntensityCalculationInterval intensityCalculationInterval;
+
+	@JsonProperty("tailoring-approach")
+	@JsonInclude(Include.NON_NULL)
+	private TailoringApproach tailoringApproach;
 
 	public WorkloadModelType getWorkloadModelType() {
 		return workloadModelType;
@@ -78,15 +83,17 @@ public class OrderOptions {
 		this.intensityCalculationInterval = intensityCalculationInterval;
 	}
 
-	public PropertySpecification toProperties() {
-		PropertySpecification props = new PropertySpecification();
+	public TailoringApproach getTailoringApproach() {
+		return tailoringApproach;
+	}
 
-		props.setDuration(duration);
-		props.setNumUsers(numUsers);
-		props.setRampup(rampup);
-		props.setIntensityCalculationInterval(intensityCalculationInterval);
+	@JsonIgnore
+	public TailoringApproach getTailoringApproachOrDefault() {
+		return tailoringApproach == null ? TailoringApproach.LOG_BASED : tailoringApproach;
+	}
 
-		return props;
+	public void setTailoringApproach(TailoringApproach tailoringApproach) {
+		this.tailoringApproach = tailoringApproach;
 	}
 
 }

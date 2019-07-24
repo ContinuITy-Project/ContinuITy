@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
-import org.continuity.api.entities.config.Order;
+import org.continuity.api.entities.order.Order;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.cli.config.PropertiesProvider;
