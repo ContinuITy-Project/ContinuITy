@@ -1,6 +1,6 @@
 package org.continuity.api.entities.config;
 
-import org.continuity.api.entities.config.session.logs.SessionLogsConfiguration;
+import org.continuity.api.entities.config.session.logs.CobraConfiguration;
 import org.continuity.idpa.AppId;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
  *
  */
 @JsonTypeInfo(use = Id.NAME, include = As.EXISTING_PROPERTY, property = "service")
-@JsonSubTypes({ @Type(value = SessionLogsConfiguration.class, name = SessionLogsConfiguration.SERVICE) })
+@JsonSubTypes({ @Type(value = CobraConfiguration.class, name = CobraConfiguration.SERVICE) })
 @JsonPropertyOrder({ "service", "app-id" })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface ServiceConfiguration {

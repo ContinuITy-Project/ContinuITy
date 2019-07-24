@@ -61,21 +61,21 @@ public class AmqpApi {
 	}
 
 	/**
-	 * AMQP API of the session logs service.
+	 * AMQP API of the cobra service.
 	 *
 	 * @author Henning Schulz
 	 *
 	 */
-	public static class SessionLogs {
+	public static class Cobra {
 
-		private static final String SCOPE = "sessionlogs";
+		private static final String SCOPE = "cobra";
 
 		public static final ExchangeDefinition<AppId> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
 
 		public static final ExchangeDefinition<AppIdAndVersion> TASK_PROCESS_TRACES = ExchangeDefinition.task(SCOPE, "process_traces").nonDurable().autoDelete()
 				.withRoutingKey(AppIdAndVersion.INSTANCE);
 
-		private SessionLogs() {
+		private Cobra() {
 		}
 
 	}

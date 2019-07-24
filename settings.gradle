@@ -8,13 +8,13 @@ include "continuity.lib.idpa"
 include "continuity.cli"
 
 include "continuity.service.benchflow"
+include "continuity.service.cobra"
 include "continuity.service.eureka"
 include "continuity.service.forecast"
 include "continuity.service.jmeter"
 include "continuity.service.orchestrator"
 include "continuity.service.request.rates"
 include "continuity.service.idpa"
-include "continuity.service.session.logs"
 include "continuity.service.wessbas"
 
 /**
