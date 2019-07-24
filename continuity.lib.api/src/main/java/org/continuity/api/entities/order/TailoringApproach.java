@@ -1,4 +1,4 @@
-package org.continuity.api.entities.config;
+package org.continuity.api.entities.order;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,19 +6,19 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum ModularizationApproach {
-	SESSION_LOGS, WORKLOAD_MODEL, REQUESTS;
+public enum TailoringApproach {
+	LOG_BASED, MODEL_BASED;
 
-	private static final Map<String, ModularizationApproach> prettyStringToApproach = new HashMap<>();
+	private static final Map<String, TailoringApproach> prettyStringToApproach = new HashMap<>();
 
 	static {
-		for (ModularizationApproach approach : values()) {
+		for (TailoringApproach approach : values()) {
 			prettyStringToApproach.put(approach.toPrettyString(), approach);
 		}
 	}
 
 	@JsonCreator
-	public static ModularizationApproach fromPrettyString(String key) {
+	public static TailoringApproach fromPrettyString(String key) {
 		return prettyStringToApproach.get(key);
 	}
 

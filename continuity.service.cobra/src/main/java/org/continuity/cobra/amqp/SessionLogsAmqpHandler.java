@@ -9,17 +9,18 @@ import java.util.stream.Collectors;
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.session.Session;
-import org.continuity.api.entities.config.ModularizationApproach;
-import org.continuity.api.entities.config.ModularizationOptions;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.links.TraceLinks;
+import org.continuity.api.entities.order.ServiceSpecification;
+import org.continuity.api.entities.order.TailoringApproach;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
 import org.continuity.api.rest.RestEndpoint;
 import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
+import org.continuity.commons.utils.TailoringUtils;
 import org.continuity.idpa.AppId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,14 +48,7 @@ public class SessionLogsAmqpHandler {
 
 		LOGGER.info("Processing task {}: Get sessions from {} to {}...", task.getTaskId(), links.getFrom(), links.getTo());
 
-		List<String> services;
-
-		if ((null != task.getModularizationOptions()) && (task.getModularizationOptions().getModularizationApproach() == ModularizationApproach.SESSION_LOGS)) {
-			ModularizationOptions modularizationOptions = task.getModularizationOptions();
-			services = modularizationOptions.getServices().keySet().stream().map(AppId::getService).collect(Collectors.toList());
-		} else {
-			services = Collections.singletonList(AppId.SERVICE_ALL);
-		}
+		List<String> services = extractServices(task);
 
 		long count = elasticManager.countSessionsInRange(aid, null, services, links.getFrom(), links.getTo());
 
@@ -81,6 +75,16 @@ public class SessionLogsAmqpHandler {
 			LOGGER.info("Finished task {} successfully.", report.getTaskId());
 		} else {
 			LOGGER.warn("Finished task {} with errors.", report.getTaskId());
+		}
+	}
+
+	private List<String> extractServices(TaskDescription task) {
+		List<ServiceSpecification> services = task.getEffectiveServices();
+
+		if ((task.getOptions() != null) && (task.getOptions().getTailoringApproachOrDefault() == TailoringApproach.LOG_BASED) && TailoringUtils.doTailoring(services)) {
+			return services.stream().map(ServiceSpecification::getService).collect(Collectors.toList());
+		} else {
+			return Collections.singletonList(AppId.SERVICE_ALL);
 		}
 	}
 

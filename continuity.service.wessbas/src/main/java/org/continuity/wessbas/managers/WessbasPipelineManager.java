@@ -14,10 +14,11 @@ import java.util.Properties;
 import org.apache.commons.lang3.Range;
 import org.continuity.api.entities.artifact.SessionsBundlePack;
 import org.continuity.api.entities.artifact.SimplifiedSession;
-import org.continuity.api.entities.config.ModularizationApproach;
 import org.continuity.api.entities.config.TaskDescription;
+import org.continuity.api.entities.order.TailoringApproach;
 import org.continuity.commons.utils.IntensityCalculationUtils;
 import org.continuity.commons.utils.SimplifiedSessionLogsDeserializer;
+import org.continuity.commons.utils.TailoringUtils;
 import org.continuity.commons.utils.WebUtils;
 import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.wessbas.entities.BehaviorModelPack;
@@ -99,7 +100,8 @@ public class WessbasPipelineManager {
 		}
 		WorkloadModel workloadModel;
 
-		boolean applyModularization = (task.getModularizationOptions()!= null) && task.getModularizationOptions().getModularizationApproach().equals(ModularizationApproach.WORKLOAD_MODEL);
+		boolean applyModularization = (task.getOptions() != null) && (task.getOptions().getTailoringApproach() == TailoringApproach.MODEL_BASED)
+				&& TailoringUtils.doTailoring(task.getEffectiveServices());
 
 		try {
 			if(applyModularization) {
@@ -153,7 +155,7 @@ public class WessbasPipelineManager {
 		// Apply Modularization
 		WorkloadModularizationManager modularizationManager = new WorkloadModularizationManager(restTemplate, task.getAppId(), task.getVersion());
 		BehaviorModelPack behaviorModelPack = new BehaviorModelPack(sessionsBundles, workingDir);
-		modularizationManager.runPipeline(task.getVersion(), task.getSource(), behaviorModelPack, task.getModularizationOptions().getServices());
+		modularizationManager.runPipeline(task.getVersion(), task.getSource(), behaviorModelPack, task.getEffectiveServices());
 
 		Properties behaviorProperties = new Properties();
 		behaviorProperties.load(Files.newInputStream(workingDir.resolve("behaviormodelextractor").resolve("behaviormix.txt")));

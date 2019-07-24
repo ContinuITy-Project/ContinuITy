@@ -4,11 +4,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import org.continuity.api.entities.config.ModularizationOptions;
-import org.continuity.api.entities.config.OrderOptions;
-import org.continuity.api.entities.config.PropertySpecification;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.order.OrderOptions;
+import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.dsl.description.ForecastInput;
 import org.continuity.idpa.AppId;
@@ -26,11 +25,13 @@ public class Recipe {
 
 	private final AppId appId;
 
+	private final List<ServiceSpecification> services;
+
 	private final VersionOrTimestamp version;
 
 	private LinkExchangeModel source;
 
-	private PropertySpecification properties;
+	private final OrderOptions options;
 
 	private ForecastInput forecastInput;
 
@@ -38,26 +39,21 @@ public class Recipe {
 
 	private final Set<String> testingContext;
 
-	private ModularizationOptions modularizationOptions;
-
-	public Recipe(String orderId, String recipeId, AppId aid, VersionOrTimestamp version, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse, Set<String> testingContext,
-			OrderOptions options,
-			ModularizationOptions modularizationOptions, ForecastInput forecastInput) {
+	public Recipe(String orderId, String recipeId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse,
+			Set<String> testingContext,
+			OrderOptions options, ForecastInput forecastInput) {
 		this.orderId = orderId;
 		this.recipeId = recipeId;
 		this.iterator = steps.listIterator(steps.size());
 		this.appId = aid;
+		this.services = services;
 		this.version = version;
 		this.source = source;
 		this.longTermUse = longTermUse;
 		this.testingContext = testingContext;
-		this.modularizationOptions = modularizationOptions;
 		this.setForecastInput(forecastInput);
+		this.options = options;
 		initIterator(source);
-
-		if (options != null) {
-			this.properties = options.toProperties();
-		}
 	}
 
 	public String getOrderId() {
@@ -91,12 +87,12 @@ public class Recipe {
 		TaskDescription task = new TaskDescription();
 		task.setTaskId(taskId);
 		task.setAppId(appId);
+		task.setServices(services);
 		task.setVersion(version);
 		task.setSource(source);
-		task.setProperties(properties);
+		task.setOptions(options);
 		task.setForecastInput(forecastInput);
 		task.setLongTermUse(longTermUse);
-		task.setModularizationOptions(modularizationOptions);
 
 		nextStep.setTask(task);
 

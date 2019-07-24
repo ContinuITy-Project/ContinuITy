@@ -1,5 +1,6 @@
-package org.continuity.api.entities.config;
+package org.continuity.api.entities.order;
 
+import java.util.List;
 import java.util.Set;
 
 import org.continuity.api.entities.links.LinkExchangeModel;
@@ -12,11 +13,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "goal", "mode", "app-id", "version", "testing-context", "options", "source", "forecast-input" })
+@JsonPropertyOrder({ "goal", "mode", "app-id", "services", "version", "testing-context", "options", "source", "forecast-input" })
 public class Order {
 
 	@JsonProperty("app-id")
 	private AppId appId;
+
+	@JsonInclude(Include.NON_EMPTY)
+	private List<ServiceSpecification> services;
 
 	@JsonInclude(Include.NON_NULL)
 	private VersionOrTimestamp version;
@@ -40,16 +44,20 @@ public class Order {
 	@JsonProperty("forecast-input")
 	private ForecastInput forecastInput;
 
-	@JsonProperty("modularization")
-	@JsonInclude(Include.NON_NULL)
-	private ModularizationOptions modularizationOptions;
-
 	public AppId getAppId() {
 		return appId;
 	}
 
 	public void setAppId(AppId appId) {
 		this.appId = appId;
+	}
+
+	public List<ServiceSpecification> getServices() {
+		return services;
+	}
+
+	public void setServices(List<ServiceSpecification> services) {
+		this.services = services;
 	}
 
 	public VersionOrTimestamp getVersion() {
@@ -98,14 +106,6 @@ public class Order {
 
 	public void setOptions(OrderOptions options) {
 		this.options = options;
-	}
-
-	public ModularizationOptions getModularizationOptions() {
-		return modularizationOptions;
-	}
-
-	public void setModularizationOptions(ModularizationOptions modularizationOptions) {
-		this.modularizationOptions = modularizationOptions;
 	}
 
 	public ForecastInput getForecastInput() {
