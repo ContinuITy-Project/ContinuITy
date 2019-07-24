@@ -8,11 +8,13 @@ import java.util.Collections;
 
 import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
-import org.continuity.api.entities.config.LoadTestType;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.order.LoadTestType;
+import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.idpa.AppId;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.jmeter.transform.JMeterAnnotator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +79,8 @@ public class TestPlanController {
 	 *            {@link JMeterTestPlanBundle}
 	 * @param aid
 	 *            the corresponding app-id
+	 * @param version
+	 *            an optional version. If {@code null}, the latest will be used.
 	 * @param annotate
 	 *            Indicates whether the test plan should be annotated with the IDPA stored for the
 	 *            specified app-id.
@@ -85,14 +89,14 @@ public class TestPlanController {
 	@RequestMapping(value = POST, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<LinkExchangeModel> uploadTestPlan(@RequestBody JMeterTestPlanBundle bundle, @ApiIgnore @PathVariable("app-id") AppId aid,
-			@RequestParam(defaultValue = "false") boolean annotate) {
+			@RequestParam(required = false) VersionOrTimestamp version, @RequestParam(defaultValue = "false") boolean annotate) {
 		LOGGER.info("Received uploaded test plan with app-id {}.", aid);
 
 		if (annotate) {
 			LOGGER.info("Annotating test plan with app-id {}.", aid);
 
 			JMeterAnnotator annotator = new JMeterAnnotator(bundle.getTestPlan(), restTemplate);
-			ListedHashTree annotatedTestPlan = annotator.createAnnotatedTestPlan(Collections.singletonList(aid));
+			ListedHashTree annotatedTestPlan = annotator.createAnnotatedTestPlan(aid, Collections.singletonList(new ServiceSpecification(aid.getService(), version)));
 			bundle.setTestPlan(annotatedTestPlan);
 		}
 

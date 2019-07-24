@@ -1,10 +1,17 @@
 package org.continuity.api.entities.config;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.order.OrderOptions;
+import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.dsl.description.ForecastInput;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -19,18 +26,17 @@ public class TaskDescription {
 	@JsonProperty("app-id")
 	private AppId appId;
 
+	@JsonInclude(Include.NON_EMPTY)
+	private List<ServiceSpecification> services;
+
 	private VersionOrTimestamp version;
 
 	private LinkExchangeModel source;
 
-	@JsonInclude(Include.NON_NULL)
-	private PropertySpecification properties;
-
 	@JsonProperty("long-term-use")
 	private boolean longTermUse;
 
-	@JsonProperty("modularization-options")
-	private ModularizationOptions modularizationOptions;
+	private OrderOptions options;
 
 	private ForecastInput forecastInput;
 
@@ -50,6 +56,14 @@ public class TaskDescription {
 		this.appId = appId;
 	}
 
+	public List<ServiceSpecification> getServices() {
+		return services;
+	}
+
+	public void setServices(List<ServiceSpecification> services) {
+		this.services = services;
+	}
+
 	public VersionOrTimestamp getVersion() {
 		return version;
 	}
@@ -66,14 +80,6 @@ public class TaskDescription {
 		this.source = source;
 	}
 
-	public PropertySpecification getProperties() {
-		return properties;
-	}
-
-	public void setProperties(PropertySpecification properties) {
-		this.properties = properties;
-	}
-
 	public boolean isLongTermUse() {
 		return longTermUse;
 	}
@@ -82,12 +88,12 @@ public class TaskDescription {
 		this.longTermUse = longTermUse;
 	}
 
-	public ModularizationOptions getModularizationOptions() {
-		return modularizationOptions;
+	public OrderOptions getOptions() {
+		return options;
 	}
 
-	public void setModularizationOptions(ModularizationOptions modularizationOptions) {
-		this.modularizationOptions = modularizationOptions;
+	public void setOptions(OrderOptions options) {
+		this.options = options;
 	}
 
 	public ForecastInput getForecastInput() {
@@ -96,6 +102,29 @@ public class TaskDescription {
 
 	public void setForecastInput(ForecastInput forecastInput) {
 		this.forecastInput = forecastInput;
+	}
+
+	/**
+	 * Gets the services that are effectively to be considered for tailoring. Takes into account the
+	 * app-id and the separately specified services.
+	 *
+	 * @return
+	 */
+	@JsonIgnore
+	public List<ServiceSpecification> getEffectiveServices() {
+		List<ServiceSpecification> effectiveServices = new ArrayList<>();
+
+		if (services != null) {
+			effectiveServices.addAll(services);
+		} else if (appId != null) {
+			effectiveServices.add(new ServiceSpecification(appId.getService(), version));
+		}
+
+		if (effectiveServices.isEmpty()) {
+			effectiveServices.add(new ServiceSpecification(AppId.SERVICE_ALL, version));
+		}
+
+		return effectiveServices.stream().map(s -> s.withVersionFallback(version)).collect(Collectors.toList());
 	}
 
 }

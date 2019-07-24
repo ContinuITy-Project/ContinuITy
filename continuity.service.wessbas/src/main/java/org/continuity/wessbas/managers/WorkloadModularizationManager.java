@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.continuity.api.entities.artifact.SessionsBundle;
@@ -17,6 +16,7 @@ import org.continuity.api.entities.artifact.markovbehavior.NormalDistribution;
 import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
 import org.continuity.api.entities.config.SessionTailoringDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.rest.RestApi;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
@@ -116,7 +116,7 @@ public class WorkloadModularizationManager {
 		LOGGER.info("Set working directory to {}", workingDir);
 	}
 
-	public void runPipeline(VersionOrTimestamp version, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, Map<AppId, String> services) {
+	public void runPipeline(VersionOrTimestamp version, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, List<ServiceSpecification> services) {
 		List<SessionsBundle> sessionBundles = behaviorModelPack.getSessionsBundlePack().getSessionsBundles();
 
 		MarkovBehaviorModel behaviorModel = new MarkovBehaviorModel();
@@ -157,14 +157,13 @@ public class WorkloadModularizationManager {
 	 * @throws NullPointerException
 	 * @throws FileNotFoundException
 	 */
-	private RelativeMarkovChain modularizeUserGroup(SessionsBundle sessionBundle, BehaviorModelPack behaviorModelPack, Map<AppId, String> serviceMap) throws FileNotFoundException, IOException {
+	private RelativeMarkovChain modularizeUserGroup(SessionsBundle sessionBundle, BehaviorModelPack behaviorModelPack, List<ServiceSpecification> services)
+			throws FileNotFoundException, IOException {
 		LOGGER.info("Modularizing behavior model {} at path {}...", sessionBundle.getBehaviorId(), behaviorModelPack.getPathToBehaviorModelFiles());
 
 		String behaviorFile = behaviorModelPack.getPathToBehaviorModelFiles().resolve("behaviormodelextractor").resolve(FILENAME + sessionBundle.getBehaviorId() + FILE_EXT).toFile().toString();
 		RelativeMarkovChain markovChain = RelativeMarkovChain.fromCsv(csvHandler.readValues(behaviorFile));
 		markovChain.setId(FILENAME + sessionBundle.getBehaviorId());
-
-		List<String> services = serviceMap.keySet().stream().map(AppId::getService).collect(Collectors.toList());
 
 		for (String state : markovChain.getRequestStates()) {
 			RelativeMarkovChain subChain = retrieveSubChain(aid, state, version, services, sessionBundle);
@@ -176,7 +175,7 @@ public class WorkloadModularizationManager {
 		return markovChain;
 	}
 
-	private RelativeMarkovChain retrieveSubChain(AppId aid, String state, VersionOrTimestamp version, List<String> services, SessionsBundle sessionBundle) {
+	private RelativeMarkovChain retrieveSubChain(AppId aid, String state, VersionOrTimestamp version, List<ServiceSpecification> services, SessionsBundle sessionBundle) {
 		SessionTailoringDescription description = createTailoringDescription(aid, state, version, services, sessionBundle);
 
 		HttpHeaders headers = new HttpHeaders();
@@ -195,7 +194,7 @@ public class WorkloadModularizationManager {
 		return response.getBody();
 	}
 
-	private SessionTailoringDescription createTailoringDescription(AppId aid, String state, VersionOrTimestamp version, List<String> services, SessionsBundle sessionBundle) {
+	private SessionTailoringDescription createTailoringDescription(AppId aid, String state, VersionOrTimestamp version, List<ServiceSpecification> services, SessionsBundle sessionBundle) {
 		List<String> sessionIds = sessionBundle.getSessions().stream().map(SimplifiedSession::getId).collect(Collectors.toList());
 
 		SessionTailoringDescription description = new SessionTailoringDescription();
@@ -203,7 +202,7 @@ public class WorkloadModularizationManager {
 		description.setAid(aid);
 		description.setRootEndpoint(state);
 		description.setVersion(version);
-		description.setTailoring(services);
+		description.setTailoring(services.stream().map(ServiceSpecification::getService).collect(Collectors.toList()));
 		description.setIncludePrePostProcessing(true);
 		description.setSessionIds(sessionIds);
 

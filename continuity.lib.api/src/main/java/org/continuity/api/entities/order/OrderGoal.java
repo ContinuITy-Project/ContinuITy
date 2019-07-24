@@ -1,4 +1,4 @@
-package org.continuity.api.entities.config;
+package org.continuity.api.entities.order;
 
 import java.util.HashMap;
 import java.util.Map;

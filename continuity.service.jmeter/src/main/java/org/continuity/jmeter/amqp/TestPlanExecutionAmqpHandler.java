@@ -13,10 +13,10 @@ import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.testelement.TestStateListener;
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
-import org.continuity.api.entities.config.LoadTestType;
-import org.continuity.api.entities.config.PropertySpecification;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.order.LoadTestType;
+import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
@@ -95,22 +95,22 @@ public class TestPlanExecutionAmqpHandler {
 		String storageId = jmeterLink.substring(jmeterLink.lastIndexOf("/") + 1);
 		JMeterTestPlanBundle testPlanBundle = testplanStorage.get(storageId);
 
-		PropertySpecification properties = task.getProperties();
+		OrderOptions options = task.getOptions();
 
-		if (properties == null) {
+		if (options == null) {
 			LOGGER.warn("Could not set JMeter properties, as they are null.");
 		} else {
-			if (properties.getNumUsers() != null) {
-				jmeterPropertiesCorrector.setNumberOfUsers(testPlanBundle.getTestPlan(), properties.getNumUsers());
-				LOGGER.info("Set number of users to {}.", properties.getNumUsers());
+			if (options.getNumUsers() != null) {
+				jmeterPropertiesCorrector.setNumberOfUsers(testPlanBundle.getTestPlan(), options.getNumUsers());
+				LOGGER.info("Set number of users to {}.", options.getNumUsers());
 			}
-			if (properties.getDuration() != null) {
-				jmeterPropertiesCorrector.setDuration(testPlanBundle.getTestPlan(), properties.getDuration());
-				LOGGER.info("Set duration to {}.", properties.getDuration());
+			if (options.getDuration() != null) {
+				jmeterPropertiesCorrector.setDuration(testPlanBundle.getTestPlan(), options.getDuration());
+				LOGGER.info("Set duration to {}.", options.getDuration());
 			}
-			if (properties.getRampup() != null) {
-				jmeterPropertiesCorrector.setRampup(testPlanBundle.getTestPlan(), properties.getRampup());
-				LOGGER.info("Set rampup to {}.", properties.getRampup());
+			if (options.getRampup() != null) {
+				jmeterPropertiesCorrector.setRampup(testPlanBundle.getTestPlan(), options.getRampup());
+				LOGGER.info("Set rampup to {}.", options.getRampup());
 			}
 		}
 

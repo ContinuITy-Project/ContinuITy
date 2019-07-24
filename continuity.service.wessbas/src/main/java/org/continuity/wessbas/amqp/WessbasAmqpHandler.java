@@ -9,6 +9,7 @@ import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MixedStorage;
+import org.continuity.commons.utils.TailoringUtils;
 import org.continuity.wessbas.config.RabbitMqConfig;
 import org.continuity.wessbas.controllers.WessbasModelController;
 import org.continuity.wessbas.entities.BehaviorModelPack;
@@ -82,7 +83,7 @@ public class WessbasAmqpHandler {
 				workloadModel = modelManager.runPipeline(task.getSource().getForecastLinks().getLink(), pathToBehaviorFiles);
 			} else {
 				WessbasPipelineManager pipelineManager = new WessbasPipelineManager(restTemplate);
-				workloadModel = pipelineManager.runPipeline(task, task.getProperties().getIntensityCalculationInterval());
+				workloadModel = pipelineManager.runPipeline(task, task.getOptions().getIntensityCalculationInterval());
 			}
 
 			if (workloadModel == null) {
@@ -94,7 +95,7 @@ public class WessbasAmqpHandler {
 
 				LOGGER.info("Task {}: Created a new workload model with id '{}'.", task.getTaskId(), storageId);
 
-				WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getAppId(), task.getModularizationOptions() != null);
+				WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getAppId(), TailoringUtils.doTailoring(task.getEffectiveServices()));
 				report = TaskReport.successful(task.getTaskId(), responsePack);
 
 				amqpTemplate.convertAndSend(AmqpApi.WorkloadModel.EVENT_CREATED.name(), AmqpApi.WorkloadModel.EVENT_CREATED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), responsePack);
