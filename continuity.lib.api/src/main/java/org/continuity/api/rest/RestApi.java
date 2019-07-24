@@ -257,12 +257,12 @@ public class RestApi {
 		}
 
 		/**
-		 * Session logs API of the orchestration service.
+		 * Sessions API of the orchestration service.
 		 *
 		 * @author Henning Schulz
 		 *
 		 */
-		public static class SessionLogs {
+		public static class Sessions {
 
 			public static final String ROOT = "/sessions";
 
@@ -272,7 +272,7 @@ public class RestApi {
 			/** {@value #ROOT}/{app-id:.+}/{tailoring}/extended */
 			public static final RestEndpoint GET_EXTENDED = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_EXTENDED, RequestMethod.GET);
 
-			private SessionLogs() {
+			private Sessions() {
 			}
 
 			public static class Paths {
@@ -771,16 +771,16 @@ public class RestApi {
 	}
 
 	/**
-	 * REST API of the Session Logs service.
+	 * REST API of the Cobra service.
 	 *
 	 * @author Henning Schulz
 	 *
 	 */
-	public static class SessionLogs {
+	public static class Cobra {
 
-		public static final String SERVICE_NAME = "session-logs";
+		public static final String SERVICE_NAME = "cobra";
 
-		private SessionLogs() {
+		private Cobra() {
 		}
 
 		public static class Sessions {

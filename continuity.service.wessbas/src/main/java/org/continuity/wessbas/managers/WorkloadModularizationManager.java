@@ -185,7 +185,7 @@ public class WorkloadModularizationManager {
 
 		ResponseEntity<RelativeMarkovChain> response;
 		try {
-			response = eurekaRestTemplate.exchange(RestApi.SessionLogs.BehaviorModel.CREATE.requestUrl().get(), HttpMethod.POST, entity, RelativeMarkovChain.class);
+			response = eurekaRestTemplate.exchange(RestApi.Cobra.BehaviorModel.CREATE.requestUrl().get(), HttpMethod.POST, entity, RelativeMarkovChain.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.error("Could not retrieve tailored Markov chain!", e);
 			LOGGER.warn("Ignoring tailoring of state {}.", state);
