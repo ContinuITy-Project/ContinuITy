@@ -49,3 +49,4 @@ continuity.service.request.rates/request-logs/*.csv
 continuity.service.session.logs/storage
 continuity.service.wessbas/persisted
 continuity.service.wessbas/storage
+continuity.service.cobra/storage

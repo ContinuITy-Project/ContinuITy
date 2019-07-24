@@ -21,13 +21,13 @@ zuul:
     idpa: /idpa/**
     jmeter: /jmeter/**
     benchflow: /benchflow/**
-    session-logs_sessions:
+    cobra_sessions:
       path: /sessions/**
-      serviceId: session-logs
+      serviceId: cobra
       stripPrefix: false
-    session-logs_measurement-data:
+    cobra_measurement-data:
       path: /measurement-data/**
-      serviceId: session-logs
+      serviceId: cobra
       stripPrefix: false
     request-rates: /request-rates/**
     wessbas: /wessbas/**

@@ -75,9 +75,9 @@ public class RequestRatesAmqpHandler {
 		RequestBuilder reqBuilder;
 
 		if (task.getVersion() == null) {
-			reqBuilder = RestApi.SessionLogs.MeasurementData.GET.requestUrl(task.getAppId());
+			reqBuilder = RestApi.Cobra.MeasurementData.GET.requestUrl(task.getAppId());
 		} else {
-			reqBuilder = RestApi.SessionLogs.MeasurementData.GET_VERSION.requestUrl(task.getAppId(), task.getVersion());
+			reqBuilder = RestApi.Cobra.MeasurementData.GET_VERSION.requestUrl(task.getAppId(), task.getVersion());
 		}
 
 		LOGGER.info("Task {}: Processing OPEN.xtrace data...", task.getTaskId());

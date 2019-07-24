@@ -39,10 +39,10 @@ after_success:
     docker tag continuityproject/request-rates continuityproject/request-rates:latest;
     docker push continuityproject/request-rates:latest;
 
-    docker tag continuityproject/session-logs continuityproject/session-logs:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker push continuityproject/session-logs:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker tag continuityproject/session-logs continuityproject/session-logs:latest;
-    docker push continuityproject/session-logs:latest;
+    docker tag continuityproject/cobra continuityproject/cobra:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/cobra:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/cobra continuityproject/cobra:latest;
+    docker push continuityproject/cobra:latest;
 
     docker tag continuityproject/jmeter continuityproject/jmeter:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/jmeter:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;

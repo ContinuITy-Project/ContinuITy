@@ -266,7 +266,7 @@ public class OrchestrationController {
 
 		switch (goal) {
 		case CREATE_SESSION_LOGS:
-			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.SessionLogs.TASK_CREATE, AmqpApi.SessionLogs.TASK_CREATE.formatRoutingKey().of(aid),
+			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.Cobra.TASK_CREATE, AmqpApi.Cobra.TASK_CREATE.formatRoutingKey().of(aid),
 					or(isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getSimpleLink), isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getExtendedLink)));
 			break;
 		case CREATE_BEHAVIOR_MIX:
@@ -389,22 +389,22 @@ public class OrchestrationController {
 		LinkExchangeModel external = new LinkExchangeModel();
 
 		if (internal.getSessionLogsLinks().getSimpleLink() != null) {
-			List<String> params = RestApi.SessionLogs.Sessions.GET_SIMPLE.parsePathParameters(internal.getSessionLogsLinks().getSimpleLink());
+			List<String> params = RestApi.Cobra.Sessions.GET_SIMPLE.parsePathParameters(internal.getSessionLogsLinks().getSimpleLink());
 
 			if (params != null) {
-				external.getSessionLogsLinks().setSimpleLink(RestApi.Orchestrator.SessionLogs.GET_SIMPLE.requestUrl(params.get(0), params.get(1)).withHost(host).get());
+				external.getSessionLogsLinks().setSimpleLink(RestApi.Orchestrator.Sessions.GET_SIMPLE.requestUrl(params.get(0), params.get(1)).withHost(host).get());
 			} else {
-				LOGGER.warn("The link {} does not match the endpoint {}!", internal.getSessionLogsLinks().getSimpleLink(), RestApi.Orchestrator.SessionLogs.GET_SIMPLE.genericPath());
+				LOGGER.warn("The link {} does not match the endpoint {}!", internal.getSessionLogsLinks().getSimpleLink(), RestApi.Orchestrator.Sessions.GET_SIMPLE.genericPath());
 			}
 		}
 
 		if (internal.getSessionLogsLinks().getExtendedLink() != null) {
-			List<String> params = RestApi.SessionLogs.Sessions.GET_EXTENDED.parsePathParameters(internal.getSessionLogsLinks().getExtendedLink());
+			List<String> params = RestApi.Cobra.Sessions.GET_EXTENDED.parsePathParameters(internal.getSessionLogsLinks().getExtendedLink());
 
 			if (params != null) {
-				external.getSessionLogsLinks().setExtendedLink(RestApi.Orchestrator.SessionLogs.GET_EXTENDED.requestUrl(params.get(0), params.get(1)).withHost(host).get());
+				external.getSessionLogsLinks().setExtendedLink(RestApi.Orchestrator.Sessions.GET_EXTENDED.requestUrl(params.get(0), params.get(1)).withHost(host).get());
 			} else {
-				LOGGER.warn("The link {} does not match the endpoint {}!", internal.getSessionLogsLinks().getSimpleLink(), RestApi.Orchestrator.SessionLogs.GET_EXTENDED.genericPath());
+				LOGGER.warn("The link {} does not match the endpoint {}!", internal.getSessionLogsLinks().getSimpleLink(), RestApi.Orchestrator.Sessions.GET_EXTENDED.genericPath());
 			}
 		}
 
