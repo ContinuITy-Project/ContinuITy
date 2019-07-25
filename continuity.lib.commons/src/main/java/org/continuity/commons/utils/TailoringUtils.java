@@ -25,37 +25,43 @@ public class TailoringUtils {
 	/**
 	 * Determines a list of target hosts from a list of {@link ServiceSpecification}.
 	 *
+	 * @param aid
+	 *            The app-id. The services will be resolved when requesting the application models.
 	 * @param services
 	 *            The services to be processed.
 	 * @param restTemplate
 	 *            The rest template to use for retrieving application models.
 	 * @return The list of target hosts.
 	 */
-	public static Collection<String> getTargetHostNames(List<ServiceSpecification> services, RestTemplate restTemplate) {
+	public static Collection<String> getTargetHostNames(AppId aid, List<ServiceSpecification> services, RestTemplate restTemplate) {
 		return services.stream()
-				.map(t -> restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(t.getService()).withQueryIfNotEmpty("version", t.getVersion().toString()).get(), Application.class))
+				.map(t -> restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid.withService(t.getService())).withQueryIfNotEmpty("version", t.getVersion().toString()).get(),
+						Application.class))
 				.map(Application::getEndpoints).flatMap(List::stream).map(endp -> (HttpEndpoint) endp).map(HttpEndpoint::getDomain).collect(Collectors.toSet());
 	}
 
 	/**
 	 * Retrieves all application models for a list of {@link ServiceSpecification}.
 	 *
+	 * @param aid
+	 *            The app-id. The services will be resolved when requesting the application models.
 	 * @param services
 	 *            The services to be processed.
 	 * @param restTemplate
 	 *            The rest template to use for retrieving application models.
 	 * @return The list of {@link Application}.
 	 */
-	public static Collection<Application> getServiceApplicationModels(List<ServiceSpecification> services, RestTemplate restTemplate) {
+	public static Collection<Application> getServiceApplicationModels(AppId aid, List<ServiceSpecification> services, RestTemplate restTemplate) {
 		return services.stream()
-				.map(t -> restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(t.getService()).withQueryIfNotEmpty("version", t.getVersion().toString()).get(), Application.class))
+				.map(t -> restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid.withService(t.getService())).withQueryIfNotEmpty("version", t.getVersion().toString()).get(),
+						Application.class))
 				.collect(Collectors.toList());
 	}
 
 	/**
 	 * Determines whether tailoring is to be applied based on a list of
 	 * {@link ServiceSpecification}.
-	 * 
+	 *
 	 * @param services
 	 *            The services to be processed.
 	 * @return {@code true} if tailoring is to be done, regardless of the tailoring approach.

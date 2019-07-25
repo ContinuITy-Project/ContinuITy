@@ -92,7 +92,8 @@ public class DataCommands {
 			spec.setType(mType);
 
 			try {
-				response = restTemplate.postForEntity(RestApi.Orchestrator.MeasurementData.PUSH_LINK.requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(), spec,
+				response = restTemplate.postForEntity(
+						RestApi.Cobra.MeasurementData.PUSH_LINK.viaOrchestrator().requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(), spec,
 						String.class);
 			} catch (HttpStatusCodeException e) {
 				response = new ResponseEntity<String>(e.getResponseBodyAsString(), e.getStatusCode());
@@ -107,7 +108,8 @@ public class DataCommands {
 
 				try {
 					response = restTemplate.postForEntity(
-							RestApi.Orchestrator.MeasurementData.PUSH_FOR_TYPE.get(mType).requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(), content,
+							RestApi.Cobra.MeasurementData.PUSH_FOR_TYPE.get(mType).viaOrchestrator().requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(),
+							content,
 							String.class);
 				} catch (HttpStatusCodeException e) {
 					response = new ResponseEntity<String>(e.getResponseBodyAsString(), e.getStatusCode());

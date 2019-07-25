@@ -116,6 +116,7 @@ public class ApplicationController {
 			if (app != null) {
 				return ResponseEntity.ok(app);
 			} else {
+				LOGGER.warn("Could not find application for {}@{}!", aid, version);
 				return ResponseEntity.notFound().build();
 			}
 		} else {

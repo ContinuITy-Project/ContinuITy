@@ -223,7 +223,6 @@ public class OrchestrationController {
 				LOGGER.info("{} Returning report number {}/{}. Therefore, deleting the response queue.", LoggingUtils.formatPrefix(orderId), reportNumber, reportCounter.getNumReports());
 			}
 
-			report.setCreatedArtifacts(transfromToExternalLinks(report.getInternalArtifacts(), servletRequest.getServerName() + ":" + servletRequest.getServerPort()));
 			report.setNumber(reportNumber);
 			report.setMax(reportCounter.getNumReports());
 
@@ -383,77 +382,6 @@ public class OrchestrationController {
 
 	private String getResponseQueueName(String orderId) {
 		return AmqpApi.Orchestrator.EVENT_FINISHED.deriveQueueName(orderId);
-	}
-
-	private LinkExchangeModel transfromToExternalLinks(LinkExchangeModel internal, String host) {
-		LinkExchangeModel external = new LinkExchangeModel();
-
-		if (internal.getSessionLogsLinks().getSimpleLink() != null) {
-			List<String> params = RestApi.Cobra.Sessions.GET_SIMPLE.parsePathParameters(internal.getSessionLogsLinks().getSimpleLink());
-
-			if (params != null) {
-				external.getSessionLogsLinks().setSimpleLink(RestApi.Orchestrator.Sessions.GET_SIMPLE.requestUrl(params.get(0), params.get(1)).withHost(host).get());
-			} else {
-				LOGGER.warn("The link {} does not match the endpoint {}!", internal.getSessionLogsLinks().getSimpleLink(), RestApi.Orchestrator.Sessions.GET_SIMPLE.genericPath());
-			}
-		}
-
-		if (internal.getSessionLogsLinks().getExtendedLink() != null) {
-			List<String> params = RestApi.Cobra.Sessions.GET_EXTENDED.parsePathParameters(internal.getSessionLogsLinks().getExtendedLink());
-
-			if (params != null) {
-				external.getSessionLogsLinks().setExtendedLink(RestApi.Orchestrator.Sessions.GET_EXTENDED.requestUrl(params.get(0), params.get(1)).withHost(host).get());
-			} else {
-				LOGGER.warn("The link {} does not match the endpoint {}!", internal.getSessionLogsLinks().getSimpleLink(), RestApi.Orchestrator.Sessions.GET_EXTENDED.genericPath());
-			}
-		}
-
-		if (internal.getWorkloadModelLinks().getLink() != null) {
-			WorkloadModelType type = internal.getWorkloadModelLinks().getType();
-
-			if (type != null) {
-				List<String> params = RestApi.Generic.WORKLOAD_MODEL_LINK.get(type.toPrettyString()).parsePathParameters(internal.getWorkloadModelLinks().getLink());
-
-				if (params != null) {
-					external.getWorkloadModelLinks().setType(type);
-					external.getWorkloadModelLinks().setLink(RestApi.Orchestrator.WorkloadModel.GET.requestUrl(type.toPrettyString(), params.get(0)).withHost(host).get());
-				} else {
-					LOGGER.warn("The link {} does not match the endpoint {}!", internal.getWorkloadModelLinks().getLink(), RestApi.Orchestrator.WorkloadModel.GET.genericPath());
-				}
-			}
-		}
-
-		if (internal.getLoadTestLinks().getLink() != null) {
-			LoadTestType type = internal.getLoadTestLinks().getType();
-
-			if (type != null) {
-				List<String> params = RestApi.Generic.GET_LOAD_TEST.get(type.toPrettyString()).parsePathParameters(internal.getLoadTestLinks().getLink());
-
-				if (params != null) {
-					external.getLoadTestLinks().setType(type);
-					external.getLoadTestLinks().setLink(RestApi.Orchestrator.Loadtest.GET.requestUrl(type.toPrettyString(), params.get(0)).withHost(host).get());
-				} else {
-					LOGGER.warn("The link {} does not match the endpoint {}!", internal.getLoadTestLinks().getLink(), RestApi.Orchestrator.Loadtest.GET.genericPath());
-				}
-			}
-		}
-
-		if (internal.getLoadTestLinks().getReportLink() != null) {
-			LoadTestType type = internal.getLoadTestLinks().getType();
-
-			if (type != null) {
-				List<String> params = RestApi.Generic.GET_LOAD_TEST_REPORT.get(type.toPrettyString()).parsePathParameters(internal.getLoadTestLinks().getReportLink());
-
-				if (params != null) {
-					external.getLoadTestLinks().setType(type);
-					external.getLoadTestLinks().setReportLink(RestApi.Orchestrator.Loadtest.REPORT.requestUrl(type.toPrettyString(), params.get(0)).withHost(host).get());
-				} else {
-					LOGGER.warn("The link {} does not match the endpoint {}!", internal.getLoadTestLinks().getReportLink(), RestApi.Orchestrator.Loadtest.REPORT.genericPath());
-				}
-			}
-		}
-
-		return external;
 	}
 
 }
