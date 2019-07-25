@@ -1,15 +1,7 @@
 package org.continuity.cli.commands;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import org.apache.jmeter.save.SaveService;
-import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.order.LoadTestType;
@@ -17,14 +9,13 @@ import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.rest.RestApi;
 import org.continuity.api.rest.RestEndpoint;
 import org.continuity.cli.config.PropertiesProvider;
+import org.continuity.cli.exception.CliException;
 import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
-import org.continuity.cli.process.JMeterProcess;
+import org.continuity.cli.storage.JMeterStorage;
 import org.continuity.cli.storage.OrderStorage;
 import org.continuity.cli.utils.ResponseBuilder;
-import org.continuity.commons.jmeter.TestPlanWriter;
-import org.continuity.idpa.AppId;
 import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,47 +27,49 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.sf.markov4jmeter.testplangenerator.util.CSVHandler;
-
 /**
  * @author Henning Schulz
  *
  */
 @ShellComponent
 @ShellCommandGroup("JMeter Commands")
-public class JMeterCommands {
+public class JMeterCommands extends AbstractCommands {
 
 	private static final String CONTEXT_NAME = "jmeter";
-
-	private static final String KEY_JMETER_HOME = "jmeter.home";
 
 	private final CliContext context = new CliContext(CONTEXT_NAME, //
 			new Shorthand("home", this, "setJMeterHome", String.class), //
 			new Shorthand("download", this, "downloadLoadTest", String.class), //
-			new Shorthand("upload", this, "uploadLoadTest", String.class, String.class, boolean.class) //
+			new Shorthand("upload", this, "uploadLoadTest", String.class, String.class, boolean.class), //
+			new Shorthand("open", this, "openLoadTest", String.class) //
 	);
 
-	private final CSVHandler csvHandler = new CSVHandler(CSVHandler.LINEBREAK_TYPE_UNIX);
+	private final PropertiesProvider propertiesProvider;
+
+	private final RestTemplate restTemplate;
+
+	private final JMeterStorage storage;
+
+	private final OrderStorage orderStorage;
+
+	private final CliContextManager contextManager;
+
+	private final ObjectMapper mapper;
 
 	@Autowired
-	private PropertiesProvider propertiesProvider;
+	public JMeterCommands(PropertiesProvider propertiesProvider, RestTemplate restTemplate, JMeterStorage storage, OrderStorage orderStorage, CliContextManager contextManager, ObjectMapper mapper) {
+		super(contextManager);
 
-	@Autowired
-	private RestTemplate restTemplate;
-
-	@Autowired
-	private OrderStorage storage;
-
-	@Autowired
-	private CliContextManager contextManager;
-
-	@Autowired
-	private ObjectMapper mapper;
-
-	private TestPlanWriter testPlanWriter;
+		this.propertiesProvider = propertiesProvider;
+		this.restTemplate = restTemplate;
+		this.storage = storage;
+		this.orderStorage = orderStorage;
+		this.contextManager = contextManager;
+		this.mapper = mapper;
+	}
 
 	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'jmeter' context so that the shorthands can be used.")
-	public AttributedString goToIdpaContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
+	public AttributedString goToJmeterContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
 		if (Shorthand.DEFAULT_VALUE.equals(unknown)) {
 			contextManager.goToContext(context);
 			return null;
@@ -86,117 +79,79 @@ public class JMeterCommands {
 	}
 
 	@ShellMethod(key = { "jmeter home" }, value = "Sets the home directory of JMeter (where the bin directory is placed).")
-	public String setJMeterHome(String jmeterHome) {
+	public String setJMeterHome(String jmeterHome) throws CliException {
 		jmeterHome = jmeterHome.replace("\\", "/");
-		Object old = propertiesProvider.putProperty(KEY_JMETER_HOME, jmeterHome);
-		testPlanWriter = new TestPlanWriter(jmeterHome);
+		Object old = propertiesProvider.putProperty(JMeterStorage.KEY_JMETER_HOME, jmeterHome);
+		storage.init();
 		return old == null ? "Set JMeter home." : "Replaced old JMeter home: " + old;
 	}
 
 	@ShellMethod(key = { "jmeter download" }, value = "Downloads and opens a JMeter load test specified by a link.")
-	public String downloadLoadTest(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String loadTestLink) throws IOException {
-		String jmeterHome = propertiesProvider.getProperty(KEY_JMETER_HOME);
+	public AttributedString downloadLoadTest(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String loadTestLink) throws Exception {
+		return executeWithCurrentAppId((aid) -> {
+			storage.init();
 
-		String error = initTestPlanWriter(jmeterHome);
+			String link = loadTestLink;
 
-		if (!error.isEmpty()) {
-			return error;
-		}
+			if (Shorthand.DEFAULT_VALUE.equals(link)) {
+				OrderReport report = orderStorage.readLatestReport(aid);
 
-		if (Shorthand.DEFAULT_VALUE.equals(loadTestLink)) {
-			OrderReport report = storage.getReport(OrderStorage.ID_LATEST);
-
-			if ((report == null) || (report.getArtifacts() == null) || (report.getArtifacts().getLoadTestLinks().getLink() == null)) {
-				return "Cannot download the JMeter test of the latest order. The link is missing!";
-			} else if (report.getArtifacts().getLoadTestLinks().getType() != LoadTestType.JMETER) {
-				return "Cannot download the JMeter test of the latest order. The link points to a " + report.getArtifacts().getLoadTestLinks().getType().toPrettyString() + " test!";
-			} else {
-				loadTestLink = report.getArtifacts().getLoadTestLinks().getLink();
+				if ((report == null) || (report.getArtifacts() == null) || (report.getArtifacts().getLoadTestLinks().getLink() == null)) {
+					return new ResponseBuilder().error("Cannot download the JMeter test of the latest order. The link is missing!").build();
+				} else if (report.getArtifacts().getLoadTestLinks().getType() != LoadTestType.JMETER) {
+					return new ResponseBuilder().error("Cannot download the JMeter test of the latest order. The link points to a ")
+							.boldError(report.getArtifacts().getLoadTestLinks().getType().toPrettyString()).error(" test!").build();
+				} else {
+					link = report.getArtifacts().getLoadTestLinks().getLink();
+				}
 			}
-		}
 
-		ResponseEntity<JMeterTestPlanBundle> response = restTemplate.getForEntity(RestEndpoint.urlViaOrchestrator(loadTestLink, propertiesProvider.getProperty(PropertiesProvider.KEY_URL)),
-				JMeterTestPlanBundle.class);
+			ResponseEntity<JMeterTestPlanBundle> response = restTemplate.getForEntity(RestEndpoint.urlViaOrchestrator(link, propertiesProvider.getProperty(PropertiesProvider.KEY_URL)),
+					JMeterTestPlanBundle.class);
 
-		if (!response.getStatusCode().is2xxSuccessful()) {
-			return response.toString();
-		}
+			if (!response.getStatusCode().is2xxSuccessful()) {
+				return new ResponseBuilder().error(response.toString()).build();
+			}
 
-		List<String> params = RestApi.JMeter.TestPlan.GET.parsePathParameters(loadTestLink);
-		Path testPlanDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), params.get(0));
-		testPlanDir.toFile().mkdirs();
+			Path testPlanPath = storage.storeAndOpen(response.getBody(), aid, link);
 
-		JMeterTestPlanBundle testPlanBundle = response.getBody();
-		Path testPlanPath = testPlanWriter.write(testPlanBundle.getTestPlan(), testPlanBundle.getBehaviors(), testPlanDir);
-		new JMeterProcess(jmeterHome).run(testPlanPath);
+			return new ResponseBuilder().normal("Stored and opened JMeter test plan at ").normal(testPlanPath).build();
+		});
+	}
 
-		return "Stored and opened JMeter test plan at " + testPlanPath;
+	@ShellMethod(key = { "jmeter open" }, value = "Opens an already downloaded JMeter load test specified by a link.")
+	public AttributedString openLoadTest(@ShellOption(defaultValue = JMeterStorage.LINK_LATEST) String link) throws Exception {
+		return executeWithCurrentAppId(aid -> {
+			storage.init();
+
+			Path testPlanPath = storage.open(aid, link);
+
+			return new ResponseBuilder().normal("Stored and opened JMeter test plan at ").normal(testPlanPath).build();
+		});
 	}
 
 	@ShellMethod(key = { "jmeter upload" }, value = "Uploads a locally stored JMeter load test and potentially annotates it.")
-	public String uploadLoadTest(String loadTestPath, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
-			@ShellOption(value = { "--annotate", "-a" }, defaultValue = "false") boolean annotate) throws IOException {
-		AppId aid = contextManager.getAppIdOrFail(appId);
+	public AttributedString uploadLoadTest(String loadTestPath, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
+			@ShellOption(value = { "--annotate", "-a" }, defaultValue = "false") boolean annotate) throws Exception {
+		return executeWithAppId(appId, (aid) -> {
+			storage.init();
 
-		String error = initTestPlanWriter(propertiesProvider.getProperty(KEY_JMETER_HOME));
+			JMeterTestPlanBundle bundle = storage.read(loadTestPath);
 
-		if (!error.isEmpty()) {
-			return error;
-		}
+			String continuityHost = propertiesProvider.getProperty(PropertiesProvider.KEY_URL);
 
-		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		Path testPlanDir = Paths.get(workingDir).resolve(loadTestPath);
+			ResponseEntity<LinkExchangeModel> response = restTemplate.postForEntity(
+					RestApi.JMeter.TestPlan.POST.viaOrchestrator().requestUrl("jmeter", aid).withHost(continuityHost).withQuery("annotate", Boolean.toString(annotate)).get(), bundle,
+					LinkExchangeModel.class);
 
-		File dir = testPlanDir.toFile();
-
-		if (!dir.exists() || !dir.isDirectory()) {
-			return testPlanDir.toAbsolutePath().toString() + " is not a directory!";
-		}
-
-		ListedHashTree testPlan = null;
-		Map<String, String[][]> behaviors = new HashMap<>();
-
-		for (File file : dir.listFiles()) {
-			if (file.getName().endsWith(".jmx")) {
-				testPlan = (ListedHashTree) SaveService.loadTree(file);
-			} else if (file.getName().endsWith(".csv")) {
-				behaviors.put(file.getName(), csvHandler.readValues(file.getAbsolutePath()));
-			}
-		}
-
-		if (testPlan == null) {
-			return "No .jmx test plan found!";
-		}
-
-		JMeterTestPlanBundle bundle = new JMeterTestPlanBundle(testPlan, behaviors);
-
-		String continuityHost = propertiesProvider.getProperty(PropertiesProvider.KEY_URL);
-
-		ResponseEntity<LinkExchangeModel> response = restTemplate.postForEntity(
-				RestApi.JMeter.TestPlan.POST.viaOrchestrator().requestUrl("jmeter", aid).withHost(continuityHost).withQuery("annotate", Boolean.toString(annotate)).get(), bundle,
-				LinkExchangeModel.class);
-
-		if (response.getStatusCode().is2xxSuccessful()) {
-			return new StringBuilder().append("Successfully uploaded JMeter test plan with app-id ").append(aid).append(" at ").append(testPlanDir.toAbsolutePath().toString()).append("\n")
-					.append(mapper.writeValueAsString(response.getBody())).toString();
-		} else {
-			return new StringBuilder().append("Could not upload JMeter test plan with app-id ").append(aid).append(" at ").append(testPlanDir.toAbsolutePath().toString()).append("\nResponse was: ")
-					.append(response.getStatusCodeValue()).append(" - ").append(response.getStatusCode()).append("\n").append(response.getBody()).toString();
-		}
-	}
-
-	private String initTestPlanWriter(String jmeterHome) {
-		if (testPlanWriter == null) {
-			if (jmeterHome == null) {
-				return "Please set the jmeter home path first (call 'jmeter home [path]')";
+			if (response.getStatusCode().is2xxSuccessful()) {
+				return new ResponseBuilder().normal("Successfully uploaded JMeter test plan with app-id ").bold(aid).normal(" at ").normal(loadTestPath).normal("\n")
+						.normal(mapper.writeValueAsString(response.getBody())).build();
 			} else {
-				testPlanWriter = new TestPlanWriter(jmeterHome);
+				return new ResponseBuilder().error("Could not upload JMeter test plan with app-id ").boldError(aid).error(" at ").error(loadTestPath).error("\nResponse was: ")
+						.boldError(response.getStatusCodeValue()).boldError(" - ").boldError(response.getStatusCode().getReasonPhrase()).error("\n").error(response.getBody()).build();
 			}
-		} else if (jmeterHome == null) {
-			return "Please set the jmeter home path first (call 'jmeter home [path]')";
-		}
-
-		return "";
+		});
 	}
 
 }

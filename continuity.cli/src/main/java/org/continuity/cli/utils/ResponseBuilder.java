@@ -1,6 +1,7 @@
 package org.continuity.cli.utils;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStringBuilder;
@@ -41,7 +42,7 @@ public class ResponseBuilder {
 	 * @see #error(String)
 	 */
 	public ResponseBuilder append(Object string, AttributedStyle style) {
-		return append(new AttributedString(string.toString(), style));
+		return append(new AttributedString(Objects.toString(string), style));
 	}
 
 	public ResponseBuilder append(ResponseBuilder other) {
