@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.continuity.api.rest.RestEndpoint;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
@@ -79,7 +80,7 @@ public class GlobalCommands implements Quit.Command {
 
 	@ShellMethod(key = { "get" }, value = "Gets an artifact.")
 	public String get(String link) throws JsonProcessingException {
-		ResponseEntity<JsonNode> response = restTemplate.getForEntity(link, JsonNode.class);
+		ResponseEntity<JsonNode> response = restTemplate.getForEntity(RestEndpoint.urlViaOrchestrator(link, propertiesProvider.getProperty(PropertiesProvider.KEY_URL)), JsonNode.class);
 
 		if (!response.getStatusCode().is2xxSuccessful()) {
 			return "Could not access the link! Response code is " + response.getStatusCode();

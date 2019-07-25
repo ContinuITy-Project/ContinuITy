@@ -20,7 +20,7 @@ import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.api.rest.CustomHeaders;
 import org.continuity.api.rest.RequestBuilder;
-import org.continuity.api.rest.RestApi.Orchestrator.Idpa;
+import org.continuity.api.rest.RestApi.Idpa;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
@@ -144,16 +144,16 @@ public class IdpaCommands {
 
 		ResponseEntity<Application> applicationResponse;
 		try {
-			applicationResponse = restTemplate.getForEntity(Idpa.GET_APPLICATION.requestUrl(aid).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(),
-					Application.class);
+			applicationResponse = restTemplate
+					.getForEntity(Idpa.Application.GET.viaOrchestrator().requestUrl(aid).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(), Application.class);
 		} catch (HttpStatusCodeException e) {
 			applicationResponse = ResponseEntity.status(e.getStatusCode()).body(null);
 		}
 
 		ResponseEntity<ApplicationAnnotation> annotationResponse;
 		try {
-			annotationResponse = restTemplate.getForEntity(Idpa.GET_ANNOTATION.requestUrl(aid).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(),
-					ApplicationAnnotation.class);
+			annotationResponse = restTemplate.getForEntity(
+					Idpa.Annotation.GET.viaOrchestrator().requestUrl(aid).withHost(url).withQueryIfNotEmpty(PARAM_VERSION, contextManager.getCurrentVersion()).get(), ApplicationAnnotation.class);
 		} catch (HttpStatusCodeException e) {
 			annotationResponse = ResponseEntity.status(e.getStatusCode()).body(null);
 		}
@@ -354,7 +354,7 @@ public class IdpaCommands {
 			String appId = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
 			aids.add(AppId.fromString(appId));
 			try {
-				response = restTemplate.postForEntity(Idpa.UPDATE_APPLICATION.requestUrl(appId).withHost(url).get(), application, String.class);
+				response = restTemplate.postForEntity(Idpa.Application.UPDATE.viaOrchestrator().requestUrl(appId).withHost(url).get(), application, String.class);
 			} catch (HttpStatusCodeException e) {
 				response = new ResponseEntity<>(e.getResponseBodyAsString(), e.getStatusCode());
 			}
@@ -370,7 +370,8 @@ public class IdpaCommands {
 			List<String> broken = null;
 
 			try {
-				broken = restTemplate.getForObject(Idpa.GET_BROKEN.requestUrl(appId).withQuery(PARAM_VERSION, application.getVersionOrTimestamp().toString()).withHost(url).get(), List.class);
+				broken = restTemplate.getForObject(
+						Idpa.Annotation.GET_BROKEN.viaOrchestrator().requestUrl(appId).withQuery(PARAM_VERSION, application.getVersionOrTimestamp().toString()).withHost(url).get(), List.class);
 			} catch (HttpStatusCodeException e) {
 				responses.error("Error when checking broken annotations! ").boldError(e.getStatusCode()).error(" (").error(e.getStatusCode().getReasonPhrase()).error(") - ")
 						.error(e.getResponseBodyAsString()).newline();
@@ -433,7 +434,7 @@ public class IdpaCommands {
 			String appId = file.getName().substring("annotation-".length(), file.getName().length() - ".yml".length());
 			aids.add(AppId.fromString(appId));
 
-			RequestBuilder req = Idpa.UPDATE_ANNOTATION.requestUrl(appId).withHost(url);
+			RequestBuilder req = Idpa.Annotation.UPDATE.viaOrchestrator().requestUrl(appId).withHost(url);
 
 			if (annotation.getVersionOrTimestamp().isEmpty()) {
 				resp.bold("Annotation '").normal(appId).bold("' has no version! Setting the current one as fallback: ").normal(currVersion).newline();

@@ -82,7 +82,7 @@ public class RequestRatesAmqpHandler {
 		LOGGER.info("Task {}: Processing OPEN.xtrace data...", task.getTaskId());
 
 		Iterable<Trace> traces = OPENxtraceUtils
-				.getOPENxtraces(reqBuilder.withQueryIfNotEmpty("from", ApiFormats.DATE_FORMAT.format(link.getFrom())).withQueryIfNotEmpty("to", ApiFormats.DATE_FORMAT.format(link.getTo())).get(),
+				.getOPENxtraces(reqBuilder.withQueryIfNotEmpty("from", ApiFormats.formatOrNull(link.getFrom())).withQueryIfNotEmpty("to", ApiFormats.formatOrNull(link.getTo())).get(),
 						restTemplate);
 		LOGGER.info("Task {}: Retrieved OPEN.xtrace data.", task.getTaskId());
 
@@ -92,7 +92,7 @@ public class RequestRatesAmqpHandler {
 		List<HTTPRequestProcessingImpl> requestsOfInterest;
 
 		if (applyModularization) {
-			Collection<String> targetHostNames = TailoringUtils.getTargetHostNames(services, restTemplate);
+			Collection<String> targetHostNames = TailoringUtils.getTargetHostNames(task.getAppId(), services, restTemplate);
 
 			requestsOfInterest = StreamSupport.stream(traces.spliterator(), false).map(Trace::getRoot).map(SubTrace::getRoot).map(root -> OpenXtraceTracer.forRootAndHosts(root, targetHostNames))
 					.map(OpenXtraceTracer::extractSubtraces).flatMap(List::stream).collect(Collectors.toList());
@@ -111,7 +111,7 @@ public class RequestRatesAmqpHandler {
 		RequestRatesCalculator calculator;
 
 		if (modularize) {
-			calculator = new ModularizingRequestRatesCalculator(TailoringUtils.getServiceApplicationModels(services, restTemplate));
+			calculator = new ModularizingRequestRatesCalculator(TailoringUtils.getServiceApplicationModels(task.getAppId(), services, restTemplate));
 		} else {
 			Application application;
 			try {

@@ -23,11 +23,8 @@ public class OrderReport {
 	@JsonInclude(Include.NON_EMPTY)
 	private Set<String> testingContext;
 
-	@JsonProperty("created-artifacts")
-	private LinkExchangeModel createdArtifacts;
-
-	@JsonProperty("internal-artifacts")
-	private LinkExchangeModel internalArtifacts;
+	@JsonProperty("artifacts")
+	private LinkExchangeModel artifacts;
 
 	private boolean successful;
 
@@ -40,7 +37,7 @@ public class OrderReport {
 	public OrderReport(String orderId, Set<String> testingContext, LinkExchangeModel internalArtifacts, boolean successful, String error) {
 		this.orderId = orderId;
 		this.testingContext = testingContext;
-		this.internalArtifacts = internalArtifacts;
+		this.artifacts = internalArtifacts;
 		this.successful = successful;
 		this.error = error;
 	}
@@ -69,20 +66,12 @@ public class OrderReport {
 		this.testingContext = testingContext;
 	}
 
-	public LinkExchangeModel getCreatedArtifacts() {
-		return createdArtifacts;
+	public LinkExchangeModel getArtifacts() {
+		return artifacts;
 	}
 
-	public void setCreatedArtifacts(LinkExchangeModel createdArtifacts) {
-		this.createdArtifacts = createdArtifacts;
-	}
-
-	public LinkExchangeModel getInternalArtifacts() {
-		return internalArtifacts;
-	}
-
-	public void setInternalArtifacts(LinkExchangeModel internalArtifacts) {
-		this.internalArtifacts = internalArtifacts;
+	public void setArtifacts(LinkExchangeModel artifacts) {
+		this.artifacts = artifacts;
 	}
 
 	public boolean isSuccessful() {
