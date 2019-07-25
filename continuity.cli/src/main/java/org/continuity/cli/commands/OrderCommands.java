@@ -1,10 +1,6 @@
 package org.continuity.cli.commands;
 
 import java.awt.Desktop;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
@@ -49,9 +45,6 @@ import org.springframework.shell.standard.ShellOption;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -60,11 +53,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  */
 @ShellComponent
-public class OrderCommands {
-
-	private static final String ORDERS_DIR = "order";
-
-	private static final String NEW_ORDER_FILENAME = "order.yml";
+public class OrderCommands extends AbstractCommands {
 
 	private static final String CONTEXT_NAME = "order";
 
@@ -74,23 +63,29 @@ public class OrderCommands {
 			new Shorthand("submit", this, "submitOrder"), //
 			new Shorthand("wait", this, "waitForOrder", String.class, String.class), //
 			new Shorthand("report", this, "getOrderReport", String.class), //
-			new Shorthand("clean", this, "cleanOrders") //
+			new Shorthand("clean", this, "cleanOrders", boolean.class) //
 	);
 
-	@Autowired
 	private PropertiesProvider propertiesProvider;
 
-	@Autowired
 	private RestTemplate restTemplate;
 
-	@Autowired
 	private OrderStorage storage;
 
-	@Autowired
 	private CliContextManager contextManager;
 
-	@Autowired
 	private ObjectMapper mapper;
+
+	@Autowired
+	public OrderCommands(PropertiesProvider propertiesProvider, RestTemplate restTemplate, OrderStorage storage, CliContextManager contextManager,
+			ObjectMapper mapper) {
+		super(contextManager);
+		this.propertiesProvider = propertiesProvider;
+		this.restTemplate = restTemplate;
+		this.storage = storage;
+		this.contextManager = contextManager;
+		this.mapper = mapper;
+	}
 
 	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'order' context so that the shorthands can be used.")
 	public AttributedString goToIdpaContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
@@ -103,100 +98,122 @@ public class OrderCommands {
 	}
 
 	@ShellMethod(key = { "order create" }, value = "Creates a new order.")
-	public String createOrder(@ShellOption(defaultValue = "create-load-test") String goal) throws JsonGenerationException, JsonMappingException, IOException {
-		OrderGoal orderGoal = OrderGoal.fromPrettyString(goal);
+	public AttributedString createOrder(@ShellOption(defaultValue = "create-load-test") String goal) throws Exception {
+		return executeWithCurrentAppId((aid) -> {
+			OrderGoal orderGoal = OrderGoal.fromPrettyString(goal);
 
-		if (orderGoal == null) {
-			return "Unknown order goal " + goal + "! The allowed goals are " + Arrays.stream(OrderGoal.values()).map(OrderGoal::toPrettyString).reduce((a, b) -> a + ", " + b).get();
-		}
+			if (orderGoal == null) {
+				return new ResponseBuilder().error("Unknown order goal ").boldError(goal).error("! The allowed goals are ")
+						.error(Arrays.stream(OrderGoal.values()).map(OrderGoal::toPrettyString).reduce((a, b) -> a + ", " + b).get()).build();
+			}
 
-		Order order = initializeOrder();
-		order.setGoal(orderGoal);
+			Order order = initializeOrder();
+			order.setGoal(orderGoal);
 
-		Desktop.getDesktop().open(storeAsNewOrder(order));
+			Desktop.getDesktop().open(storage.storeAsNew(contextManager.getCurrentAppId(), order).toFile());
 
-		return "Created and opened a new order at orders/order-new.yml";
+			return new ResponseBuilder().normal("Created and opened a new order.").build();
+		});
 	}
 
 	@ShellMethod(key = { "order edit" }, value = "Edits an already created order.")
-	public String editOrder(@ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws JsonGenerationException, JsonMappingException, IOException {
-		Order order = storage.getOrder(id);
+	public AttributedString editOrder(@ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws Exception {
+		return executeWithCurrentAppId((aid) -> {
+			Order order = storage.readOrder(aid, id);
 
-		if (order == null) {
-			return "There is no order with ID " + id;
-		}
+			if (order == null) {
+				return new ResponseBuilder().error("There is no such order to be edited!").build();
+			}
 
-		Desktop.getDesktop().open(storeAsNewOrder(order));
+			Desktop.getDesktop().open(storage.storeAsNew(aid, order).toFile());
 
-		return "Updated the current order and opened it.";
+			return new ResponseBuilder().normal("Copied the order and opened it.").build();
+		});
 	}
 
 	@ShellMethod(key = { "order submit" }, value = "Submits the latest created order.")
-	public String submitOrder() throws JsonParseException, JsonMappingException, IOException {
-		Path orderDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), ORDERS_DIR, NEW_ORDER_FILENAME);
-		Order order = mapper.readValue(orderDir.toFile(), Order.class);
+	public AttributedString submitOrder() throws Exception {
+		return executeWithCurrentAppId((aid) -> {
+			Order order = storage.readNew(aid);
 
-		String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
-		ResponseEntity<OrderResponse> response;
-		try {
-			response = restTemplate.postForEntity(RestApi.Orchestrator.Orchestration.SUBMIT.requestUrl().withHost(url).get(), order, OrderResponse.class);
-		} catch (HttpStatusCodeException e) {
-			return e.getResponseBodyAsString();
-		}
+			if (order == null) {
+				order = storage.readLatestOrder(aid);
 
-		String storageId = storage.newOrder(order);
-		storage.storeLinks(storageId, response.getBody());
+				if (order == null) {
+					return new ResponseBuilder().error("There is no order to be submitted! Create one first using ").boldError("order create").build();
+				}
 
-		StringBuilder message = new StringBuilder();
+				storage.storeAsNew(aid, order).toFile();
+			}
 
-		message.append("Submitted the order, storage ID is ");
-		message.append(storageId);
-		message.append(". For further actions:\n");
-		message.append(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody()));
+			String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
+			ResponseEntity<OrderResponse> response;
+			try {
+				response = restTemplate.postForEntity(RestApi.Orchestrator.Orchestration.SUBMIT.requestUrl().withHost(url).get(), order, OrderResponse.class);
+			} catch (HttpStatusCodeException e) {
+				return new ResponseBuilder().error(e.getResponseBodyAsString()).build();
+			}
 
-		return message.toString();
+			String orderId = storage.store(aid, response.getBody());
+			storage.moveNew(aid, orderId);
+
+			ResponseBuilder message = new ResponseBuilder();
+
+			message.normal("Submitted the order, order ID is ");
+			message.bold(orderId);
+			message.normal(". For further actions:\n");
+			message.normal(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody()));
+
+			return message.build();
+		});
 	}
 
 	@ShellMethod(key = { "order wait" }, value = "Waits for an order to be finished.")
-	public String waitForOrder(@ShellOption(defaultValue = "1000") String timeout, @ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws IOException {
-		OrderResponse tuple = storage.getLinks(id);
+	public AttributedString waitForOrder(@ShellOption(defaultValue = "1000") String timeout, @ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws Exception {
+		return executeWithCurrentAppId((aid) -> {
+			OrderResponse orderResponse = storage.readResponse(aid, id);
 
-		if (tuple == null) {
-			return "Please create and submit an order before waiting!";
-		}
+			if (orderResponse == null) {
+				return new ResponseBuilder().error("Please create and submit an order before waiting!").build();
+			}
 
-		ResponseEntity<OrderReport> response;
-		try {
-			response = restTemplate.getForEntity(tuple.getWaitLink() + "?timeout=" + timeout, OrderReport.class);
-		} catch (HttpStatusCodeException e) {
-			return e.getResponseBodyAsString();
-		}
+			ResponseEntity<OrderReport> response;
+			try {
+				response = restTemplate.getForEntity(orderResponse.getWaitLink() + "?timeout=" + timeout, OrderReport.class);
+			} catch (HttpStatusCodeException e) {
+				return new ResponseBuilder().error(e.getResponseBodyAsString()).build();
+			}
 
-		if (response.getStatusCode().equals(HttpStatus.OK) && response.hasBody()) {
-			storage.storeReport(id, response.getBody());
+			if (response.getStatusCode().equals(HttpStatus.OK) && response.hasBody()) {
+				storage.store(aid, response.getBody());
 
-			return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody());
-		} else {
-			return "The order is not finished, yet.";
-		}
+				return new ResponseBuilder().normal(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody())).build();
+			} else {
+				return new ResponseBuilder().bold("The order is not finished, yet.").build();
+			}
+		});
 	}
 
 	@ShellMethod(key = { "order report" }, value = "Gets the order report if available.")
-	public String getOrderReport(@ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws IOException {
-		OrderReport report = storage.getReport(id);
+	public AttributedString getOrderReport(@ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws Exception {
+		return executeWithCurrentAppId((aid) -> {
+			OrderReport report = storage.readReport(aid, id);
 
-		if (report == null) {
-			return waitForOrder("0", id);
-		} else {
-			return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(report);
-		}
+			if (report == null) {
+				return waitForOrder("0", id);
+			} else {
+				return new ResponseBuilder().normal(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(report)).build();
+			}
+		});
 	}
 
 	@ShellMethod(key = { "order clean" }, value = "Cleans the order storage.")
-	public String cleanOrders() throws IOException {
-		int num = storage.clean();
+	public AttributedString cleanOrders(@ShellOption(value = { "--current", "-c" }, defaultValue = "false") boolean cleanCurrent) throws Exception {
+		return executeWithCurrentAppId((aid) -> {
+			int num = storage.clean(aid, cleanCurrent);
 
-		return "Cleaned " + num + " orders.";
+			return new ResponseBuilder().normal("Deleted ").bold(num).normal(" orders.").build();
+		});
 	}
 
 	private Order initializeOrder() {
@@ -254,16 +271,6 @@ public class OrderCommands {
 		order.setSource(links);
 
 		return order;
-	}
-
-	private File storeAsNewOrder(Order order) throws JsonGenerationException, JsonMappingException, IOException {
-		Path ordersDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), ORDERS_DIR);
-		ordersDir.toFile().mkdirs();
-
-		File orderFile = ordersDir.resolve(NEW_ORDER_FILENAME).toFile();
-		mapper.writeValue(orderFile, order);
-
-		return orderFile;
 	}
 
 }

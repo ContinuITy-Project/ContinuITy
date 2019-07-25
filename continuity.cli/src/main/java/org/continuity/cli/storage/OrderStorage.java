@@ -2,130 +2,167 @@ package org.continuity.cli.storage;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.io.FileUtils;
 import org.continuity.api.entities.order.Order;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
+import org.continuity.api.rest.RestApi;
 import org.continuity.cli.config.PropertiesProvider;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.continuity.idpa.AppId;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
 
 public class OrderStorage {
 
 	public static final String ID_LATEST = "LATEST";
 
-	private static final String STORAGE_DIR = "orders";
+	private static final String FILENAME_ORDER = "order.yml";
 
-	private static final String ORDER_FILE = "order.yml";
+	private static final String FILENAME_RESPONSE = "response.yml";
 
-	private static final String LINKS_FILE = "links.yml";
+	private static final String FILENAME_REPORT = "report.yml";
 
-	private static final String REPORT_FILE = "report.yml";
+	private static final String FILENAME_NEW = "order-new.yml";
 
-	@Autowired
-	private PropertiesProvider propertiesProvider;
+	private final OrderDirectoryManager directory;
 
-	private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
+	private final ObjectMapper mapper;
 
-	private AtomicInteger counter = new AtomicInteger(1);
-
-	private String latest = null;
-
-	public String newOrder(Order order) throws JsonGenerationException, JsonMappingException, IOException {
-		String id = counter.getAndIncrement() + "-" + order.getGoal().toPrettyString() + "-" + order.getAppId();
-
-		File orderFile = getOrderDir(id).resolve(ORDER_FILE).toFile();
-		mapper.writeValue(orderFile, order);
-
-		latest = id;
-
-		return id;
+	public OrderStorage(PropertiesProvider properties, ObjectMapper mapper) {
+		this.directory = new OrderDirectoryManager("order", properties);
+		this.mapper = mapper;
 	}
 
-	public Order getOrder(String id) {
-		id = resolveLatest(id);
-		File orderFile = getOrderDir(id).resolve(ORDER_FILE).toFile();
-
-		try {
-			return mapper.readValue(orderFile, Order.class);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
+	public Path storeAsNew(AppId aid, Order order) throws IOException {
+		Path path = directory.getDir(aid, true).resolve(FILENAME_NEW);
+		mapper.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), order);
+		return path;
 	}
 
-	public void storeLinks(String id, OrderResponse links) throws JsonGenerationException, JsonMappingException, IOException {
-		id = resolveLatest(id);
-		File linksFile = getOrderDir(id).resolve(LINKS_FILE).toFile();
+	public Order readNew(AppId aid) throws IOException {
+		File file = directory.getDir(aid, false).resolve(FILENAME_NEW).toFile();
 
-		mapper.writeValue(linksFile, links);
-	}
-
-	public OrderResponse getLinks(String id) {
-		id = resolveLatest(id);
-		File linksFile = getOrderDir(id).resolve(LINKS_FILE).toFile();
-
-		try {
-			return mapper.readValue(linksFile, OrderResponse.class);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	public void storeReport(String id, OrderReport report) throws JsonGenerationException, JsonMappingException, IOException {
-		id = resolveLatest(id);
-		File reportFile = getOrderDir(id).resolve(REPORT_FILE).toFile();
-
-		mapper.writeValue(reportFile, report);
-	}
-
-	public OrderReport getReport(String id) {
-		id = resolveLatest(id);
-		File reportFile = getOrderDir(id).resolve(REPORT_FILE).toFile();
-
-		try {
-			return mapper.readValue(reportFile, OrderReport.class);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	public int clean() throws IOException {
-		int removedCount = 0;
-
-		for (File dir : Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), STORAGE_DIR).toFile().listFiles()) {
-			if (dir.isDirectory()) {
-				FileUtils.deleteDirectory(dir);
-				removedCount++;
-			}
-		}
-
-		return removedCount;
-	}
-
-	private Path getOrderDir(String id) {
-		Path orderDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), STORAGE_DIR, id);
-		orderDir.toFile().mkdirs();
-		return orderDir;
-	}
-
-	private String resolveLatest(String id) {
-		if (ID_LATEST.equals(id)) {
-			return latest;
+		if (file.exists()) {
+			return mapper.readValue(file, Order.class);
 		} else {
-			return id;
+			return null;
 		}
+	}
+
+	/**
+	 * Moves the new order to its appropriate folder. Assumes that the corresponding response has
+	 * already been stored using {@link #store(AppId, OrderResponse)}.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param orderId
+	 *            The order-id.
+	 * @throws IOException
+	 */
+	public void moveNew(AppId aid, String orderId) throws IOException {
+		Path rootDir = directory.getDir(aid, false);
+		Path dir = directory.getDir(aid, orderId, true);
+		Files.move(rootDir.resolve(FILENAME_NEW), dir.resolve(FILENAME_ORDER));
+	}
+
+	public Order readOrder(AppId aid, String orderId) throws IOException {
+		if (ID_LATEST.equals(orderId)) {
+			return readLatestOrder(aid);
+		}
+
+		Path path = directory.getDir(aid, orderId, false).resolve(FILENAME_ORDER);
+
+		if (path.toFile().exists()) {
+			return mapper.readValue(path.toFile(), Order.class);
+		} else {
+			return null;
+		}
+	}
+
+	public Order readLatestOrder(AppId aid) throws IOException {
+		Path dir = directory.getLatest(aid);
+
+		if (dir != null) {
+			return readOrder(aid, dir.getFileName().toString());
+		} else {
+			return null;
+		}
+	}
+
+	public String store(AppId aid, OrderResponse response) throws IOException {
+		String orderId = RestApi.Orchestrator.Orchestration.WAIT.parsePathParameters(response.getWaitLink()).get(0);
+		Path dir = directory.getFreshDir(aid, orderId);
+
+		mapper.writeValue(dir.resolve(FILENAME_RESPONSE).toFile(), response);
+
+		return orderId;
+	}
+
+	public OrderResponse readResponse(AppId aid, String orderId) throws IOException {
+		if (ID_LATEST.equals(orderId)) {
+			return readLatestResponse(aid);
+		}
+
+		Path path = directory.getDir(aid, orderId, false).resolve(FILENAME_RESPONSE);
+
+		if (path.toFile().exists()) {
+			return mapper.readValue(path.toFile(), OrderResponse.class);
+		} else {
+			return null;
+		}
+	}
+
+	public OrderResponse readLatestResponse(AppId aid) throws IOException {
+		Path dir = directory.getLatest(aid);
+
+		if (dir != null) {
+			return readResponse(aid, dir.getFileName().toString());
+		} else {
+			return null;
+		}
+	}
+
+	public void store(AppId aid, OrderReport report) throws IOException {
+		String orderId = report.getOrderId();
+		Path dir = directory.getDir(aid, orderId, true);
+
+		mapper.writeValue(dir.resolve(FILENAME_REPORT).toFile(), report);
+	}
+
+	public OrderReport readReport(AppId aid, String orderId) throws IOException {
+		if (ID_LATEST.equals(orderId)) {
+			return readLatestReport(aid);
+		}
+
+		Path path = directory.getDir(aid, orderId, false).resolve(FILENAME_REPORT);
+
+		if (path.toFile().exists()) {
+			return mapper.readValue(path.toFile(), OrderReport.class);
+		} else {
+			return null;
+		}
+	}
+
+	public OrderReport readLatestReport(AppId aid) throws IOException {
+		Path dir = directory.getLatest(aid);
+
+		if (dir != null) {
+			return readReport(aid, dir.getFileName().toString());
+		} else {
+			return null;
+		}
+	}
+
+	public int clean(AppId aid, boolean includeCurrent) {
+		int num = directory.clearArchive(aid);
+
+		if (includeCurrent) {
+			num += directory.clearCurrent(aid);
+		}
+
+		return num;
 	}
 
 }

@@ -2,6 +2,7 @@ package org.continuity.cli.commands;
 
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
+import org.continuity.cli.storage.OrderStorage;
 import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.Availability;
@@ -87,6 +88,17 @@ public class GenericShorthands {
 		return contextManager.getAvailablility("open");
 	}
 
+	@ShellMethod(key = { "edit" }, value = "Shorthand for '<context> edit'. Available in 'order'.")
+	@ShellMethodAvailability({ "editAvailability" })
+	public AttributedString editOrder(@ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws Throwable {
+		Shorthand shorthand = contextManager.getShorthand("open");
+		return shorthand.execute(id);
+	}
+
+	public Availability editAvailability() {
+		return contextManager.getAvailablility("edit");
+	}
+
 	@ShellMethod(key = { "home" }, value = "Shorthand for '<context> home'. Available in 'jmeter'.")
 	@ShellMethodAvailability({ "homeAvailability" })
 	public AttributedString home(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String path) throws Throwable {
@@ -162,9 +174,9 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "clean" }, value = "Shorthand for '<context> clean'. Available in 'order'.")
 	@ShellMethodAvailability({ "cleanAvailability" })
-	public AttributedString clear() throws Throwable {
+	public AttributedString clear(@ShellOption(value = { "--current", "-c" }, defaultValue = "false") boolean cleanCurrent) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("clean");
-		return shorthand.execute();
+		return shorthand.execute(cleanCurrent);
 	}
 
 	public Availability cleanAvailability() {

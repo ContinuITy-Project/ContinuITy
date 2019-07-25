@@ -1,7 +1,6 @@
 package org.continuity.cli.commands;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,13 +13,12 @@ import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
+import org.continuity.cli.storage.IdpaStorage;
 import org.continuity.cli.utils.ResponseBuilder;
 import org.continuity.commons.accesslogs.UnifiedCsvFromAccessLogsExtractor;
 import org.continuity.commons.utils.FileUtils;
 import org.continuity.commons.utils.WebUtils;
-import org.continuity.idpa.AppId;
 import org.continuity.idpa.application.Application;
-import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.jline.utils.AttributedString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +35,7 @@ import org.springframework.web.client.RestTemplate;
  *
  */
 @ShellComponent
-public class DataCommands {
+public class DataCommands extends AbstractCommands {
 
 	private static final String CONTEXT_NAME = "data";
 
@@ -46,16 +44,22 @@ public class DataCommands {
 			new Shorthand("upload", this, "upload", String.class, String.class, String.class, String.class, boolean.class) //
 	);
 
-	@Autowired
-	private RestTemplate restTemplate;
+	private final RestTemplate restTemplate;
+
+	private final PropertiesProvider propertiesProvider;
+
+	private final CliContextManager contextManager;
+
+	private final IdpaStorage idpaStorage;
 
 	@Autowired
-	private PropertiesProvider propertiesProvider;
-
-	@Autowired
-	private CliContextManager contextManager;
-
-	private final IdpaYamlSerializer<Application> appSerializer = new IdpaYamlSerializer<>(Application.class);
+	public DataCommands(CliContextManager contextManager, RestTemplate restTemplate, PropertiesProvider propertiesProvider, IdpaStorage idpaStorage) {
+		super(contextManager);
+		this.restTemplate = restTemplate;
+		this.propertiesProvider = propertiesProvider;
+		this.contextManager = contextManager;
+		this.idpaStorage = idpaStorage;
+	}
 
 	@ShellMethod(key = { CONTEXT_NAME }, value = "Goes to the 'accesslogs' context so that the shorthands can be used.")
 	public AttributedString goToAccesslogsContext(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE, help = "[for internal use]") String unknown) {
@@ -70,57 +74,57 @@ public class DataCommands {
 	@ShellMethod(key = { "data upload" }, value = "Uploads data of a certain type (open-xtrace, access-logs, csv) for later use.")
 	public AttributedString upload(@ShellOption(help = "Location where the data can be found. Can be a URL or a file path. A file name can contain UNIX-like wildcards.") String path,
 			@ShellOption(defaultValue = "open-xtrace") String type, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
-			@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String version, @ShellOption(value = { "--finish", "-f" }, defaultValue = "false") boolean finish) throws IOException {
-		MeasurementDataType mType = MeasurementDataType.fromPrettyString(type);
+			@ShellOption(value = "--version", defaultValue = Shorthand.DEFAULT_VALUE) String passedVersion, @ShellOption(value = { "--finish", "-f" }, defaultValue = "false") boolean finish)
+			throws Exception {
 
-		if (mType == null) {
-			return new ResponseBuilder().error("Unknown measurement data type ").boldError(type).error("!").build();
-		}
+		return executeWithAppIdAndVersion(appId, passedVersion, (aid, version) -> {
+			MeasurementDataType mType = MeasurementDataType.fromPrettyString(type);
 
-		AppId aid = contextManager.getAppIdOrFail(appId);
-		version = contextManager.getVersionOrFail(version);
-
-		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
-
-		ResponseEntity<String> response;
-		ResponseBuilder answer = new ResponseBuilder();
-
-		if (path.startsWith("http")) {
-			MeasurementDataSpec spec = new MeasurementDataSpec();
-			spec.setLink(path);
-			spec.setType(mType);
-
-			try {
-				response = restTemplate.postForEntity(
-						RestApi.Cobra.MeasurementData.PUSH_LINK.viaOrchestrator().requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(), spec,
-						String.class);
-			} catch (HttpStatusCodeException e) {
-				response = new ResponseEntity<String>(e.getResponseBodyAsString(), e.getStatusCode());
+			if (mType == null) {
+				return new ResponseBuilder().error("Unknown measurement data type ").boldError(type).error("!").build();
 			}
 
-			appendAnswer(answer, mType, path, response, true);
-		} else {
-			boolean first = true;
+			String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
+			String url = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
 
-			for (File file : FileUtils.getAllFilesMatchingWildcards(Paths.get(workingDir).resolve(path))) {
-				String content = new String(Files.readAllBytes(file.toPath()));
+			ResponseEntity<String> response;
+			ResponseBuilder answer = new ResponseBuilder();
+
+			if (path.startsWith("http")) {
+				MeasurementDataSpec spec = new MeasurementDataSpec();
+				spec.setLink(path);
+				spec.setType(mType);
 
 				try {
 					response = restTemplate.postForEntity(
-							RestApi.Cobra.MeasurementData.PUSH_FOR_TYPE.get(mType).viaOrchestrator().requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(),
-							content,
+							RestApi.Cobra.MeasurementData.PUSH_LINK.viaOrchestrator().requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(), spec,
 							String.class);
 				} catch (HttpStatusCodeException e) {
 					response = new ResponseEntity<String>(e.getResponseBodyAsString(), e.getStatusCode());
 				}
 
-				appendAnswer(answer, mType, file.toString(), response, first);
-				first = false;
-			}
-		}
+				appendAnswer(answer, mType, path, response, true);
+			} else {
+				boolean first = true;
 
-		return answer.build();
+				for (File file : FileUtils.getAllFilesMatchingWildcards(Paths.get(workingDir).resolve(path))) {
+					String content = new String(Files.readAllBytes(file.toPath()));
+
+					try {
+						response = restTemplate.postForEntity(
+								RestApi.Cobra.MeasurementData.PUSH_FOR_TYPE.get(mType).viaOrchestrator().requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(),
+								content, String.class);
+					} catch (HttpStatusCodeException e) {
+						response = new ResponseEntity<String>(e.getResponseBodyAsString(), e.getStatusCode());
+					}
+
+					appendAnswer(answer, mType, file.toString(), response, first);
+					first = false;
+				}
+			}
+
+			return answer.build();
+		});
 	}
 
 	private void appendAnswer(ResponseBuilder answer, MeasurementDataType mType, String path, ResponseEntity<String> response, boolean first) {
@@ -145,33 +149,22 @@ public class DataCommands {
 	}
 
 	@ShellMethod(key = { "data unify" }, value = "Creates a unified CSV from access logs holding the required information for session logs creation based on an application model.")
-	public String createUnifiedCsv(String pathToAccessLogs, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws IOException {
-		AppId aid = contextManager.getAppIdOrFail(appId);
+	public AttributedString createUnifiedCsv(String pathToAccessLogs, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws Exception {
+		return executeWithAppId(appId, aid -> {
+			Application application = idpaStorage.readApplication(aid);
 
-		Application application = readApplicationModel(aid);
+			String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
+			Path accessLogsPath = Paths.get(workingDir).resolve(pathToAccessLogs);
+			Path outputPath = accessLogsPath.getParent().resolve(accessLogsPath.getFileName() + "-unified.csv");
 
-		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		Path accessLogsPath = Paths.get(workingDir).resolve(pathToAccessLogs);
-		Path outputPath = accessLogsPath.getParent().resolve(accessLogsPath.getFileName() + "-unified.csv");
+			UnifiedCsvFromAccessLogsExtractor extractor = new UnifiedCsvFromAccessLogsExtractor(application, accessLogsPath, outputPath);
+			extractor.consume();
 
-		UnifiedCsvFromAccessLogsExtractor extractor = new UnifiedCsvFromAccessLogsExtractor(application, accessLogsPath, outputPath);
-		extractor.consume();
+			String ignored = extractor.getIgnoredRequests().stream().collect(Collectors.joining("\n"));
 
-		String ignored = extractor.getIgnoredRequests().stream().collect(Collectors.joining("\n"));
-
-		return new StringBuilder().append("Created a unified CSV and stored it to ").append(outputPath.toAbsolutePath())
-				.append("\nThe following requests have been ignored because the could not be mapped to an endpoint:\n").append(ignored).toString();
-	}
-
-	private Application readApplicationModel(AppId aid) throws IOException {
-		String workingDir = propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR);
-		File applicationFile = new File(workingDir + "/application-" + aid + ".yml");
-
-		if (applicationFile.exists()) {
-			return appSerializer.readFromYaml(applicationFile);
-		} else {
-			return null;
-		}
+			return new ResponseBuilder().normal("Created a unified CSV and stored it to ").normal(outputPath.toAbsolutePath())
+					.normal("\nThe following requests have been ignored because the could not be mapped to an endpoint:\n").normal(ignored).build();
+		});
 	}
 
 }
