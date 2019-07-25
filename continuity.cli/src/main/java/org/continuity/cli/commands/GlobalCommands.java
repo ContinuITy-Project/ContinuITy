@@ -12,6 +12,7 @@ import org.continuity.api.rest.RestEndpoint;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
+import org.continuity.cli.utils.ResponseBuilder;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStyle;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,6 @@ import org.springframework.shell.standard.ShellOption;
 import org.springframework.shell.standard.commands.Quit;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -32,21 +32,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  */
 @ShellComponent
-public class GlobalCommands implements Quit.Command {
+public class GlobalCommands extends AbstractCommands implements Quit.Command {
 
 	private static final String DEFAULT_VALUE = "$DEFAULT$";
 
-	@Autowired
-	private PropertiesProvider propertiesProvider;
+	private final PropertiesProvider propertiesProvider;
+
+	private final CliContextManager contextManager;
+
+	private final RestTemplate restTemplate;
+
+	private final ObjectMapper mapper;
 
 	@Autowired
-	private CliContextManager contextManager;
-
-	@Autowired
-	private RestTemplate restTemplate;
-
-	@Autowired
-	private ObjectMapper mapper;
+	public GlobalCommands(CliContextManager contextManager, PropertiesProvider propertiesProvider, RestTemplate restTemplate, ObjectMapper mapper) {
+		super(contextManager);
+		this.propertiesProvider = propertiesProvider;
+		this.contextManager = contextManager;
+		this.restTemplate = restTemplate;
+		this.mapper = mapper;
+	}
 
 	@ShellMethod(key = { "props" }, value = "Shows the content of the current properties.")
 	public String loadProperties() throws FileNotFoundException, IOException {
@@ -79,14 +84,11 @@ public class GlobalCommands implements Quit.Command {
 	}
 
 	@ShellMethod(key = { "get" }, value = "Gets an artifact.")
-	public String get(String link) throws JsonProcessingException {
-		ResponseEntity<JsonNode> response = restTemplate.getForEntity(RestEndpoint.urlViaOrchestrator(link, propertiesProvider.getProperty(PropertiesProvider.KEY_URL)), JsonNode.class);
-
-		if (!response.getStatusCode().is2xxSuccessful()) {
-			return "Could not access the link! Response code is " + response.getStatusCode();
-		}
-
-		return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody());
+	public AttributedString get(String link) throws Exception {
+		return execute(() -> {
+			ResponseEntity<JsonNode> response = restTemplate.getForEntity(RestEndpoint.urlViaOrchestrator(link, propertiesProvider.getProperty(PropertiesProvider.KEY_URL)), JsonNode.class);
+			return new ResponseBuilder().normal(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody())).build();
+		});
 	}
 
 	@ShellMethod(key = { ".." }, value = "Goes one context up.")
