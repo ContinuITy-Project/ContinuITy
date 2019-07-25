@@ -65,6 +65,49 @@ public class RestEndpoint {
 	}
 
 	/**
+	 * Redirects a URL targeting a backend service via the orchestrator.
+	 *
+	 * @param url
+	 *            The URL targeting the backend service.
+	 * @param orchestratorHost
+	 *            The host of the orchestrator service.
+	 * @return A URL targeting the backend service via the orchestrator.
+	 */
+	public static String urlViaOrchestrator(String url, String orchestratorHost) {
+		String protocol = "http://";
+
+		if (url.startsWith("http://")) {
+			url = url.substring(7);
+		} else if (url.startsWith("https://")) {
+			protocol = "https://";
+			url = url.substring(8);
+		}
+
+		return new StringBuilder().append(protocol).append(orchestratorHost).append("/").append(url).toString();
+	}
+
+	/**
+	 * Redirects a URL targeting a backend service via the orchestrator, using
+	 * {@link RestApi.Orchestrator#SERVICE_NAME}.
+	 *
+	 * @param url
+	 *            The URL targeting the backend service.
+	 * @return A URL targeting the backend service via the orchestrator.
+	 */
+	public static String urlViaOrchestrator(String url) {
+		return urlViaOrchestrator(url, RestApi.Orchestrator.SERVICE_NAME);
+	}
+
+	/**
+	 * Redirects this endpoint via the orchestrator service.
+	 *
+	 * @return An endpoint indirectly targeting the original endpoint via the orchestrator.
+	 */
+	public RestEndpoint viaOrchestrator() {
+		return of(RestApi.Orchestrator.SERVICE_NAME, this.serviceName, genericPath(), this.method);
+	}
+
+	/**
 	 * Returns whether this endpoint has a root element.
 	 *
 	 * @return {@code true} if it has a root element.

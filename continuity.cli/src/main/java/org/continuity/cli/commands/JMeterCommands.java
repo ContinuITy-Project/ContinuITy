@@ -15,7 +15,7 @@ import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.order.LoadTestType;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.rest.RestApi;
-import org.continuity.api.rest.RestApi.Orchestrator.Loadtest;
+import org.continuity.api.rest.RestEndpoint;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
@@ -106,23 +106,24 @@ public class JMeterCommands {
 		if (Shorthand.DEFAULT_VALUE.equals(loadTestLink)) {
 			OrderReport report = storage.getReport(OrderStorage.ID_LATEST);
 
-			if ((report == null) || (report.getCreatedArtifacts() == null) || (report.getCreatedArtifacts().getLoadTestLinks().getLink() == null)) {
+			if ((report == null) || (report.getArtifacts() == null) || (report.getArtifacts().getLoadTestLinks().getLink() == null)) {
 				return "Cannot download the JMeter test of the latest order. The link is missing!";
-			} else if (report.getCreatedArtifacts().getLoadTestLinks().getType() != LoadTestType.JMETER) {
-				return "Cannot download the JMeter test of the latest order. The link points to a " + report.getCreatedArtifacts().getLoadTestLinks().getType().toPrettyString() + " test!";
+			} else if (report.getArtifacts().getLoadTestLinks().getType() != LoadTestType.JMETER) {
+				return "Cannot download the JMeter test of the latest order. The link points to a " + report.getArtifacts().getLoadTestLinks().getType().toPrettyString() + " test!";
 			} else {
-				loadTestLink = report.getCreatedArtifacts().getLoadTestLinks().getLink();
+				loadTestLink = report.getArtifacts().getLoadTestLinks().getLink();
 			}
 		}
 
-		ResponseEntity<JMeterTestPlanBundle> response = restTemplate.getForEntity(loadTestLink, JMeterTestPlanBundle.class);
+		ResponseEntity<JMeterTestPlanBundle> response = restTemplate.getForEntity(RestEndpoint.urlViaOrchestrator(loadTestLink, propertiesProvider.getProperty(PropertiesProvider.KEY_URL)),
+				JMeterTestPlanBundle.class);
 
 		if (!response.getStatusCode().is2xxSuccessful()) {
 			return response.toString();
 		}
 
-		List<String> params = Loadtest.GET.parsePathParameters(loadTestLink);
-		Path testPlanDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), params.get(1));
+		List<String> params = RestApi.JMeter.TestPlan.GET.parsePathParameters(loadTestLink);
+		Path testPlanDir = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR), params.get(0));
 		testPlanDir.toFile().mkdirs();
 
 		JMeterTestPlanBundle testPlanBundle = response.getBody();
@@ -172,7 +173,7 @@ public class JMeterCommands {
 		String continuityHost = propertiesProvider.getProperty(PropertiesProvider.KEY_URL);
 
 		ResponseEntity<LinkExchangeModel> response = restTemplate.postForEntity(
-				RestApi.Orchestrator.Loadtest.POST.requestUrl("jmeter", aid).withHost(continuityHost).withQuery("annotate", Boolean.toString(annotate)).get(), bundle,
+				RestApi.JMeter.TestPlan.POST.viaOrchestrator().requestUrl("jmeter", aid).withHost(continuityHost).withQuery("annotate", Boolean.toString(annotate)).get(), bundle,
 				LinkExchangeModel.class);
 
 		if (response.getStatusCode().is2xxSuccessful()) {

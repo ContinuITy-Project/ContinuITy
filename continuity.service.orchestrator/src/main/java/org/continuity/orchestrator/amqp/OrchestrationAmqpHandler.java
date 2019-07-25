@@ -104,7 +104,7 @@ public class OrchestrationAmqpHandler {
 	private void storeToTestingContext(OrderReport report, String recipeId, AppId aid) {
 		if ((report.getTestingContext() != null) && !report.getTestingContext().isEmpty()) {
 			try {
-				testingContextStorage.store(aid, report.getTestingContext(), report.getInternalArtifacts());
+				testingContextStorage.store(aid, report.getTestingContext(), report.getArtifacts());
 			} catch (IOException e) {
 				LOGGER.error("{} Error when storing the testing context!", LoggingUtils.formatPrefix(report.getOrderId(), recipeId));
 				LOGGER.error("Exception:", e);

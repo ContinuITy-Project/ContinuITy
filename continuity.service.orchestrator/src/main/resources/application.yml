@@ -21,14 +21,7 @@ zuul:
     idpa: /idpa/**
     jmeter: /jmeter/**
     benchflow: /benchflow/**
-    cobra_sessions:
-      path: /sessions/**
-      serviceId: cobra
-      stripPrefix: false
-    cobra_measurement-data:
-      path: /measurement-data/**
-      serviceId: cobra
-      stripPrefix: false
+    cobra: /cobra/**
     request-rates: /request-rates/**
     wessbas: /wessbas/**
 hystrix:
