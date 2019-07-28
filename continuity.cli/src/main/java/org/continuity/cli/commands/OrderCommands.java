@@ -2,14 +2,15 @@ package org.continuity.cli.commands;
 
 import java.awt.Desktop;
 import java.text.ParseException;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.apache.commons.lang.time.DateUtils;
-import org.continuity.api.entities.links.LinkExchangeModel;
-import org.continuity.api.entities.links.SessionsStatus;
 import org.continuity.api.entities.order.LoadTestType;
 import org.continuity.api.entities.order.Order;
 import org.continuity.api.entities.order.OrderGoal;
@@ -28,11 +29,22 @@ import org.continuity.cli.manage.Shorthand;
 import org.continuity.cli.storage.OrderStorage;
 import org.continuity.cli.utils.ResponseBuilder;
 import org.continuity.commons.utils.WebUtils;
-import org.continuity.dsl.description.ContextParameter;
-import org.continuity.dsl.description.ForecastInput;
-import org.continuity.dsl.description.ForecastOptions;
-import org.continuity.dsl.description.IntensityCalculationInterval;
-import org.continuity.dsl.description.Measurement;
+import org.continuity.dsl.StringOrNumeric;
+import org.continuity.dsl.adjustment.IntensityIncreasedAdjustment;
+import org.continuity.dsl.adjustment.IntensityMultipliedAdjustment;
+import org.continuity.dsl.context.Context;
+import org.continuity.dsl.context.TimeSpecification;
+import org.continuity.dsl.context.WorkloadAdjustment;
+import org.continuity.dsl.context.WorkloadInfluence;
+import org.continuity.dsl.context.influence.FixedInfluence;
+import org.continuity.dsl.context.influence.IncreasedInfluence;
+import org.continuity.dsl.context.influence.IsAbsentInfluence;
+import org.continuity.dsl.context.influence.MultipliedInfluence;
+import org.continuity.dsl.context.influence.OccursInfluence;
+import org.continuity.dsl.context.timespec.AbsentSpecification;
+import org.continuity.dsl.context.timespec.AfterSpecification;
+import org.continuity.dsl.context.timespec.BeforeSpecification;
+import org.continuity.dsl.context.timespec.PlusSpecification;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.jline.utils.AttributedString;
@@ -219,7 +231,7 @@ public class OrderCommands extends AbstractCommands {
 	private Order initializeOrder() {
 		Order order = new Order();
 
-		order.setMode(OrderMode.PAST_SESSIONS);
+		order.setMode(OrderMode.PAST_WORKLOAD);
 
 		if (contextManager.getCurrentAppId() == null) {
 			order.setAppId(AppId.fromString("APP_ID"));
@@ -229,12 +241,10 @@ public class OrderCommands extends AbstractCommands {
 
 		order.setServices(Arrays.asList(ServiceSpecification.fromString("SERVICE_OVERRIDING_APP_ID")));
 
-		String version;
+		String version = contextManager.getCurrentVersion();
 
-		if (contextManager.getCurrentVersion() == null) {
+		if (version == null) {
 			version = "v0.0.0";
-		} else {
-			version = contextManager.getCurrentVersion();
 		}
 
 		try {
@@ -249,28 +259,67 @@ public class OrderCommands extends AbstractCommands {
 		options.setRampup(1);
 		options.setLoadTestType(LoadTestType.JMETER);
 		options.setWorkloadModelType(WorkloadModelType.WESSBAS);
-		options.setIntensityCalculationInterval(IntensityCalculationInterval.MINUTE);
 		options.setTailoringApproach(TailoringApproach.LOG_BASED);
+		options.setForecastApproach("Telescope");
 		order.setOptions(options);
 
-		Measurement measurement = new Measurement("Name of measurement containing contextual data");
-		List<ContextParameter> covariates = new LinkedList<ContextParameter>();
-		covariates.add(measurement);
-		ForecastOptions forecastOpt = new ForecastOptions("2019/01/01 00:00:00", IntensityCalculationInterval.HOUR, "telescope or prophet", "http://localhost:8086");
-		ForecastInput forecastInput = new ForecastInput(covariates, forecastOpt);
-		order.setForecastInput(forecastInput);
-
-		LinkExchangeModel links = new LinkExchangeModel();
-		links.getTraceLinks().setFrom(DateUtils.addHours(new Date(), 1)).setTo(new Date());
-		links.getSessionLogsLinks().setSimpleLink("SIMPLE_SESSION_LOGS_LINK");
-		links.getSessionLogsLinks().setExtendedLink("EXTENDED_SESSION_LOGS_LINK");
-		links.getSessionsBundlesLinks().setLink("SESSIONS_BUNDLES_LINKS").setStatus(SessionsStatus.NOT_CHANGED);
-		links.getForecastLinks().setLink("FORECAST_LINKS");
-		links.getWorkloadModelLinks().setType(WorkloadModelType.WESSBAS).setLink("WORKLOAD_MODEL_LINK");
-		links.getLoadTestLinks().setType(LoadTestType.JMETER).setLink("LOADTEST_LINK");
-		order.setSource(links);
+		order.setContext(createContext());
 
 		return order;
+	}
+
+	private Context createContext() {
+		Context context = new Context();
+
+		List<TimeSpecification> when = new ArrayList<>();
+
+		AbsentSpecification absent = new AbsentSpecification();
+		absent.setWhat("black-friday");
+		when.add(absent);
+
+		AfterSpecification after = new AfterSpecification();
+		after.setDate(new Date());
+		when.add(after);
+
+		PlusSpecification plus = new PlusSpecification();
+		plus.setDuration(Duration.ofHours(1));
+		when.add(plus);
+
+		context.setWhen(when);
+
+		Map<String, List<WorkloadInfluence>> influences = new HashMap<>();
+		FixedInfluence fixed = new FixedInfluence();
+		fixed.setValue(new StringOrNumeric("sunny"));
+		influences.put("weather", Collections.singletonList(fixed));
+
+		MultipliedInfluence multiplied = new MultipliedInfluence();
+		multiplied.setWith(1.3);
+		IncreasedInfluence increased = new IncreasedInfluence();
+		increased.setBy(5);
+		influences.put("temperature", Arrays.asList(multiplied, increased));
+
+		OccursInfluence occurs = new OccursInfluence();
+		IsAbsentInfluence isAbsent = new IsAbsentInfluence();
+		BeforeSpecification absentBefore = new BeforeSpecification();
+		absentBefore.setDate(new Date());
+		isAbsent.setWhen(Collections.singletonList(absentBefore));
+		influences.put("outage", Arrays.asList(occurs, isAbsent));
+
+		context.setInfluencing(influences);
+
+		List<WorkloadAdjustment> adjustments = new ArrayList<>();
+		IntensityMultipliedAdjustment intMultiplied = new IntensityMultipliedAdjustment();
+		intMultiplied.setWith(1.5);
+		adjustments.add(intMultiplied);
+
+		IntensityIncreasedAdjustment intIncreased = new IntensityIncreasedAdjustment();
+		intIncreased.setBy(200);
+		intIncreased.setGroup(2);
+		adjustments.add(intIncreased);
+
+		context.setAdjusted(adjustments);
+
+		return context;
 	}
 
 }

@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
-import org.continuity.dsl.description.ForecastInput;
+import org.continuity.dsl.context.Context;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
@@ -38,7 +38,7 @@ public class TaskDescription {
 
 	private OrderOptions options;
 
-	private ForecastInput forecastInput;
+	private Context context;
 
 	public String getTaskId() {
 		return taskId;
@@ -96,12 +96,12 @@ public class TaskDescription {
 		this.options = options;
 	}
 
-	public ForecastInput getForecastInput() {
-		return forecastInput;
+	public Context getContext() {
+		return context;
 	}
 
-	public void setForecastInput(ForecastInput forecastInput) {
-		this.forecastInput = forecastInput;
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 	/**

@@ -13,8 +13,6 @@ import java.util.stream.Collectors;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionRequest;
 import org.continuity.cobra.entities.TraceRecord;
-import org.continuity.cobra.extractor.RequestTailorer;
-import org.continuity.cobra.extractor.SessionUpdater;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.application.Application;
@@ -74,7 +72,7 @@ public class ModularizedOPENxtraceSessionLogsExtractorTest {
 
 		tailorerWithPrePostProcessing = new RequestTailorer(aid, version, restTemplate, true);
 		tailorerWithoutPrePostProcessing = new RequestTailorer(aid, version, restTemplate, false);
-		updater = new SessionUpdater(version, services, Long.MAX_VALUE, true);
+		updater = new SessionUpdater(version, Long.MAX_VALUE, true);
 	}
 
 

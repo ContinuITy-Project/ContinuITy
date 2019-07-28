@@ -7,12 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 
 import org.continuity.api.entities.order.OrderGoal;
 import org.continuity.api.entities.order.OrderMode;
-
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Manages possible cycles through the pipeline.
@@ -28,8 +27,7 @@ public class OrderCycleManager {
 	 * Initializes the manager by defining the possible cycles.
 	 */
 	public OrderCycleManager() {
-		cycle(OrderMode.PAST_SESSIONS, OrderGoal.CREATE_SESSION_LOGS, OrderGoal.CREATE_WORKLOAD_MODEL, OrderGoal.CREATE_LOAD_TEST, OrderGoal.EXECUTE_LOAD_TEST);
-		cycle(OrderMode.PAST_REQUESTS, OrderGoal.CREATE_WORKLOAD_MODEL, OrderGoal.CREATE_LOAD_TEST, OrderGoal.EXECUTE_LOAD_TEST);
+		cycle(OrderMode.PAST_WORKLOAD, OrderGoal.CREATE_SESSION_LOGS, OrderGoal.CREATE_WORKLOAD_MODEL, OrderGoal.CREATE_LOAD_TEST, OrderGoal.EXECUTE_LOAD_TEST);
 		cycle(OrderMode.FORECASTED_WORKLOAD, OrderGoal.CREATE_SESSION_LOGS, OrderGoal.CREATE_BEHAVIOR_MIX, OrderGoal.CREATE_FORECAST, OrderGoal.CREATE_WORKLOAD_MODEL, OrderGoal.CREATE_LOAD_TEST, OrderGoal.EXECUTE_LOAD_TEST);
 	}
 

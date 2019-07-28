@@ -20,7 +20,7 @@ import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.MeasurementDataSpec;
-import org.continuity.api.entities.config.session.logs.CobraConfiguration;
+import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.api.rest.RestApi;
 import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.converter.AccessLogsToOpenXtraceConverter;
