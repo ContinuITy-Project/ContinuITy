@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.continuity.api.entities.config.ServiceConfiguration;
-import org.continuity.api.entities.config.session.logs.CobraConfiguration;
+import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.idpa.AppId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

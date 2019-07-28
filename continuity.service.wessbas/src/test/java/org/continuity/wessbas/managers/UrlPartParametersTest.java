@@ -43,7 +43,7 @@ public class UrlPartParametersTest {
 		LinkExchangeModel  source = new LinkExchangeModel();
 		source.getSessionLogsLinks().setExtendedLink("");
 		task.setSource(source);
-		WessbasBundle bundle = manager.runPipeline(task, null);
+		WessbasBundle bundle = manager.runPipeline(task, 60000000000L);
 
 		AnnotationFromWessbasExtractor extractor = new AnnotationFromWessbasExtractor(bundle.getWorkloadModel());
 		Application systemModel = extractor.extractSystemModel();

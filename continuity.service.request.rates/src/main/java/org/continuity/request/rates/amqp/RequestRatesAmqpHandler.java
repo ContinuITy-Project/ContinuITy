@@ -7,16 +7,15 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.continuity.api.amqp.AmqpApi;
-import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.TraceLinks;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.report.TaskReport;
-import org.continuity.api.rest.RequestBuilder;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.openxtrace.OpenXtraceTracer;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.utils.TailoringUtils;
+import org.continuity.commons.utils.WebUtils;
 import org.continuity.idpa.application.Application;
 import org.continuity.request.rates.config.RabbitMqConfig;
 import org.continuity.request.rates.entities.RequestRecord;
@@ -71,19 +70,10 @@ public class RequestRatesAmqpHandler {
 		TaskReport report;
 		TraceLinks link = task.getSource().getTraceLinks();
 
-		RequestBuilder reqBuilder;
-
-		if (task.getVersion() == null) {
-			reqBuilder = RestApi.Cobra.MeasurementData.GET.requestUrl(task.getAppId());
-		} else {
-			reqBuilder = RestApi.Cobra.MeasurementData.GET_VERSION.requestUrl(task.getAppId(), task.getVersion());
-		}
-
 		LOGGER.info("Task {}: Processing OPEN.xtrace data...", task.getTaskId());
 
 		Iterable<Trace> traces = OPENxtraceUtils
-				.getOPENxtraces(reqBuilder.withQueryIfNotEmpty("from", ApiFormats.formatOrNull(link.getFrom())).withQueryIfNotEmpty("to", ApiFormats.formatOrNull(link.getTo())).get(),
-						restTemplate);
+				.getOPENxtraces(WebUtils.addProtocolIfMissing(link.getLink()), restTemplate);
 		LOGGER.info("Task {}: Retrieved OPEN.xtrace data.", task.getTaskId());
 
 		List<ServiceSpecification> services = task.getEffectiveServices();

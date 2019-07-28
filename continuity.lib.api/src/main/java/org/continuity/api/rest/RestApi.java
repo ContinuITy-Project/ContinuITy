@@ -649,6 +649,27 @@ public class RestApi {
 
 		}
 
+		public static class Context {
+
+			public static final String ROOT = "/context";
+
+			/** {@value #ROOT}/{app-id:.+} */
+			public static final RestEndpoint PUSH = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH, RequestMethod.POST);
+
+			private Context() {
+			}
+
+			public static class Paths {
+
+				public static final String PUSH = "/{app-id:.+}";
+
+				private Paths() {
+				}
+
+			}
+
+		}
+
 		public static class BehaviorModel {
 
 			public static final String ROOT = "/behavior-model";

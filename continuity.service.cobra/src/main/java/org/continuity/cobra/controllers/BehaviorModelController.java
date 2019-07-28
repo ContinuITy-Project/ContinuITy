@@ -74,7 +74,7 @@ public class BehaviorModelController {
 		List<TraceRecord> traces = elasticManager.readTraceRecords(aid, rootEndpoint, description.getSessionIds());
 
 		RequestTailorer tailorer = new RequestTailorer(aid, version, restTemplate, includePrePost);
-		SessionUpdater updater = new SessionUpdater(version, description.getTailoring(), Long.MAX_VALUE, true);
+		SessionUpdater updater = new SessionUpdater(version, Long.MAX_VALUE, true);
 		SessionsToMarkovChainAggregator aggregator = new SessionsToMarkovChainAggregator();
 
 		List<SessionRequest> requests = tailorer.tailorTraces(services, traces);

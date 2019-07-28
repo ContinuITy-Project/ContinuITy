@@ -14,8 +14,6 @@ import org.continuity.api.entities.artifact.SessionsBundlePack;
 import org.continuity.api.entities.artifact.SimplifiedSession;
 import org.continuity.commons.utils.IntensityCalculationUtils;
 import org.continuity.commons.utils.WebUtils;
-import org.continuity.dsl.description.ForecastInput;
-import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.influxdb.BatchOptions;
@@ -42,7 +40,8 @@ public class IntensitiesPipelineManager {
 
 	private AppId aid;
 
-	private ForecastInput forecastInput;
+	// TODO: change to Duration
+	private long interval;
 
 	private Pair<VersionOrTimestamp, Integer> dateAndAmountOfUserGroups;
 
@@ -67,11 +66,11 @@ public class IntensitiesPipelineManager {
 	/**
 	 * Constructor.
 	 */
-	public IntensitiesPipelineManager(RestTemplate restTemplate, InfluxDB influxDb, AppId aid, ForecastInput context) {
+	public IntensitiesPipelineManager(RestTemplate restTemplate, InfluxDB influxDb, AppId aid, long interval) {
 		this.restTemplate = restTemplate;
 		this.influxDb = influxDb;
 		this.aid = aid;
-		this.forecastInput = context;
+		this.interval = interval;
 	}
 
 	public IntensitiesPipelineManager() {
@@ -134,12 +133,8 @@ public class IntensitiesPipelineManager {
 		IntensityCalculationUtils.sortSessions(sessions);
 		long startTime = sessions.get(0).getStartTime();
 
-		if(null == forecastInput.getForecastOptions().getInterval()) {
-			forecastInput.getForecastOptions().setInterval(IntensityCalculationInterval.SECOND);
-		}
-
 		// The time range for which an intensity will be calculated
-		long rangeLength = forecastInput.getForecastOptions().getInterval().asNumber();
+		long rangeLength = interval;
 
 		// rounds start time down
 		long roundedStartTime = startTime - (startTime % rangeLength);

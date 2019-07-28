@@ -17,7 +17,7 @@ import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionRequest;
 import org.continuity.api.entities.config.ConfigurationProvider;
-import org.continuity.api.entities.config.session.logs.CobraConfiguration;
+import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.api.rest.RestApi;
 import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.entities.TraceRecord;
@@ -139,7 +139,7 @@ public class MeasurementDataAmqpHandler {
 			List<SessionRequest> requests = tailorer.tailorTraces(services, traces);
 			List<Session> openSessions = sessionManager.readOpenSessions(aid, version, services);
 
-			SessionUpdater updater = new SessionUpdater(version, services, config.getMaxSessionPause().getSeconds() * SECONDS_TO_MICROS, forceFinish);
+			SessionUpdater updater = new SessionUpdater(version, config.getMaxSessionPause().getSeconds() * SECONDS_TO_MICROS, forceFinish);
 			Set<Session> updatedSessions = updater.updateSessions(openSessions, requests);
 
 
@@ -148,7 +148,7 @@ public class MeasurementDataAmqpHandler {
 				indexTracesWithSessions(traces, updatedSessions);
 
 				LOGGER.info("{}@{} {}: Storing sessions...", aid, version, services);
-				sessionManager.storeOrUpdateSessions(aid, updatedSessions);
+				sessionManager.storeOrUpdateSessions(aid, updatedSessions, services);
 			} else {
 				LOGGER.info("{}@{} {}: No sessions have been updated.", aid, version, services);
 			}

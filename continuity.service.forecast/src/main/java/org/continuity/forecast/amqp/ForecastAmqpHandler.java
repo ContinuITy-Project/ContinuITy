@@ -77,19 +77,21 @@ public class ForecastAmqpHandler {
 			LOGGER.error("Task {}: Link to sessions is missing for app-id {}!", task.getTaskId(), task.getAppId());
 			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
 		} else {
-			InfluxDB influxDb = InfluxDBFactory.connect(task.getForecastInput().getForecastOptions().getInfluxLink(), "admin", "admin");
+			InfluxDB influxDb = InfluxDBFactory.connect("TODO: link to Influx", "admin", "admin"); // TODO
+			// TODO: retrieve interval from service configuration
+			long interval = 60000000000L;
 
 			boolean statusChanged = task.getSource().getSessionsBundlesLinks().getStatus().equals(SessionsStatus.CHANGED) ? true : false;
 
 			// calculate new intensities
 			if(statusChanged) {
-				IntensitiesPipelineManager intensitiesPipelineManager = new IntensitiesPipelineManager(restTemplate, influxDb, task.getAppId(), task.getForecastInput());
+				IntensitiesPipelineManager intensitiesPipelineManager = new IntensitiesPipelineManager(restTemplate, influxDb, task.getAppId(), interval);
 				intensitiesPipelineManager.runPipeline(linkToSessions);
 				Pair<VersionOrTimestamp, Integer> dateAndAmountOfUserGroups = intensitiesPipelineManager.getDateAndAmountOfUserGroups();
 				dateAndAmountOfUsersStorage.put(pathParams.get(0), dateAndAmountOfUserGroups);
 			}
 
-			ForecastPipelineManager pipelineManager = new ForecastPipelineManager(influxDb, task.getAppId(), task.getForecastInput());
+			ForecastPipelineManager pipelineManager = new ForecastPipelineManager(influxDb, task.getAppId(), task.getContext(), interval, task.getOptions().getForecastApproachOrDefault());
 			ForecastBundle forecastBundle = pipelineManager.runPipeline(dateAndAmountOfUsersStorage.get(pathParams.get(0)));
 			influxDb.close();
 

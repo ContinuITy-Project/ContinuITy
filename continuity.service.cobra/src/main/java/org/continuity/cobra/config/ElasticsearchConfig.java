@@ -2,6 +2,7 @@ package org.continuity.cobra.config;
 
 import java.io.IOException;
 
+import org.continuity.cobra.managers.ElasticsearchIntensityManager;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,11 @@ public class ElasticsearchConfig {
 	@Bean(destroyMethod = "destroy")
 	public ElasticsearchSessionManager elasticsearchSessionManager(@Value("${elasticsearch.host:localhost}") String host, ObjectMapper mapper) throws IOException {
 		return new ElasticsearchSessionManager(host, mapper);
+	}
+
+	@Bean(destroyMethod = "destroy")
+	public ElasticsearchIntensityManager elasticsearchIntensityManager(@Value("${elasticsearch.host:localhost}") String host, ObjectMapper mapper) throws IOException {
+		return new ElasticsearchIntensityManager(host, mapper);
 	}
 
 }

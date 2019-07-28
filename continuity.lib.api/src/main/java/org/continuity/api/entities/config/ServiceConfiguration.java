@@ -1,6 +1,6 @@
 package org.continuity.api.entities.config;
 
-import org.continuity.api.entities.config.session.logs.CobraConfiguration;
+import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.idpa.AppId;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

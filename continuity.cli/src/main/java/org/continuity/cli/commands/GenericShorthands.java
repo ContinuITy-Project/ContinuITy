@@ -91,7 +91,7 @@ public class GenericShorthands {
 	@ShellMethod(key = { "edit" }, value = "Shorthand for '<context> edit'. Available in 'order'.")
 	@ShellMethodAvailability({ "editAvailability" })
 	public AttributedString editOrder(@ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws Throwable {
-		Shorthand shorthand = contextManager.getShorthand("open");
+		Shorthand shorthand = contextManager.getShorthand("edit");
 		return shorthand.execute(id);
 	}
 

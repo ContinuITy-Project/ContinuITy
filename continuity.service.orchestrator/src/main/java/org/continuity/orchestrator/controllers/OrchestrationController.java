@@ -38,7 +38,7 @@ import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MemoryStorage;
 import org.continuity.commons.utils.WebUtils;
-import org.continuity.dsl.description.ForecastInput;
+import org.continuity.dsl.context.Context;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.orchestrator.entities.CreationStep;
@@ -133,7 +133,7 @@ public class OrchestrationController {
 
 			for (Map.Entry<Set<String>, Set<LinkExchangeModel>> entry : sources.entrySet()) {
 				for (LinkExchangeModel source : entry.getValue()) {
-					createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getForecastInput(),
+					createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getContext(),
 							entry.getKey(), source);
 				}
 			}
@@ -141,7 +141,7 @@ public class OrchestrationController {
 			declareResponseQueue(orderId);
 			orderCounterStorage.putToReserved(orderId, new OrderReportCounter(orderId, 1));
 
-			createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getForecastInput(),
+			createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getContext(),
 					order.getTestingContext(), order.getSource());
 		}
 
@@ -155,7 +155,7 @@ public class OrchestrationController {
 	}
 
 	private void createAndSubmitRecipe(String orderId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, OrderGoal goal, OrderMode mode, OrderOptions options,
-			ForecastInput forecastInput, Set<String> testingContext, LinkExchangeModel source) {
+			Context context, Set<String> testingContext, LinkExchangeModel source) {
 		boolean useTestingContext = ((testingContext != null) && !testingContext.isEmpty());
 
 		if (useTestingContext) {
@@ -186,7 +186,7 @@ public class OrchestrationController {
 
 		LOGGER.info("{} Processing new recipe with goal {}...", LoggingUtils.formatPrefix(orderId, recipeId), goal);
 
-		Recipe recipe = new Recipe(orderId, recipeId, aid, services, version, recipeSteps, source, useTestingContext, testingContext, options, forecastInput);
+		Recipe recipe = new Recipe(orderId, recipeId, aid, services, version, recipeSteps, source, useTestingContext, testingContext, options, context);
 
 		if (recipe.hasNext()) {
 			recipeStorage.putToReserved(recipeId, recipe);

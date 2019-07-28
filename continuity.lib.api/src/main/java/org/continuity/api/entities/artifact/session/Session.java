@@ -1,6 +1,5 @@
 package org.continuity.api.entities.artifact.session;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -17,15 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
  * Represents a session.
@@ -56,11 +47,6 @@ public class Session {
 
 	@JsonIgnore
 	private boolean fresh;
-
-	@JsonSerialize(using = TailoringSerializer.class)
-	@JsonDeserialize(using = TailoringDeserializer.class)
-	@JsonView(SessionView.Simple.class)
-	private List<String> tailoring;
 
 	@JsonView(SessionView.Simple.class)
 	private NavigableSet<SessionRequest> requests = new TreeSet<>();
@@ -118,14 +104,6 @@ public class Session {
 		this.fresh = fresh;
 	}
 
-	public List<String> getTailoring() {
-		return tailoring;
-	}
-
-	public void setTailoring(List<String> tailoring) {
-		this.tailoring = tailoring;
-	}
-
 	public NavigableSet<SessionRequest> getRequests() {
 		return requests;
 	}
@@ -145,11 +123,6 @@ public class Session {
 	}
 
 	@JsonIgnore
-	public String getTailoringAsString() {
-		return convertTailoringToString(tailoring);
-	}
-
-	@JsonIgnore
 	public String toSimpleLog() {
 		return getUniqueId() + DELIM + requests.stream().map(SessionRequest::toSimpleLog).collect(Collectors.joining(DELIM));
 	}
@@ -161,7 +134,7 @@ public class Session {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(sessionId, tailoring, version, startMicros);
+		return Objects.hash(sessionId, version, startMicros);
 	}
 
 	@Override
@@ -176,8 +149,7 @@ public class Session {
 
 		Session other = (Session) obj;
 		return (endMicros == other.endMicros) && (finished == other.finished) && Objects.equals(sessionId, other.sessionId) && Objects.equals(requests, other.requests)
-				&& (startMicros == other.startMicros)
-				&& Objects.equals(tailoring, other.tailoring) && Objects.equals(version, other.version);
+				&& (startMicros == other.startMicros) && Objects.equals(version, other.version);
 	}
 
 	@Override
@@ -200,37 +172,6 @@ public class Session {
 		Collections.sort(list);
 
 		return list;
-	}
-
-	public static class TailoringSerializer extends StdSerializer<List<String>> {
-
-		private static final long serialVersionUID = -4973460573775064579L;
-
-		@SuppressWarnings("unchecked")
-		protected TailoringSerializer() {
-			super((Class<List<String>>) (Class<?>) List.class);
-		}
-
-		@Override
-		public void serialize(List<String> value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-			gen.writeString(convertTailoringToString(value));
-		}
-
-	}
-
-	public static class TailoringDeserializer extends StdDeserializer<List<String>> {
-
-		private static final long serialVersionUID = -3619765155269279344L;
-
-		protected TailoringDeserializer() {
-			super(List.class);
-		}
-
-		@Override
-		public List<String> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-			return convertStringToTailoring(p.getValueAsString());
-		}
-
 	}
 
 }

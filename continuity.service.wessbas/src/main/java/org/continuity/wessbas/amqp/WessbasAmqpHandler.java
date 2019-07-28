@@ -83,7 +83,8 @@ public class WessbasAmqpHandler {
 				workloadModel = modelManager.runPipeline(task.getSource().getForecastLinks().getLink(), pathToBehaviorFiles);
 			} else {
 				WessbasPipelineManager pipelineManager = new WessbasPipelineManager(restTemplate);
-				workloadModel = pipelineManager.runPipeline(task, task.getOptions().getIntensityCalculationInterval());
+				// TODO: retrieve from service configuration
+				workloadModel = pipelineManager.runPipeline(task, 60000000000L);
 			}
 
 			if (workloadModel == null) {

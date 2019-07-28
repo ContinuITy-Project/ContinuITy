@@ -1,7 +1,7 @@
 package org.continuity.cobra.config;
 
 import org.continuity.api.amqp.AmqpApi;
-import org.continuity.api.entities.config.session.logs.CobraConfiguration;
+import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;

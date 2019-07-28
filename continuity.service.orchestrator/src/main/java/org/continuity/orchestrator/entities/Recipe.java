@@ -9,7 +9,7 @@ import org.continuity.api.entities.links.LinkExchangeModel;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.report.TaskReport;
-import org.continuity.dsl.description.ForecastInput;
+import org.continuity.dsl.context.Context;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
@@ -33,7 +33,7 @@ public class Recipe {
 
 	private final OrderOptions options;
 
-	private ForecastInput forecastInput;
+	private Context context;
 
 	private final boolean longTermUse;
 
@@ -41,17 +41,17 @@ public class Recipe {
 
 	public Recipe(String orderId, String recipeId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse,
 			Set<String> testingContext,
-			OrderOptions options, ForecastInput forecastInput) {
+			OrderOptions options, Context context) {
 		this.orderId = orderId;
 		this.recipeId = recipeId;
 		this.iterator = steps.listIterator(steps.size());
 		this.appId = aid;
 		this.services = services;
 		this.version = version;
-		this.source = source;
+		this.source = source == null ? new LinkExchangeModel() : source;
 		this.longTermUse = longTermUse;
 		this.testingContext = testingContext;
-		this.setForecastInput(forecastInput);
+		this.context = context;
 		this.options = options;
 		initIterator(source);
 	}
@@ -91,7 +91,7 @@ public class Recipe {
 		task.setVersion(version);
 		task.setSource(source);
 		task.setOptions(options);
-		task.setForecastInput(forecastInput);
+		task.setContext(context);
 		task.setLongTermUse(longTermUse);
 
 		nextStep.setTask(task);
@@ -117,12 +117,12 @@ public class Recipe {
 		}
 	}
 
-	public ForecastInput getForecastInput() {
-		return forecastInput;
+	public Context getContext() {
+		return context;
 	}
 
-	public void setForecastInput(ForecastInput forecastInput) {
-		this.forecastInput = forecastInput;
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }
