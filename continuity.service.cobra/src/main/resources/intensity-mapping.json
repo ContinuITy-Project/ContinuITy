@@ -1,0 +1,29 @@
+{
+    "properties": {
+        "timestamp": { "type": "long" },
+        "intensity": {
+            "properties": {
+                "0": { "type": "long" }
+            }
+        },
+        "context": {
+            "properties": {
+                "numeric": {
+                    "properties": {
+                        "name": { "type": "keyword" },
+                        "value": { "type" : "double" }
+                    }
+                },
+                "string": {
+                    "properties": {
+                        "name": { "type": "keyword" },
+                        "value": { "type" : "keyword" }
+                    }
+                },
+                "boolean": {
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+}

@@ -12,20 +12,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 
 import org.apache.commons.math3.util.Pair;
 import org.continuity.api.entities.artifact.ForecastBundle;
-import org.continuity.dsl.description.ContextParameter;
-import org.continuity.dsl.description.ForecastInput;
-import org.continuity.dsl.description.FutureEvent;
-import org.continuity.dsl.description.FutureEvents;
-import org.continuity.dsl.description.FutureNumber;
-import org.continuity.dsl.description.FutureNumbers;
-import org.continuity.dsl.description.FutureOccurrences;
-import org.continuity.dsl.description.IntensityCalculationInterval;
-import org.continuity.dsl.description.Measurement;
+import org.continuity.dsl.context.Context;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.influxdb.InfluxDB;
@@ -49,11 +40,14 @@ public class ForecastPipelineManager {
 
 	private AppId aid;
 
-	private ForecastInput forecastInput;
+	private Context context;
 
 	private int workloadIntensity;
 
-	private IntensityCalculationInterval interval;
+	// TODO: replace by Duration
+	private long interval;
+
+	private String forecastingApproach;
 
 
 	public int getWorkloadIntensity() {
@@ -67,15 +61,12 @@ public class ForecastPipelineManager {
 	/**
 	 * Constructor.
 	 */
-	public ForecastPipelineManager(InfluxDB influxDb, AppId aid, ForecastInput forecastInput) {
+	public ForecastPipelineManager(InfluxDB influxDb, AppId aid, Context context, long interval, String forecastingApproach) {
 		this.influxDb = influxDb;
 		this.aid = aid;
-		this.forecastInput = forecastInput;
-		if(null == this.forecastInput.getForecastOptions().getInterval()) {
-			interval = IntensityCalculationInterval.SECOND;
-		} else {
-			interval = this.forecastInput.getForecastOptions().getInterval();
-		}
+		this.context = context;
+		this.interval = interval;
+		this.forecastingApproach = forecastingApproach;
 	}
 
 	public void setupDatabase() {
@@ -127,7 +118,7 @@ public class ForecastPipelineManager {
 		int sumOfIntensities = 0;
 		List<Integer> forecastedIntensities = new LinkedList<Integer>();
 
-		if (forecastInput.getForecastOptions().getForecaster().equalsIgnoreCase("Telescope")) {
+		if (forecastingApproach.equalsIgnoreCase("Telescope")) {
 			initializeTelescope(re);
 
 			for (int i = 0; i < amountOfUserGroups; i++) {
@@ -135,7 +126,7 @@ public class ForecastPipelineManager {
 				forecastedIntensities.add(intensity);
 				sumOfIntensities += intensity;
 			}
-		} else if (forecastInput.getForecastOptions().getForecaster().equalsIgnoreCase("Prophet")) {
+		} else if (forecastingApproach.equalsIgnoreCase("Prophet")) {
 			initializeProphet(re);
 
 			for (int i = 0; i < amountOfUserGroups; i++) {
@@ -193,8 +184,9 @@ public class ForecastPipelineManager {
 	 */
 	private int calculateSizeOfForecast(ArrayList<Long> timestampsOfIntensities) {
 		long endTimeIntensities = timestampsOfIntensities.get(timestampsOfIntensities.size() - 1);
-		long endTimeForecast = this.forecastInput.getForecastOptions().getDateAsTimestamp();
-		long interval = this.interval.asNumber() / NANOS_TO_MILLIS_FACTOR;
+		long endTimeForecast = endTimeIntensities + (24 * 60 * 60 * 1000); // TODO: extract from
+																			// context
+		long interval = this.interval / NANOS_TO_MILLIS_FACTOR;
 
 		// Calculates considered future timestamps
 		long startTimeForecast = endTimeIntensities + interval;
@@ -236,14 +228,15 @@ public class ForecastPipelineManager {
 		ArrayList<Pair<String, ArrayList<Double>>> histCovariates = new ArrayList<Pair<String, ArrayList<Double>>>();
 		ArrayList<Pair<String, ArrayList<Double>>> futureCovariates = new ArrayList<Pair<String, ArrayList<Double>>>();
 
-		if (forecastInput.getContext() != null) {
+		if (context != null) {
 
 			long startTimeOfIntensities = timestampsOfIntensities.get(0);
 			long endTimeIntensities = timestampsOfIntensities.get(timestampsOfIntensities.size() - 1);
 
-			long endTimeForecast = this.forecastInput.getForecastOptions().getDateAsTimestamp();
+			long endTimeForecast = endTimeIntensities + (24 * 60 * 60 * 1000); // TODO: extract from
+																				// context
 
-			long interval = this.interval.asNumber() /NANOS_TO_MILLIS_FACTOR;
+			long interval = this.interval / NANOS_TO_MILLIS_FACTOR;
 
 			// Calculates considered future timestamps
 			long startTimeForecast = endTimeIntensities + interval;
@@ -254,96 +247,7 @@ public class ForecastPipelineManager {
 				forecastTimestamp += interval;
 			}
 
-			for (ContextParameter covar : forecastInput.getContext()) {
-				if (covar instanceof FutureNumbers) {
-					FutureNumbers numCovar = (FutureNumbers) covar;
-
-					ArrayList<Double> historicalOccurrences = calculateHistoricalOccurrencesNumerical(numCovar, timestampsOfIntensities, startTimeOfIntensities, endTimeIntensities);
-					ArrayList<Double> futureOccurrences = calculateFutureOccurrencesNumerical(numCovar, futureTimestamps, startTimeForecast, endTimeForecast);
-
-					List<FutureNumber> numericInstances = numCovar.getFuture();
-
-					for (FutureNumber numInstance : numericInstances) {
-						double value = numInstance.getValue();
-						FutureOccurrences futureTimes = numInstance.getTime();
-						List<Long> futureTimestampsOfValue = futureTimes.getFutureDatesAsTimestamps(interval);
-
-						for (long futureTimestampOfValue : futureTimestampsOfValue) {
-							int index = futureTimestamps.indexOf(futureTimestampOfValue);
-							futureOccurrences.set(index, value);
-						}
-					}
-					Pair<String, ArrayList<Double>> covarPast = new Pair<>(numCovar.getMeasurement(), historicalOccurrences);
-					Pair<String, ArrayList<Double>> covarFuture = new Pair<>(numCovar.getMeasurement(), futureOccurrences);
-					histCovariates.add(covarPast);
-					futureCovariates.add(covarFuture);
-
-				} else if (covar instanceof FutureEvents) {
-					FutureEvents stringCovar = (FutureEvents) covar;
-					List<FutureEvent> stringInstances = stringCovar.getFuture();
-
-					HashMap<String, ArrayList<Long>> eventMap = calculateEventMap(stringCovar, startTimeOfIntensities, endTimeIntensities, startTimeForecast, endTimeForecast);
-
-					for (Map.Entry<String, ArrayList<Long>> entry : eventMap.entrySet()) {
-						String value = entry.getKey();
-						ArrayList<Long> timestamps = entry.getValue();
-
-						ArrayList<Double> historicalOccurrences = new ArrayList<Double>(Collections.nCopies(timestampsOfIntensities.size(), 0.0));
-						ArrayList<Double> futureOccurrences = new ArrayList<Double>(Collections.nCopies(futureTimestamps.size(), 0.0));
-
-						calculateOccurrencesString(futureOccurrences, historicalOccurrences, timestamps, timestampsOfIntensities, futureTimestamps, endTimeIntensities);
-
-						for (FutureEvent stringInstance : stringInstances) {
-							String valueOfInstance = stringInstance.getValue();
-							if (valueOfInstance.equals(value)) {
-								FutureOccurrences futureTimes = stringInstance.getTime();
-								List<Long> futureTimestampsOfValue = futureTimes.getFutureDatesAsTimestamps(interval);
-
-								for (long futureTimestampOfValue : futureTimestampsOfValue) {
-									int index = futureTimestamps.indexOf(futureTimestampOfValue);
-									futureOccurrences.set(index, 1.0);
-								}
-							}
-						}
-						Pair<String, ArrayList<Double>> covarPast = new Pair<>(value, historicalOccurrences);
-						Pair<String, ArrayList<Double>> covarFuture = new Pair<>(value, futureOccurrences);
-						histCovariates.add(covarPast);
-						futureCovariates.add(covarFuture);
-					}
-
-				} else if (covar instanceof Measurement) {
-					Measurement mCovar = (Measurement) covar;
-					boolean isNumeric = identifyIfNumericValues(mCovar);
-					if (isNumeric) {
-
-						ArrayList<Double> historicalOccurrences = calculateHistoricalOccurrencesNumerical(mCovar, timestampsOfIntensities, startTimeOfIntensities, endTimeIntensities);
-						ArrayList<Double> futureOccurrences = calculateFutureOccurrencesNumerical(mCovar, futureTimestamps, startTimeForecast, endTimeForecast);
-
-						Pair<String, ArrayList<Double>> covarPast = new Pair<>(mCovar.getMeasurement(), historicalOccurrences);
-						Pair<String, ArrayList<Double>> covarFuture = new Pair<>(mCovar.getMeasurement(), futureOccurrences);
-						histCovariates.add(covarPast);
-						futureCovariates.add(covarFuture);
-
-					} else {
-
-						HashMap<String, ArrayList<Long>> eventMap = calculateEventMap(mCovar, startTimeOfIntensities, endTimeIntensities, startTimeForecast, endTimeForecast);
-
-						for (Map.Entry<String, ArrayList<Long>> entry : eventMap.entrySet()) {
-							ArrayList<Long> timestamps = entry.getValue();
-
-							ArrayList<Double> historicalOccurrences = new ArrayList<Double>(Collections.nCopies(timestampsOfIntensities.size(), 0.0));
-							ArrayList<Double> futureOccurrences = new ArrayList<Double>(Collections.nCopies(futureTimestamps.size(), 0.0));
-
-							calculateOccurrencesString(futureOccurrences, historicalOccurrences, timestamps, timestampsOfIntensities, futureTimestamps, endTimeIntensities);
-
-							Pair<String, ArrayList<Double>> covarPast = new Pair<>(entry.getKey(), historicalOccurrences);
-							Pair<String, ArrayList<Double>> covarFuture = new Pair<>(entry.getKey(), futureOccurrences);
-							histCovariates.add(covarPast);
-							futureCovariates.add(covarFuture);
-						}
-					}
-				}
-			}
+			// TODO: calculate histCovariates and futureCovariates
 		}
 		Pair<ArrayList<Pair<String, ArrayList<Double>>>, ArrayList<Pair<String, ArrayList<Double>>>> covariates = new Pair<>(histCovariates, futureCovariates);
 		return covariates;
@@ -383,11 +287,11 @@ public class ForecastPipelineManager {
 	 * @param endTimeForecast
 	 * @return
 	 */
-	private HashMap<String, ArrayList<Long>> calculateEventMap(Measurement mCovar, long startTime, long endTimeIntensities, long startTimeForecast, long endTimeForecast) {
+	private HashMap<String, ArrayList<Long>> calculateEventMap(String measurementName, long startTime, long endTimeIntensities, long startTimeForecast, long endTimeForecast) {
 		HashMap<String, ArrayList<Long>> eventMap = new HashMap<String, ArrayList<Long>>();
 
-		ArrayList<Pair<Long, String>> histValues = getStringValues(mCovar, convertTimestampToUtcDate(startTime), convertTimestampToUtcDate(endTimeIntensities));
-		ArrayList<Pair<Long, String>> futValues = getStringValues(mCovar, convertTimestampToUtcDate(startTimeForecast), convertTimestampToUtcDate(endTimeForecast));
+		ArrayList<Pair<Long, String>> histValues = getStringValues(measurementName, convertTimestampToUtcDate(startTime), convertTimestampToUtcDate(endTimeIntensities));
+		ArrayList<Pair<Long, String>> futValues = getStringValues(measurementName, convertTimestampToUtcDate(startTimeForecast), convertTimestampToUtcDate(endTimeForecast));
 
 		for (Pair<Long, String> histValue : histValues) {
 			String value = histValue.getValue();
@@ -420,9 +324,9 @@ public class ForecastPipelineManager {
 	 * @param endTimeIntensities
 	 * @return
 	 */
-	private ArrayList<Double> calculateHistoricalOccurrencesNumerical(Measurement mCovar, ArrayList<Long> timestampsOfIntensities, long startTime, long endTimeIntensities) {
+	private ArrayList<Double> calculateHistoricalOccurrencesNumerical(String measurementName, ArrayList<Long> timestampsOfIntensities, long startTime, long endTimeIntensities) {
 		ArrayList<Double> historicalOccurrences = new ArrayList<Double>(Collections.nCopies(timestampsOfIntensities.size(), 0.0));
-		ArrayList<Pair<Long, Double>> histValues = getNumericValues(mCovar, convertTimestampToUtcDate(startTime), convertTimestampToUtcDate(endTimeIntensities));
+		ArrayList<Pair<Long, Double>> histValues = getNumericValues(measurementName, convertTimestampToUtcDate(startTime), convertTimestampToUtcDate(endTimeIntensities));
 
 		for (Pair<Long, Double> histValue : histValues) {
 			int index = timestampsOfIntensities.indexOf(histValue.getKey());
@@ -441,9 +345,9 @@ public class ForecastPipelineManager {
 	 * @param endTimeForecast
 	 * @return
 	 */
-	private ArrayList<Double> calculateFutureOccurrencesNumerical(Measurement mCovar, ArrayList<Long> futureTimestamps, long startTimeForecast, long endTimeForecast) {
+	private ArrayList<Double> calculateFutureOccurrencesNumerical(String measurementName, ArrayList<Long> futureTimestamps, long startTimeForecast, long endTimeForecast) {
 		ArrayList<Double> futureOccurrences = new ArrayList<Double>(Collections.nCopies(futureTimestamps.size(), 0.0));
-		ArrayList<Pair<Long, Double>> futValues = getNumericValues(mCovar, convertTimestampToUtcDate(startTimeForecast), convertTimestampToUtcDate(endTimeForecast));
+		ArrayList<Pair<Long, Double>> futValues = getNumericValues(measurementName, convertTimestampToUtcDate(startTimeForecast), convertTimestampToUtcDate(endTimeForecast));
 
 		for (Pair<Long, Double> futValue : futValues) {
 			int index = futureTimestamps.indexOf(futValue.getKey());
@@ -612,8 +516,7 @@ public class ForecastPipelineManager {
 	 * @param mCovar
 	 * @return
 	 */
-	private boolean identifyIfNumericValues(Measurement mCovar) {
-		String measurementName = mCovar.getMeasurement();
+	private boolean identifyIfNumericValues(String measurementName) {
 		String queryString = "SELECT time, value FROM " + measurementName;
 		Query query = new Query(queryString, aid.toString());
 		QueryResult queryResult = influxDb.query(query);
@@ -636,11 +539,10 @@ public class ForecastPipelineManager {
 	 * @param endTime
 	 * @return
 	 */
-	private ArrayList<Pair<Long, Double>> getNumericValues(Measurement covar, String startTime, String endTime) {
+	private ArrayList<Pair<Long, Double>> getNumericValues(String measurementName, String startTime, String endTime) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		ArrayList<Pair<Long, Double>> measurements = new ArrayList<Pair<Long, Double>>();
-		String measurementName = covar.getMeasurement();
 		String queryString = "SELECT time, value FROM " + measurementName + " WHERE time >= '" + startTime + "' AND time <= '" + endTime + "'";
 		Query query = new Query(queryString, aid.toString());
 		QueryResult queryResult = influxDb.query(query);
@@ -671,11 +573,10 @@ public class ForecastPipelineManager {
 	 * @param startTime
 	 * @param endTime
 	 */
-	private ArrayList<Pair<Long, String>> getStringValues(Measurement covar, String startTime, String endTime) {
+	private ArrayList<Pair<Long, String>> getStringValues(String measurementName, String startTime, String endTime) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		ArrayList<Pair<Long, String>> events = new ArrayList<Pair<Long, String>>();
-		String measurementName = covar.getMeasurement();
 		String queryString = "SELECT time, value FROM " + measurementName + " WHERE time >= '" + startTime + "' AND time <= '" + endTime + "'";
 		Query query = new Query(queryString, aid.toString());
 		QueryResult queryResult = influxDb.query(query);

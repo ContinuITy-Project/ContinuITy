@@ -39,7 +39,7 @@ public class WessbasPipelineTest {
 		LinkExchangeModel  source = new LinkExchangeModel();
 		source.getSessionLogsLinks().setExtendedLink("");
 		task.setSource(source);
-		WessbasBundle bundle = pipelineManager.runPipeline(task, null);
+		WessbasBundle bundle = pipelineManager.runPipeline(task, 60000000000L);
 
 		WorkloadModel workloadModel = bundle.getWorkloadModel();
 

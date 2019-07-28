@@ -18,9 +18,6 @@
         "finished": {
             "type": "boolean"
         },
-        "tailoring": {
-            "type": "keyword"
-        },
         "requests": {
             "properties": {
                 "endpoint": {

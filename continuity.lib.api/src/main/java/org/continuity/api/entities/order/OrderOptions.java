@@ -1,7 +1,5 @@
 package org.continuity.api.entities.order;
 
-import org.continuity.dsl.description.IntensityCalculationInterval;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,13 +25,13 @@ public class OrderOptions {
 	@JsonInclude(Include.NON_NULL)
 	private Integer rampup;
 
-	@JsonProperty("intensity-calculation-interval")
-	@JsonInclude(Include.NON_NULL)
-	private IntensityCalculationInterval intensityCalculationInterval;
-
 	@JsonProperty("tailoring-approach")
 	@JsonInclude(Include.NON_NULL)
 	private TailoringApproach tailoringApproach;
+
+	@JsonProperty("forecast-approach")
+	@JsonInclude(Include.NON_NULL)
+	private String forecastApproach;
 
 	public WorkloadModelType getWorkloadModelType() {
 		return workloadModelType;
@@ -75,14 +73,6 @@ public class OrderOptions {
 		this.rampup = rampup;
 	}
 
-	public IntensityCalculationInterval getIntensityCalculationInterval() {
-		return intensityCalculationInterval;
-	}
-
-	public void setIntensityCalculationInterval(IntensityCalculationInterval intensityCalculationInterval) {
-		this.intensityCalculationInterval = intensityCalculationInterval;
-	}
-
 	public TailoringApproach getTailoringApproach() {
 		return tailoringApproach;
 	}
@@ -94,6 +84,19 @@ public class OrderOptions {
 
 	public void setTailoringApproach(TailoringApproach tailoringApproach) {
 		this.tailoringApproach = tailoringApproach;
+	}
+
+	public String getForecastApproach() {
+		return forecastApproach;
+	}
+
+	@JsonIgnore
+	public String getForecastApproachOrDefault() {
+		return forecastApproach == null ? "Telescope" : forecastApproach;
+	}
+
+	public void setForecastApproach(String forecastApproach) {
+		this.forecastApproach = forecastApproach;
 	}
 
 }

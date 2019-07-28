@@ -27,15 +27,12 @@ public class SessionUpdater {
 
 	private final VersionOrTimestamp version;
 
-	private final List<String> services;
-
 	private final long maxSessionPauseMicros;
 
 	private final boolean forceFinish;
 
-	public SessionUpdater(VersionOrTimestamp version, List<String> services, long maxSessionPauseMicros, boolean forceFinish) {
+	public SessionUpdater(VersionOrTimestamp version, long maxSessionPauseMicros, boolean forceFinish) {
 		this.version = version;
-		this.services = services;
 		this.maxSessionPauseMicros = maxSessionPauseMicros;
 		this.forceFinish = forceFinish;
 	}
@@ -136,7 +133,6 @@ public class SessionUpdater {
 		session.setFresh(true);
 		session.setSessionId(sessionId);
 		session.setVersion(version);
-		session.setTailoring(services);
 
 		return session;
 	}

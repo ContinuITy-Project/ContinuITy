@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.continuity.api.entities.links.LinkExchangeModel;
-import org.continuity.dsl.description.ForecastInput;
+import org.continuity.dsl.context.Context;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "goal", "mode", "app-id", "services", "version", "testing-context", "options", "source", "forecast-input" })
+@JsonPropertyOrder({ "goal", "mode", "app-id", "services", "version", "testing-context", "context", "options", "source" })
 public class Order {
 
 	@JsonProperty("app-id")
@@ -35,14 +35,13 @@ public class Order {
 	private Set<String> testingContext;
 
 	@JsonInclude(Include.NON_NULL)
+	private Context context;
+
+	@JsonInclude(Include.NON_NULL)
 	private LinkExchangeModel source;
 
 	@JsonInclude(Include.NON_NULL)
 	private OrderOptions options;
-
-	@JsonInclude(Include.NON_NULL)
-	@JsonProperty("forecast-input")
-	private ForecastInput forecastInput;
 
 	public AppId getAppId() {
 		return appId;
@@ -92,6 +91,14 @@ public class Order {
 		this.testingContext = testingContext;
 	}
 
+	public Context getContext() {
+		return context;
+	}
+
+	public void setContext(Context context) {
+		this.context = context;
+	}
+
 	public LinkExchangeModel getSource() {
 		return source;
 	}
@@ -106,14 +113,6 @@ public class Order {
 
 	public void setOptions(OrderOptions options) {
 		this.options = options;
-	}
-
-	public ForecastInput getForecastInput() {
-		return forecastInput;
-	}
-
-	public void setForecastInput(ForecastInput forecastInput) {
-		this.forecastInput = forecastInput;
 	}
 
 }

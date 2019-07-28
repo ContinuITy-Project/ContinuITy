@@ -20,7 +20,6 @@ import org.continuity.commons.utils.IntensityCalculationUtils;
 import org.continuity.commons.utils.SimplifiedSessionLogsDeserializer;
 import org.continuity.commons.utils.TailoringUtils;
 import org.continuity.commons.utils.WebUtils;
-import org.continuity.dsl.description.IntensityCalculationInterval;
 import org.continuity.wessbas.entities.BehaviorModelPack;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
@@ -82,7 +81,7 @@ public class WessbasPipelineManager {
 	 *
 	 * @return The generated workload model.
 	 */
-	public WessbasBundle runPipeline(TaskDescription task, IntensityCalculationInterval interval) {
+	public WessbasBundle runPipeline(TaskDescription task, long interval) {
 		String sessionLogsLink = task.getSource().getSessionLogsLinks().getExtendedLink();
 		if ("dummy".equals(sessionLogsLink)) {
 			return new WessbasBundle(task.getVersion(), WessbasDslInstance.DVDSTORE_PARSED.get());
@@ -127,7 +126,7 @@ public class WessbasPipelineManager {
 	 * @throws GeneratorException
 	 * @throws SecurityException
 	 */
-	private WorkloadModel convertSessionLogIntoWessbasDSLInstance(String sessionLog, IntensityCalculationInterval interval) throws IOException, SecurityException, GeneratorException {
+	private WorkloadModel convertSessionLogIntoWessbasDSLInstance(String sessionLog, long interval) throws IOException, SecurityException, GeneratorException {
 		Path sessionLogsPath = writeSessionLogIntoFile(sessionLog);
 		// number of users is calculated based on the given sessions
 		Properties intensityProps = createWorkloadIntensity(sessionLog, interval);
@@ -143,7 +142,7 @@ public class WessbasPipelineManager {
 	 * @throws GeneratorException
 	 * @throws SecurityException
 	 */
-	private WorkloadModel convertSessionLogIntoWessbasDSLInstanceUsingModularization(String sessionLogs, TaskDescription task, IntensityCalculationInterval interval)
+	private WorkloadModel convertSessionLogIntoWessbasDSLInstanceUsingModularization(String sessionLogs, TaskDescription task, long interval)
 			throws IOException, SecurityException, GeneratorException {
 		// set 1 as default and configure actual number on demand
 		Properties intensityProps = createWorkloadIntensity(sessionLogs, interval);
@@ -169,7 +168,7 @@ public class WessbasPipelineManager {
 		return sessionLogsPath;
 	}
 
-	private Properties createWorkloadIntensity(String sessionLogs, IntensityCalculationInterval interval) throws IOException {
+	private Properties createWorkloadIntensity(String sessionLogs, long interval) throws IOException {
 		Properties properties = new Properties();
 		properties.put("workloadIntensity.type", "constant");
 
@@ -205,19 +204,13 @@ public class WessbasPipelineManager {
 	 * @param interval the used interval/ resolution
 	 * @return the intensity which represents the number of users.
 	 */
-	private int calculateIntensity(String sessionLogsString, IntensityCalculationInterval interval) {
+	private int calculateIntensity(String sessionLogsString, long interval) {
 		List<SimplifiedSession> sessions = SimplifiedSessionLogsDeserializer.parse(sessionLogsString);
 		IntensityCalculationUtils.sortSessions(sessions);
 		long startTime = sessions.get(0).getStartTime();
 
 		// The time range for which an intensity will be calculated
-		long rangeLength;
-
-		if (null == interval) {
-			interval = IntensityCalculationInterval.SECOND;
-		}
-
-		rangeLength = interval.asNumber();
+		long rangeLength = interval;
 
 		long highestEndTime = 0;
 
@@ -228,7 +221,8 @@ public class WessbasPipelineManager {
 		}
 		// Check if overall session logs duration is shorter than a single range
 		if(rangeLength > (highestEndTime-startTime)) {
-			LOGGER.info("The intensity of the given session logs cannot be calculated, because the used range '"+ interval.name()+"' is longer than the overall duration of the session logs. As default numOfthreads is set to 1!");
+			LOGGER.info("The intensity of the given session logs cannot be calculated, because the used range '" + interval
+					+ "' is longer than the overall duration of the session logs. As default numOfthreads is set to 1!");
 			return 1;
 		}
 
