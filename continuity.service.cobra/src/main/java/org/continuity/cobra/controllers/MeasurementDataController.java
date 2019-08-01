@@ -193,7 +193,7 @@ public class MeasurementDataController {
 			parsedLogs.add(AccessLogEntry.fromLogLine(line));
 		}
 
-		List<Trace> traces = new AccessLogsToOpenXtraceConverter(configProvider.getOrDefault(aid).isHashSessionId()).convert(parsedLogs);
+		List<Trace> traces = new AccessLogsToOpenXtraceConverter(configProvider.getOrDefault(aid).getSessions().isHashId()).convert(parsedLogs);
 		return storeTraces(aid, version, traces, finish);
 	}
 
@@ -207,7 +207,7 @@ public class MeasurementDataController {
 
 		List<CsvRow> csvRows = CsvRow.listFromString(csvContent);
 
-		List<Trace> traces = new CsvRowToOpenXtraceConverter(configProvider.getOrDefault(aid).isHashSessionId()).convert(csvRows);
+		List<Trace> traces = new CsvRowToOpenXtraceConverter(configProvider.getOrDefault(aid).getSessions().isHashId()).convert(csvRows);
 		return storeTraces(aid, version, traces, finish);
 	}
 
