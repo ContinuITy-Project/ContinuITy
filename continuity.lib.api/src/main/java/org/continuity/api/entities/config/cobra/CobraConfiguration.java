@@ -9,9 +9,6 @@ import org.continuity.api.entities.config.ServiceConfiguration;
 import org.continuity.dsl.schema.ContextSchema;
 import org.continuity.idpa.AppId;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
 /**
@@ -24,26 +21,17 @@ public class CobraConfiguration implements ServiceConfiguration {
 
 	public static final String SERVICE = "cobra";
 
-	public static final Duration DEFAULT_MAX_SESSION_PAUSE = Duration.ofMinutes(30);
-
 	private static final List<List<String>> DEFAULT_TAILORING = Collections.singletonList(Collections.singletonList(AppId.SERVICE_ALL));
 
 	private AppId appId;
 
-	@JsonProperty("max-session-pause")
-	@JsonSerialize(converter = DurationToStringConverter.class)
-	@JsonDeserialize(converter = StringToDurationConverter.class)
-	private Duration maxSessionPause = DEFAULT_MAX_SESSION_PAUSE;
-
-	@JsonProperty("hash-session-id")
-	private boolean hashSessionId = false;
-
-	@JsonProperty("omit-session-clustering")
-	private boolean omitSessionClustering = false;
+	private SessionsConfiguration sessions = new SessionsConfiguration();
 
 	private List<List<String>> tailoring = DEFAULT_TAILORING;
 
 	private ContextSchema context = new ContextSchema();
+
+	private ClusteringConfiguration clustering = new ClusteringConfiguration();
 
 	@Override
 	public String getService() {
@@ -60,41 +48,24 @@ public class CobraConfiguration implements ServiceConfiguration {
 	}
 
 	/**
+	 * Defines how sessions are generated.
 	 *
-	 * @return The maximum time of inactivity a session can have. After that, a new session starts.
+	 * @return
 	 */
-	public Duration getMaxSessionPause() {
-		return maxSessionPause;
+	public SessionsConfiguration getSessions() {
+		if (sessions == null) {
+			synchronized (this) {
+				if (sessions == null) {
+					sessions = new SessionsConfiguration();
+				}
+			}
+		}
+
+		return sessions;
 	}
 
-	public void setMaxSessionPause(Duration maxSessionPause) {
-		this.maxSessionPause = maxSessionPause;
-	}
-
-	/**
-	 *
-	 * @return Whether session IDs (only those extracted from client IPs or related information)
-	 *         should be hashed for privacy concerns.
-	 */
-	public boolean isHashSessionId() {
-		return hashSessionId;
-	}
-
-	public void setHashSessionId(boolean hashSessionId) {
-		this.hashSessionId = hashSessionId;
-	}
-
-	/**
-	 *
-	 * @return Whether the automated clustering into sessions should be omitted. Defaults to
-	 *         {@code false}.
-	 */
-	public boolean isOmitSessionClustering() {
-		return omitSessionClustering;
-	}
-
-	public void setOmitSessionClustering(boolean omitSessionClustering) {
-		this.omitSessionClustering = omitSessionClustering;
+	public void setSessions(SessionsConfiguration sessions) {
+		this.sessions = sessions;
 	}
 
 	/**
@@ -117,11 +88,40 @@ public class CobraConfiguration implements ServiceConfiguration {
 	 * @return
 	 */
 	public ContextSchema getContext() {
+		if (context == null) {
+			synchronized (this) {
+				if (context == null) {
+					context = new ContextSchema();
+				}
+			}
+		}
+
 		return context;
 	}
 
 	public void setContext(ContextSchema context) {
 		this.context = context;
+	}
+
+	/**
+	 * Defines the clustering that is done automatically.
+	 *
+	 * @return
+	 */
+	public ClusteringConfiguration getClustering() {
+		if (clustering == null) {
+			synchronized (this) {
+				if (clustering == null) {
+					clustering = new ClusteringConfiguration();
+				}
+			}
+		}
+
+		return clustering;
+	}
+
+	public void setClustering(ClusteringConfiguration clustering) {
+		this.clustering = clustering;
 	}
 
 	@Override

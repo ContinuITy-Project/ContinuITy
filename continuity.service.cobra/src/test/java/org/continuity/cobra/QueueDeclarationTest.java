@@ -15,6 +15,9 @@ public class QueueDeclarationTest {
 
 		assertThat(RabbitMqConfig.EVENT_CONFIG_AVAILABLE_NAME).as("The defined queue name should be equal to the derived one.")
 				.isEqualTo(AmqpApi.Orchestrator.EVENT_CONFIG_AVAILABLE.deriveQueueName(RabbitMqConfig.SERVICE_NAME));
+
+		assertThat(RabbitMqConfig.EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME).as("The defined queue name should be equal to the derived one.")
+				.isEqualTo(AmqpApi.Cobra.Clustinator.EVENT_FINISHED.deriveQueueName(RabbitMqConfig.SERVICE_NAME));
 	}
 
 }

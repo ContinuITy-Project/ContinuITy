@@ -78,6 +78,25 @@ public class AmqpApi {
 		private Cobra() {
 		}
 
+		/**
+		 * AMQP API of the clustinator service (sidekick of Cobra).
+		 * 
+		 * @author Henning Schulz
+		 *
+		 */
+		public static class Clustinator {
+
+			private static final String SCOPE = "clustinator";
+
+			public static final ExchangeDefinition<AppId> TASK_CLUSTER = ExchangeDefinition.task(SCOPE, "cluster").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
+
+			public static final ExchangeDefinition<AppId> EVENT_FINISHED = ExchangeDefinition.event(SCOPE, "finished").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
+
+			private Clustinator() {
+			}
+
+		}
+
 	}
 
 	/**

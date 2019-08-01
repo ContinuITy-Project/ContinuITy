@@ -27,6 +27,7 @@ import org.elasticsearch.action.search.ClearScrollResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
+import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -86,10 +87,24 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 *
 	 * @param aid
 	 * @param elements
+	 * @param waitFor
+	 *            Whether the request should wait until the data is indexed.
+	 * @throws IOException
+	 */
+	protected void storeElements(AppId aid, Collection<T> elements, boolean waitFor) throws IOException {
+		storeElements(aid, Collections.emptyList(), elements, waitFor);
+	}
+
+	/**
+	 * Stores the elements using the default tailoring (all) without waiting for the data being
+	 * indexed.
+	 *
+	 * @param aid
+	 * @param elements
 	 * @throws IOException
 	 */
 	protected void storeElements(AppId aid, Collection<T> elements) throws IOException {
-		storeElements(aid, Collections.emptyList(), elements);
+		storeElements(aid, elements, false);
 	}
 
 	/**
@@ -98,9 +113,11 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @param aid
 	 * @param tailoring
 	 * @param elements
+	 * @param waitFor
+	 *            Whether the request should wait until the data is indexed.
 	 * @throws IOException
 	 */
-	protected void storeElements(AppId aid, List<String> tailoring, Collection<T> elements) throws IOException {
+	protected void storeElements(AppId aid, List<String> tailoring, Collection<T> elements, boolean waitFor) throws IOException {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 		initIndex(index);
 
@@ -110,9 +127,25 @@ public abstract class ElasticsearchScrollingManager<T> {
 			request.add(new IndexRequest(index).source(json.getLeft(), XContentType.JSON).id(json.getRight()));
 		});
 
+		if (waitFor) {
+			request.setRefreshPolicy(RefreshPolicy.WAIT_UNTIL);
+		}
+
 		BulkResponse response = client.bulk(request, RequestOptions.DEFAULT);
 
 		LOGGER.info("The bulk request to {} took {} and resulted in status {}.", index, response.getTook(), response.status());
+	}
+
+	/**
+	 * Stores the elements using the defined tailoring without waiting for the data being indexed.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param elements
+	 * @throws IOException
+	 */
+	protected void storeElements(AppId aid, List<String> tailoring, Collection<T> elements) throws IOException {
+		storeElements(aid, tailoring, elements, false);
 	}
 
 	/**
@@ -156,12 +189,12 @@ public abstract class ElasticsearchScrollingManager<T> {
 		try {
 			response = client.search(search, RequestOptions.DEFAULT);
 		} catch (ElasticsearchStatusException e) {
-			LOGGER.info("Could not get any elements from {} {}: {}", aid, toIndex(aid, sTailoring), message, e.getMessage());
+			LOGGER.info("Could not get any elements from {} {}: {}", toIndex(aid, sTailoring), message, e.getMessage());
 			return Collections.emptyList();
 		}
 
 		SearchHits hits = response.getHits();
-		LOGGER.info("The search request to {} {} resulted in {}.", aid, toIndex(aid, sTailoring), message, hits.getTotalHits());
+		LOGGER.info("The search request to {} {} resulted in {}.", toIndex(aid, sTailoring), message, hits.getTotalHits());
 
 		return processSearchResponse(response, aid, message, 0);
 	}
