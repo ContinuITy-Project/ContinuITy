@@ -117,14 +117,14 @@ public class SessionUpdater {
 			numFinished.incrementAndGet();
 		});
 
-		LOGGER.info("Session clustering done. old: {}, updated: {}, new: {}, finished: {}, ignored (redirect): {}, ignored (duplicate): {}, ignored (error): {}", numOld, numUpdated, numNew,
+		LOGGER.info("Session grouping done. old: {}, updated: {}, new: {}, finished: {}, ignored (redirect): {}, ignored (duplicate): {}, ignored (error): {}", numOld, numUpdated, numNew,
 				numFinished, numRedirect, numDuplicate, numError);
 
 		return newSessions;
 	}
 
 	private boolean isRedirect(SessionRequest request) {
-		return (request.getExtendedInformation() != null) && ((request.getExtendedInformation().getResponseCode() / 100) == 3);
+		return (request != null) && (request.getExtendedInformation() != null) && ((request.getExtendedInformation().getResponseCode() / 100) == 3);
 	}
 
 	private Session createFreshSession(String sessionId) {

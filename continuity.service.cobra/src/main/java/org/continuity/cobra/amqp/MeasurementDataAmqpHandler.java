@@ -1,6 +1,7 @@
 package org.continuity.cobra.amqp;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,12 +15,16 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.amqp.ExchangeDefinition;
+import org.continuity.api.amqp.RoutingKeyFormatter;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionRequest;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.api.rest.RestApi;
 import org.continuity.cobra.config.RabbitMqConfig;
+import org.continuity.cobra.entities.ClustinatorInput;
+import org.continuity.cobra.entities.ClustinatorResult;
 import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.cobra.extractor.RequestTailorer;
 import org.continuity.cobra.extractor.SessionUpdater;
@@ -34,6 +39,7 @@ import org.continuity.idpa.application.HttpEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +75,9 @@ public class MeasurementDataAmqpHandler {
 	@Autowired
 	private ElasticsearchSessionManager sessionManager;
 
+	@Autowired
+	private AmqpTemplate amqpTemplate;
+
 	@RabbitListener(queues = RabbitMqConfig.TASK_PROCESS_TRACES_QUEUE_NAME)
 	public void processTraces(String tracesAsJson, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(RabbitMqConfig.HEADER_FINISH) boolean finish)
 			throws IOException, TimeoutException {
@@ -92,7 +101,7 @@ public class MeasurementDataAmqpHandler {
 
 		LOGGER.info("{}@{}: Indexing done. Grouping to sessions...", aid, version);
 
-		if (configProvider.getOrDefault(aid).isOmitSessionClustering()) {
+		if (configProvider.getOrDefault(aid).getSessions().isOmit()) {
 			LOGGER.info("{}@{}: Session grouping and clustering is omitted by configuration.", aid, version);
 		} else {
 			LOGGER.info("{}@{}: Grouping and updating the corresponding sessions...", aid, version);
@@ -107,6 +116,16 @@ public class MeasurementDataAmqpHandler {
 
 		long endMillis = System.currentTimeMillis();
 		LOGGER.info("{}@{}: Processing of the traces done. It took {}", aid, version, DurationFormatUtils.formatDurationHMS(endMillis - startMillis));
+	}
+
+	@RabbitListener(queues = RabbitMqConfig.EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME)
+	public void storeClustering(ClustinatorResult result) {
+		LOGGER.info("{}@{}: Received clustering result for services {} from clustinator in range {} ({}) - {}", result.getAppId(), result.getVersion(), result.getTailoring(),
+				new Date(result.getStartMicros() / 1000),
+				new Date(result.getIntervalStartMicros() / 1000), new Date(result.getEndMicros() / 1000));
+
+		// TODO
+		LOGGER.warn("Handling the clustering result is not implemented, yet!");
 	}
 
 	private void storeTraces(AppId aid, VersionOrTimestamp version, List<TraceRecord> traces) throws IOException {
@@ -137,9 +156,9 @@ public class MeasurementDataAmqpHandler {
 			LOGGER.info("{}@{}: Tailoring to {}...", aid, version, services);
 
 			List<SessionRequest> requests = tailorer.tailorTraces(services, traces);
-			List<Session> openSessions = sessionManager.readOpenSessions(aid, version, services);
+			List<Session> openSessions = sessionManager.readOpenSessions(aid, null, services);
 
-			SessionUpdater updater = new SessionUpdater(version, config.getMaxSessionPause().getSeconds() * SECONDS_TO_MICROS, forceFinish);
+			SessionUpdater updater = new SessionUpdater(version, config.getSessions().getTimeout().getSeconds() * SECONDS_TO_MICROS, forceFinish);
 			Set<Session> updatedSessions = updater.updateSessions(openSessions, requests);
 
 
@@ -147,11 +166,54 @@ public class MeasurementDataAmqpHandler {
 				LOGGER.info("{}@{} {}: Indexing traces with sessions...", aid, version, services);
 				indexTracesWithSessions(traces, updatedSessions);
 
+				Date latestDateBeforeUpdate = sessionManager.getLatestDate(aid, null, services);
+
 				LOGGER.info("{}@{} {}: Storing sessions...", aid, version, services);
-				sessionManager.storeOrUpdateSessions(aid, updatedSessions, services);
+				sessionManager.storeOrUpdateSessions(aid, updatedSessions, services, true);
+
+				Date latestDateAfterUpdate = sessionManager.getLatestDate(aid, null, services);
+
+				LOGGER.info("{}@{} {}: Sessions stored. Latest date before update: {} and after: {}.", aid, version, services, latestDateBeforeUpdate, latestDateAfterUpdate);
+
+				triggerClustering(aid, version, services, latestDateBeforeUpdate, latestDateAfterUpdate);
 			} else {
 				LOGGER.info("{}@{} {}: No sessions have been updated.", aid, version, services);
 			}
+		}
+	}
+
+	private void triggerClustering(AppId aid, VersionOrTimestamp version, List<String> services, Date latestDateBeforeUpdate, Date latestDateAfterUpdate) throws IOException, TimeoutException {
+		CobraConfiguration config = configProvider.getOrDefault(aid);
+
+		Duration interval = config.getClustering().getInterval();
+		Duration overlap = config.getClustering().getOverlap();
+
+		long intervalMillis = (interval.getSeconds() * 1000) + (interval.getNano() / 1000000);
+		long latestClusteringBeforeUpdate = (latestDateAfterUpdate.getTime() / intervalMillis) * intervalMillis;
+
+		if (config.getClustering().isOmit()) {
+			LOGGER.info("{}@{} {}: Clustering is omitted by configuration.", aid, version, services);
+		} else if (latestClusteringBeforeUpdate <= latestDateBeforeUpdate.getTime()) {
+			LOGGER.info("{}@{} {}: Clustering is not due, yet. Next will be after: {}.", aid, version, services, new Date(latestClusteringBeforeUpdate + intervalMillis));
+		} else {
+			Duration timeout = config.getSessions().getTimeout();
+			long timeoutMillis = (timeout.getSeconds() * 1000) + (timeout.getNano() / 1000000);
+			long overlapMillis = (overlap.getSeconds() * 1000) + (overlap.getNano() / 1000000);
+			long end = latestClusteringBeforeUpdate - timeoutMillis;
+			long start = end - intervalMillis - overlapMillis;
+			long intervalStart = end - intervalMillis;
+
+			LOGGER.info("{}@{} {}: subtracting {} from the clustering interval for respecting the session timeout.", aid, version, services, timeout);
+			LOGGER.info("{}@{} {}: Triggering clustering with start {}, interval start {}, end {} ...", aid, version, services, new Date(start), new Date(intervalStart), new Date(end));
+
+			List<Session> sessions = sessionManager.readSessionsInRange(aid, version, services, new Date(start), new Date(end));
+			ClustinatorInput input = new ClustinatorInput().setAppId(aid).setVersion(version).setTailoring(services).setEpsilon(config.getClustering().getEpsilon())
+					.setMinSampleSize(config.getClustering().getMinSampleSize()).setStartMicros(start * 1000).setIntervalStartMicros(intervalStart * 1000).setEndMicros(end * 1000).setSessions(sessions);
+
+			ExchangeDefinition<RoutingKeyFormatter.AppId> exchange = AmqpApi.Cobra.Clustinator.TASK_CLUSTER;
+			amqpTemplate.convertAndSend(exchange.name(), exchange.formatRoutingKey().of(aid), input);
+
+			LOGGER.info("{}@{} {}: Clustering triggered. Waiting for the clustinator.", aid, version, services);
 		}
 	}
 

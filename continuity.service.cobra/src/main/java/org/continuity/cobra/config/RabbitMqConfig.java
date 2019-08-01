@@ -35,6 +35,10 @@ public class RabbitMqConfig {
 
 	public static final String HEADER_FINISH = "continuity.finish";
 
+	public static final String EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME = "continuity.cobra.event.clustinator.finished";
+
+	public static final String EVENT_CLUSTINATOR_FINISHED_ROUTING_KEY = "#";
+
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
 	// General
@@ -119,6 +123,26 @@ public class RabbitMqConfig {
 	@Bean
 	Binding taskProcessTracesBinding() {
 		return BindingBuilder.bind(taskProcessTracesQueue()).to(taskProcessTracesExchange()).with(TASK_PROCESS_TRACES_ROUTING_KEY);
+	}
+
+	@Bean
+	TopicExchange taskClustinatorClusterExchange() {
+		return AmqpApi.Cobra.Clustinator.TASK_CLUSTER.create();
+	}
+
+	@Bean
+	TopicExchange eventClustinatorFinishedExchange() {
+		return AmqpApi.Cobra.Clustinator.EVENT_FINISHED.create();
+	}
+
+	@Bean
+	Queue eventClustinatorFinishedQueue() {
+		return QueueBuilder.nonDurable(EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME).build();
+	}
+
+	@Bean
+	Binding eventClustinatorFinishedBinding() {
+		return BindingBuilder.bind(eventClustinatorFinishedQueue()).to(eventClustinatorFinishedExchange()).with(EVENT_CLUSTINATOR_FINISHED_ROUTING_KEY);
 	}
 
 	// Dead letter exchange and queue

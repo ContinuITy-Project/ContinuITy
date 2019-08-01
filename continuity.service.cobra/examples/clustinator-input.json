@@ -1,0 +1,73 @@
+{
+    "app-id": "app.service",
+    "version": "v1.0",
+    "tailoring": "all",
+    "epsilon": 1.5,
+    "min-sample-size": 10,
+    "start-micros": 1564714800000,
+    "interval-start-micros": 1564729200000,
+    "end-micros": 1564732800000,
+    "sessions": [
+        {
+            "unique-id": "s%3Ae_PBdjk8DQ4JPOa_6s1IabYIVF10CEJo.ezNx%2BEKLrorj3EShbHV3O1uvoRctieOkA4Wc29iPMng_1557244136303000",
+            "session-id": "s%3Ae_PBdjk8DQ4JPOa_6s1IabYIVF10CEJo.ezNx%2BEKLrorj3EShbHV3O1uvoRctieOkA4Wc29iPMng",
+            "version": "v1",
+            "start-micros": 1557244136303000,
+            "end-micros": 1557244139211000,
+            "finished": false,
+            "requests": [
+                {
+                    "id": "4c0499cce9147fd7",
+                    "endpoint": "getCatalogueUsingGET",
+                    "trace-id": 5477672152152178647,
+                    "start-micros": 1557244136303000,
+                    "end-micros": 1557244136306000,
+                    "extended-information": {
+                        "uri": "/catalogue",
+                        "port": 8079,
+                        "host": "front-end",
+                        "protocol": "HTTP/1.1",
+                        "method": "GET",
+                        "parameters": "size=2&tags=skin",
+                        "encoding": "<no-encoding>",
+                        "responseCode": 200
+                    }
+                },
+                {
+                    "id": "6606aa8940bc1d61",
+                    "endpoint": "cartUsingGET",
+                    "trace-id": 7351750948202224993,
+                    "start-micros": 1557244138411000,
+                    "end-micros": 1557244138415000,
+                    "extended-information": {
+                        "uri": "/cart",
+                        "port": 8079,
+                        "host": "front-end",
+                        "protocol": "HTTP/1.1",
+                        "method": "GET",
+                        "parameters": "<no-query-string>",
+                        "encoding": "<no-encoding>",
+                        "responseCode": 200
+                    }
+                },
+                {
+                    "id": "481094b5724e5dc1",
+                    "endpoint": "getCustomerUsingGET",
+                    "trace-id": 5192813877385911745,
+                    "start-micros": 1557244139208000,
+                    "end-micros": 1557244139211000,
+                    "extended-information": {
+                        "uri": "/customers/thisIdWillBeIgnoredBytheFrontEnd",
+                        "port": 8079,
+                        "host": "front-end",
+                        "protocol": "HTTP/1.1",
+                        "method": "GET",
+                        "parameters": "URL_PART_id=thisIdWillBeIgnoredBytheFrontEnd",
+                        "encoding": "<no-encoding>",
+                        "responseCode": 200
+                    }
+                }
+            ]
+        }
+    ]
+}
