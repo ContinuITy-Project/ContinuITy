@@ -1,10 +1,13 @@
 package org.continuity.orchestrator.entities;
 
 import java.util.function.Function;
+import java.util.function.Predicate;
 
+import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.amqp.ExchangeDefinition;
 import org.continuity.api.entities.config.TaskDescription;
 import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.report.OrderReport;
 import org.continuity.orchestrator.util.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,10 +31,14 @@ public class CreationStep implements RecipeStep {
 
 	private final Function<LinkExchangeModel, Boolean> dataAlreadyPresent;
 
+	private final String requiredService;
+
+	private final Predicate<String> isServiceAvailable;
+
 	private TaskDescription task;
 
 	public CreationStep(String name, String orderId, String recipeId, AmqpTemplate amqpTemplate, ExchangeDefinition<?> exchange, String routingKey,
-			Function<LinkExchangeModel, Boolean> dataAlreadyPresent) {
+			Function<LinkExchangeModel, Boolean> dataAlreadyPresent, String requiredService, Predicate<String> isServiceAvailable) {
 		this.name = name;
 		this.orderId = orderId;
 		this.recipeId = recipeId;
@@ -39,6 +46,8 @@ public class CreationStep implements RecipeStep {
 		this.exchange = exchange;
 		this.routingKey = routingKey;
 		this.dataAlreadyPresent = dataAlreadyPresent;
+		this.requiredService = requiredService;
+		this.isServiceAvailable = isServiceAvailable;
 	}
 
 	@Override
@@ -56,9 +65,16 @@ public class CreationStep implements RecipeStep {
 
 	@Override
 	public void execute() {
-		LOGGER.info("{} Sending creation task {}", LoggingUtils.formatPrefix(orderId, recipeId, task.getTaskId()), exchange);
+		if (isServiceAvailable.test(requiredService)) {
+			LOGGER.info("{} Sending creation task {}", LoggingUtils.formatPrefix(orderId, recipeId, task.getTaskId()), exchange);
 
-		amqpTemplate.convertAndSend(exchange.name(), routingKey, task);
+			amqpTemplate.convertAndSend(exchange.name(), routingKey, task);
+		} else {
+			LOGGER.error("{} Cannot send creation task {}! Service {} is not available.", LoggingUtils.formatPrefix(orderId, recipeId, task.getTaskId()), exchange, requiredService);
+
+			amqpTemplate.convertAndSend(AmqpApi.Orchestrator.EVENT_FINISHED.name(), AmqpApi.Orchestrator.EVENT_FINISHED.formatRoutingKey().of(orderId),
+					OrderReport.asError(orderId, new LinkExchangeModel(), String.format("Service %s is not available!", requiredService)));
+		}
 	}
 
 	@Override

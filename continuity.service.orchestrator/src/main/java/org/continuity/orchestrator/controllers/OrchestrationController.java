@@ -15,8 +15,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
+import javax.jms.IllegalStateException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.continuity.api.amqp.AmqpApi;
@@ -69,6 +71,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.netflix.appinfo.InstanceInfo;
+import com.netflix.discovery.EurekaClient;
+import com.netflix.discovery.shared.Application;
 import com.rabbitmq.client.Channel;
 
 @RestController
@@ -93,6 +98,9 @@ public class OrchestrationController {
 
 	@Autowired
 	private ConnectionFactory connectionFactory;
+
+	@Autowired
+	private EurekaClient eurekaClient;
 
 	@Value("${spring.rabbitmq.host}")
 	private String rabbitHost;
@@ -133,16 +141,26 @@ public class OrchestrationController {
 
 			for (Map.Entry<Set<String>, Set<LinkExchangeModel>> entry : sources.entrySet()) {
 				for (LinkExchangeModel source : entry.getValue()) {
-					createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getContext(),
-							entry.getKey(), source);
+					try {
+						createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getContext(),
+								entry.getKey(), source);
+					} catch (IllegalStateException e) {
+						LOGGER.error("{} Cannot submit order: {}", LoggingUtils.formatPrefix(orderId), e.getMessage());
+						return ResponseEntity.badRequest().body(e.getMessage());
+					}
 				}
 			}
 		} else {
 			declareResponseQueue(orderId);
 			orderCounterStorage.putToReserved(orderId, new OrderReportCounter(orderId, 1));
 
-			createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getContext(),
-					order.getTestingContext(), order.getSource());
+			try {
+				createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getContext(),
+						order.getTestingContext(), order.getSource());
+			} catch (IllegalStateException e) {
+				LOGGER.error("{} Cannot submit order: {}", LoggingUtils.formatPrefix(orderId), e.getMessage());
+				return ResponseEntity.badRequest().body(e.getMessage());
+			}
 		}
 
 		OrderResponse response = new OrderResponse();
@@ -155,7 +173,7 @@ public class OrchestrationController {
 	}
 
 	private void createAndSubmitRecipe(String orderId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, OrderGoal goal, OrderMode mode, OrderOptions options,
-			Context context, Set<String> testingContext, LinkExchangeModel source) {
+			Context context, Set<String> testingContext, LinkExchangeModel source) throws IllegalStateException {
 		boolean useTestingContext = ((testingContext != null) && !testingContext.isEmpty());
 
 		if (useTestingContext) {
@@ -259,14 +277,17 @@ public class OrchestrationController {
 		return waitUntilFinished(orderId, 0, servletRequest);
 	}
 
-	private RecipeStep createRecipeStep(String orderId, String recipeId, AppId aid, OrderGoal goal, OrderOptions options) {
+	private RecipeStep createRecipeStep(String orderId, String recipeId, AppId aid, OrderGoal goal, OrderOptions options) throws IllegalStateException {
 		RecipeStep step;
 		String stepName = goal.toPrettyString();
 
 		switch (goal) {
 		case CREATE_SESSION_LOGS:
+			checkServiceAvailable(RestApi.Cobra.SERVICE_NAME);
+
 			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.Cobra.TASK_CREATE, AmqpApi.Cobra.TASK_CREATE.formatRoutingKey().of(aid),
-					or(isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getSimpleLink), isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getExtendedLink)));
+					or(isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getSimpleLink), isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getExtendedLink)),
+					RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
 			break;
 		case CREATE_BEHAVIOR_MIX:
 			WorkloadModelType workloadType;
@@ -276,12 +297,16 @@ public class OrchestrationController {
 				workloadType = options.getWorkloadModelType();
 			}
 
+			checkServiceAvailable(workloadType.toPrettyString());
+
 			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.WorkloadModel.MIX_CREATE, AmqpApi.WorkloadModel.MIX_CREATE.formatRoutingKey().of(workloadType.toPrettyString()),
-					isPresent(LinkExchangeModel::getSessionsBundlesLinks, SessionsBundlesLinks::getLink));
+					isPresent(LinkExchangeModel::getSessionsBundlesLinks, SessionsBundlesLinks::getLink), RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
 			break;
 		case CREATE_FORECAST:
+			checkServiceAvailable(RestApi.Forecast.SERVICE_NAME);
+
 			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.Forecast.TASK_CREATE, AmqpApi.Forecast.TASK_CREATE.formatRoutingKey().of("forecast"),
-					isPresent(LinkExchangeModel::getForecastLinks, ForecastLinks::getLink));
+					isPresent(LinkExchangeModel::getForecastLinks, ForecastLinks::getLink), RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
 			break;
 		case CREATE_WORKLOAD_MODEL:
 			if ((options == null) || (options.getWorkloadModelType() == null)) {
@@ -290,11 +315,13 @@ public class OrchestrationController {
 				workloadType = options.getWorkloadModelType();
 			}
 
+			checkServiceAvailable(workloadType.toPrettyString());
+
 			Function<LinkExchangeModel, Boolean> check = all(isPresent(LinkExchangeModel::getWorkloadModelLinks, WorkloadModelLinks::getLink),
 					isEqual(LinkExchangeModel::getWorkloadModelLinks, WorkloadModelLinks::getType, workloadType));
 
 			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.WorkloadModel.TASK_CREATE,
-					AmqpApi.WorkloadModel.TASK_CREATE.formatRoutingKey().of(workloadType.toPrettyString()), check);
+					AmqpApi.WorkloadModel.TASK_CREATE.formatRoutingKey().of(workloadType.toPrettyString()), check, RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
 			break;
 		case CREATE_LOAD_TEST:
 			LoadTestType loadTestType;
@@ -305,9 +332,12 @@ public class OrchestrationController {
 				loadTestType = options.getLoadTestType();
 			}
 
+			checkServiceAvailable(loadTestType.toPrettyString());
+
 			check = all(isPresent(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getLink), isEqual(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getType, loadTestType));
 
-			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.LoadTest.TASK_CREATE, AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(loadTestType.toPrettyString()), check);
+			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.LoadTest.TASK_CREATE, AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(loadTestType.toPrettyString()), check,
+					RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
 			break;
 		case EXECUTE_LOAD_TEST:
 			loadTestType = options.getLoadTestType();
@@ -316,9 +346,11 @@ public class OrchestrationController {
 				loadTestType = LoadTestType.JMETER;
 			}
 
+			checkServiceAvailable(loadTestType.toPrettyString());
+
 			if (loadTestType.canExecute()) {
 				step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.LoadTest.TASK_EXECUTE, AmqpApi.LoadTest.TASK_EXECUTE.formatRoutingKey().of(loadTestType.toPrettyString()),
-						links -> false);
+						links -> false, RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
 			} else {
 				LOGGER.error("Cannot execute {} tests!", loadTestType);
 				step = new DummyStep(amqpTemplate);
@@ -333,6 +365,17 @@ public class OrchestrationController {
 		}
 
 		return step;
+	}
+
+	private boolean isServiceAvailable(String service) {
+		return eurekaClient.getApplications().getRegisteredApplications().stream().map(Application::getInstances).flatMap(List::stream).map(InstanceInfo::getAppName)
+				.map(String::toLowerCase).collect(Collectors.toSet()).contains(service);
+	}
+
+	private void checkServiceAvailable(String service) throws IllegalStateException {
+		if (!isServiceAvailable(service)) {
+			throw new IllegalStateException("Service " + service + " is not available!");
+		}
 	}
 
 	@PostConstruct
