@@ -3,7 +3,7 @@ package org.continuity.benchflow.amqp;
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.artifact.BehaviorModel;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.LoadTestType;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
@@ -80,7 +80,7 @@ public class BenchFlowDSLCreationAmqpHandler {
 				LOGGER.info("Task {}: Created a load test from {}.", task.getTaskId(), workloadModelLink);
 
 				report = TaskReport.successful(task.getTaskId(),
-						new LinkExchangeModel().getLoadTestLinks().setType(LoadTestType.BENCHFLOW).setLink(RestApi.BenchFlow.DSL.GET.requestUrl(id).withoutProtocol().get()).parent());
+						new ArtifactExchangeModel().getLoadTestLinks().setType(LoadTestType.BENCHFLOW).setLink(RestApi.BenchFlow.DSL.GET.requestUrl(id).withoutProtocol().get()).parent());
 			}
 		}
 
@@ -90,7 +90,7 @@ public class BenchFlowDSLCreationAmqpHandler {
 
 	private ContinuITyModel getContinuITyModel(String workloadModelLink, AppId aid) {
 
-		LinkExchangeModel workloadLinks = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadModelLink), LinkExchangeModel.class);
+		ArtifactExchangeModel workloadLinks = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadModelLink), ArtifactExchangeModel.class);
 
 		if (workloadLinks == null) {
 			LOGGER.error("Workload links with app-id {} is null! Aborting.", aid);

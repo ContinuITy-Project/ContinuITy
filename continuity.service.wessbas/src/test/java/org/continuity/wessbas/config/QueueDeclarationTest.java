@@ -9,8 +9,8 @@ public class QueueDeclarationTest {
 
 	@Test
 	public void test() {
-		assertThat(RabbitMqConfig.TASK_CREATE_QUEUE_NAME).as("The defined queue name should be equal to the derived one.")
-				.isEqualTo(AmqpApi.WorkloadModel.TASK_CREATE.deriveQueueName(RabbitMqConfig.SERVICE_NAME));
+		assertThat(RabbitMqConfig.TASK_CREATE_WORKLOAD_QUEUE_NAME).as("The defined queue name should be equal to the derived one.")
+				.isEqualTo(AmqpApi.Global.TASK_CREATE.deriveQueueName("wessbas_workload"));
 	}
 
 }

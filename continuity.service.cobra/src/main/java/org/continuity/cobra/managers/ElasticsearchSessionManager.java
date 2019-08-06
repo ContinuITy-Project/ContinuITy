@@ -15,8 +15,6 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.core.CountRequest;
-import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -105,24 +103,9 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	 * @throws TimeoutException
 	 */
 	public long countSessionsInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException {
-		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+		QueryBuilder query = createRangeQuery(version, from, to);
 
-		if (!indexExists(index)) {
-			return 0;
-		}
-
-		CountRequest count = new CountRequest(index);
-		count.source(new SearchSourceBuilder().query(createRangeQuery(version, from, to)));
-
-		CountResponse response;
-		try {
-			response = client.count(count, RequestOptions.DEFAULT);
-		} catch (ElasticsearchStatusException e) {
-			LOGGER.info("Could not find any sessions for app-id {} and version {} in time range {} - {}: {}", aid, version, formatOrNull(from), formatOrNull(to), e.getMessage());
-			return 0;
-		}
-
-		return response.getCount();
+		return countElements(aid, tailoring, query, String.format(" with version %s and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
 	}
 
 	private QueryBuilder createRangeQuery(VersionOrTimestamp version, Date from, Date to) {

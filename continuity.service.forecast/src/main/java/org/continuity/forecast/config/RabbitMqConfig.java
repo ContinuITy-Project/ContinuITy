@@ -26,9 +26,9 @@ public class RabbitMqConfig {
 
 	public static final String SERVICE_NAME = "forecast";
 
-	public static final String TASK_CREATE_QUEUE_NAME = "continuity.forecast.task.forecast.create";
+	public static final String TASK_CREATE_QUEUE_NAME = "continuity.forecast.task.global.create";
 
-	public static final String TASK_CREATE_ROUTING_KEY = "#";
+	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.Global.TASK_CREATE.formatRoutingKey().ofGenericTarget(SERVICE_NAME);
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -67,7 +67,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange taskCreateExchange() {
-		return AmqpApi.Forecast.TASK_CREATE.create();
+		return AmqpApi.Global.TASK_CREATE.create();
 	}
 
 	@Bean

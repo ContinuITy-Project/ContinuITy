@@ -15,7 +15,6 @@ import org.continuity.api.entities.artifact.SimplifiedSession;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.client.RestTemplate;
 
 import net.sf.markov4jmeter.behavior.BehaviorMix;
 import net.sf.markov4jmeter.behavior.Session;
@@ -33,8 +32,6 @@ public class BehaviorMixManager {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BehaviorMixManager.class);
 
-	private RestTemplate restTemplate;
-
 	private final Path workingDir;
 
 	private final VersionOrTimestamp version;
@@ -46,8 +43,7 @@ public class BehaviorMixManager {
 	/**
 	 * Constructor.
 	 */
-	public BehaviorMixManager(RestTemplate restTemplate, VersionOrTimestamp version) {
-		this.restTemplate = restTemplate;
+	public BehaviorMixManager(VersionOrTimestamp version) {
 		this.version = version;
 
 		Path tmpDir;
@@ -67,8 +63,7 @@ public class BehaviorMixManager {
 	/**
 	 * Constructor.
 	 */
-	public BehaviorMixManager(RestTemplate restTemplate, VersionOrTimestamp version, Path workingDir) {
-		this.restTemplate = restTemplate;
+	public BehaviorMixManager(VersionOrTimestamp version, Path workingDir) {
 		this.workingDir = workingDir;
 		this.version = version;
 	}

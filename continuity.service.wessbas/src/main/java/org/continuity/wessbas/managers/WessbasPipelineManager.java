@@ -20,6 +20,7 @@ import org.continuity.commons.utils.IntensityCalculationUtils;
 import org.continuity.commons.utils.SimplifiedSessionLogsDeserializer;
 import org.continuity.commons.utils.TailoringUtils;
 import org.continuity.commons.utils.WebUtils;
+import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.wessbas.entities.BehaviorModelPack;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
@@ -33,7 +34,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import m4jdsl.WorkloadModel;
-import net.sf.markov4jmeter.behaviormodelextractor.BehaviorModelExtractor;
 import net.sf.markov4jmeter.m4jdslmodelgenerator.GeneratorException;
 import net.sf.markov4jmeter.m4jdslmodelgenerator.M4jdslModelGenerator;
 
@@ -73,43 +73,41 @@ public class WessbasPipelineManager {
 	}
 
 	/**
-	 * Runs the pipeline and calls the callback when the model was created.
+	 * Constructor.
+	 */
+	public WessbasPipelineManager(RestTemplate restTemplate, Path workingDir) {
+		this.restTemplate = restTemplate;
+		this.workingDir = workingDir;
+
+		LOGGER.info("Set working directory to {}", workingDir);
+	}
+
+	/**
+	 * Runs the whole pipeline by creating a behavior model and transforming it into a workload
+	 * model.
 	 *
 	 *
 	 * @param task
 	 *            Input monitoring data to be transformed into a WESSBAS DSL instance.
+	 * @param interval
+	 *            The interval for calculating the intensity.
+	 *
+	 * @see #createBehaviorModelFromSessions(String, VersionOrTimestamp, long)
+	 * @see #transformBehaviorModelToWorkloadModelIncludingTailoring(BehaviorModelPack,
+	 *      TaskDescription)
 	 *
 	 * @return The generated workload model.
 	 */
 	public WessbasBundle runPipeline(TaskDescription task, long interval) {
-		String sessionLogsLink = task.getSource().getSessionLogsLinks().getExtendedLink();
+		String sessionLogsLink = task.getSource().getSessionLinks().getExtendedLink();
 		if ("dummy".equals(sessionLogsLink)) {
 			return new WessbasBundle(task.getVersion(), WessbasDslInstance.DVDSTORE_PARSED.get());
 		}
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setAccept(Collections.singletonList(MediaType.TEXT_PLAIN));
-
-		String sessionLog;
-		try {
-			sessionLog = restTemplate.exchange(WebUtils.addProtocolIfMissing(sessionLogsLink), HttpMethod.GET, new HttpEntity<>(headers), String.class).getBody();
-		} catch (RestClientException e) {
-			LOGGER.error("Error when retrieving the session logs!", e);
-			return null;
-		}
 		WorkloadModel workloadModel;
-
-		boolean applyModularization = (task.getOptions() != null) && (task.getOptions().getTailoringApproach() == TailoringApproach.MODEL_BASED)
-				&& TailoringUtils.doTailoring(task.getEffectiveServices());
-
 		try {
-			if(applyModularization) {
-				workloadModel = convertSessionLogIntoWessbasDSLInstanceUsingModularization(sessionLog, task, interval);
-
-			} else {
-				workloadModel = convertSessionLogIntoWessbasDSLInstance(sessionLog, interval);
-
-			}
+			BehaviorModelPack behaviorModelPack = createBehaviorModelFromSessions(task, interval);
+			workloadModel = transformBehaviorModelToWorkloadModelIncludingTailoring(behaviorModelPack, task);
 		} catch (Exception e) {
 			LOGGER.error("Could not create a WESSBAS workload model!", e);
 			return null;
@@ -119,53 +117,64 @@ public class WessbasPipelineManager {
 	}
 
 	/**
-	 * This method converts a session log into a Wessbas DSL instance.
+	 * Creates a behavior model from (extended) session logs.
 	 *
-	 * @param sessionLog
+	 * @param task
+	 *            The task, which is assumed to hold extended session logs.
+	 * @param interval
+	 *            The interval for calculating the intensity.
+	 * @return The behavior model in a {@link BehaviorModelPack}.
 	 * @throws IOException
-	 * @throws GeneratorException
-	 * @throws SecurityException
 	 */
-	private WorkloadModel convertSessionLogIntoWessbasDSLInstance(String sessionLog, long interval) throws IOException, SecurityException, GeneratorException {
-		Path sessionLogsPath = writeSessionLogIntoFile(sessionLog);
-		// number of users is calculated based on the given sessions
-		Properties intensityProps = createWorkloadIntensity(sessionLog, interval);
-		Properties behaviorProps = createBehaviorModel(sessionLogsPath);
-		return generateWessbasModel(intensityProps, behaviorProps);
+	public BehaviorModelPack createBehaviorModelFromSessions(TaskDescription task, long interval) throws IOException {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Collections.singletonList(MediaType.TEXT_PLAIN));
+
+		String sessionLogs;
+		try {
+			sessionLogs = restTemplate.exchange(WebUtils.addProtocolIfMissing(task.getSource().getSessionLinks().getExtendedLink()), HttpMethod.GET, new HttpEntity<>(headers), String.class).getBody();
+		} catch (RestClientException e) {
+			LOGGER.error("Error when retrieving the session logs!", e);
+			return null;
+		}
+
+		createWorkloadIntensity(sessionLogs, interval);
+
+		BehaviorMixManager behaviorManager = new BehaviorMixManager(task.getVersion(), workingDir);
+		SessionsBundlePack sessionsBundles = behaviorManager.runPipeline(sessionLogs);
+
+		return new BehaviorModelPack(sessionsBundles, workingDir);
 	}
 
 	/**
-	 * This method converts a session log into a Wessbas DSL instance.
+	 * Transforms a behavior model into a workload model and also applies tailoring if requested.
 	 *
-	 * @param sessionLog
+	 * @param behaviorModelPack
+	 *            The behavior model as {@link BehaviorModelPack}.
+	 * @param task
+	 *            The task describing how to generate the workload model, especially regarding
+	 *            tailoring.
+	 * @return The workload model.
 	 * @throws IOException
-	 * @throws GeneratorException
 	 * @throws SecurityException
+	 * @throws GeneratorException
 	 */
-	private WorkloadModel convertSessionLogIntoWessbasDSLInstanceUsingModularization(String sessionLogs, TaskDescription task, long interval)
-			throws IOException, SecurityException, GeneratorException {
-		// set 1 as default and configure actual number on demand
-		Properties intensityProps = createWorkloadIntensity(sessionLogs, interval);
+	public WorkloadModel transformBehaviorModelToWorkloadModelIncludingTailoring(BehaviorModelPack behaviorModelPack, TaskDescription task) throws IOException, SecurityException, GeneratorException {
+		boolean applyModularization = (task.getOptions() != null) && (task.getOptions().getTailoringApproach() == TailoringApproach.MODEL_BASED)
+				&& TailoringUtils.doTailoring(task.getEffectiveServices());
 
-		//Apply Behavior Mix generation
-		BehaviorMixManager behaviorManager = new BehaviorMixManager(restTemplate, task.getVersion(), workingDir);
-		SessionsBundlePack sessionsBundles = behaviorManager.runPipeline(sessionLogs);
+		if (applyModularization) {
+			WorkloadModularizationManager modularizationManager = new WorkloadModularizationManager(restTemplate, task.getAppId(), task.getVersion());
+			modularizationManager.runPipeline(task.getVersion(), task.getSource(), behaviorModelPack, task.getEffectiveServices());
+		}
 
-		// Apply Modularization
-		WorkloadModularizationManager modularizationManager = new WorkloadModularizationManager(restTemplate, task.getAppId(), task.getVersion());
-		BehaviorModelPack behaviorModelPack = new BehaviorModelPack(sessionsBundles, workingDir);
-		modularizationManager.runPipeline(task.getVersion(), task.getSource(), behaviorModelPack, task.getEffectiveServices());
+		Properties intensityProps = new Properties();
+		intensityProps.load(Files.newInputStream(workingDir.resolve("workloadIntensity.properties")));
 
 		Properties behaviorProperties = new Properties();
 		behaviorProperties.load(Files.newInputStream(workingDir.resolve("behaviormodelextractor").resolve("behaviormix.txt")));
 
 		return generateWessbasModel(intensityProps, behaviorProperties);
-	}
-
-	private Path writeSessionLogIntoFile(String sessionLog) throws IOException {
-		Path sessionLogsPath = workingDir.resolve("sessions.dat");
-		Files.write(sessionLogsPath, Collections.singletonList(sessionLog), StandardOpenOption.CREATE);
-		return sessionLogsPath;
 	}
 
 	private Properties createWorkloadIntensity(String sessionLogs, long interval) throws IOException {
@@ -177,18 +186,6 @@ public class WessbasPipelineManager {
 		properties.store(Files.newOutputStream(workingDir.resolve("workloadIntensity.properties"), StandardOpenOption.CREATE), null);
 
 		return properties;
-	}
-
-	private Properties createBehaviorModel(Path sessionLogsPath) throws IOException {
-		Path outputDir = workingDir.resolve("behaviormodelextractor");
-		outputDir.toFile().mkdir();
-
-		BehaviorModelExtractor behav = new BehaviorModelExtractor();
-		behav.createBehaviorModel(sessionLogsPath.toString(), outputDir.toString());
-
-		Properties behaviorProperties = new Properties();
-		behaviorProperties.load(Files.newInputStream(workingDir.resolve("behaviormodelextractor").resolve("behaviormix.txt")));
-		return behaviorProperties;
 	}
 
 	private WorkloadModel generateWessbasModel(Properties workloadIntensityProperties, Properties behaviorModelsProperties) throws FileNotFoundException, SecurityException, GeneratorException {
@@ -209,9 +206,6 @@ public class WessbasPipelineManager {
 		IntensityCalculationUtils.sortSessions(sessions);
 		long startTime = sessions.get(0).getStartTime();
 
-		// The time range for which an intensity will be calculated
-		long rangeLength = interval;
-
 		long highestEndTime = 0;
 
 		for(SimplifiedSession session: sessions) {
@@ -219,12 +213,9 @@ public class WessbasPipelineManager {
 				highestEndTime = session.getEndTime();
 			}
 		}
-		// Check if overall session logs duration is shorter than a single range
-		if(rangeLength > (highestEndTime-startTime)) {
-			LOGGER.info("The intensity of the given session logs cannot be calculated, because the used range '" + interval
-					+ "' is longer than the overall duration of the session logs. As default numOfthreads is set to 1!");
-			return 1;
-		}
+
+		// The time range for which an intensity will be calculated
+		long rangeLength = Math.min(interval, highestEndTime - startTime);
 
 		// rounds highest end time up
 		long roundedHighestEndTime = highestEndTime;
@@ -261,6 +252,9 @@ public class WessbasPipelineManager {
 			int intensityOfRange = (int) IntensityCalculationUtils.calculateIntensityForRange(range, sessionsInRange, rangeLength);
 			intensities.add(intensityOfRange);
 		}
+
+		// TODO: use list as varying intensity?
+
 		return Math.toIntExact(Math.round(intensities.stream().mapToDouble(a -> a).average().getAsDouble()));
 	}
 
