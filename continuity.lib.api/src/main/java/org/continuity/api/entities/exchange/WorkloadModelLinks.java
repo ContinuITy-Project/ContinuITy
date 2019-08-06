@@ -1,8 +1,6 @@
-package org.continuity.api.entities.links;
+package org.continuity.api.entities.exchange;
 
 import java.lang.reflect.Field;
-
-import org.continuity.api.entities.order.WorkloadModelType;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -34,7 +32,7 @@ public class WorkloadModelLinks extends AbstractLinks<WorkloadModelLinks> {
 	@JsonInclude(Include.NON_NULL)
 	private String initialAnnotationLink;
 
-	public WorkloadModelLinks(LinkExchangeModel parent) {
+	public WorkloadModelLinks(ArtifactExchangeModel parent) {
 		super(parent);
 	}
 

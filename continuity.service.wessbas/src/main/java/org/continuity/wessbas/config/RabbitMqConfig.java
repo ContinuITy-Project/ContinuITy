@@ -1,6 +1,7 @@
 package org.continuity.wessbas.config;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.exchange.ArtifactType;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -26,13 +27,13 @@ public class RabbitMqConfig {
 
 	public static final String SERVICE_NAME = "wessbas";
 
-	public static final String TASK_CREATE_QUEUE_NAME = "continuity.wessbas.task.workloadmodel.create";
-	
-	public static final String MIX_CREATE_QUEUE_NAME = "continuity.wessbas.task.behaviormix.createmix";
+	public static final String TASK_CREATE_WORKLOAD_QUEUE_NAME = "continuity.wessbas_workload.task.global.create";
 
-	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.WorkloadModel.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME);
-	
-	public static final String MIX_CREATE_ROUTING_KEY = AmqpApi.WorkloadModel.MIX_CREATE.formatRoutingKey().of(SERVICE_NAME);
+	public static final String TASK_CREATE_BEHAVIOR_QUEUE_NAME = "continuity.wessbas_behavior.task.global.create";
+
+	public static final String TASK_CREATE_WORKLOAD_ROUTING_KEY = AmqpApi.Global.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME, ArtifactType.WORKLOAD_MODEL);
+
+	public static final String TASK_CREATE_BEHAVIOR_ROUTING_KEY = AmqpApi.Global.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME, ArtifactType.BEHAVIOR_MODEL);
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -71,39 +72,29 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange taskCreateExchange() {
-		return AmqpApi.WorkloadModel.TASK_CREATE.create();
-	}
-	
-	@Bean
-	TopicExchange mixCreateExchange() {
-		return AmqpApi.WorkloadModel.MIX_CREATE.create();
+		return AmqpApi.Global.TASK_CREATE.create();
 	}
 
 	@Bean
-	Queue taskCreateQueue() {
-		return QueueBuilder.nonDurable(TASK_CREATE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
-				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
-	}
-	
-	@Bean
-	Queue mixCreateQueue() {
-		return QueueBuilder.nonDurable(MIX_CREATE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+	Queue taskCreateWorkloadQueue() {
+		return QueueBuilder.nonDurable(TASK_CREATE_WORKLOAD_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
-	Binding taskCreateBinding() {
-		return BindingBuilder.bind(taskCreateQueue()).to(taskCreateExchange()).with(TASK_CREATE_ROUTING_KEY);
-	}
-	
-	@Bean
-	Binding mixCreateBinding() {
-		return BindingBuilder.bind(mixCreateQueue()).to(mixCreateExchange()).with(MIX_CREATE_ROUTING_KEY);
+	Queue taskCreateBehaviorQueue() {
+		return QueueBuilder.nonDurable(TASK_CREATE_BEHAVIOR_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
-	TopicExchange eventCreatedExchange() {
-		return AmqpApi.WorkloadModel.EVENT_CREATED.create();
+	Binding taskCreateWorkloadBinding() {
+		return BindingBuilder.bind(taskCreateWorkloadQueue()).to(taskCreateExchange()).with(TASK_CREATE_WORKLOAD_ROUTING_KEY);
+	}
+
+	@Bean
+	Binding taskCreateBehaviorBinding() {
+		return BindingBuilder.bind(taskCreateBehaviorQueue()).to(taskCreateExchange()).with(TASK_CREATE_BEHAVIOR_ROUTING_KEY);
 	}
 
 	@Bean

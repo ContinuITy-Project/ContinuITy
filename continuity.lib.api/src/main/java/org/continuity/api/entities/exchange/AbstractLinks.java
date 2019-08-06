@@ -1,4 +1,4 @@
-package org.continuity.api.entities.links;
+package org.continuity.api.entities.exchange;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public abstract class AbstractLinks<T extends AbstractLinks<T>> {
 
 	@JsonBackReference
-	private final LinkExchangeModel parent;
+	private final ArtifactExchangeModel parent;
 
-	public AbstractLinks(LinkExchangeModel parent) {
+	public AbstractLinks(ArtifactExchangeModel parent) {
 		this.parent = parent;
 	}
 
-	public LinkExchangeModel parent() {
+	public ArtifactExchangeModel parent() {
 		return parent;
 	}
 

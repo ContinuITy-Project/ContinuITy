@@ -3,7 +3,7 @@ package org.continuity.api.rest;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.continuity.api.entities.links.MeasurementDataType;
+import org.continuity.api.entities.exchange.MeasurementDataType;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
@@ -778,22 +778,27 @@ public class RestApi {
 		/**
 		 * BehaviorModel API of the WESSBAS service.
 		 *
-		 * @author Manuel Palenga
+		 * @author Manuel Palenga, Henning Schulz
 		 *
 		 */
 		public static class BehaviorModel {
 
 			public static final String ROOT = "/behavior";
 
-			/** {@value #ROOT}/{id}/create */
-			public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.GET);
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+
+			/** {@value #ROOT}/legacy/{id} */
+			public static final RestEndpoint GET_LEGACY = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_LEGACY, RequestMethod.GET);
 
 			private BehaviorModel() {
 			}
 
 			public static class Paths {
 
-				public static final String CREATE = "/{id}";
+				public static final String GET = "/{id}";
+
+				public static final String GET_LEGACY = "/legacy/{id}";
 
 				private Paths() {
 				}
@@ -837,31 +842,6 @@ public class RestApi {
 				public static final String GET_APPLICATION = "/{id}/application";
 				public static final String GET_ANNOTATION = "/{id}/annotation";
 				public static final String PERSIST = "/{id}/persist";
-
-				private Paths() {
-				}
-			}
-		}
-
-		/**
-		 * Sessions Bundles API of the WESSBAS service.
-		 *
-		 * @author Alper Hidiroglu
-		 *
-		 */
-		public static class SessionsBundles {
-
-			public static final String ROOT = "/sessionsbundles";
-
-			/** {@value #ROOT}/{id} */
-			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
-
-			private SessionsBundles() {
-			}
-
-			public static class Paths {
-
-				public static final String GET = "/{id}";
 
 				private Paths() {
 				}

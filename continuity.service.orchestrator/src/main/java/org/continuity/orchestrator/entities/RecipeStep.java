@@ -1,7 +1,7 @@
 package org.continuity.orchestrator.entities;
 
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 
 public interface RecipeStep {
 
@@ -17,7 +17,7 @@ public interface RecipeStep {
 	 *
 	 * @return {@code true} if the data is available or {@code false}, otherwise.
 	 */
-	boolean checkData(LinkExchangeModel source);
+	boolean checkData(ArtifactExchangeModel source);
 
 	void execute();
 

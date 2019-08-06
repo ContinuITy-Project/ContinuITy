@@ -2,7 +2,7 @@ package org.continuity.orchestrator.entities;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.orchestrator.config.RabbitMqConfig;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ public class DummyStep implements RecipeStep {
 		LOGGER.warn("Dummy step for task {} - doing nothing!", task.getTaskId());
 
 		amqpTemplate.convertAndSend(AmqpApi.Global.EVENT_FINISHED.name(), AmqpApi.Global.EVENT_FINISHED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME),
-				TaskReport.successful(task.getTaskId(), new LinkExchangeModel()));
+				TaskReport.successful(task.getTaskId(), new ArtifactExchangeModel()));
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class DummyStep implements RecipeStep {
 	}
 
 	@Override
-	public boolean checkData(LinkExchangeModel source) {
+	public boolean checkData(ArtifactExchangeModel source) {
 		return false;
 	}
 

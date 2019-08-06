@@ -1,6 +1,7 @@
 package org.continuity.request.rates.config;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.exchange.ArtifactType;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -28,7 +29,7 @@ public class RabbitMqConfig {
 
 	public static final String TASK_CREATE_QUEUE_NAME = "continuity.request-rates.task.workloadmodel.create";
 
-	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.WorkloadModel.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME);
+	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.Global.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME, ArtifactType.WORKLOAD_MODEL);
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -67,7 +68,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange taskCreateExchange() {
-		return AmqpApi.WorkloadModel.TASK_CREATE.create();
+		return AmqpApi.Global.TASK_CREATE.create();
 	}
 
 	@Bean
@@ -79,11 +80,6 @@ public class RabbitMqConfig {
 	@Bean
 	Binding taskCreateBinding() {
 		return BindingBuilder.bind(taskCreateQueue()).to(taskCreateExchange()).with(TASK_CREATE_ROUTING_KEY);
-	}
-
-	@Bean
-	TopicExchange eventCreatedExchange() {
-		return AmqpApi.WorkloadModel.EVENT_CREATED.create();
 	}
 
 	@Bean

@@ -1,6 +1,7 @@
 package org.continuity.jmeter.config;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.exchange.ArtifactType;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -26,13 +27,13 @@ public class RabbitMqConfig {
 
 	public static final String SERVICE_NAME = "jmeter";
 
-	public static final String TASK_CREATE_QUEUE_NAME = "continuity.jmeter.task.loadtest.create";
+	public static final String TASK_CREATE_QUEUE_NAME = "continuity.jmeter_create.task.global.create";
 
-	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME);
+	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.Global.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME, ArtifactType.LOAD_TEST);
 
-	public static final String TASK_EXECUTE_QUEUE_NAME = "continuity.jmeter.task.loadtest.execute";
+	public static final String TASK_EXECUTE_QUEUE_NAME = "continuity.jmeter_execute.task.global.create";
 
-	public static final String TASK_EXECUTE_ROUTING_KEY = AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME);
+	public static final String TASK_EXECUTE_ROUTING_KEY = AmqpApi.Global.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME, ArtifactType.TEST_RESULT);
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -71,7 +72,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange taskCreateExchange() {
-		return AmqpApi.LoadTest.TASK_CREATE.create();
+		return AmqpApi.Global.TASK_CREATE.create();
 	}
 
 	@Bean
@@ -86,11 +87,6 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
-	TopicExchange taskExecuteExchange() {
-		return AmqpApi.LoadTest.TASK_EXECUTE.create();
-	}
-
-	@Bean
 	Queue taskExecuteQueue() {
 		return QueueBuilder.nonDurable(TASK_EXECUTE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
@@ -98,7 +94,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	Binding taskExecuteBinding() {
-		return BindingBuilder.bind(taskExecuteQueue()).to(taskExecuteExchange()).with(TASK_CREATE_ROUTING_KEY);
+		return BindingBuilder.bind(taskExecuteQueue()).to(taskCreateExchange()).with(TASK_EXECUTE_ROUTING_KEY);
 	}
 
 	@Bean

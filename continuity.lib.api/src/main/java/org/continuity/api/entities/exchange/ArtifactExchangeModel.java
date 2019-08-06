@@ -1,10 +1,11 @@
-package org.continuity.api.entities.links;
+package org.continuity.api.entities.exchange;
 
 import java.lang.reflect.Field;
 
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -12,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class LinkExchangeModel {
+public class ArtifactExchangeModel {
 
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -24,25 +25,20 @@ public class LinkExchangeModel {
 	@JsonInclude(Include.NON_NULL)
 	private VersionOrTimestamp version;
 
-	@JsonProperty(value = "idpa", required = false)
-	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
-	@JsonManagedReference
-	private final IdpaLinks idpaLinks = new IdpaLinks(this);
-
 	@JsonProperty(value = "traces", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
 	@JsonManagedReference
 	private final TraceLinks traceLinks = new TraceLinks(this);
 
-	@JsonProperty(value = "session-logs", required = false)
+	@JsonProperty(value = "sessions", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
 	@JsonManagedReference
-	private final SessionLogsLinks sessionLogsLinks = new SessionLogsLinks(this);
+	private final SessionLinks sessionLinks = new SessionLinks(this);
 
-	@JsonProperty(value = "forecast", required = false)
+	@JsonProperty(value = "behavior-model", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
 	@JsonManagedReference
-	private final ForecastLinks forecastLinks = new ForecastLinks(this);
+	private final BehaviorModelLinks behaviorModelLinks = new BehaviorModelLinks(this);
 
 	@JsonProperty(value = "workload-model", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
@@ -54,16 +50,16 @@ public class LinkExchangeModel {
 	@JsonManagedReference
 	private final LoadTestLinks loadTestLinks = new LoadTestLinks(this);
 
-	@JsonProperty(value = "sessions-bundles", required = false)
+	@JsonProperty(value = "test-result", required = false)
 	@JsonInclude(value = Include.CUSTOM, valueFilter = AbstractLinks.ValueFilter.class)
 	@JsonManagedReference
-	private final SessionsBundlesLinks sessionsBundlesLinks = new SessionsBundlesLinks(this);
+	private final LoadTestResultLinks resultLinks = new LoadTestResultLinks(this);
 
 	public AppId getAppId() {
 		return appId;
 	}
 
-	public LinkExchangeModel setAppId(AppId appId) {
+	public ArtifactExchangeModel setAppId(AppId appId) {
 		this.appId = appId;
 		return this;
 	}
@@ -72,25 +68,21 @@ public class LinkExchangeModel {
 		return version;
 	}
 
-	public LinkExchangeModel setVersion(VersionOrTimestamp version) {
+	public ArtifactExchangeModel setVersion(VersionOrTimestamp version) {
 		this.version = version;
 		return this;
-	}
-
-	public IdpaLinks getIdpaLinks() {
-		return idpaLinks;
 	}
 
 	public TraceLinks getTraceLinks() {
 		return traceLinks;
 	}
 
-	public SessionLogsLinks getSessionLogsLinks() {
-		return sessionLogsLinks;
+	public SessionLinks getSessionLinks() {
+		return sessionLinks;
 	}
 
-	public ForecastLinks getForecastLinks() {
-		return forecastLinks;
+	public BehaviorModelLinks getBehaviorModelLinks() {
+		return behaviorModelLinks;
 	}
 
 	public WorkloadModelLinks getWorkloadModelLinks() {
@@ -101,16 +93,21 @@ public class LinkExchangeModel {
 		return loadTestLinks;
 	}
 
-	public SessionsBundlesLinks getSessionsBundlesLinks() {
-		return sessionsBundlesLinks;
+	public LoadTestResultLinks getResultLinks() {
+		return resultLinks;
 	}
 
-	public void merge(LinkExchangeModel other) {
+	@JsonIgnore
+	public boolean isPresent(ArtifactType type) {
+		return type.isPresentInModel(this);
+	}
+
+	public void merge(ArtifactExchangeModel other) {
 		if (this.getAppId() == null) {
 			this.setAppId(other.getAppId());
 		}
 
-		for (Field field : LinkExchangeModel.class.getDeclaredFields()) {
+		for (Field field : ArtifactExchangeModel.class.getDeclaredFields()) {
 			if (AbstractLinks.class.isAssignableFrom(field.getType())) {
 				try {
 					mergeLinks(field, other);
@@ -122,7 +119,7 @@ public class LinkExchangeModel {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends AbstractLinks<T>> void mergeLinks(Field field, LinkExchangeModel other) throws IllegalArgumentException, IllegalAccessException {
+	private <T extends AbstractLinks<T>> void mergeLinks(Field field, ArtifactExchangeModel other) throws IllegalArgumentException, IllegalAccessException {
 		((T) field.get(this)).merge((T) field.get(other));
 	}
 

@@ -1,4 +1,4 @@
-package org.continuity.api.entities.links;
+package org.continuity.api.entities.exchange;
 
 import java.lang.reflect.Field;
 
@@ -6,7 +6,7 @@ public class TraceLinks extends AbstractLinks<TraceLinks> {
 
 	private String link;
 
-	public TraceLinks(LinkExchangeModel parent) {
+	public TraceLinks(ArtifactExchangeModel parent) {
 		super(parent);
 	}
 

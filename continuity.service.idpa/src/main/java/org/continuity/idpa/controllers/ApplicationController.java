@@ -15,9 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.report.ApplicationChangeReport;
 import org.continuity.api.entities.report.ApplicationChangeType;
 import org.continuity.commons.utils.WebUtils;
@@ -25,14 +24,11 @@ import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
-import org.continuity.idpa.entities.ApplicationModelLink;
 import org.continuity.idpa.entities.EndpointAsRegex;
 import org.continuity.idpa.serialization.yaml.IdpaYamlSerializer;
 import org.continuity.idpa.storage.ApplicationStorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -65,18 +61,15 @@ public class ApplicationController {
 
 	private final RestTemplate restTemplate;
 
-	private final AmqpTemplate amqpTemplate;
-
 	@Value("${spring.application.name}")
 	private String applicationName;
 
 	private final ApplicationStorageManager manager;
 
 	@Autowired
-	public ApplicationController(ApplicationStorageManager manager, RestTemplate restTemplate, AmqpTemplate amqpTemplate) {
+	public ApplicationController(ApplicationStorageManager manager, RestTemplate restTemplate) {
 		this.manager = manager;
 		this.restTemplate = restTemplate;
-		this.amqpTemplate = amqpTemplate;
 	}
 
 	/**
@@ -247,16 +240,6 @@ public class ApplicationController {
 
 		ApplicationChangeReport report = manager.saveOrUpdate(aid, system, ignoredChangeTypes);
 
-		if (report.changed()) {
-			try {
-				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(aid),
-						new ApplicationModelLink(applicationName, aid, report.getBeforeChange()));
-			} catch (AmqpException e) {
-				LOGGER.error("Could not send the system model with app-id {} to the {} exchange!", aid, AmqpApi.Idpa.EVENT_CHANGED.name());
-				LOGGER.error("Exception:", e);
-			}
-		}
-
 		return ResponseEntity.ok().body(report.toString());
 	}
 
@@ -291,16 +274,16 @@ public class ApplicationController {
 			@RequestParam(name = "ignore-parameter-added", defaultValue = "false") boolean ignoreParameterAdded) {
 		LOGGER.info("Updating IDPA from workload model link: {}", workloadModelLink);
 
-		ResponseEntity<LinkExchangeModel> workloadLinksResponse;
+		ResponseEntity<ArtifactExchangeModel> workloadLinksResponse;
 		try {
-			workloadLinksResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(workloadModelLink), LinkExchangeModel.class);
+			workloadLinksResponse = restTemplate.getForEntity(WebUtils.addProtocolIfMissing(workloadModelLink), ArtifactExchangeModel.class);
 		} catch (HttpStatusCodeException e) {
 			LOGGER.error("Could not retrieve the workload model overview from {}. Got response code {}!", workloadModelLink, e.getStatusCode());
 			LOGGER.error("Exception:", e);
 			return;
 		}
 
-		LinkExchangeModel link = workloadLinksResponse.getBody();
+		ArtifactExchangeModel link = workloadLinksResponse.getBody();
 
 		if ("INVALID".equals(link.getWorkloadModelLinks().getApplicationLink())) {
 			LOGGER.error("Received invalid system model link: {}", link);
@@ -366,16 +349,6 @@ public class ApplicationController {
 		}
 
 		ApplicationChangeReport report = manager.saveOrUpdate(aid, system, ignoredChangeTypes);
-
-		if (report.changed()) {
-			try {
-				amqpTemplate.convertAndSend(AmqpApi.Idpa.EVENT_CHANGED.name(), AmqpApi.Idpa.EVENT_CHANGED.formatRoutingKey().of(aid),
-						new ApplicationModelLink(applicationName, aid, report.getBeforeChange()));
-			} catch (AmqpException e) {
-				LOGGER.error("Could not send the system model with app-id {} to the {} exchange!", aid, AmqpApi.Idpa.EVENT_CHANGED.name());
-				LOGGER.error("Exception: ", e);
-			}
-		}
 
 		return ResponseEntity.ok().body(report.toString());
 	}

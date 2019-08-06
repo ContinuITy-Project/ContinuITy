@@ -6,7 +6,7 @@ import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.LoadTestType;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
@@ -55,7 +55,7 @@ public class TestPlanCreationAmqpHandler {
 		} else {
 			LOGGER.info("Task {}: Creating a load test from {}...", task.getTaskId(), workloadModelLink);
 
-			LinkExchangeModel workloadLinks = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadModelLink), LinkExchangeModel.class);
+			ArtifactExchangeModel workloadLinks = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadModelLink), ArtifactExchangeModel.class);
 
 			if ((workloadLinks == null) || (workloadLinks.getWorkloadModelLinks().getJmeterLink() == null)) {
 				LOGGER.error("The workload model at {} does not provide a link to JMeter!", workloadModelLink);
@@ -67,7 +67,7 @@ public class TestPlanCreationAmqpHandler {
 				LOGGER.info("Task {}: Created a load test from {}.", task.getTaskId(), workloadModelLink);
 
 				report = TaskReport.successful(task.getTaskId(),
-						new LinkExchangeModel().getLoadTestLinks().setType(LoadTestType.JMETER).setLink(RestApi.JMeter.TestPlan.GET.requestUrl(id).withoutProtocol().get()).parent());
+						new ArtifactExchangeModel().getLoadTestLinks().setType(LoadTestType.JMETER).setLink(RestApi.JMeter.TestPlan.GET.requestUrl(id).withoutProtocol().get()).parent());
 			}
 		}
 
@@ -84,7 +84,7 @@ public class TestPlanCreationAmqpHandler {
 	 *            The app-id to be used to retrieve the annotation.
 	 * @return The transformed JMeter test plan.
 	 */
-	private JMeterTestPlanBundle createAndGetLoadTest(LinkExchangeModel workloadLinks, AppId aid, OrderOptions properties, List<ServiceSpecification> services) {
+	private JMeterTestPlanBundle createAndGetLoadTest(ArtifactExchangeModel workloadLinks, AppId aid, OrderOptions properties, List<ServiceSpecification> services) {
 		JMeterTestPlanBundle testPlanPack = restTemplate.getForObject(WebUtils.addProtocolIfMissing(workloadLinks.getWorkloadModelLinks().getJmeterLink()), JMeterTestPlanBundle.class);
 		JMeterAnnotator annotator = new JMeterAnnotator(testPlanPack.getTestPlan(), restTemplate);
 		ListedHashTree annotatedTestPlan = annotator.createAnnotatedTestPlan(aid, services);

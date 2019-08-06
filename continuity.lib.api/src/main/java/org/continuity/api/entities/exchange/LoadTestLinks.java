@@ -1,4 +1,4 @@
-package org.continuity.api.entities.links;
+package org.continuity.api.entities.exchange;
 
 import java.lang.reflect.Field;
 
@@ -18,11 +18,7 @@ public class LoadTestLinks extends AbstractLinks<LoadTestLinks> {
 	@JsonInclude(Include.NON_NULL)
 	private String link;
 
-	@JsonProperty(value = "report-link", required = false)
-	@JsonInclude(Include.NON_NULL)
-	private String reportLink;
-
-	public LoadTestLinks(LinkExchangeModel parent) {
+	public LoadTestLinks(ArtifactExchangeModel parent) {
 		super(parent);
 	}
 
@@ -45,15 +41,6 @@ public class LoadTestLinks extends AbstractLinks<LoadTestLinks> {
 
 	public LoadTestLinks setLink(String loadTestLink) {
 		this.link = loadTestLink;
-		return this;
-	}
-
-	public String getReportLink() {
-		return reportLink;
-	}
-
-	public LoadTestLinks setReportLink(String loadTestReportLink) {
-		this.reportLink = loadTestReportLink;
 		return this;
 	}
 

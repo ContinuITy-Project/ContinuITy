@@ -2,7 +2,7 @@ package org.continuity.api.entities.report;
 
 import java.util.Set;
 
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -24,7 +24,7 @@ public class OrderReport {
 	private Set<String> testingContext;
 
 	@JsonProperty("artifacts")
-	private LinkExchangeModel artifacts;
+	private ArtifactExchangeModel artifacts;
 
 	private boolean successful;
 
@@ -34,7 +34,7 @@ public class OrderReport {
 	public OrderReport() {
 	}
 
-	public OrderReport(String orderId, Set<String> testingContext, LinkExchangeModel internalArtifacts, boolean successful, String error) {
+	public OrderReport(String orderId, Set<String> testingContext, ArtifactExchangeModel internalArtifacts, boolean successful, String error) {
 		this.orderId = orderId;
 		this.testingContext = testingContext;
 		this.artifacts = internalArtifacts;
@@ -42,11 +42,11 @@ public class OrderReport {
 		this.error = error;
 	}
 
-	public static OrderReport asSuccessful(String orderId, Set<String> testingContext, LinkExchangeModel internalArtifacts) {
+	public static OrderReport asSuccessful(String orderId, Set<String> testingContext, ArtifactExchangeModel internalArtifacts) {
 		return new OrderReport(orderId, testingContext, internalArtifacts, true, null);
 	}
 
-	public static OrderReport asError(String orderId, LinkExchangeModel internalArtifacts, String error) {
+	public static OrderReport asError(String orderId, ArtifactExchangeModel internalArtifacts, String error) {
 		return new OrderReport(orderId, null, internalArtifacts, false, error);
 	}
 
@@ -66,11 +66,11 @@ public class OrderReport {
 		this.testingContext = testingContext;
 	}
 
-	public LinkExchangeModel getArtifacts() {
+	public ArtifactExchangeModel getArtifacts() {
 		return artifacts;
 	}
 
-	public void setArtifacts(LinkExchangeModel artifacts) {
+	public void setArtifacts(ArtifactExchangeModel artifacts) {
 		this.artifacts = artifacts;
 	}
 

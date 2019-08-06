@@ -1,4 +1,4 @@
-package org.continuity.api.entities.order;
+package org.continuity.api.entities.exchange;
 
 import java.util.HashMap;
 import java.util.Map;

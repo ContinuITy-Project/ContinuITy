@@ -15,3 +15,5 @@ eureka:
   instance:
     statusPageUrlPath: /swagger-ui.html
     preferIpAddress: true
+    metadataMap:
+      produces: traces, sessions, behavior-model

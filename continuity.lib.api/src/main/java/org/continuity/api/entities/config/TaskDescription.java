@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactType;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.dsl.context.Context;
@@ -31,10 +32,12 @@ public class TaskDescription {
 
 	private VersionOrTimestamp version;
 
-	private LinkExchangeModel source;
+	private ArtifactExchangeModel source;
 
 	@JsonProperty("long-term-use")
 	private boolean longTermUse;
+
+	private ArtifactType target;
 
 	private OrderOptions options;
 
@@ -72,11 +75,11 @@ public class TaskDescription {
 		this.version = version;
 	}
 
-	public LinkExchangeModel getSource() {
+	public ArtifactExchangeModel getSource() {
 		return source;
 	}
 
-	public void setSource(LinkExchangeModel source) {
+	public void setSource(ArtifactExchangeModel source) {
 		this.source = source;
 	}
 
@@ -86,6 +89,14 @@ public class TaskDescription {
 
 	public void setLongTermUse(boolean longTermUse) {
 		this.longTermUse = longTermUse;
+	}
+
+	public ArtifactType getTarget() {
+		return target;
+	}
+
+	public void setTarget(ArtifactType target) {
+		this.target = target;
 	}
 
 	public OrderOptions getOptions() {
