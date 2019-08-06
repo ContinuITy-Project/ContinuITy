@@ -11,6 +11,7 @@ import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.slf4j.Logger;
@@ -103,6 +104,33 @@ public class ElasticsearchTraceManager extends ElasticsearchScrollingManager<Tra
 	 *             If a request to the database times out.
 	 */
 	public List<TraceRecord> readTraceRecords(AppId aid, VersionOrTimestamp version, Date from, Date to) throws IOException, TimeoutException {
+		QueryBuilder query = createRangeQuery(version, from, to);
+
+		return readElements(aid, query, String.format("with version %s, and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
+	}
+
+	/**
+	 * Counts all traces within a given range.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param version
+	 *            The version or timestamp. Can be {@code null}. In this case, it will be ignored.
+	 * @param from
+	 *            The start date of the range.
+	 * @param to
+	 *            The end date of the range.
+	 * @return The number of sessions in the range.
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	public long countTraces(AppId aid, VersionOrTimestamp version, Date from, Date to) throws IOException {
+		QueryBuilder query = createRangeQuery(version, from, to);
+
+		return countElements(aid, query, String.format("with version %s, and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
+	}
+
+	private QueryBuilder createRangeQuery(VersionOrTimestamp version, Date from, Date to) {
 		BoolQueryBuilder query = QueryBuilders.boolQuery();
 
 		if (version != null) {
@@ -115,7 +143,7 @@ public class ElasticsearchTraceManager extends ElasticsearchScrollingManager<Tra
 			LOGGER.warn("The provided time range ({} - {}) contains null elements! Ignoring.", from, to);
 		}
 
-		return readElements(aid, query, String.format("with version %s, and time range %s - %s", version.toString(), formatOrNull(from), formatOrNull(to)));
+		return query;
 	}
 
 	/**

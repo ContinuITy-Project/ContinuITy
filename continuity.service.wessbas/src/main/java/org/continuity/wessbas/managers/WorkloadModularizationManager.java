@@ -15,7 +15,7 @@ import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
 import org.continuity.api.entities.artifact.markovbehavior.NormalDistribution;
 import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
 import org.continuity.api.entities.config.SessionTailoringDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.rest.RestApi;
 import org.continuity.idpa.AppId;
@@ -116,7 +116,7 @@ public class WorkloadModularizationManager {
 		LOGGER.info("Set working directory to {}", workingDir);
 	}
 
-	public void runPipeline(VersionOrTimestamp version, LinkExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, List<ServiceSpecification> services) {
+	public void runPipeline(VersionOrTimestamp version, ArtifactExchangeModel linkExchangeModel, BehaviorModelPack behaviorModelPack, List<ServiceSpecification> services) {
 		List<SessionsBundle> sessionBundles = behaviorModelPack.getSessionsBundlePack().getSessionsBundles();
 
 		MarkovBehaviorModel behaviorModel = new MarkovBehaviorModel();

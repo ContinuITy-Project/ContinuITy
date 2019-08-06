@@ -5,7 +5,7 @@ import java.util.ListIterator;
 import java.util.Set;
 
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.report.TaskReport;
@@ -29,7 +29,7 @@ public class Recipe {
 
 	private final VersionOrTimestamp version;
 
-	private LinkExchangeModel source;
+	private ArtifactExchangeModel source;
 
 	private final OrderOptions options;
 
@@ -39,7 +39,7 @@ public class Recipe {
 
 	private final Set<String> testingContext;
 
-	public Recipe(String orderId, String recipeId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, List<RecipeStep> steps, LinkExchangeModel source, boolean longTermUse,
+	public Recipe(String orderId, String recipeId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, List<RecipeStep> steps, ArtifactExchangeModel source, boolean longTermUse,
 			Set<String> testingContext,
 			OrderOptions options, Context context) {
 		this.orderId = orderId;
@@ -48,7 +48,7 @@ public class Recipe {
 		this.appId = aid;
 		this.services = services;
 		this.version = version;
-		this.source = source == null ? new LinkExchangeModel() : source;
+		this.source = source == null ? new ArtifactExchangeModel() : source;
 		this.longTermUse = longTermUse;
 		this.testingContext = testingContext;
 		this.context = context;
@@ -64,7 +64,7 @@ public class Recipe {
 		return recipeId;
 	}
 
-	public LinkExchangeModel getSource() {
+	public ArtifactExchangeModel getSource() {
 		return source;
 	}
 
@@ -103,7 +103,7 @@ public class Recipe {
 		source.merge(report.getResult());
 	}
 
-	private void initIterator(LinkExchangeModel source) {
+	private void initIterator(ArtifactExchangeModel source) {
 		while (iterator.hasPrevious()) {
 			boolean stop = iterator.previous().checkData(source);
 

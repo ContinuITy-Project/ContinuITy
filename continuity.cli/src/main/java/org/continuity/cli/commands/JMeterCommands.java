@@ -3,7 +3,7 @@ package org.continuity.cli.commands;
 import java.nio.file.Path;
 
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.LoadTestType;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.rest.RestApi;
@@ -140,9 +140,9 @@ public class JMeterCommands extends AbstractCommands {
 
 			String continuityHost = propertiesProvider.getProperty(PropertiesProvider.KEY_URL);
 
-			ResponseEntity<LinkExchangeModel> response = restTemplate.postForEntity(
+			ResponseEntity<ArtifactExchangeModel> response = restTemplate.postForEntity(
 					RestApi.JMeter.TestPlan.POST.viaOrchestrator().requestUrl("jmeter", aid).withHost(continuityHost).withQuery("annotate", Boolean.toString(annotate)).get(), bundle,
-					LinkExchangeModel.class);
+					ArtifactExchangeModel.class);
 
 			if (response.getStatusCode().is2xxSuccessful()) {
 				return new ResponseBuilder().normal("Successfully uploaded JMeter test plan with app-id ").bold(aid).normal(" at ").normal(loadTestPath).normal("\n")

@@ -3,7 +3,8 @@ package org.continuity.api.entities.order;
 import java.util.List;
 import java.util.Set;
 
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactType;
 import org.continuity.dsl.context.Context;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
@@ -13,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "goal", "mode", "app-id", "services", "version", "testing-context", "context", "options", "source" })
+@JsonPropertyOrder({ "target", "mode", "app-id", "services", "version", "testing-context", "context", "options", "source" })
 public class Order {
 
 	@JsonProperty("app-id")
@@ -25,10 +26,7 @@ public class Order {
 	@JsonInclude(Include.NON_NULL)
 	private VersionOrTimestamp version;
 
-	private OrderGoal goal;
-
-	@JsonInclude(Include.NON_NULL)
-	private OrderMode mode;
+	private ArtifactType target;
 
 	@JsonProperty("testing-context")
 	@JsonInclude(Include.NON_EMPTY)
@@ -38,7 +36,7 @@ public class Order {
 	private Context context;
 
 	@JsonInclude(Include.NON_NULL)
-	private LinkExchangeModel source;
+	private ArtifactExchangeModel source;
 
 	@JsonInclude(Include.NON_NULL)
 	private OrderOptions options;
@@ -67,20 +65,12 @@ public class Order {
 		this.version = version;
 	}
 
-	public OrderGoal getGoal() {
-		return goal;
+	public ArtifactType getTarget() {
+		return target;
 	}
 
-	public void setGoal(OrderGoal goal) {
-		this.goal = goal;
-	}
-
-	public OrderMode getMode() {
-		return mode;
-	}
-
-	public void setMode(OrderMode mode) {
-		this.mode = mode;
+	public void setTarget(ArtifactType target) {
+		this.target = target;
 	}
 
 	public Set<String> getTestingContext() {
@@ -99,11 +89,11 @@ public class Order {
 		this.context = context;
 	}
 
-	public LinkExchangeModel getSource() {
+	public ArtifactExchangeModel getSource() {
 		return source;
 	}
 
-	public void setSource(LinkExchangeModel source) {
+	public void setSource(ArtifactExchangeModel source) {
 		this.source = source;
 	}
 

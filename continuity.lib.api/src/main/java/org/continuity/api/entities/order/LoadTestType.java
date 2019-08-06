@@ -18,8 +18,8 @@ public enum LoadTestType {
 	}
 
 	@JsonCreator
-	public static OrderGoal fromPrettyString(String key) {
-		return key == null ? null : OrderGoal.valueOf(key.toUpperCase());
+	public static LoadTestType fromPrettyString(String key) {
+		return key == null ? null : valueOf(key.toUpperCase());
 	}
 
 	@JsonValue

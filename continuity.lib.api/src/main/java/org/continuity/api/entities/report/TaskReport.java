@@ -1,6 +1,6 @@
 package org.continuity.api.entities.report;
 
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -12,19 +12,19 @@ public class TaskReport {
 	private boolean successful;
 
 	@JsonInclude(Include.NON_NULL)
-	private LinkExchangeModel result;
+	private ArtifactExchangeModel result;
 
 	@JsonInclude(Include.NON_NULL)
 	private TaskError error;
 
-	public TaskReport(String taskId, boolean successful, LinkExchangeModel result, TaskError error) {
+	public TaskReport(String taskId, boolean successful, ArtifactExchangeModel result, TaskError error) {
 		this.taskId = taskId;
 		this.successful = successful;
 		this.result = result;
 		this.error = error;
 	}
 
-	public static TaskReport successful(String taskId, LinkExchangeModel result) {
+	public static TaskReport successful(String taskId, ArtifactExchangeModel result) {
 		return new TaskReport(taskId, true, result, null);
 	}
 
@@ -52,11 +52,11 @@ public class TaskReport {
 		this.successful = successful;
 	}
 
-	public LinkExchangeModel getResult() {
+	public ArtifactExchangeModel getResult() {
 		return result;
 	}
 
-	public void setResult(LinkExchangeModel result) {
+	public void setResult(ArtifactExchangeModel result) {
 		this.result = result;
 	}
 

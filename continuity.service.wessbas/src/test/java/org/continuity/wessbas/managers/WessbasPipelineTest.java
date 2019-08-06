@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.UnsupportedEncodingException;
 
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,8 +36,8 @@ public class WessbasPipelineTest {
 	@Test
 	public void test() {
 		TaskDescription task = new TaskDescription();
-		LinkExchangeModel  source = new LinkExchangeModel();
-		source.getSessionLogsLinks().setExtendedLink("");
+		ArtifactExchangeModel  source = new ArtifactExchangeModel();
+		source.getSessionLinks().setExtendedLink("");
 		task.setSource(source);
 		WessbasBundle bundle = pipelineManager.runPipeline(task, 60000000000L);
 

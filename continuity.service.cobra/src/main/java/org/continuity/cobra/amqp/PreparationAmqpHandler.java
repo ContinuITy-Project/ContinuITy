@@ -11,7 +11,7 @@ import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.order.TailoringApproach;
 import org.continuity.api.entities.report.TaskError;
@@ -21,6 +21,7 @@ import org.continuity.api.rest.RestApi;
 import org.continuity.api.rest.RestEndpoint;
 import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
+import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.commons.utils.TailoringUtils;
 import org.continuity.dsl.context.Context;
 import org.continuity.dsl.context.timespec.AfterSpecification;
@@ -43,12 +44,14 @@ public class PreparationAmqpHandler {
 	private AmqpTemplate amqpTemplate;
 
 	@Autowired
-	private ElasticsearchSessionManager elasticManager;
+	private ElasticsearchSessionManager elasticSessionManager;
+
+	@Autowired
+	private ElasticsearchTraceManager elasticTraceManager;
 
 	@RabbitListener(queues = RabbitMqConfig.TASK_CREATE_QUEUE_NAME)
-	public void createSessionLogs(TaskDescription task) throws IOException, TimeoutException {
+	public void prepareInitialData(TaskDescription task) throws IOException, TimeoutException {
 		TaskReport report;
-		AppId aid = task.getAppId();
 
 		Date from = null;
 		Date to = null;
@@ -63,27 +66,58 @@ public class PreparationAmqpHandler {
 			LOGGER.warn("Currently, only the before and after when specifications are used!");
 		}
 
-		LOGGER.info("Processing task {}: Get sessions from {} to {}...", task.getTaskId(), from, to);
+		// TODO: read intensities based on context and use the resulting time ranges for retrieving
+		// the corresponding artifacts (store the link in a storage?)
 
-		List<String> services = extractServices(task);
+		LOGGER.info("Processing task {}: Get {} from {} to {}...", task.getTaskId(), task.getTarget().toPrettyString(), from, to);
 
-		long count = elasticManager.countSessionsInRange(aid, null, services, from, to);
-
-		if (count == 0) {
-			LOGGER.error("Task {}: There are no such sessions available!", task.getTaskId());
-			report = TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
-		} else {
-			LinkExchangeModel artifacts = new LinkExchangeModel();
-
-			artifacts.getSessionLogsLinks().setSimpleLink(formatSessionLink(RestApi.Cobra.Sessions.GET_SIMPLE, aid, services, from, to))
-					.setExtendedLink(formatSessionLink(RestApi.Cobra.Sessions.GET_EXTENDED, aid, services, from, to));
-
-			artifacts.getTraceLinks().setLink(formatTraceLink(aid, task.getVersion(), from, to));
-
-			report = TaskReport.successful(task.getTaskId(), artifacts);
+		switch (task.getTarget()) {
+		case TRACES:
+			report = createTraceLink(task, from, to);
+			break;
+		case SESSIONS:
+			report = createSessionLink(task, from, to);
+			break;
+		case BEHAVIOR_MODEL:
+			LOGGER.error("Task {}: Using the behavior models is not implemented yet!!", task.getTaskId());
+			report = TaskReport.error(task.getTaskId(), TaskError.ILLEGAL_TYPE);
+			break;
+		default:
+			LOGGER.error("Task {}: Cannot generate {}!", task.getTaskId(), task.getTarget().toPrettyString());
+			report = TaskReport.error(task.getTaskId(), TaskError.ILLEGAL_TYPE);
+			break;
 		}
 
 		sendReport(report);
+	}
+
+	private TaskReport createTraceLink(TaskDescription task, Date from, Date to) throws IOException {
+		long count = elasticTraceManager.countTraces(task.getAppId(), null, from, to);
+
+		if (count == 0) {
+			LOGGER.error("Task {}: There are no such traces available!", task.getTaskId());
+			return TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
+		} else {
+			ArtifactExchangeModel artifacts = new ArtifactExchangeModel();
+			artifacts.getTraceLinks().setLink(formatTraceLink(task.getAppId(), task.getVersion(), from, to));
+			return TaskReport.successful(task.getTaskId(), artifacts);
+		}
+	}
+
+	private TaskReport createSessionLink(TaskDescription task, Date from, Date to) throws IOException {
+		List<String> services = extractServices(task);
+
+		long count = elasticSessionManager.countSessionsInRange(task.getAppId(), null, services, from, to);
+
+		if (count == 0) {
+			LOGGER.error("Task {}: There are no such sessions available!", task.getTaskId());
+			return TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
+		} else {
+			ArtifactExchangeModel artifacts = new ArtifactExchangeModel();
+			artifacts.getSessionLinks().setSimpleLink(formatSessionLink(RestApi.Cobra.Sessions.GET_SIMPLE, task.getAppId(), services, from, to))
+					.setExtendedLink(formatSessionLink(RestApi.Cobra.Sessions.GET_EXTENDED, task.getAppId(), services, from, to));
+			return TaskReport.successful(task.getTaskId(), artifacts);
+		}
 	}
 
 	private String formatSessionLink(RestEndpoint endpoint, AppId aid, List<String> services, Date from, Date to) {

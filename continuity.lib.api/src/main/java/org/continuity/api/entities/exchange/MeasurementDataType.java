@@ -1,4 +1,4 @@
-package org.continuity.api.entities.links;
+package org.continuity.api.entities.exchange;
 
 import java.util.HashMap;
 import java.util.Map;

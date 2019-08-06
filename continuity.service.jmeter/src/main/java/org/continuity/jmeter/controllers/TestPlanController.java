@@ -8,7 +8,7 @@ import java.util.Collections;
 
 import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.LoadTestType;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.rest.RestApi;
@@ -84,11 +84,11 @@ public class TestPlanController {
 	 * @param annotate
 	 *            Indicates whether the test plan should be annotated with the IDPA stored for the
 	 *            specified app-id.
-	 * @return a {@link LinkExchangeModel} containing the link
+	 * @return a {@link ArtifactExchangeModel} containing the link
 	 */
 	@RequestMapping(value = POST, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<LinkExchangeModel> uploadTestPlan(@RequestBody JMeterTestPlanBundle bundle, @ApiIgnore @PathVariable("app-id") AppId aid,
+	public ResponseEntity<ArtifactExchangeModel> uploadTestPlan(@RequestBody JMeterTestPlanBundle bundle, @ApiIgnore @PathVariable("app-id") AppId aid,
 			@RequestParam(required = false) VersionOrTimestamp version, @RequestParam(defaultValue = "false") boolean annotate) {
 		LOGGER.info("Received uploaded test plan with app-id {}.", aid);
 
@@ -101,7 +101,7 @@ public class TestPlanController {
 		}
 
 		String id = storage.put(bundle, aid);
-		return ResponseEntity.ok(new LinkExchangeModel().getLoadTestLinks().setType(LoadTestType.JMETER).setLink(RestApi.JMeter.TestPlan.GET.requestUrl(id).withoutProtocol().get()).parent());
+		return ResponseEntity.ok(new ArtifactExchangeModel().getLoadTestLinks().setType(LoadTestType.JMETER).setLink(RestApi.JMeter.TestPlan.GET.requestUrl(id).withoutProtocol().get()).parent());
 	}
 
 }

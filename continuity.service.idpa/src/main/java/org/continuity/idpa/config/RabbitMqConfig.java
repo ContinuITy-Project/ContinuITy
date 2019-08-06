@@ -1,9 +1,7 @@
 package org.continuity.idpa.config;
 
-import org.continuity.api.amqp.AmqpApi;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.MessagePostProcessor;
-import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -28,11 +26,6 @@ public class RabbitMqConfig {
 			m.getMessageProperties().getHeaders().remove("__TypeId__");
 			return m;
 		};
-	}
-
-	@Bean
-	TopicExchange idpaApplicationChangedExchange() {
-		return AmqpApi.Idpa.EVENT_CHANGED.create();
 	}
 
 	@Bean

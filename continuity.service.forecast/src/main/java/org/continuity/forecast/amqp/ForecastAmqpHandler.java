@@ -7,8 +7,7 @@ import org.apache.commons.math3.util.Pair;
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.artifact.ForecastBundle;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
-import org.continuity.api.entities.links.SessionsStatus;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.report.TaskError;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
@@ -67,9 +66,10 @@ public class ForecastAmqpHandler {
 	public void onMonitoringDataAvailable(TaskDescription task) {
 		LOGGER.info("Task {}: Received new task to be processed for app-id '{}'", task.getTaskId(), task.getAppId());
 
-		String linkToSessions = task.getSource().getSessionsBundlesLinks().getLink();
+		String linkToSessions = null; // TODO: task.getSource().getSessionsBundlesLinks().getLink();
 
-		List<String> pathParams = RestApi.Wessbas.SessionsBundles.GET.parsePathParameters(linkToSessions);
+		List<String> pathParams = null; // TODO:
+										// RestApi.Wessbas.SessionsBundles.GET.parsePathParameters(linkToSessions);
 
 		TaskReport report;
 
@@ -81,7 +81,9 @@ public class ForecastAmqpHandler {
 			// TODO: retrieve interval from service configuration
 			long interval = 60000000000L;
 
-			boolean statusChanged = task.getSource().getSessionsBundlesLinks().getStatus().equals(SessionsStatus.CHANGED) ? true : false;
+			boolean statusChanged = true; // TODO:
+											// task.getSource().getSessionsBundlesLinks().getStatus().equals(SessionsStatus.CHANGED)
+											// ? true : false;
 
 			// calculate new intensities
 			if(statusChanged) {
@@ -105,7 +107,8 @@ public class ForecastAmqpHandler {
 
 				LOGGER.info("Task {}: Created a new forecast with id '{}'.", task.getTaskId(), storageId);
 
-				report = TaskReport.successful(task.getTaskId(), new LinkExchangeModel().getForecastLinks().setLink(forecastLink).parent());
+				report = TaskReport.successful(task.getTaskId(), new ArtifactExchangeModel()); // TODO:
+																								// .getForecastLinks().setLink(forecastLink).parent());
 			}
 		}
 

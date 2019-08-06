@@ -8,7 +8,7 @@ import java.util.stream.StreamSupport;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.TraceLinks;
+import org.continuity.api.entities.exchange.TraceLinks;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.report.TaskReport;
 import org.continuity.api.rest.RestApi;
@@ -121,10 +121,6 @@ public class RequestRatesAmqpHandler {
 
 		WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getAppId());
 		TaskReport report = TaskReport.successful(task.getTaskId(), responsePack);
-
-		if (calculator.useNames()) {
-			amqpTemplate.convertAndSend(AmqpApi.WorkloadModel.EVENT_CREATED.name(), AmqpApi.WorkloadModel.EVENT_CREATED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), responsePack);
-		}
 
 		return report;
 	}

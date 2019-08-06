@@ -3,7 +3,7 @@ package org.continuity.wessbas.managers;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.idpa.annotation.ApplicationAnnotation;
 import org.continuity.idpa.annotation.DirectListInput;
 import org.continuity.idpa.application.Application;
@@ -40,8 +40,8 @@ public class UrlPartParametersTest {
 	@Test
 	public void testTransformationFromSessionLog() {
 		TaskDescription task = new TaskDescription();
-		LinkExchangeModel  source = new LinkExchangeModel();
-		source.getSessionLogsLinks().setExtendedLink("");
+		ArtifactExchangeModel  source = new ArtifactExchangeModel();
+		source.getSessionLinks().setExtendedLink("");
 		task.setSource(source);
 		WessbasBundle bundle = manager.runPipeline(task, 60000000000L);
 

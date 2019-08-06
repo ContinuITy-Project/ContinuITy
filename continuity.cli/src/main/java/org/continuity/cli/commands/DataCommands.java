@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
 import org.continuity.api.entities.config.MeasurementDataSpec;
-import org.continuity.api.entities.links.MeasurementDataType;
+import org.continuity.api.entities.exchange.MeasurementDataType;
 import org.continuity.api.rest.RestApi;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;

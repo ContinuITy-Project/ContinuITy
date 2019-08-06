@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.commons.storage.AppIdFileStorage;
 import org.continuity.commons.storage.ArtifactStorage;
 import org.continuity.commons.storage.JsonFileStorage;
@@ -27,17 +27,17 @@ public class TestingContextStorage {
 
 	private static final String MAPPINGS_DIR = "mappings";
 
-	private final ArtifactStorage<LinkExchangeModel> artifactStorage;
+	private final ArtifactStorage<ArtifactExchangeModel> artifactStorage;
 
 	private final AppIdFileStorage<TestingContextMapping> mappingStorage;
 
 	public TestingContextStorage(Path storagePath) {
-		this.artifactStorage = new JsonFileStorage<LinkExchangeModel>(storagePath.resolve(ARTIFACTS_DIR), new LinkExchangeModel());
+		this.artifactStorage = new JsonFileStorage<ArtifactExchangeModel>(storagePath.resolve(ARTIFACTS_DIR), new ArtifactExchangeModel());
 		this.mappingStorage = new AppIdFileStorage<>(storagePath.resolve(MAPPINGS_DIR), TestingContextMapping.class);
 	}
 
-	public void store(AppId aid, Set<String> testingContext, LinkExchangeModel artifact) throws IOException {
-		Pair<String, LinkExchangeModel> existing = mergeWithExisting(aid, testingContext, artifact);
+	public void store(AppId aid, Set<String> testingContext, ArtifactExchangeModel artifact) throws IOException {
+		Pair<String, ArtifactExchangeModel> existing = mergeWithExisting(aid, testingContext, artifact);
 		String id;
 
 		if (existing == null) {
@@ -61,10 +61,10 @@ public class TestingContextStorage {
 		mappingStorage.store(mapping, aid);
 	}
 
-	private Pair<String, LinkExchangeModel> mergeWithExisting(AppId aid, Set<String> testingContext, LinkExchangeModel artifact) throws IOException {
-		Map<String, LinkExchangeModel> existing = getFull(aid, testingContext);
+	private Pair<String, ArtifactExchangeModel> mergeWithExisting(AppId aid, Set<String> testingContext, ArtifactExchangeModel artifact) throws IOException {
+		Map<String, ArtifactExchangeModel> existing = getFull(aid, testingContext);
 
-		for (Map.Entry<String, LinkExchangeModel> entry : existing.entrySet()) {
+		for (Map.Entry<String, ArtifactExchangeModel> entry : existing.entrySet()) {
 			if (overlap(entry.getValue(), artifact)) {
 				return Pair.of(entry.getKey(), entry.getValue());
 			}
@@ -73,14 +73,14 @@ public class TestingContextStorage {
 		return null;
 	}
 
-	public Map<Set<String>, Set<LinkExchangeModel>> get(AppId aid, Set<String> testingContext, boolean includePartial) throws IOException {
+	public Map<Set<String>, Set<ArtifactExchangeModel>> get(AppId aid, Set<String> testingContext, boolean includePartial) throws IOException {
 		TestingContextMapping mapping = mappingStorage.read(aid);
 
 		if (mapping == null) {
 			return Collections.emptyMap();
 		}
 
-		Map<Set<String>, Set<LinkExchangeModel>> result = new HashMap<>();
+		Map<Set<String>, Set<ArtifactExchangeModel>> result = new HashMap<>();
 
 		if (includePartial) {
 			for (String ctx : testingContext) {
@@ -88,7 +88,7 @@ public class TestingContextStorage {
 
 				if (indivMapping != null) {
 					for (Set<String> partialContext : indivMapping) {
-						Set<LinkExchangeModel> sources = new HashSet<>();
+						Set<ArtifactExchangeModel> sources = new HashSet<>();
 
 						for (String id : mapping.getFullMappings().get(partialContext)) {
 							sources.add(artifactStorage.get(id));
@@ -101,7 +101,7 @@ public class TestingContextStorage {
 				}
 			}
 		} else {
-			Set<LinkExchangeModel> sources = new HashSet<>();
+			Set<ArtifactExchangeModel> sources = new HashSet<>();
 			sources.addAll(getFull(aid, testingContext).values());
 
 			if (!sources.isEmpty()) {
@@ -112,11 +112,11 @@ public class TestingContextStorage {
 		return result;
 	}
 
-	private Map<String, LinkExchangeModel> getFull(AppId aid, Set<String> testingContext) throws IOException {
+	private Map<String, ArtifactExchangeModel> getFull(AppId aid, Set<String> testingContext) throws IOException {
 		TestingContextMapping mapping = mappingStorage.read(aid);
 		Set<String> fullMapping = mapping.getFullMappings().get(testingContext);
 
-		Map<String, LinkExchangeModel> sources = new HashMap<>();
+		Map<String, ArtifactExchangeModel> sources = new HashMap<>();
 
 		if (fullMapping != null) {
 			for (String id : fullMapping) {
@@ -127,12 +127,12 @@ public class TestingContextStorage {
 		return sources;
 	}
 
-	private boolean overlap(LinkExchangeModel first, LinkExchangeModel second) {
+	private boolean overlap(ArtifactExchangeModel first, ArtifactExchangeModel second) {
 		boolean overlap = false;
 
 		overlap |= (first.getTraceLinks().getLink() != null) && Objects.equals(first.getTraceLinks().getLink(), second.getTraceLinks().getLink());
-		overlap |= (first.getSessionLogsLinks().getSimpleLink() != null) && Objects.equals(first.getSessionLogsLinks().getSimpleLink(), second.getSessionLogsLinks().getSimpleLink());
-		overlap |= (first.getSessionLogsLinks().getExtendedLink() != null) && Objects.equals(first.getSessionLogsLinks().getExtendedLink(), second.getSessionLogsLinks().getExtendedLink());
+		overlap |= (first.getSessionLinks().getSimpleLink() != null) && Objects.equals(first.getSessionLinks().getSimpleLink(), second.getSessionLinks().getSimpleLink());
+		overlap |= (first.getSessionLinks().getExtendedLink() != null) && Objects.equals(first.getSessionLinks().getExtendedLink(), second.getSessionLinks().getExtendedLink());
 		overlap |= (first.getWorkloadModelLinks().getLink() != null) && Objects.equals(first.getWorkloadModelLinks().getLink(), second.getWorkloadModelLinks().getLink());
 		overlap |= (first.getLoadTestLinks().getLink() != null) && Objects.equals(first.getLoadTestLinks().getLink(), second.getLoadTestLinks().getLink());
 

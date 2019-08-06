@@ -23,9 +23,9 @@ public class RabbitMqConfig {
 
 	public static final String SERVICE_NAME = "cobra";
 
-	public static final String TASK_CREATE_QUEUE_NAME = "continuity.cobra.task.cobra.create";
+	public static final String TASK_CREATE_QUEUE_NAME = "continuity.cobra.task.global.create";
 
-	public static final String TASK_CREATE_ROUTING_KEY = "#";
+	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.Global.TASK_CREATE.formatRoutingKey().ofGenericTarget(SERVICE_NAME);
 
 	public static final String EVENT_CONFIG_AVAILABLE_NAME = "continuity.cobra.event.orchestrator.configavailable";
 
@@ -76,7 +76,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange taskCreateExchange() {
-		return AmqpApi.Cobra.TASK_CREATE.create();
+		return AmqpApi.Global.TASK_CREATE.create();
 	}
 
 	@Bean

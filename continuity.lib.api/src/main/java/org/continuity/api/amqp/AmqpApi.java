@@ -2,10 +2,9 @@ package org.continuity.api.amqp;
 
 import org.continuity.api.amqp.RoutingKeyFormatter.AppId;
 import org.continuity.api.amqp.RoutingKeyFormatter.AppIdAndVersion;
-import org.continuity.api.amqp.RoutingKeyFormatter.LoadTestType;
 import org.continuity.api.amqp.RoutingKeyFormatter.RecipeId;
 import org.continuity.api.amqp.RoutingKeyFormatter.ServiceName;
-import org.continuity.api.amqp.RoutingKeyFormatter.WorkloadType;
+import org.continuity.api.amqp.RoutingKeyFormatter.ServiceNameAndTarget;
 
 /**
  * Holds all AMQP exchange definitions of all ContinuITy services.
@@ -35,6 +34,8 @@ public class AmqpApi {
 		private static final String SCOPE = "global";
 
 		public static final ExchangeDefinition<ServiceName> EVENT_FINISHED = ExchangeDefinition.event(SCOPE, "finished").nonDurable().autoDelete().withRoutingKey(ServiceName.INSTANCE);
+
+		public static final ExchangeDefinition<ServiceNameAndTarget> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(ServiceNameAndTarget.INSTANCE);
 
 		private Global() {
 		}
@@ -70,8 +71,6 @@ public class AmqpApi {
 
 		private static final String SCOPE = "cobra";
 
-		public static final ExchangeDefinition<AppId> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
-
 		public static final ExchangeDefinition<AppIdAndVersion> TASK_PROCESS_TRACES = ExchangeDefinition.task(SCOPE, "process_traces").nonDurable().autoDelete()
 				.withRoutingKey(AppIdAndVersion.INSTANCE);
 
@@ -80,7 +79,7 @@ public class AmqpApi {
 
 		/**
 		 * AMQP API of the clustinator service (sidekick of Cobra).
-		 * 
+		 *
 		 * @author Henning Schulz
 		 *
 		 */
@@ -95,80 +94,6 @@ public class AmqpApi {
 			private Clustinator() {
 			}
 
-		}
-
-	}
-
-	/**
-	 * AMQP API of the workload model services, e.g., wessbas.
-	 *
-	 * @author Henning Schulz, Alper Hidiroglu
-	 *
-	 */
-	public static class WorkloadModel {
-
-		private static final String SCOPE = "workloadmodel";
-
-		public static final ExchangeDefinition<WorkloadType> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(WorkloadType.INSTANCE);
-
-		public static final ExchangeDefinition<WorkloadType> MIX_CREATE = ExchangeDefinition.task(SCOPE, "createmix").nonDurable().autoDelete().withRoutingKey(WorkloadType.INSTANCE);
-
-		public static final ExchangeDefinition<WorkloadType> EVENT_CREATED = ExchangeDefinition.event(SCOPE, "created").nonDurable().autoDelete().withRoutingKey(WorkloadType.INSTANCE);
-
-		private WorkloadModel() {
-		}
-
-	}
-
-	/**
-	 * AMQP API of the load test services, e.g., jmeter.
-	 *
-	 * @author Henning Schulz
-	 *
-	 */
-	public static class LoadTest {
-
-		private static final String SCOPE = "loadtest";
-
-		public static final ExchangeDefinition<LoadTestType> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(LoadTestType.INSTANCE);
-
-		public static final ExchangeDefinition<LoadTestType> TASK_EXECUTE = ExchangeDefinition.task(SCOPE, "execute").nonDurable().autoDelete().withRoutingKey(LoadTestType.INSTANCE);
-
-		private LoadTest() {
-		}
-
-	}
-
-	/**
-	 * AMQP API of the IDPA service.
-	 *
-	 * @author Henning Schulz
-	 *
-	 */
-	public static class Idpa {
-
-		private static final String SCOPE = "idpa";
-
-		public static final ExchangeDefinition<AppId> EVENT_CHANGED = ExchangeDefinition.event(SCOPE, "changed").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
-
-		private Idpa() {
-		}
-
-	}
-
-	/**
-	 * AMQP API of the forecast service.
-	 *
-	 * @author Alper Hidiroglu
-	 *
-	 */
-	public static class Forecast {
-
-		private static final String SCOPE = "forecast";
-
-		public static final ExchangeDefinition<ServiceName> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(ServiceName.INSTANCE);
-
-		private Forecast() {
 		}
 
 	}

@@ -11,14 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.continuity.api.entities.order.LoadTestType;
+import org.continuity.api.entities.exchange.ArtifactType;
 import org.continuity.api.entities.order.Order;
-import org.continuity.api.entities.order.OrderGoal;
-import org.continuity.api.entities.order.OrderMode;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.order.TailoringApproach;
-import org.continuity.api.entities.order.WorkloadModelType;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.api.rest.RestApi;
@@ -110,17 +107,17 @@ public class OrderCommands extends AbstractCommands {
 	}
 
 	@ShellMethod(key = { "order create" }, value = "Creates a new order.")
-	public AttributedString createOrder(@ShellOption(defaultValue = "create-load-test") String goal) throws Exception {
+	public AttributedString createOrder(@ShellOption(defaultValue = "load-test") String target) throws Exception {
 		return executeWithCurrentAppId((aid) -> {
-			OrderGoal orderGoal = OrderGoal.fromPrettyString(goal);
+			ArtifactType orderTarget = ArtifactType.fromPrettyString(target);
 
-			if (orderGoal == null) {
-				return new ResponseBuilder().error("Unknown order goal ").boldError(goal).error("! The allowed goals are ")
-						.error(Arrays.stream(OrderGoal.values()).map(OrderGoal::toPrettyString).reduce((a, b) -> a + ", " + b).get()).build();
+			if (orderTarget == null) {
+				return new ResponseBuilder().error("Unknown order target ").boldError(target).error("! The allowed targets are ")
+						.error(Arrays.stream(ArtifactType.values()).map(ArtifactType::toPrettyString).reduce((a, b) -> a + ", " + b).get()).build();
 			}
 
 			Order order = initializeOrder();
-			order.setGoal(orderGoal);
+			order.setTarget(orderTarget);
 
 			Desktop.getDesktop().open(storage.storeAsNew(contextManager.getCurrentAppId(), order).toFile());
 
@@ -231,8 +228,6 @@ public class OrderCommands extends AbstractCommands {
 	private Order initializeOrder() {
 		Order order = new Order();
 
-		order.setMode(OrderMode.PAST_WORKLOAD);
-
 		if (contextManager.getCurrentAppId() == null) {
 			order.setAppId(AppId.fromString("APP_ID"));
 		} else {
@@ -255,12 +250,16 @@ public class OrderCommands extends AbstractCommands {
 
 		OrderOptions options = new OrderOptions();
 		options.setDuration(60);
-		options.setNumUsers(1);
 		options.setRampup(1);
-		options.setLoadTestType(LoadTestType.JMETER);
-		options.setWorkloadModelType(WorkloadModelType.WESSBAS);
 		options.setTailoringApproach(TailoringApproach.LOG_BASED);
 		options.setForecastApproach("Telescope");
+
+		Map<ArtifactType, String> producers = new HashMap<>();
+		producers.put(ArtifactType.WORKLOAD_MODEL, "wessbas");
+		producers.put(ArtifactType.BEHAVIOR_MODEL, "wessbas");
+		producers.put(ArtifactType.LOAD_TEST, "jmeter");
+		options.setProducers(producers);
+
 		order.setOptions(options);
 
 		order.setContext(createContext());

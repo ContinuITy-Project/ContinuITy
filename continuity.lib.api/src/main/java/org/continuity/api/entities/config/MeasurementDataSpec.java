@@ -1,6 +1,6 @@
 package org.continuity.api.entities.config;
 
-import org.continuity.api.entities.links.MeasurementDataType;
+import org.continuity.api.entities.exchange.MeasurementDataType;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

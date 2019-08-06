@@ -1,6 +1,7 @@
 package org.continuity.benchflow.config;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.entities.exchange.ArtifactType;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -26,9 +27,9 @@ public class RabbitMqConfig {
 
 	public static final String SERVICE_NAME = "benchflow";
 
-	public static final String TASK_CREATE_QUEUE_NAME = "continuity.benchflow.task.loadtest.create";
+	public static final String TASK_CREATE_QUEUE_NAME = "continuity.benchflow.task.global.create";
 
-	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME);
+	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.Global.TASK_CREATE.formatRoutingKey().of(SERVICE_NAME, ArtifactType.LOAD_TEST);
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -67,7 +68,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	TopicExchange taskCreateExchange() {
-		return AmqpApi.LoadTest.TASK_CREATE.create();
+		return AmqpApi.Global.TASK_CREATE.create();
 	}
 
 	@Bean

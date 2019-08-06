@@ -6,13 +6,15 @@ import static org.continuity.api.rest.RestApi.Orchestrator.Orchestration.Paths.S
 import static org.continuity.api.rest.RestApi.Orchestrator.Orchestration.Paths.WAIT;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -22,33 +24,18 @@ import javax.jms.IllegalStateException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.continuity.api.amqp.AmqpApi;
-import org.continuity.api.entities.links.ForecastLinks;
-import org.continuity.api.entities.links.LinkExchangeModel;
-import org.continuity.api.entities.links.LoadTestLinks;
-import org.continuity.api.entities.links.SessionLogsLinks;
-import org.continuity.api.entities.links.SessionsBundlesLinks;
-import org.continuity.api.entities.links.WorkloadModelLinks;
-import org.continuity.api.entities.order.LoadTestType;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactType;
 import org.continuity.api.entities.order.Order;
-import org.continuity.api.entities.order.OrderGoal;
-import org.continuity.api.entities.order.OrderMode;
-import org.continuity.api.entities.order.OrderOptions;
-import org.continuity.api.entities.order.ServiceSpecification;
-import org.continuity.api.entities.order.WorkloadModelType;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.api.rest.RestApi;
 import org.continuity.commons.storage.MemoryStorage;
 import org.continuity.commons.utils.WebUtils;
-import org.continuity.dsl.context.Context;
-import org.continuity.idpa.AppId;
-import org.continuity.idpa.VersionOrTimestamp;
 import org.continuity.orchestrator.entities.CreationStep;
-import org.continuity.orchestrator.entities.DummyStep;
 import org.continuity.orchestrator.entities.OrderReportCounter;
 import org.continuity.orchestrator.entities.Recipe;
 import org.continuity.orchestrator.entities.RecipeStep;
-import org.continuity.orchestrator.orders.OrderCycleManager;
 import org.continuity.orchestrator.storage.TestingContextStorage;
 import org.continuity.orchestrator.util.LoggingUtils;
 import org.slf4j.Logger;
@@ -91,8 +78,6 @@ public class OrchestrationController {
 	@Qualifier("testingContextStorage")
 	private TestingContextStorage testingContextStorage;
 
-	private final OrderCycleManager orderCycleManager = new OrderCycleManager();
-
 	@Autowired
 	private AmqpTemplate amqpTemplate;
 
@@ -118,14 +103,14 @@ public class OrchestrationController {
 	public ResponseEntity<Object> submitOrder(@RequestBody Order order, HttpServletRequest servletRequest) throws IOException {
 		String orderId = orderCounterStorage.reserve(order.getAppId());
 
-		LOGGER.info("{} Received new order with goal {} and ID {}.", LoggingUtils.formatPrefix(orderId), order.getGoal().toPrettyString(), orderId);
+		LOGGER.info("{} Received new order with goal {} and ID {}.", LoggingUtils.formatPrefix(orderId), order.getTarget().toPrettyString(), orderId);
 
 		boolean useTestingContext = ((order.getTestingContext() != null) && !order.getTestingContext().isEmpty());
 
 		int numRecipes = 1;
 
 		if (useTestingContext && (order.getSource() == null)) {
-			Map<Set<String>, Set<LinkExchangeModel>> sources = testingContextStorage.get(order.getAppId(), order.getTestingContext(), false);
+			Map<Set<String>, Set<ArtifactExchangeModel>> sources = testingContextStorage.get(order.getAppId(), order.getTestingContext(), false);
 			if (sources == null) {
 				numRecipes = 0;
 			} else {
@@ -139,11 +124,10 @@ public class OrchestrationController {
 			declareResponseQueue(orderId);
 			orderCounterStorage.putToReserved(orderId, new OrderReportCounter(orderId, numRecipes));
 
-			for (Map.Entry<Set<String>, Set<LinkExchangeModel>> entry : sources.entrySet()) {
-				for (LinkExchangeModel source : entry.getValue()) {
+			for (Map.Entry<Set<String>, Set<ArtifactExchangeModel>> entry : sources.entrySet()) {
+				for (ArtifactExchangeModel source : entry.getValue()) {
 					try {
-						createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getContext(),
-								entry.getKey(), source);
+						createAndSubmitRecipe(orderId, order, entry.getKey(), source);
 					} catch (IllegalStateException e) {
 						LOGGER.error("{} Cannot submit order: {}", LoggingUtils.formatPrefix(orderId), e.getMessage());
 						return ResponseEntity.badRequest().body(e.getMessage());
@@ -155,8 +139,7 @@ public class OrchestrationController {
 			orderCounterStorage.putToReserved(orderId, new OrderReportCounter(orderId, 1));
 
 			try {
-				createAndSubmitRecipe(orderId, order.getAppId(), order.getServices(), order.getVersion(), order.getGoal(), order.getMode(), order.getOptions(), order.getContext(),
-						order.getTestingContext(), order.getSource());
+				createAndSubmitRecipe(orderId, order, order.getTestingContext(), order.getSource());
 			} catch (IllegalStateException e) {
 				LOGGER.error("{} Cannot submit order: {}", LoggingUtils.formatPrefix(orderId), e.getMessage());
 				return ResponseEntity.badRequest().body(e.getMessage());
@@ -172,39 +155,41 @@ public class OrchestrationController {
 		return ResponseEntity.accepted().body(response);
 	}
 
-	private void createAndSubmitRecipe(String orderId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, OrderGoal goal, OrderMode mode, OrderOptions options,
-			Context context, Set<String> testingContext, LinkExchangeModel source) throws IllegalStateException {
+	public void createAndSubmitRecipe(String orderId, Order order, Set<String> testingContext, ArtifactExchangeModel source) throws IllegalStateException {
 		boolean useTestingContext = ((testingContext != null) && !testingContext.isEmpty());
 
 		if (useTestingContext) {
 			LOGGER.info("{} Using testing-context {}.", LoggingUtils.formatPrefix(orderId), testingContext);
 		}
 
-		if (mode == null) {
-			List<OrderMode> modes = orderCycleManager.getModesContainingGoal(goal);
+		if (source == null) {
+			source = new ArtifactExchangeModel();
+		}
 
-			if (modes.size() == 1) {
-				mode = modes.get(0);
-			} else {
-				LOGGER.error("{} Order is ambiguous! The goal {} is contained in the modes {}.", LoggingUtils.formatPrefix(orderId), goal, modes);
+		Map<ArtifactType, Map<String, ArtifactType>> producerMap = createProducerMap();
+		Map<ArtifactType, String> producers = order.getOptions().getProducersOrDefault();
 
-				amqpTemplate.convertAndSend(AmqpApi.Orchestrator.EVENT_FINISHED.name(), AmqpApi.Orchestrator.EVENT_FINISHED.formatRoutingKey().of(orderId),
-						OrderReport.asError(orderId, source, "The order goal is ambiguous: there are " + modes.size() + " possible modes " + modes));
+		String recipeId = recipeStorage.reserve(order.getAppId());
+		List<RecipeStep> steps = new LinkedList<>();
+		ArtifactType target = order.getTarget();
 
-				return;
+		while (target != null) {
+			String service = producers.get(target);
+
+			if (!producerMap.get(target).containsKey(service)) {
+				throw new IllegalStateException("There is no " + service + " available that can produce " + target.toPrettyString() + "!");
 			}
+
+			RecipeStep step = new CreationStep(target, orderId, recipeId, amqpTemplate, service, this::isServiceAvailable);
+			steps.add(0, step);
+
+			target = producerMap.get(target).get(service);
 		}
 
-		String recipeId = recipeStorage.reserve(aid);
-		List<RecipeStep> recipeSteps = new ArrayList<>();
+		LOGGER.info("{} Processing new recipe with target {}...", LoggingUtils.formatPrefix(orderId, recipeId), order.getTarget());
 
-		for (OrderGoal subGoal : orderCycleManager.getCycle(mode, goal)) {
-			recipeSteps.add(createRecipeStep(orderId, recipeId, aid, subGoal, options));
-		}
-
-		LOGGER.info("{} Processing new recipe with goal {}...", LoggingUtils.formatPrefix(orderId, recipeId), goal);
-
-		Recipe recipe = new Recipe(orderId, recipeId, aid, services, version, recipeSteps, source, useTestingContext, testingContext, options, context);
+		Recipe recipe = new Recipe(orderId, recipeId, order.getAppId(), order.getServices(), order.getVersion(), steps, source, useTestingContext, testingContext, order.getOptions(),
+				order.getContext());
 
 		if (recipe.hasNext()) {
 			recipeStorage.putToReserved(recipeId, recipe);
@@ -253,129 +238,15 @@ public class OrchestrationController {
 		}
 	}
 
-	private <S, T> Function<LinkExchangeModel, Boolean> isPresent(Function<LinkExchangeModel, S> getLinksObject, Function<S, T> getLink) {
-		return getLinksObject.andThen(getLink).andThen(x -> x != null);
-	}
-
-	private <S, T> Function<LinkExchangeModel, Boolean> isEqual(Function<LinkExchangeModel, S> getLinksObject, Function<S, T> getLink, T value) {
-		return getLinksObject.andThen(getLink).andThen(value::equals);
-	}
-
-	@SafeVarargs
-	private final Function<LinkExchangeModel, Boolean> all(Function<LinkExchangeModel, Boolean>... functions) {
-		return links -> Arrays.stream(functions).map(f -> f.apply(links)).reduce((a, b) -> a && b).get();
-	}
-
-	@SafeVarargs
-	private final Function<LinkExchangeModel, Boolean> or(Function<LinkExchangeModel, Boolean>... functions) {
-		return links -> Arrays.stream(functions).map(f -> f.apply(links)).reduce((a, b) -> a || b).get();
-	}
-
 	@RequestMapping(path = RESULT, method = RequestMethod.GET)
 	public ResponseEntity<OrderReport> getResultWithoutWaiting(@PathVariable("id") String orderId, HttpServletRequest servletRequest) {
 		LOGGER.info("{} Trying to get result without waiting...", LoggingUtils.formatPrefix(orderId));
 		return waitUntilFinished(orderId, 0, servletRequest);
 	}
 
-	private RecipeStep createRecipeStep(String orderId, String recipeId, AppId aid, OrderGoal goal, OrderOptions options) throws IllegalStateException {
-		RecipeStep step;
-		String stepName = goal.toPrettyString();
-
-		switch (goal) {
-		case CREATE_SESSION_LOGS:
-			checkServiceAvailable(RestApi.Cobra.SERVICE_NAME);
-
-			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.Cobra.TASK_CREATE, AmqpApi.Cobra.TASK_CREATE.formatRoutingKey().of(aid),
-					or(isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getSimpleLink), isPresent(LinkExchangeModel::getSessionLogsLinks, SessionLogsLinks::getExtendedLink)),
-					RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
-			break;
-		case CREATE_BEHAVIOR_MIX:
-			WorkloadModelType workloadType;
-			if ((options == null) || (options.getWorkloadModelType() == null)) {
-				workloadType = WorkloadModelType.WESSBAS;
-			} else {
-				workloadType = options.getWorkloadModelType();
-			}
-
-			checkServiceAvailable(workloadType.toPrettyString());
-
-			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.WorkloadModel.MIX_CREATE, AmqpApi.WorkloadModel.MIX_CREATE.formatRoutingKey().of(workloadType.toPrettyString()),
-					isPresent(LinkExchangeModel::getSessionsBundlesLinks, SessionsBundlesLinks::getLink), RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
-			break;
-		case CREATE_FORECAST:
-			checkServiceAvailable(RestApi.Forecast.SERVICE_NAME);
-
-			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.Forecast.TASK_CREATE, AmqpApi.Forecast.TASK_CREATE.formatRoutingKey().of("forecast"),
-					isPresent(LinkExchangeModel::getForecastLinks, ForecastLinks::getLink), RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
-			break;
-		case CREATE_WORKLOAD_MODEL:
-			if ((options == null) || (options.getWorkloadModelType() == null)) {
-				workloadType = WorkloadModelType.WESSBAS;
-			} else {
-				workloadType = options.getWorkloadModelType();
-			}
-
-			checkServiceAvailable(workloadType.toPrettyString());
-
-			Function<LinkExchangeModel, Boolean> check = all(isPresent(LinkExchangeModel::getWorkloadModelLinks, WorkloadModelLinks::getLink),
-					isEqual(LinkExchangeModel::getWorkloadModelLinks, WorkloadModelLinks::getType, workloadType));
-
-			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.WorkloadModel.TASK_CREATE,
-					AmqpApi.WorkloadModel.TASK_CREATE.formatRoutingKey().of(workloadType.toPrettyString()), check, RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
-			break;
-		case CREATE_LOAD_TEST:
-			LoadTestType loadTestType;
-
-			if ((options == null) || (options.getLoadTestType() == null)) {
-				loadTestType = LoadTestType.JMETER;
-			} else {
-				loadTestType = options.getLoadTestType();
-			}
-
-			checkServiceAvailable(loadTestType.toPrettyString());
-
-			check = all(isPresent(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getLink), isEqual(LinkExchangeModel::getLoadTestLinks, LoadTestLinks::getType, loadTestType));
-
-			step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.LoadTest.TASK_CREATE, AmqpApi.LoadTest.TASK_CREATE.formatRoutingKey().of(loadTestType.toPrettyString()), check,
-					RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
-			break;
-		case EXECUTE_LOAD_TEST:
-			loadTestType = options.getLoadTestType();
-
-			if (loadTestType == null) {
-				loadTestType = LoadTestType.JMETER;
-			}
-
-			checkServiceAvailable(loadTestType.toPrettyString());
-
-			if (loadTestType.canExecute()) {
-				step = new CreationStep(stepName, orderId, recipeId, amqpTemplate, AmqpApi.LoadTest.TASK_EXECUTE, AmqpApi.LoadTest.TASK_EXECUTE.formatRoutingKey().of(loadTestType.toPrettyString()),
-						links -> false, RestApi.Cobra.SERVICE_NAME, this::isServiceAvailable);
-			} else {
-				LOGGER.error("Cannot execute {} tests!", loadTestType);
-				step = new DummyStep(amqpTemplate);
-			}
-
-			break;
-		default:
-			LOGGER.error("Cannot create {} step. Unknown goal!", goal);
-			step = new DummyStep(amqpTemplate);
-			break;
-
-		}
-
-		return step;
-	}
-
 	private boolean isServiceAvailable(String service) {
-		return eurekaClient.getApplications().getRegisteredApplications().stream().map(Application::getInstances).flatMap(List::stream).map(InstanceInfo::getAppName)
-				.map(String::toLowerCase).collect(Collectors.toSet()).contains(service);
-	}
-
-	private void checkServiceAvailable(String service) throws IllegalStateException {
-		if (!isServiceAvailable(service)) {
-			throw new IllegalStateException("Service " + service + " is not available!");
-		}
+		return eurekaClient.getApplications().getRegisteredApplications().stream().map(Application::getInstances).flatMap(List::stream).map(InstanceInfo::getAppName).map(String::toLowerCase)
+				.collect(Collectors.toSet()).contains(service);
 	}
 
 	@PostConstruct
@@ -425,6 +296,76 @@ public class OrchestrationController {
 
 	private String getResponseQueueName(String orderId) {
 		return AmqpApi.Orchestrator.EVENT_FINISHED.deriveQueueName(orderId);
+	}
+
+	/**
+	 * Creates a map {@code target -> producing-service -> required}, e.g., <br>
+	 * <br>
+	 *
+	 * <code>
+	 * test-results: <br>
+	 * * jmeter: load-test <br>
+	 * load-test: <br>
+	 * * jmeter: workload-model <br>
+	 * * benchflow: workload-model <br>
+	 * workload-model: <br>
+	 * * wessbas: behavior-model <br>
+	 * * request-rates: traces <br>
+	 * behavior-model: <br>
+	 * * cobra: context <br>
+	 * * wessbas: sessions <br>
+	 * sessions: <br>
+	 * * cobra: context <br>
+	 * traces: <br>
+	 * * cobra: context
+	 * </code>
+	 *
+	 * @return
+	 */
+	private Map<ArtifactType, Map<String, ArtifactType>> createProducerMap() {
+		return eurekaClient.getApplications().getRegisteredApplications().stream().map(Application::getInstancesAsIsFromEureka).flatMap(List::stream).map(this::createSingleProducerMap)
+				.reduce(this::mergeProducerMaps).orElse(Collections.emptyMap());
+	}
+
+	private Map<ArtifactType, Map<String, ArtifactType>> createSingleProducerMap(InstanceInfo info) {
+		Map<String, String> metadata = info.getMetadata();
+
+		String produced = metadata.get("produces");
+
+		if (produced == null) {
+			return Collections.emptyMap();
+		}
+
+		Map<ArtifactType, Map<String, ArtifactType>> producers = new HashMap<>();
+
+		Arrays.stream(produced.split("\\,")).map(String::trim).filter(s -> !s.isEmpty()).forEach(type -> {
+			ArtifactType keyType = ArtifactType.fromPrettyString(type);
+			ArtifactType valueType = Optional.ofNullable(metadata.get("requires-for-" + type)).map(ArtifactType::fromPrettyString).orElse(null);
+
+			Map<String, ArtifactType> inner = new HashMap<>();
+			inner.put(info.getAppName().toLowerCase(), valueType);
+			producers.put(keyType, inner);
+		});
+
+		return producers;
+	}
+
+	private Map<ArtifactType, Map<String, ArtifactType>> mergeProducerMaps(Map<ArtifactType, Map<String, ArtifactType>> first, Map<ArtifactType, Map<String, ArtifactType>> second) {
+		if (first.isEmpty()) {
+			return second;
+		} else if (second.isEmpty()) {
+			return first;
+		}
+
+		for (Entry<ArtifactType, Map<String, ArtifactType>> entry : second.entrySet()) {
+			if (first.containsKey(entry.getKey())) {
+				first.get(entry.getKey()).putAll(entry.getValue());
+			} else {
+				first.put(entry.getKey(), entry.getValue());
+			}
+		}
+
+		return first;
 	}
 
 }

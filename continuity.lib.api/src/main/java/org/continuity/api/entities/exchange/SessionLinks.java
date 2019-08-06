@@ -1,4 +1,4 @@
-package org.continuity.api.entities.links;
+package org.continuity.api.entities.exchange;
 
 import java.lang.reflect.Field;
 
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class SessionLogsLinks extends AbstractLinks<SessionLogsLinks> {
+public class SessionLinks extends AbstractLinks<SessionLinks> {
 
 	@JsonProperty(value = "simple-link", required = false)
 	@JsonInclude(Include.NON_NULL)
@@ -16,11 +16,11 @@ public class SessionLogsLinks extends AbstractLinks<SessionLogsLinks> {
 	@JsonInclude(Include.NON_NULL)
 	private String extendedLink;
 
-	public SessionLogsLinks(LinkExchangeModel parent) {
+	public SessionLinks(ArtifactExchangeModel parent) {
 		super(parent);
 	}
 
-	public SessionLogsLinks() {
+	public SessionLinks() {
 		this(null);
 	}
 
@@ -28,7 +28,7 @@ public class SessionLogsLinks extends AbstractLinks<SessionLogsLinks> {
 		return simpleLink;
 	}
 
-	public SessionLogsLinks setSimpleLink(String simpleLink) {
+	public SessionLinks setSimpleLink(String simpleLink) {
 		this.simpleLink = simpleLink;
 		return this;
 	}
@@ -37,7 +37,7 @@ public class SessionLogsLinks extends AbstractLinks<SessionLogsLinks> {
 		return extendedLink;
 	}
 
-	public SessionLogsLinks setExtendedLink(String extendedLink) {
+	public SessionLinks setExtendedLink(String extendedLink) {
 		this.extendedLink = extendedLink;
 		return this;
 	}
@@ -45,7 +45,7 @@ public class SessionLogsLinks extends AbstractLinks<SessionLogsLinks> {
 
 	@Override
 	public boolean isEmpty() {
-		for (Field field : SessionLogsLinks.class.getDeclaredFields()) {
+		for (Field field : SessionLinks.class.getDeclaredFields()) {
 			try {
 				if ((field.getName() != "parent") && (field.get(this) != null)) {
 					return false;
@@ -59,8 +59,8 @@ public class SessionLogsLinks extends AbstractLinks<SessionLogsLinks> {
 	}
 
 	@Override
-	public void merge(SessionLogsLinks other) throws IllegalArgumentException, IllegalAccessException {
-		for (Field field : SessionLogsLinks.class.getDeclaredFields()) {
+	public void merge(SessionLinks other) throws IllegalArgumentException, IllegalAccessException {
+		for (Field field : SessionLinks.class.getDeclaredFields()) {
 			if ((field.getName() != "parent") && (field.get(this) == null)) {
 				field.set(this, field.get(other));
 			}

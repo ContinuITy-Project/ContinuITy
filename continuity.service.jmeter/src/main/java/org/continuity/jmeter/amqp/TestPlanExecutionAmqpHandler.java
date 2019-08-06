@@ -14,7 +14,7 @@ import org.apache.jmeter.testelement.TestStateListener;
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.api.entities.config.TaskDescription;
-import org.continuity.api.entities.links.LinkExchangeModel;
+import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.LoadTestType;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.report.TaskError;
@@ -169,7 +169,7 @@ public class TestPlanExecutionAmqpHandler {
 					String reportId = reportStorage.put(FileUtils.readFileToString(resultsPath.toFile(), Charset.defaultCharset()) + appendix, task.getAppId());
 					String reportLink = RestApi.JMeter.Report.GET.requestUrl(reportId).withoutProtocol().get();
 
-					TaskReport report = TaskReport.successful(task.getTaskId(), new LinkExchangeModel().getLoadTestLinks().setType(LoadTestType.JMETER).setReportLink(reportLink).parent());
+					TaskReport report = TaskReport.successful(task.getTaskId(), new ArtifactExchangeModel().getResultLinks().setLink(reportLink).parent());
 					amqpTemplate.convertAndSend(AmqpApi.Global.EVENT_FINISHED.name(), AmqpApi.Global.EVENT_FINISHED.formatRoutingKey().of(RabbitMqConfig.SERVICE_NAME), report);
 
 					LOGGER.info("Task {}: JMeter test finished. Results are stored to {}.", task.getTaskId(), resultsPath);

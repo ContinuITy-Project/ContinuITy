@@ -15,6 +15,10 @@ eureka:
   instance:
     statusPageUrlPath: /swagger-ui.html
     preferIpAddress: true
+    metadataMap:
+      produces: load-test, test-result
+      requires-for-load-test: workload-model
+      requires-for-test-result: load-test
 endpoints:
   prometheus:
     enabled: true

@@ -31,6 +31,8 @@ import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.core.CountRequest;
+import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
@@ -239,6 +241,50 @@ public abstract class ElasticsearchScrollingManager<T> {
 		} else {
 			LOGGER.error("Could not clear the scroll with ID {}: {}", scrollId, response.status());
 		}
+	}
+
+	/**
+	 * Counts the elements using the default tailoring (all).
+	 * 
+	 * @param aid
+	 * @param query
+	 * @param message
+	 * @return
+	 * @throws IOException
+	 */
+	protected long countElements(AppId aid, QueryBuilder query, String message) throws IOException {
+		return countElements(aid, Collections.emptyList(), query, message);
+	}
+
+	/**
+	 * Counts the elements using the defined tailoring.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param query
+	 * @param message
+	 * @return
+	 * @throws IOException
+	 */
+	protected long countElements(AppId aid, List<String> tailoring, QueryBuilder query, String message) throws IOException {
+		String index = toIndex(aid, tailoring == null ? null : Session.convertTailoringToString(tailoring));
+
+		if (!indexExists(index)) {
+			return 0;
+		}
+
+		CountRequest count = new CountRequest(index);
+		count.source(new SearchSourceBuilder().query(query));
+
+		CountResponse response;
+		try {
+			response = client.count(count, RequestOptions.DEFAULT);
+		} catch (ElasticsearchStatusException e) {
+			LOGGER.info("Could not find any elements in {} {}: {}", index, message, e.getMessage());
+			return 0;
+		}
+
+		return response.getCount();
 	}
 
 	/**
