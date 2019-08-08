@@ -98,7 +98,6 @@ public class RequestUriMapper {
 	private class MappingFinder {
 
 		private final String uri;
-		private final String[] uriParts;
 
 		private final String method;
 
@@ -106,7 +105,6 @@ public class RequestUriMapper {
 
 		public MappingFinder(String uri, String method) {
 			this.uri = normalizeUri(uri);
-			this.uriParts = this.uri.split("\\/");
 			this.method = method;
 		}
 
@@ -121,48 +119,13 @@ public class RequestUriMapper {
 		}
 
 		public void testRespectingWildcards(HttpEndpoint interf) {
-			String[] interfUriParts = normalizeUri(interf.getPath()).split("\\/");
-
-			if ((found != null) || !method.equals(interf.getMethod()) || (uriParts.length < interfUriParts.length)) {
+			if ((found != null) || !method.equals(interf.getMethod())) {
 				return;
 			}
-			if (hasTrailingWildcard(interfUriParts)) {
-				if (compareUriParts(interfUriParts, interfUriParts.length - 1)) {
-					found = interf;
-				} else {
-					return;
-				}
-			} else if (uriParts.length != interfUriParts.length) {
-				return;
-			} else {
-				if (compareUriParts(interfUriParts, uriParts.length)) {
-					found = interf;
-				} else {
-					return;
-				}
+
+			if (uri.matches(interf.getPathAsRegex())) {
+				found = interf;
 			}
-		}
-
-		private boolean compareUriParts(String[] interfUriParts, int max) {
-			for (int i = 0; i < max; i++) {
-				if (!uriPartsMap(uriParts[i], interfUriParts[i])) {
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		private boolean uriPartsMap(String uri, String pattern) {
-			return isWildcard(pattern) || uri.equals(pattern);
-		}
-
-		private boolean isWildcard(String uriPart) {
-			return uriPart.matches("\\{.*\\}");
-		}
-
-		private boolean hasTrailingWildcard(String[] interfUriParts) {
-			return (interfUriParts.length != 0) && interfUriParts[interfUriParts.length - 1].matches("\\{.*\\:\\*\\}");
 		}
 
 	}

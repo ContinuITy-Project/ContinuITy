@@ -185,7 +185,7 @@ public class RequestTailorer {
 		request.setExtendedInformation(info);
 
 		info.setUri(callable.getUri());
-		info.setParameters(toParameters(callable.getHTTPParameters(), callable.getRequestBody(), extractUriParams(callable.getUri(), endpoint.getPath())));
+		info.setParameters(toParameters(callable.getHTTPParameters(), callable.getRequestBody(), extractUriParams(callable.getUri(), endpoint)));
 		info.setPort(callable.getContainingSubTrace().getLocation().getPort());
 		info.setHost(callable.getContainingSubTrace().getLocation().getHost());
 
@@ -234,12 +234,12 @@ public class RequestTailorer {
 	 *            The abstract URI that specifies the pattern.
 	 * @return The extracted parameters in the form <code>[URL_PART_name -> value]</code>.
 	 */
-	private Map<String, String[]> extractUriParams(String uri, String urlPattern) {
+	private Map<String, String[]> extractUriParams(String uri, HttpEndpoint endpoint) {
 		if (uri == null) {
 			return Collections.emptyMap();
 		}
 
-		UrlPartParameterExtractor extractor = new UrlPartParameterExtractor(urlPattern, uri);
+		UrlPartParameterExtractor extractor = new UrlPartParameterExtractor(endpoint, uri);
 		Map<String, String[]> params = new HashMap<>();
 
 		while (extractor.hasNext()) {
@@ -247,7 +247,7 @@ public class RequestTailorer {
 			String value = extractor.currentValue();
 
 			if (value == null) {
-				throw new IllegalArgumentException("Uri and pattern need to have the same length, bus was '" + uri + "' and '" + urlPattern + "'!");
+				throw new IllegalArgumentException("Uri and pattern need to have the same length, bus was '" + uri + "' and '" + endpoint.getPath() + "'!");
 			}
 
 			params.put("URL_PART_" + param, new String[] { value });

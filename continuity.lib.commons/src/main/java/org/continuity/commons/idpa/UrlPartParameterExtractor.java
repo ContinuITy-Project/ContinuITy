@@ -1,7 +1,12 @@
 package org.continuity.commons.idpa;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.continuity.idpa.application.HttpEndpoint;
+import org.continuity.idpa.application.HttpParameter;
+import org.continuity.idpa.application.HttpParameterType;
 
 /**
  * Extracts the parameters from the URI. E.g., if the URI pattern is
@@ -13,15 +18,18 @@ import java.util.stream.Collectors;
  */
 public class UrlPartParameterExtractor {
 
-	private final String[] patternParts;
+	private final Matcher matcher;
 
-	private final String[] pathParts;
+	private final boolean matches;
 
-	private int currentIndex = -1;
+	private final Iterator<String> parameters;
 
-	public UrlPartParameterExtractor(String pattern, String path) {
-		this.pathParts = normalizeUri(path).split("\\/");
-		this.patternParts = normalizeUri(pattern).split("\\/");
+	private String currParam;
+
+	public UrlPartParameterExtractor(HttpEndpoint endpoint, String path) {
+		this.matcher = Pattern.compile(endpoint.getPathAsRegex()).matcher(path);
+		this.matches = matcher.find();
+		this.parameters = endpoint.getParameters().stream().filter(p -> p.getParameterType() == HttpParameterType.URL_PART).map(HttpParameter::getName).iterator();
 	}
 
 	/**
@@ -30,7 +38,7 @@ public class UrlPartParameterExtractor {
 	 * @return {@code true} if there is a next pair.
 	 */
 	public boolean hasNext() {
-		return nextParameterIndex() < patternParts.length;
+		return parameters.hasNext();
 	}
 
 	/**
@@ -40,19 +48,8 @@ public class UrlPartParameterExtractor {
 	 * @return The parameter name or {@code null} if there is none.
 	 */
 	public String nextParameter() {
-		int nextIndex = nextParameterIndex();
-
-		if (nextIndex < patternParts.length) {
-			currentIndex = nextIndex;
-
-			if (isTrailingWildcard(nextIndex)) {
-				return patternParts[nextIndex].substring(1, patternParts[nextIndex].length() - 3);
-			} else {
-				return patternParts[nextIndex].substring(1, patternParts[nextIndex].length() - 1);
-			}
-		} else {
-			return null;
-		}
+		currParam = parameters.next();
+		return currParam;
 	}
 
 	/**
@@ -62,41 +59,16 @@ public class UrlPartParameterExtractor {
 	 * @return The parameter value or {@code null} if there is none.
 	 */
 	public String currentValue() {
-		if (currentIndex < pathParts.length) {
-			if (isTrailingWildcard(currentIndex)) {
-				return Arrays.stream(pathParts).skip(currentIndex).collect(Collectors.joining("/"));
-			} else {
-				return pathParts[currentIndex];
-			}
-		} else {
+		if (!matches || (currParam == null)) {
 			return null;
-		}
-	}
-
-	private int nextParameterIndex() {
-		for (int i = currentIndex + 1; i < patternParts.length; i++) {
-			if (patternParts[i].matches("\\{.*\\}")) {
-				return i;
+		} else {
+			try {
+				return matcher.group(currParam);
+			} catch (IllegalArgumentException e) {
+				// There is no such group
+				return null;
 			}
 		}
-
-		return Integer.MAX_VALUE;
-	}
-
-	private boolean isTrailingWildcard(int index) {
-		return patternParts[index].matches("\\{.*\\:\\*\\}");
-	}
-
-	private String normalizeUri(String uri) {
-		if (!uri.startsWith("/")) {
-			uri = "/" + uri;
-		}
-
-		if (!uri.endsWith("/")) {
-			uri = uri + "/";
-		}
-
-		return uri;
 	}
 
 }

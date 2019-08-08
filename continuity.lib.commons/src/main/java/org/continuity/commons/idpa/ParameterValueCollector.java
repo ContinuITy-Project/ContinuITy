@@ -30,7 +30,7 @@ public class ParameterValueCollector {
 	}
 
 	public void collectFromPath(String path) {
-		UrlPartParameterExtractor extractor = new UrlPartParameterExtractor(endpoint.getPath(), path);
+		UrlPartParameterExtractor extractor = new UrlPartParameterExtractor(endpoint, path);
 
 		while (extractor.hasNext()) {
 			storeParamAndValue(extractor.nextParameter(), extractor.currentValue());

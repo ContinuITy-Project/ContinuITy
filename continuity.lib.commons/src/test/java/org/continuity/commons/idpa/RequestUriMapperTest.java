@@ -2,7 +2,6 @@ package org.continuity.commons.idpa;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.junit.Before;
@@ -91,8 +90,8 @@ public class RequestUriMapperTest {
 
 		assertThat(mapper.mapRespectingWildcards("/foo/bar", "DELETE")).isEqualTo(interf6);
 		assertThat(mapper.mapRespectingWildcards("/foo/bar/baz", "DELETE")).isEqualTo(interf6);
-		assertThat(mapper.mapRespectingWildcards("/foo", "DELETE")).isNull();
-		assertThat(mapper.mapRespectingWildcards("/foo/", "DELETE")).isNull();
+		assertThat(mapper.mapRespectingWildcards("/foo", "DELETE")).isEqualTo(interf6);
+		assertThat(mapper.mapRespectingWildcards("/foo/", "DELETE")).isEqualTo(interf6);
 	}
 
 }
