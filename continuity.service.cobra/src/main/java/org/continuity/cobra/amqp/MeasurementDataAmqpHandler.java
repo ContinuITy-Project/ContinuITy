@@ -2,6 +2,7 @@ package org.continuity.cobra.amqp;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -256,6 +257,7 @@ public class MeasurementDataAmqpHandler {
 		}
 
 		RequestUriMapper rootMapper = new RequestUriMapper(rootApp);
+		List<String> unmapped = new ArrayList<>();
 
 		for (TraceRecord trace : traces) {
 			List<HTTPRequestProcessingImpl> rootCallables = OpenXtraceTracer.forRoot(trace.getTrace().getRoot().getRoot()).extractSubtraces();
@@ -265,7 +267,18 @@ public class MeasurementDataAmqpHandler {
 			}
 
 			HttpEndpoint endpoint = rootMapper.map(rootCallables.get(0).getUri(), rootCallables.get(0).getRequestMethod().get().name());
-			trace.setRawEndpoint(endpoint);
+
+			if (endpoint != null) {
+				trace.setRawEndpoint(endpoint);
+			} else {
+				unmapped.add(rootCallables.get(0).getUri());
+			}
+		}
+
+		if (unmapped.size() > 100) {
+			LOGGER.warn("Could not find an endpoint for {} traces!", unmapped.size());
+		} else if (!unmapped.isEmpty()) {
+			LOGGER.info("Could not find an endpoint for the following paths: {}", unmapped);
 		}
 	}
 
