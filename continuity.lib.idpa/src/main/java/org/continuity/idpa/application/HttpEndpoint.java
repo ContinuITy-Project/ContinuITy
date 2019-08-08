@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import org.continuity.idpa.AbstractIdpaElement;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -89,6 +90,34 @@ public class HttpEndpoint extends AbstractIdpaElement implements Endpoint<HttpPa
 	 */
 	public String getPath() {
 		return this.path;
+	}
+
+	/**
+	 * Returns the path as a regular expression that can be used for matching observed paths.
+	 *
+	 * @return The path as regular expression.
+	 */
+	@JsonIgnore
+	public String getPathAsRegex() {
+		if (this.path == null) {
+			return null;
+		}
+
+		String path = this.path;
+
+		if (path.startsWith("/")) {
+			path = path.substring(1);
+		}
+
+		if (path.endsWith("/")) {
+			path = path.substring(0, path.length() - 1);
+		}
+
+		path = path.replaceAll("\\{([^\\}]*)\\:\\*\\}", "(?<$1>.*)");
+		path = path.replaceAll("\\{([^\\}]*)\\:(.*)\\}", "(?<$1>$2)");
+		path = path.replaceAll("\\{([^\\}]*)\\}", "(?<$1>[^/]*)");
+
+		return new StringBuilder().append("^/?").append(path.replaceAll("\\{([^\\}]*)\\:\\*\\}", "(?<$1>.*)").replaceAll("\\{([^\\}]*)\\}", "(?<$1>[^/]*)")).append("/?$").toString();
 	}
 
 	/**
