@@ -44,7 +44,7 @@ public class UnifiedCsvFromAccessLogsExtractor extends AbstractAccessLogsConsume
 
 	@Override
 	protected void process(AccessLogEntry logEntry, HttpEndpoint endpoint) throws IOException {
-		UrlPartParameterExtractor extractor = new UrlPartParameterExtractor(endpoint.getPath(), logEntry.getPath());
+		UrlPartParameterExtractor extractor = new UrlPartParameterExtractor(endpoint, logEntry.getPath());
 
 		List<ParameterRecord> params = new ArrayList<>();
 

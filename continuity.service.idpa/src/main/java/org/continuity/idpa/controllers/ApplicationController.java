@@ -187,22 +187,7 @@ public class ApplicationController {
 	}
 
 	private EndpointAsRegex toRegex(HttpEndpoint endpoint) {
-		String path = endpoint.getPath();
-		String regex = null;
-
-		if (path != null) {
-			if (path.startsWith("/")) {
-				path = path.substring(1);
-			}
-
-			if (path.endsWith("/")) {
-				path = path.substring(0, path.length() - 1);
-			}
-
-			regex = new StringBuilder().append("^/?").append(path.replaceAll("\\{([^\\}]*)\\:\\*\\}", "(?<$1>.*)").replaceAll("\\{([^\\}]*)\\}", "(?<$1>[^/]*)")).append("/?$").toString();
-		}
-
-		return new EndpointAsRegex(endpoint.getDomain(), endpoint.getPort(), endpoint.getMethod(), regex);
+		return new EndpointAsRegex(endpoint.getDomain(), endpoint.getPort(), endpoint.getMethod(), endpoint.getPathAsRegex());
 	}
 
 	/**

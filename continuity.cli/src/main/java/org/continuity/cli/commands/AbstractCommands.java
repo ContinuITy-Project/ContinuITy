@@ -31,7 +31,7 @@ public abstract class AbstractCommands {
 		} catch (CliException e) {
 			return e.getAttributedMessage();
 		} catch (HttpClientErrorException e) {
-			return new ResponseBuilder().error("Bad request: ").boldError(e.getRawStatusCode()).boldError(" (").boldError(e.getStatusText()).boldError(")").error(": ")
+			return new ResponseBuilder().error("Bad request: ").boldError(e.getRawStatusCode()).boldError(" (").boldError(e.getStatusCode().getReasonPhrase()).boldError(")").error(": ")
 					.error(e.getResponseBodyAsString()).build();
 		}
 	}

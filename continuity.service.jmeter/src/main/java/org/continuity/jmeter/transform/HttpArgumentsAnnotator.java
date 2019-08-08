@@ -152,7 +152,7 @@ public class HttpArgumentsAnnotator {
 
 			if ((param instanceof HttpParameter) && (((HttpParameter) param).getParameterType() == HttpParameterType.URL_PART)) {
 				String paramName = ((HttpParameter) param).getName();
-				path = path.replace("{" + paramName + "}", inputFormatter.getInputString(paramAnn.getInput()));
+				path = path.replaceAll("{" + paramName + "[^}]*}", inputFormatter.getInputString(paramAnn.getInput()));
 			}
 		}
 
