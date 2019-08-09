@@ -25,6 +25,8 @@ public class CobraConfiguration implements ServiceConfiguration {
 
 	private AppId appId;
 
+	private TracesConfiguration traces = new TracesConfiguration();
+
 	private SessionsConfiguration sessions = new SessionsConfiguration();
 
 	private List<List<String>> tailoring = DEFAULT_TAILORING;
@@ -45,6 +47,19 @@ public class CobraConfiguration implements ServiceConfiguration {
 
 	public void setAppId(AppId appId) {
 		this.appId = appId;
+	}
+
+	/**
+	 * Defines how traces are treated.
+	 * 
+	 * @return
+	 */
+	public TracesConfiguration getTraces() {
+		return traces;
+	}
+
+	public void setTraces(TracesConfiguration traces) {
+		this.traces = traces;
 	}
 
 	/**

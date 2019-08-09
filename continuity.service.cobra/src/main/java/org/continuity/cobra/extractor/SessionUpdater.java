@@ -1,5 +1,6 @@
 package org.continuity.cobra.extractor;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -25,16 +26,23 @@ public class SessionUpdater {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SessionUpdater.class);
 
+	private static final Set<Integer> REDIRECT_CODES = Arrays.asList(300, 301, 302, 303, 305, 307, 308).stream().collect(Collectors.toSet());
+
+	private static final String FLAG_REDIRECT_CONSIDERED = "SessionUpdater.redirect_considered";
+
 	private final VersionOrTimestamp version;
 
 	private final long maxSessionPauseMicros;
 
 	private final boolean forceFinish;
 
-	public SessionUpdater(VersionOrTimestamp version, long maxSessionPauseMicros, boolean forceFinish) {
+	private final boolean ignoreRedirects;
+
+	public SessionUpdater(VersionOrTimestamp version, long maxSessionPauseMicros, boolean forceFinish, boolean ignoreRedirects) {
 		this.version = version;
 		this.maxSessionPauseMicros = maxSessionPauseMicros;
 		this.forceFinish = forceFinish;
+		this.ignoreRedirects = ignoreRedirects;
 	}
 
 	/**
@@ -86,8 +94,11 @@ public class SessionUpdater {
 					continue;
 				}
 
-				if ((session.getRequests().size() > 0) && isRedirect(session.getRequests().floor(req))) {
+				SessionRequest previous = session.getRequests().floor(req);
+
+				if ((session.getRequests().size() > 0) && isRedirect(previous)) {
 					numRedirect++;
+					previous.getFlags().add(FLAG_REDIRECT_CONSIDERED);
 					continue;
 				}
 
@@ -124,7 +135,8 @@ public class SessionUpdater {
 	}
 
 	private boolean isRedirect(SessionRequest request) {
-		return (request != null) && (request.getExtendedInformation() != null) && ((request.getExtendedInformation().getResponseCode() / 100) == 3);
+		return !ignoreRedirects && (request != null) && (request.getExtendedInformation() != null) && REDIRECT_CODES.contains(request.getExtendedInformation().getResponseCode())
+				&& !request.getFlags().contains(FLAG_REDIRECT_CONSIDERED);
 	}
 
 	private Session createFreshSession(String sessionId) {

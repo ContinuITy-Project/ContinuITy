@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -159,7 +160,7 @@ public class MeasurementDataAmqpHandler {
 			List<SessionRequest> requests = tailorer.tailorTraces(services, traces);
 			List<Session> openSessions = sessionManager.readOpenSessions(aid, null, services);
 
-			SessionUpdater updater = new SessionUpdater(version, config.getSessions().getTimeout().getSeconds() * SECONDS_TO_MICROS, forceFinish);
+			SessionUpdater updater = new SessionUpdater(version, config.getSessions().getTimeout().getSeconds() * SECONDS_TO_MICROS, forceFinish, config.getSessions().isIgnoreRedirects());
 			Set<Session> updatedSessions = updater.updateSessions(openSessions, requests);
 
 
@@ -259,7 +260,12 @@ public class MeasurementDataAmqpHandler {
 		RequestUriMapper rootMapper = new RequestUriMapper(rootApp);
 		List<String> unmapped = new ArrayList<>();
 
-		for (TraceRecord trace : traces) {
+		ListIterator<TraceRecord> iterator = traces.listIterator();
+		boolean discard = configProvider.getConfiguration(aid).getTraces().isDiscardUmapped();
+
+		while (iterator.hasNext()) {
+			TraceRecord trace = iterator.next();
+
 			List<HTTPRequestProcessingImpl> rootCallables = OpenXtraceTracer.forRoot(trace.getTrace().getRoot().getRoot()).extractSubtraces();
 
 			if (rootCallables.size() == 0) {
@@ -272,6 +278,10 @@ public class MeasurementDataAmqpHandler {
 				trace.setRawEndpoint(endpoint);
 			} else {
 				unmapped.add(rootCallables.get(0).getUri());
+
+				if (discard) {
+					iterator.remove();
+				}
 			}
 		}
 
@@ -280,9 +290,13 @@ public class MeasurementDataAmqpHandler {
 		if (distinctUnmapped.size() > 100) {
 			LOGGER.warn("{}@{}: Could not find an endpoint for {} traces!", aid, version, unmapped.size());
 		} else if (!unmapped.isEmpty()) {
-			LOGGER.info("{}@{}: Could not find an endpoint for {} traces with the following paths: {}", aid, version, unmapped.size(), distinctUnmapped);
+			LOGGER.warn("{}@{}: Could not find an endpoint for {} traces with the following paths: {}", aid, version, unmapped.size(), distinctUnmapped);
 		} else {
 			LOGGER.info("{}@{}: All traces have been mapped to endpoints successfully.", aid, version);
+		}
+
+		if (!unmapped.isEmpty() && discard) {
+			LOGGER.info("{}@{}: The traces without endpoint won't be stored.", aid, version);
 		}
 	}
 

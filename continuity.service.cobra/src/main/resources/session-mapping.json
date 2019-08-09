@@ -35,6 +35,10 @@
                 "trace-id": {
                     "type": "long"
                 },
+                "flags": {
+                    "type": "keyword",
+                    "index": false
+                },
                 "extended-information": {
                     "properties": {
                         "encoding": {
