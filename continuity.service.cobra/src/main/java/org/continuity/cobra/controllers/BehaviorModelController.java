@@ -15,7 +15,9 @@ import org.continuity.api.entities.artifact.markovbehavior.NormalDistribution;
 import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionRequest;
+import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.SessionTailoringDescription;
+import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.cobra.extractor.RequestTailorer;
 import org.continuity.cobra.extractor.SessionUpdater;
@@ -50,6 +52,9 @@ public class BehaviorModelController {
 	@Autowired
 	private ElasticsearchTraceManager elasticManager;
 
+	@Autowired
+	private ConfigurationProvider<CobraConfiguration> configProvider;
+
 	@RequestMapping(value = CREATE, method = RequestMethod.POST, produces = "application/json")
 	public ResponseEntity<RelativeMarkovChain> getTailoredMarkovChainAsJson(@RequestBody SessionTailoringDescription description) throws IOException, TimeoutException {
 		return ResponseEntity.ok(getTailoredMarkovChain(description));
@@ -74,7 +79,7 @@ public class BehaviorModelController {
 		List<TraceRecord> traces = elasticManager.readTraceRecords(aid, rootEndpoint, description.getSessionIds());
 
 		RequestTailorer tailorer = new RequestTailorer(aid, version, restTemplate, includePrePost);
-		SessionUpdater updater = new SessionUpdater(version, Long.MAX_VALUE, true);
+		SessionUpdater updater = new SessionUpdater(version, Long.MAX_VALUE, true, configProvider.getOrDefault(aid).getSessions().isIgnoreRedirects());
 		SessionsToMarkovChainAggregator aggregator = new SessionsToMarkovChainAggregator();
 
 		List<SessionRequest> requests = tailorer.tailorTraces(services, traces);
