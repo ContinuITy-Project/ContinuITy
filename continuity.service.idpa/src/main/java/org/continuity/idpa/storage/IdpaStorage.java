@@ -294,7 +294,7 @@ public class IdpaStorage {
 	}
 
 	private Path getDirPath(AppId aid, VersionOrTimestamp version, boolean createDirs) throws NotDirectoryException {
-		Path dirPath = getDirPath(aid).resolve(version.toString());
+		Path dirPath = getDirPath(aid).resolve(version.toNormalizedString());
 		checkAndCreateDirs(dirPath, createDirs);
 		return dirPath;
 	}
