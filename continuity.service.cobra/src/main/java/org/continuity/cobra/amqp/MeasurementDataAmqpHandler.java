@@ -278,9 +278,11 @@ public class MeasurementDataAmqpHandler {
 		List<String> distinctUnmapped = unmapped.stream().distinct().collect(Collectors.toList());
 
 		if (distinctUnmapped.size() > 100) {
-			LOGGER.warn("Could not find an endpoint for {} traces!", unmapped.size());
+			LOGGER.warn("{}@{}: Could not find an endpoint for {} traces!", aid, version, unmapped.size());
 		} else if (!unmapped.isEmpty()) {
-			LOGGER.info("Could not find an endpoint for {} traces with the following paths: {}", unmapped.size(), distinctUnmapped);
+			LOGGER.info("{}@{}: Could not find an endpoint for {} traces with the following paths: {}", aid, version, unmapped.size(), distinctUnmapped);
+		} else {
+			LOGGER.info("{}@{}: All traces have been mapped to endpoints successfully.", aid, version);
 		}
 	}
 
