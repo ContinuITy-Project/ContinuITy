@@ -39,6 +39,12 @@ public class ConfigurationStorage {
 	public ConfigurationStorage(Path path, ObjectMapper mapper) {
 		this.path = path;
 		this.mapper = mapper;
+
+		if (!path.toFile().exists()) {
+			path.toFile().mkdirs();
+		}
+
+		LOGGER.info("Using configuration storage path {}.", path.toAbsolutePath());
 	}
 
 	/**
