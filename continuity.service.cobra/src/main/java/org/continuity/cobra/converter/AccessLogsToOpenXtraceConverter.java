@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -83,8 +84,13 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 		if ((params == null) || params.isEmpty()) {
 			return Collections.emptyMap();
 		} else {
-			return params.stream().collect(Collectors.toMap(ParameterRecord::getName, rec -> new String[] { rec.getValue() }));
+			return params.stream().collect(Collectors.groupingBy(ParameterRecord::getName)).entrySet().stream().collect(Collectors.toMap(Entry::getKey, this::paramListToArray));
 		}
+	}
+
+	private String[] paramListToArray(Entry<String, List<ParameterRecord>> paramsEntry) {
+		List<ParameterRecord> params = paramsEntry.getValue();
+		return params.stream().map(ParameterRecord::getValue).collect(Collectors.toList()).toArray(new String[params.size()]);
 	}
 
 }
