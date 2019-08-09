@@ -432,9 +432,12 @@ public class IdpaCommands extends AbstractCommands {
 	public AttributedString initAnnotation(@ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId) throws Exception {
 		return executeWithAppId(appId, (aid) -> {
 			Application application = storage.readApplication(aid);
-			ApplicationAnnotation annotation = storage.readAnnotation(aid);
 
-			annotation = new AnnotationExtractor().extractAnnotation(application);
+			if (storage.annotationExists(aid)) {
+				return new ResponseBuilder().error("There is already an annotation for app-id ").boldError(aid).error("! Move or remove that one first before creating a new one.").build();
+			}
+
+			ApplicationAnnotation annotation = new AnnotationExtractor().extractAnnotation(application);
 
 			storage.storeIfNotPresent(annotation, aid);
 
