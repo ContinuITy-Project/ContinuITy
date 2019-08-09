@@ -275,10 +275,12 @@ public class MeasurementDataAmqpHandler {
 			}
 		}
 
-		if (unmapped.size() > 100) {
+		List<String> distinctUnmapped = unmapped.stream().distinct().collect(Collectors.toList());
+
+		if (distinctUnmapped.size() > 100) {
 			LOGGER.warn("Could not find an endpoint for {} traces!", unmapped.size());
 		} else if (!unmapped.isEmpty()) {
-			LOGGER.info("Could not find an endpoint for the following paths: {}", unmapped);
+			LOGGER.info("Could not find an endpoint for {} traces with the following paths: {}", unmapped.size(), distinctUnmapped);
 		}
 	}
 

@@ -140,7 +140,8 @@ public class DataCommands extends AbstractCommands {
 	}
 
 	private void appendSuccess(ResponseBuilder answer, MeasurementDataType mType, String path, ResponseEntity<String> response) {
-		answer.normal("Successfully uploaded the data of type ").bold(mType.toPrettyString()).normal(" at ").bold(path).newline().normal("The data can be retrieved at ").bold(response.getBody());
+		answer.normal("Successfully uploaded the data of type ").bold(mType.toPrettyString()).normal(" at ").bold(path).newline()
+				.normal("The data will now be processed and can be later retrieved at ").bold(response.getBody());
 	}
 
 	private void appendError(ResponseBuilder answer, MeasurementDataType mType, String path, ResponseEntity<String> response) {
