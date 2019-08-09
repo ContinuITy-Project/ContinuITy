@@ -72,7 +72,7 @@ public class ModularizedOPENxtraceSessionLogsExtractorTest {
 
 		tailorerWithPrePostProcessing = new RequestTailorer(aid, version, restTemplate, true);
 		tailorerWithoutPrePostProcessing = new RequestTailorer(aid, version, restTemplate, false);
-		updater = new SessionUpdater(version, Long.MAX_VALUE, true);
+		updater = new SessionUpdater(version, Long.MAX_VALUE, true, true);
 	}
 
 

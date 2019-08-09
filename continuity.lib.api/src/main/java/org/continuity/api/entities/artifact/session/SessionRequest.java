@@ -1,6 +1,8 @@
 package org.continuity.api.entities.artifact.session;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -44,6 +46,8 @@ public class SessionRequest implements Comparable<SessionRequest> {
 	@JsonProperty("extended-information")
 	@JsonView(SessionView.Extended.class)
 	private ExtendedRequestInformation extendedInformation;
+
+	private final Set<String> flags = new HashSet<>();
 
 	@JsonIgnore
 	public static boolean isPrePostProcessing(String endpoint) {
@@ -129,6 +133,10 @@ public class SessionRequest implements Comparable<SessionRequest> {
 
 	public void setExtendedInformation(ExtendedRequestInformation extendedInformation) {
 		this.extendedInformation = extendedInformation;
+	}
+
+	public Set<String> getFlags() {
+		return flags;
 	}
 
 	@JsonIgnore

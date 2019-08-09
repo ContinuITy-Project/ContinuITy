@@ -25,6 +25,9 @@ public class SessionsConfiguration {
 	@JsonProperty("hash-id")
 	private boolean hashId = false;
 
+	@JsonProperty("ignore-redirects")
+	private boolean ignoreRedirects = true;
+
 	private boolean omit = false;
 
 	/**
@@ -50,6 +53,19 @@ public class SessionsConfiguration {
 
 	public void setHashId(boolean hashSessionId) {
 		this.hashId = hashSessionId;
+	}
+
+	/**
+	 *
+	 * @return Whether requests following a request with a redirect response code should be ignored.
+	 *         Defaults to {@code true}.
+	 */
+	public boolean isIgnoreRedirects() {
+		return ignoreRedirects;
+	}
+
+	public void setIgnoreRedirects(boolean ignoreRedirects) {
+		this.ignoreRedirects = ignoreRedirects;
 	}
 
 	/**
