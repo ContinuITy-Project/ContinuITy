@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -84,10 +86,27 @@ public class OrderDirectoryManager extends DirectoryManager {
 			return null;
 		}
 
-		Optional<String> latest = Files.list(dir).filter(p -> p.toFile().isDirectory()).map(Path::getFileName).map(Path::toString).filter(name -> !name.startsWith(FOLDER_ARCHIVE)).sorted()
+		Optional<String> latest = Files.list(dir).filter(p -> p.toFile().isDirectory()).map(Path::getFileName).map(Path::toString).filter(name -> !name.startsWith(FOLDER_ARCHIVE))
+				.sorted(this::compareFolders)
 				.reduce((a, b) -> b);
 
 		return latest.map(s -> dir.resolve(s)).orElse(null);
+	}
+
+	private int compareFolders(String first, String second) {
+		Pattern pattern = Pattern.compile("(.*)-([0-9]+)");
+		Matcher firstMatcher = pattern.matcher(first);
+		Matcher secondMatcher = pattern.matcher(second);
+
+		if (firstMatcher.find() && secondMatcher.find()) {
+			int stringComp = firstMatcher.group(1).compareTo(secondMatcher.group(1));
+			int firstNum = Integer.parseInt(firstMatcher.group(2));
+			int secondNum = Integer.parseInt(secondMatcher.group(2));
+
+			return (Integer.signum(stringComp) * 2) + Integer.signum(firstNum - secondNum);
+		} else {
+			return first.compareTo(second);
+		}
 	}
 
 	public int clearArchive(AppId aid) {
