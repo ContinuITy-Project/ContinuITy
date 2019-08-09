@@ -4,10 +4,9 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.exception.CliException;
 import org.continuity.commons.utils.FileUtils;
@@ -112,38 +111,40 @@ public class IdpaStorage {
 		}
 	}
 
-	public Stream<Pair<AppId, Application>> listApplications(AppId appIdPattern) {
-		return FileUtils.getAllFilesMatchingWildcards(getApplicationPath(appIdPattern, false).toString()).stream().map(this::readApplicationPair).filter(Objects::nonNull);
+	public Stream<Triple<AppId, Application, String>> listApplications(AppId appIdPattern) {
+		return FileUtils.getAllFilesMatchingWildcards(getApplicationPath(appIdPattern, false).toString()).stream().map(this::readApplicationTriple);
 	}
 
-	public Stream<Pair<AppId, ApplicationAnnotation>> listAnnotations(AppId appIdPattern) {
-		return FileUtils.getAllFilesMatchingWildcards(getAnnotationPath(appIdPattern, false).toString()).stream().map(this::readAnnotationPair).filter(Objects::nonNull);
+	public Stream<Triple<AppId, ApplicationAnnotation, String>> listAnnotations(AppId appIdPattern) {
+		return FileUtils.getAllFilesMatchingWildcards(getAnnotationPath(appIdPattern, false).toString()).stream().map(this::readAnnotationTriple);
 	}
 
-	private Pair<AppId, Application> readApplicationPair(File file) {
+	private Triple<AppId, Application, String> readApplicationTriple(File file) {
 		Application app;
+		String appId = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
+		AppId aid = AppId.fromString(appId);
 
 		try {
 			app = appSerializer.readFromYaml(file);
 		} catch (IOException e) {
-			return null;
+			return Triple.of(aid, null, e.getMessage());
 		}
 
-		String appId = file.getName().substring("application-".length(), file.getName().length() - ".yml".length());
-		return Pair.of(AppId.fromString(appId), app);
+		return Triple.of(aid, app, null);
 	}
 
-	private Pair<AppId, ApplicationAnnotation> readAnnotationPair(File file) {
+	private Triple<AppId, ApplicationAnnotation, String> readAnnotationTriple(File file) {
 		ApplicationAnnotation ann;
+		String appId = file.getName().substring("annotation-".length(), file.getName().length() - ".yml".length());
+		AppId aid = AppId.fromString(appId);
 
 		try {
 			ann = annSerializer.readFromYaml(file);
 		} catch (IOException e) {
-			return null;
+			return Triple.of(aid, null, e.getMessage());
 		}
 
-		String appId = file.getName().substring("annotation-".length(), file.getName().length() - ".yml".length());
-		return Pair.of(AppId.fromString(appId), ann);
+		return Triple.of(aid, ann, null);
 	}
 
 	private Path getApplicationPath(AppId aid, boolean create) {
