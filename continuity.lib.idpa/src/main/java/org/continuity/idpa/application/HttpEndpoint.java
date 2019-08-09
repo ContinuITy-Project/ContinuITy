@@ -113,8 +113,8 @@ public class HttpEndpoint extends AbstractIdpaElement implements Endpoint<HttpPa
 			path = path.substring(0, path.length() - 1);
 		}
 
-		path = path.replaceAll("\\{([^\\}]*)\\:\\*\\}", "(?<$1>.*)");
-		path = path.replaceAll("\\{([^\\}]*)\\:(.*)\\}", "(?<$1>$2)");
+		path = path.replaceAll("\\{([^\\}\\:]*)\\:\\*\\}", "(?<$1>.*)");
+		path = path.replaceAll("\\{([^\\}\\:]*)\\:(.*)\\}", "(?<$1>$2)");
 		path = path.replaceAll("\\{([^\\}]*)\\}", "(?<$1>[^/]*)");
 
 		return new StringBuilder().append("^/?").append(path.replaceAll("\\{([^\\}]*)\\:\\*\\}", "(?<$1>.*)").replaceAll("\\{([^\\}]*)\\}", "(?<$1>[^/]*)")).append("/?$").toString();
