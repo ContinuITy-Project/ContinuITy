@@ -307,12 +307,18 @@ public class IdpaCommands extends AbstractCommands {
 			String url = propertiesProvider.getProperty(PropertiesProvider.KEY_URL);
 			ResponseBuilder responses = new ResponseBuilder();
 
-			boolean error = storage.listApplications(aidPattern).map(pair -> {
-				AppId aid = pair.getLeft();
-				Application application = pair.getRight();
+			boolean error = storage.listApplications(aidPattern).map(triple -> {
+				AppId aid = triple.getLeft();
+				Application application = triple.getMiddle();
+				String errorMessage = triple.getRight();
 				ResponseEntity<String> response;
-
 				aids.add(aid);
+
+				if (errorMessage != null) {
+					responses.newline().bold(aid).error(" [ERROR]").newline().error(errorMessage);
+					return true;
+				}
+
 				try {
 					response = restTemplate.postForEntity(Idpa.Application.UPDATE.viaOrchestrator().requestUrl(aid).withHost(url).get(), application, String.class);
 				} catch (HttpStatusCodeException e) {
@@ -352,7 +358,8 @@ public class IdpaCommands extends AbstractCommands {
 			}).reduce(Boolean::logicalOr).orElse(false);
 
 			if (error) {
-				return new ResponseBuilder().normal("Uploaded application models for app-ids ").normal(aids).normal(". ").error("Some of them resulted in errors:").newline().append(responses).build();
+				return new ResponseBuilder().normal("Attempted to upload application models for app-ids ").normal(aids).normal(". ").error("Some of them resulted in errors:").newline()
+						.append(responses).build();
 			} else {
 				return new ResponseBuilder().normal("Successfully uploaded application models for app-ids ").normal(aids).normal(":").newline().append(responses).build();
 			}
@@ -389,11 +396,16 @@ public class IdpaCommands extends AbstractCommands {
 
 			VersionOrTimestamp currVersion = VersionOrTimestamp.fromString(currVersionStr);
 
-			boolean error = storage.listAnnotations(aidPattern).map(pair -> {
-				AppId aid = pair.getLeft();
-				ApplicationAnnotation annotation = pair.getRight();
-
+			boolean error = storage.listAnnotations(aidPattern).map(triple -> {
+				AppId aid = triple.getLeft();
+				ApplicationAnnotation annotation = triple.getMiddle();
+				String errorMessage = triple.getRight();
 				aids.add(aid);
+
+				if (errorMessage != null) {
+					responses.newline().bold(aid).error(" [ERROR]").newline().error(errorMessage);
+					return true;
+				}
 
 				RequestBuilder req = Idpa.Annotation.UPDATE.viaOrchestrator().requestUrl(aid).withHost(url);
 
@@ -421,7 +433,7 @@ public class IdpaCommands extends AbstractCommands {
 			}).reduce(Boolean::logicalOr).orElse(false);
 
 			if (error) {
-				return resp.normal("Uploaded annotations for app-ids ").normal(aids).normal(". ").error("Some of them resulted in errors:").newline().append(responses).build();
+				return resp.normal("Attempted to upload annotations for app-ids ").normal(aids).normal(". ").error("Some of them resulted in errors:").newline().append(responses).build();
 			} else {
 				return resp.normal("Successfully uploaded annotations for app-ids ").normal(aids).normal(":").newline().append(responses).build();
 			}
