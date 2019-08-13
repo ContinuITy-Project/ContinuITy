@@ -1,0 +1,15 @@
+{
+    "properties": {
+        "timestamp": { "type": "long" },
+        "markov-chains": {
+            "properties": {
+                "id": { "type": "keyword" },
+                "frequency": { "type": "double" },
+                "transitions": {
+                    "type": "object",
+                    "enabled": false
+                }
+            }
+        }
+    }
+}
