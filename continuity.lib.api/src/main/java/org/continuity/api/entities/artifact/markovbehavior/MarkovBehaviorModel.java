@@ -11,6 +11,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Common format for Markov-chain-based behavior models. Comprises several {@link RelativeMarkovChain}s.
  *
@@ -21,7 +23,23 @@ public class MarkovBehaviorModel {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MarkovBehaviorModel.class);
 
+	private long timestamp;
+
+	@JsonProperty("markov-chains")
 	private List<RelativeMarkovChain> markovChains;
+
+	/**
+	 * Timestamp in milliseconds.
+	 *
+	 * @return
+	 */
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
 
 	/**
 	 * Returns the comprised Markov chains.

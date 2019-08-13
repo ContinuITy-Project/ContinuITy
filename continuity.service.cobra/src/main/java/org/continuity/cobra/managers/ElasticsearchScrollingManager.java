@@ -42,6 +42,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,27 +177,47 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @throws TimeoutException
 	 */
 	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, String message) throws IOException, TimeoutException {
-		String sTailoring = Session.convertTailoringToString(tailoring);
+		return readElements(aid, tailoring, query, null, 10000, message); // 10000 is the maximum
+	}
 
-		if (!indexExists(toIndex(aid, sTailoring))) {
+	/**
+	 * Reads the elements using the defined tailoring, sort, and number of elements to be retrieved.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param query
+	 * @param sort
+	 * @param size
+	 * @param message
+	 * @return
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, SortBuilder<?> sort, int size, String message) throws IOException, TimeoutException {
+		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+
+		if (!indexExists(index)) {
 			return Collections.emptyList();
 		}
 
-		SearchRequest search = new SearchRequest(toIndex(aid, sTailoring));
-		// 10000 is the maximum
-		search.source(new SearchSourceBuilder().query(query).size(10000));
-		search.scroll(TimeValue.timeValueMinutes(SCROLL_MINUTES));
+		SearchSourceBuilder source = new SearchSourceBuilder().query(query).size(size);
+
+		if (sort != null) {
+			source.sort(sort);
+		}
+
+		SearchRequest search = new SearchRequest(index).source(source).scroll(TimeValue.timeValueMinutes(SCROLL_MINUTES));
 
 		SearchResponse response;
 		try {
 			response = client.search(search, RequestOptions.DEFAULT);
 		} catch (ElasticsearchStatusException e) {
-			LOGGER.info("Could not get any elements from {} {}: {}", toIndex(aid, sTailoring), message, e.getMessage());
+			LOGGER.info("Could not get any elements from {} {}: {}", index, message, e.getMessage());
 			return Collections.emptyList();
 		}
 
 		SearchHits hits = response.getHits();
-		LOGGER.info("The search request to {} {} resulted in {}.", toIndex(aid, sTailoring), message, hits.getTotalHits());
+		LOGGER.info("The search request to {} {} resulted in {}.", index, message, hits.getTotalHits());
 
 		return processSearchResponse(response, aid, message, 0);
 	}
@@ -245,7 +266,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 	/**
 	 * Counts the elements using the default tailoring (all).
-	 * 
+	 *
 	 * @param aid
 	 * @param query
 	 * @param message

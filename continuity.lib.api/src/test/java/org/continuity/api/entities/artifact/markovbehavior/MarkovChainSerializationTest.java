@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.assertj.core.data.Offset;
+import org.continuity.api.entities.test.MarkovChainTestInstance;
 import org.junit.Before;
 import org.junit.Test;
 

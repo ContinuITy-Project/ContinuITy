@@ -3,6 +3,7 @@ package org.continuity.cobra.amqp;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,17 +20,20 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.amqp.ExchangeDefinition;
 import org.continuity.api.amqp.RoutingKeyFormatter;
+import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionRequest;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.api.rest.RestApi;
 import org.continuity.cobra.config.RabbitMqConfig;
+import org.continuity.cobra.converter.ClustinatorMarkovChainConverter;
 import org.continuity.cobra.entities.ClustinatorInput;
 import org.continuity.cobra.entities.ClustinatorResult;
 import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.cobra.extractor.RequestTailorer;
 import org.continuity.cobra.extractor.SessionUpdater;
+import org.continuity.cobra.managers.ElasticsearchBehaviorManager;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.commons.idpa.RequestUriMapper;
@@ -76,6 +80,9 @@ public class MeasurementDataAmqpHandler {
 
 	@Autowired
 	private ElasticsearchSessionManager sessionManager;
+
+	@Autowired
+	private ElasticsearchBehaviorManager behaviorManager;
 
 	@Autowired
 	private AmqpTemplate amqpTemplate;
@@ -209,8 +216,23 @@ public class MeasurementDataAmqpHandler {
 			LOGGER.info("{}@{} {}: Triggering clustering with start {}, interval start {}, end {} ...", aid, version, services, new Date(start), new Date(intervalStart), new Date(end));
 
 			List<Session> sessions = sessionManager.readSessionsInRange(aid, version, services, new Date(start), new Date(end));
+			List<String> endpoints = sessions.stream().map(Session::getRequests).flatMap(Set::stream).map(SessionRequest::getEndpoint).distinct().collect(Collectors.toList());
+			MarkovBehaviorModel previousBehavior = behaviorManager.readLatest(aid, services);
+			Map<String, double[]> previousMarkovChains;
+
+			if (previousBehavior == null) {
+				LOGGER.info("{}@{} {}: There is no previous behavior. Starting from scratch.", aid, version, services);
+				previousMarkovChains = Collections.emptyMap();
+			} else {
+				LOGGER.info("{}@{} {}: Using a previous behavior from {}.", aid, version, services, new Date(previousBehavior.getTimestamp()));
+				ClustinatorMarkovChainConverter converter = new ClustinatorMarkovChainConverter(endpoints);
+				previousMarkovChains = converter.convertBehaviorModel(previousBehavior);
+			}
+
 			ClustinatorInput input = new ClustinatorInput().setAppId(aid).setVersion(version).setTailoring(services).setEpsilon(config.getClustering().getEpsilon())
-					.setMinSampleSize(config.getClustering().getMinSampleSize()).setStartMicros(start * 1000).setIntervalStartMicros(intervalStart * 1000).setEndMicros(end * 1000).setSessions(sessions);
+					.setMinSampleSize(config.getClustering().getMinSampleSize()).setStartMicros(start * 1000).setIntervalStartMicros(intervalStart * 1000).setEndMicros(end * 1000).setStates(endpoints)
+					.setPreviousMarkovChains(previousMarkovChains)
+					.setSessions(sessions);
 
 			ExchangeDefinition<RoutingKeyFormatter.AppId> exchange = AmqpApi.Cobra.Clustinator.TASK_CLUSTER;
 			amqpTemplate.convertAndSend(exchange.name(), exchange.formatRoutingKey().of(aid), input);

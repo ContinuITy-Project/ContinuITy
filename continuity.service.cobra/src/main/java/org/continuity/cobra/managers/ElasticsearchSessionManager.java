@@ -211,9 +211,9 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	@Override
 	protected Pair<String, String> serialize(Session session) {
 		try {
-			return Pair.of(mapper.writerWithView(SessionView.Extended.class).writeValueAsString(session), session.getUniqueId());
+			return Pair.of(mapper.writerWithView(SessionView.Internal.class).writeValueAsString(session), session.getUniqueId());
 		} catch (JsonProcessingException e) {
-			LOGGER.error("Could not write TraceRecord to JSON string!", e);
+			LOGGER.error("Could not write Session to JSON string!", e);
 			return null;
 		}
 	}
