@@ -3,7 +3,6 @@ package org.continuity.cobra.amqp;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +20,7 @@ import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.amqp.ExchangeDefinition;
 import org.continuity.api.amqp.RoutingKeyFormatter;
 import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
+import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionRequest;
 import org.continuity.api.entities.config.ConfigurationProvider;
@@ -29,7 +29,6 @@ import org.continuity.api.rest.RestApi;
 import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.converter.ClustinatorMarkovChainConverter;
 import org.continuity.cobra.entities.ClustinatorInput;
-import org.continuity.cobra.entities.ClustinatorResult;
 import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.cobra.extractor.RequestTailorer;
 import org.continuity.cobra.extractor.SessionUpdater;
@@ -127,16 +126,6 @@ public class MeasurementDataAmqpHandler {
 		LOGGER.info("{}@{}: Processing of the traces done. It took {}", aid, version, DurationFormatUtils.formatDurationHMS(endMillis - startMillis));
 	}
 
-	@RabbitListener(queues = RabbitMqConfig.EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME)
-	public void storeClustering(ClustinatorResult result) {
-		LOGGER.info("{}@{}: Received clustering result for services {} from clustinator in range {} ({}) - {}", result.getAppId(), result.getVersion(), result.getTailoring(),
-				new Date(result.getStartMicros() / 1000),
-				new Date(result.getIntervalStartMicros() / 1000), new Date(result.getEndMicros() / 1000));
-
-		// TODO
-		LOGGER.warn("Handling the clustering result is not implemented, yet!");
-	}
-
 	private void storeTraces(AppId aid, VersionOrTimestamp version, List<TraceRecord> traces) throws IOException {
 		traceManager.storeTraceRecords(aid, version, traces);
 
@@ -217,12 +206,15 @@ public class MeasurementDataAmqpHandler {
 
 			List<Session> sessions = sessionManager.readSessionsInRange(aid, version, services, new Date(start), new Date(end));
 			List<String> endpoints = sessions.stream().map(Session::getRequests).flatMap(Set::stream).map(SessionRequest::getEndpoint).distinct().collect(Collectors.toList());
+			endpoints.add(0, RelativeMarkovChain.INITIAL_STATE);
+			endpoints.add(RelativeMarkovChain.FINAL_STATE);
+
 			MarkovBehaviorModel previousBehavior = behaviorManager.readLatest(aid, services);
 			Map<String, double[]> previousMarkovChains;
 
 			if (previousBehavior == null) {
 				LOGGER.info("{}@{} {}: There is no previous behavior. Starting from scratch.", aid, version, services);
-				previousMarkovChains = Collections.emptyMap();
+				previousMarkovChains = null;
 			} else {
 				LOGGER.info("{}@{} {}: Using a previous behavior from {}.", aid, version, services, new Date(previousBehavior.getTimestamp()));
 				ClustinatorMarkovChainConverter converter = new ClustinatorMarkovChainConverter(endpoints);

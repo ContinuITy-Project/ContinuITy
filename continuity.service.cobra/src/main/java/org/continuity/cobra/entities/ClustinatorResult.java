@@ -1,6 +1,7 @@
 package org.continuity.cobra.entities;
 
 import java.util.List;
+import java.util.Map;
 
 import org.continuity.api.entities.deserialization.TailoringDeserializer;
 import org.continuity.api.entities.deserialization.TailoringSerializer;
@@ -38,7 +39,10 @@ public class ClustinatorResult {
 	@JsonProperty("end-micros")
 	private long endMicros;
 
-	// TODO: clustering result
+	private List<String> states;
+
+	@JsonProperty("mean-markov-chains")
+	private Map<String, double[]> meanMarkovChains;
 
 	public AppId getAppId() {
 		return appId;
@@ -86,6 +90,22 @@ public class ClustinatorResult {
 
 	public void setEndMicros(long endMicros) {
 		this.endMicros = endMicros;
+	}
+
+	public List<String> getStates() {
+		return states;
+	}
+
+	public void setStates(List<String> states) {
+		this.states = states;
+	}
+
+	public Map<String, double[]> getMeanMarkovChains() {
+		return meanMarkovChains;
+	}
+
+	public void setMeanMarkovChains(Map<String, double[]> meanMarkovChains) {
+		this.meanMarkovChains = meanMarkovChains;
 	}
 
 }

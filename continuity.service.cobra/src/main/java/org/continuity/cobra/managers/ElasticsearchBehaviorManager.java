@@ -1,6 +1,7 @@
 package org.continuity.cobra.managers;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -31,6 +32,19 @@ public class ElasticsearchBehaviorManager extends ElasticsearchScrollingManager<
 		super(host, "behavior");
 
 		this.mapper = mapper;
+	}
+
+	/**
+	 * Stores a behavior model.
+	 * 
+	 * @param aid
+	 * @param tailoring
+	 * @param model
+	 *            The behavior model.
+	 * @throws IOException
+	 */
+	public void store(AppId aid, List<String> tailoring, MarkovBehaviorModel model) throws IOException {
+		storeElements(aid, tailoring, Collections.singleton(model));
 	}
 
 	/**

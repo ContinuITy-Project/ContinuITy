@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
@@ -66,11 +67,21 @@ public class ClustinatorMarkovChainConverter {
 
 		for (String from : endpoints) {
 			int j = 0;
+			double sumProb = 0;
 
 			for (String to : endpoints) {
 				RelativeMarkovTransition transition = markovChain.getTransition(from, to);
-				array[transitionToIndex(i, j)] = transition.getProbability();
+				double prob = transition.getProbability();
 
+				if ((j == (n - 1)) && (sumProb < 0.1)) {
+					// ensure each line summarizes to 1
+					// (wouldn't be the case if state 'from' does not exist)
+					prob = 1 - sumProb;
+				}
+
+				array[transitionToIndex(i, j)] = prob;
+
+				sumProb += prob;
 				j++;
 			}
 
@@ -78,6 +89,26 @@ public class ClustinatorMarkovChainConverter {
 		}
 
 		return array;
+	}
+
+	/**
+	 * Converts a map of arrays as returned by the clustinator to a {@link MarkovBehaviorModel}.
+	 *
+	 * @param map
+	 *            The map of arrays. Each array needs to have exactly {@code n * n} elements
+	 *            ({@code n} = number of endpoints).
+	 * @return The behavior model.
+	 */
+	public MarkovBehaviorModel convertArrays(Map<String, double[]> map) {
+		MarkovBehaviorModel model = new MarkovBehaviorModel();
+
+		for (Entry<String, double[]> entry : map.entrySet()) {
+			RelativeMarkovChain chain = convertArray(entry.getValue());
+			chain.setId(entry.getKey());
+			model.addMarkovChain(chain);
+		}
+
+		return model;
 	}
 
 	/**

@@ -27,7 +27,6 @@ public class ClustinatorMarkovChainTest {
 		testMarkovArrayMarkov(MarkovChainTestInstance.SIMPLE_WO_A);
 		testMarkovArrayMarkov(MarkovChainTestInstance.SOCK_SHOP);
 		testMarkovArrayMarkov(MarkovChainTestInstance.SOCK_SHOP_WO_CART);
-		testMarkovArrayMarkov(MarkovChainTestInstance.SPECIAL_NUMBERS);
 	}
 
 	private void testMarkovArrayMarkov(MarkovChainTestInstance instance) throws IOException {
@@ -41,7 +40,7 @@ public class ClustinatorMarkovChainTest {
 		RelativeMarkovChain converted = converter.convertArray(array);
 
 		for (String state : states) {
-			assertThat(converted.getTransitions().get(state).values()).extracting(RelativeMarkovTransition::getProbability)
+			assertThat(converted.getTransitions().get(state).values()).extracting(RelativeMarkovTransition::getProbability).as("transition probabilities from state " + state)
 					.containsExactlyElementsOf(orig.getTransitions().get(state).values().stream().map(RelativeMarkovTransition::getProbability).collect(Collectors.toList()));
 		}
 	}

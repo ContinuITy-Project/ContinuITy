@@ -37,6 +37,11 @@ public class MarkovBehaviorModel {
 		return timestamp;
 	}
 
+	/**
+	 * Timestamp in milliseconds.
+	 * 
+	 * @param timestamp
+	 */
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
