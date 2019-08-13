@@ -47,6 +47,7 @@ public class SessionRequest implements Comparable<SessionRequest> {
 	@JsonView(SessionView.Extended.class)
 	private ExtendedRequestInformation extendedInformation;
 
+	@JsonView(SessionView.Internal.class)
 	private final Set<String> flags = new HashSet<>();
 
 	@JsonIgnore

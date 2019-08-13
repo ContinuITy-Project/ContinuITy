@@ -1,6 +1,7 @@
 package org.continuity.cobra.entities;
 
 import java.util.List;
+import java.util.Map;
 
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.deserialization.TailoringDeserializer;
@@ -18,7 +19,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @author Henning Schulz
  *
  */
-@JsonPropertyOrder({ "app-id", "version", "tailoring", "epsilon", "min-sample-size", "start-micros", "interval-start-micros", "end-micros", "sessions" })
+@JsonPropertyOrder({ "app-id", "version", "tailoring", "epsilon", "min-sample-size", "start-micros", "interval-start-micros", "end-micros", "states", "previous-markov-chains", "sessions" })
 public class ClustinatorInput {
 
 	@JsonProperty("app-id")
@@ -43,6 +44,11 @@ public class ClustinatorInput {
 
 	@JsonProperty("end-micros")
 	private long endMicros;
+
+	private List<String> states;
+
+	@JsonProperty("previous-markov-chains")
+	private Map<String, double[]> previousMarkovChains;
 
 	private List<Session> sessions;
 
@@ -115,6 +121,24 @@ public class ClustinatorInput {
 
 	public ClustinatorInput setEndMicros(long endMicros) {
 		this.endMicros = endMicros;
+		return this;
+	}
+
+	public List<String> getStates() {
+		return states;
+	}
+
+	public ClustinatorInput setStates(List<String> states) {
+		this.states = states;
+		return this;
+	}
+
+	public Map<String, double[]> getPreviousMarkovChains() {
+		return previousMarkovChains;
+	}
+
+	public ClustinatorInput setPreviousMarkovChains(Map<String, double[]> previousMarkovChains) {
+		this.previousMarkovChains = previousMarkovChains;
 		return this;
 	}
 

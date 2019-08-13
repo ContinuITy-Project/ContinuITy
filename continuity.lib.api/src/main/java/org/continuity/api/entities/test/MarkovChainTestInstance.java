@@ -1,12 +1,10 @@
-package org.continuity.api.entities.artifact.markovbehavior;
+package org.continuity.api.entities.test;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.List;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.stream.Collectors;
-
-import com.google.common.io.Files;
 
 public enum MarkovChainTestInstance {
 
@@ -23,9 +21,9 @@ public enum MarkovChainTestInstance {
 	}
 
 	public String[][] getCsv() throws IOException {
-		List<String> lines = Files.readLines(new File(getClass().getResource(path).getFile()), Charset.defaultCharset());
-
-		return lines.stream().map(l -> l.split(SEPARATOR)).collect(Collectors.toList()).toArray(new String[lines.size()][]);
+		try (InputStream in = getClass().getResourceAsStream(path)) {
+			return new BufferedReader(new InputStreamReader(in)).lines().map(l -> l.split(SEPARATOR)).collect(Collectors.toList()).toArray(new String[0][]);
+		}
 	}
 
 }

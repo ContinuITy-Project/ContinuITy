@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 
 import org.assertj.core.data.Offset;
+import org.continuity.api.entities.test.MarkovChainTestInstance;
 import org.junit.Test;
 
 public class MarkovChainTest {

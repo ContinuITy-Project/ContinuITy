@@ -156,7 +156,7 @@ public abstract class AbstractMarkovChain<T extends MarkovTransition> {
 		if ((transition == null) || (transition.hasZeroProbability())) {
 			Map<String, T> fromTransitions = transitions.get(from);
 
-			if (from != null) {
+			if (fromTransitions != null) {
 				fromTransitions.remove(to);
 			}
 		} else {
