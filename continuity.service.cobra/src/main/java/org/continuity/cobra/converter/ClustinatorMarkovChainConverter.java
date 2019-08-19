@@ -1,5 +1,6 @@
 package org.continuity.cobra.converter;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,8 +26,8 @@ public class ClustinatorMarkovChainConverter {
 	private final int n;
 
 	public ClustinatorMarkovChainConverter(List<String> endpoints) {
-		this.endpoints = endpoints;
-		this.n = endpoints.size();
+		this.endpoints = endpoints == null ? Collections.emptyList() : endpoints;
+		this.n = endpoints == null ? 0 : endpoints.size();
 	}
 
 	/**
