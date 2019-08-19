@@ -73,7 +73,7 @@ public class ContextController {
 	@RequestMapping(value = PUSH, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<ContextValidityReport> storeContexts(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestBody Map<Date, ContextRecord> contextMap) throws IOException, TimeoutException {
-		CobraConfiguration config = configProvider.getOrDefault(aid);
+		CobraConfiguration config = configProvider.getConfiguration(aid);
 		ContextSchema schema = config.getContext();
 
 		ContextValidityReport report = contextMap.values().stream().map(schema::validate).reduce(ContextValidityReport::merge).orElse(new ContextValidityReport());
