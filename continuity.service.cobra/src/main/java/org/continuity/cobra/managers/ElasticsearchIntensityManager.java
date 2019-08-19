@@ -1,19 +1,35 @@
 package org.continuity.cobra.managers;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.continuity.api.entities.artifact.session.SessionView;
 import org.continuity.dsl.context.Context;
 import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.dsl.timeseries.NumericVariable;
+import org.continuity.dsl.timeseries.StringVariable;
 import org.continuity.idpa.AppId;
+import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +45,11 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchIntensityManager.class);
 
+	private static final String UPDATE_SCRIPT_ID = "update-intensity";
+
 	private final ObjectMapper mapper;
+
+	private boolean updateScriptInitialized = false;
 
 	public ElasticsearchIntensityManager(String host, ObjectMapper mapper) throws IOException {
 		super(host, "intensity");
@@ -48,7 +68,84 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 * @throws IOException
 	 */
 	public void storeOrUpdateIntensities(AppId aid, List<String> tailoring, Collection<IntensityRecord> records) throws IOException {
-		storeElements(aid, tailoring, records);
+		boolean containsContexts = records.stream().map(IntensityRecord::getContext).filter(c -> (c != null) && !c.isEmpty()).count() > 0;
+
+		if (containsContexts) {
+			try {
+				initUpdateScript();
+			} catch (Exception e) {
+				LOGGER.error("Could not initialize update script! Hoping it is already present...", e);
+			}
+			storeOrUpdateByScript(aid, tailoring, records, this::createUpdateScript);
+		} else {
+			storeOrUpdateElements(aid, tailoring, records);
+		}
+	}
+
+	private void initUpdateScript() throws IOException {
+		if (!updateScriptInitialized) {
+			String scriptSource;
+
+			try (InputStream in = ElasticsearchIntensityManager.class.getResourceAsStream("/" + UPDATE_SCRIPT_ID + ".painless")) {
+				scriptSource = new BufferedReader(new InputStreamReader(in)).lines().map(String::trim).collect(Collectors.joining(" "));
+			}
+
+			XContentBuilder script = XContentFactory.jsonBuilder();
+			script.startObject();
+			{
+				script.startObject("script");
+				{
+					script.field("lang", "painless");
+					script.field("source", scriptSource);
+				}
+				script.endObject();
+			}
+			script.endObject();
+
+			PutStoredScriptRequest request = new PutStoredScriptRequest().id(UPDATE_SCRIPT_ID).content(BytesReference.bytes(script), XContentType.JSON);
+
+			AcknowledgedResponse response = client.putScript(request, RequestOptions.DEFAULT);
+
+			if (response.isAcknowledged()) {
+				updateScriptInitialized = true;
+				LOGGER.info("Initialized update script.");
+			} else {
+				LOGGER.error("Could not initialize update script! Elasticsearch did not acknowledge the request. Hoping it is already present...");
+			}
+		}
+	}
+
+	private Script createUpdateScript(IntensityRecord record) {
+		Map<String, Object> params = new HashMap<>();
+
+		if ((record.getIntensity() != null) && !record.getIntensity().isEmpty()) {
+			params.put("intensity", record.getIntensity());
+		}
+
+		if (record.getContext() != null) {
+			if ((record.getContext().getNumeric() != null) && !record.getContext().getNumeric().isEmpty()) {
+				params.put("numeric", formatVariables(record.getContext().getNumeric(), NumericVariable::getName, NumericVariable::getValue));
+			}
+
+			if ((record.getContext().getString() != null) && !record.getContext().getString().isEmpty()) {
+				params.put("string", formatVariables(record.getContext().getString(), StringVariable::getName, StringVariable::getValue));
+			}
+
+			if ((record.getContext().getBoolean() != null) && !record.getContext().getBoolean().isEmpty()) {
+				params.put("boolean", record.getContext().getBoolean());
+			}
+		}
+
+		return new Script(ScriptType.STORED, null, UPDATE_SCRIPT_ID, params);
+	}
+
+	private <T, V> List<Map<String, Object>> formatVariables(Collection<V> variables, Function<V, String> nameGetter, Function<V, T> valueGetter) {
+		return variables.stream().map(v -> {
+			Map<String, Object> map = new HashMap<>();
+			map.put("name", nameGetter.apply(v));
+			map.put("value", valueGetter.apply(v));
+			return map;
+		}).collect(Collectors.toList());
 	}
 
 	/**
@@ -130,13 +227,13 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	}
 
 	@Override
-	protected Pair<String, String> serialize(IntensityRecord intensity) {
-		try {
-			return Pair.of(mapper.writerWithView(SessionView.Extended.class).writeValueAsString(intensity), Long.toString(intensity.getTimestamp()));
-		} catch (JsonProcessingException e) {
-			LOGGER.error("Could not write TraceRecord to JSON string!", e);
-			return null;
-		}
+	protected String serialize(IntensityRecord intensity) throws JsonProcessingException {
+		return mapper.writeValueAsString(intensity);
+	}
+
+	@Override
+	protected String getDocumentId(IntensityRecord intensity) {
+		return Long.toString(intensity.getTimestamp());
 	}
 
 	@Override

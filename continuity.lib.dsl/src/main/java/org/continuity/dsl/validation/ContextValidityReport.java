@@ -6,20 +6,28 @@ import java.util.List;
 import org.continuity.dsl.schema.VariableType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  *
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "erroenous", "unknown", "newly-added", "wrong-type" })
 public class ContextValidityReport {
 
+	@JsonInclude(Include.NON_EMPTY)
 	private List<NewVariableReport> unknown;
 
 	@JsonProperty("newly-added")
+	@JsonInclude(Include.NON_EMPTY)
 	private List<NewVariableReport> newlyAdded;
 
+	@JsonProperty("wrong-type")
+	@JsonInclude(Include.NON_EMPTY)
 	private List<WrongTypeReport> wrongType;
 
 	public boolean isErroenous() {
@@ -31,12 +39,12 @@ public class ContextValidityReport {
 		return (newlyAdded != null) && !newlyAdded.isEmpty();
 	}
 
-	public List<NewVariableReport> getNewVariables() {
+	public List<NewVariableReport> getUnknown() {
 		return unknown;
 	}
 
-	public void setNewVariables(List<NewVariableReport> newVariables) {
-		this.unknown = newVariables;
+	public void setUnknown(List<NewVariableReport> unknown) {
+		this.unknown = unknown;
 	}
 
 	public List<NewVariableReport> getNewlyAdded() {
@@ -55,7 +63,8 @@ public class ContextValidityReport {
 		this.wrongType = wrongType;
 	}
 
-	public void reportUnknown(String name, VariableType type) {
+	@JsonIgnore
+	private List<NewVariableReport> getUnknownNonNull() {
 		if (unknown == null) {
 			synchronized (this) {
 				if (unknown == null) {
@@ -64,10 +73,11 @@ public class ContextValidityReport {
 			}
 		}
 
-		unknown.add(new NewVariableReport(name, type));
+		return unknown;
 	}
 
-	public void reportNewlyAdded(String name, VariableType type) {
+	@JsonIgnore
+	private List<NewVariableReport> getNewlyAddedNonNull() {
 		if (newlyAdded == null) {
 			synchronized (this) {
 				if (newlyAdded == null) {
@@ -76,10 +86,11 @@ public class ContextValidityReport {
 			}
 		}
 
-		newlyAdded.add(new NewVariableReport(name, type));
+		return newlyAdded;
 	}
 
-	public void reportWrongType(String name, VariableType expected, VariableType received) {
+	@JsonIgnore
+	private List<WrongTypeReport> getWrongTypeNonNull() {
 		if (wrongType == null) {
 			synchronized (this) {
 				if (wrongType == null) {
@@ -88,14 +99,34 @@ public class ContextValidityReport {
 			}
 		}
 
-		wrongType.add(new WrongTypeReport(name, expected, received));
+		return wrongType;
+	}
+
+	public void reportUnknown(String name, VariableType type) {
+		getUnknownNonNull().add(new NewVariableReport(name, type));
+	}
+
+	public void reportNewlyAdded(String name, VariableType type) {
+		getNewlyAddedNonNull().add(new NewVariableReport(name, type));
+	}
+
+	public void reportWrongType(String name, VariableType expected, VariableType received) {
+		getWrongTypeNonNull().add(new WrongTypeReport(name, expected, received));
 	}
 
 	public ContextValidityReport merge(ContextValidityReport other) {
 		if (other != null) {
-			this.unknown.addAll(other.unknown);
-			this.newlyAdded.addAll(other.newlyAdded);
-			this.wrongType.addAll(other.wrongType);
+			if (other.getUnknown() != null) {
+				this.getUnknownNonNull().addAll(other.getUnknown());
+			}
+
+			if (other.getNewlyAdded() != null) {
+				this.getNewlyAddedNonNull().addAll(other.getNewlyAdded());
+			}
+
+			if (other.getWrongType() != null) {
+				this.getWrongTypeNonNull().addAll(other.getWrongType());
+			}
 		}
 
 		return this;

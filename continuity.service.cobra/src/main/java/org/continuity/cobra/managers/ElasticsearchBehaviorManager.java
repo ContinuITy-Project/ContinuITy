@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
 import org.continuity.idpa.AppId;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -36,7 +35,7 @@ public class ElasticsearchBehaviorManager extends ElasticsearchScrollingManager<
 
 	/**
 	 * Stores a behavior model.
-	 * 
+	 *
 	 * @param aid
 	 * @param tailoring
 	 * @param model
@@ -69,13 +68,13 @@ public class ElasticsearchBehaviorManager extends ElasticsearchScrollingManager<
 	}
 
 	@Override
-	protected Pair<String, String> serialize(MarkovBehaviorModel model) {
-		try {
-			return Pair.of(mapper.writeValueAsString(model), Long.toString(model.getTimestamp()));
-		} catch (JsonProcessingException e) {
-			LOGGER.error("Could not write MarkovBehaviorModel to JSON string!", e);
-			return null;
-		}
+	protected String serialize(MarkovBehaviorModel model) throws JsonProcessingException {
+		return mapper.writeValueAsString(model);
+	}
+
+	@Override
+	protected String getDocumentId(MarkovBehaviorModel model) {
+		return Long.toString(model.getTimestamp());
 	}
 
 	@Override

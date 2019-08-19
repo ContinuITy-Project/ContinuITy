@@ -1,9 +1,12 @@
 package org.continuity.dsl.timeseries;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -14,35 +17,43 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class ContextRecord {
 
-	private List<NumericVariable> numeric;
+	@JsonInclude(Include.NON_NULL)
+	private Set<NumericVariable> numeric;
 
-	private List<StringVariable> string;
+	@JsonInclude(Include.NON_NULL)
+	private Set<StringVariable> string;
 
 	@JsonProperty("boolean")
-	private List<String> bool;
+	@JsonInclude(Include.NON_NULL)
+	private Set<String> bool;
 
-	public List<NumericVariable> getNumeric() {
+	public Set<NumericVariable> getNumeric() {
 		return numeric;
 	}
 
-	public void setNumeric(List<NumericVariable> numeric) {
+	public void setNumeric(Set<NumericVariable> numeric) {
 		this.numeric = numeric;
 	}
 
-	public List<StringVariable> getString() {
+	public Set<StringVariable> getString() {
 		return string;
 	}
 
-	public void setString(List<StringVariable> string) {
+	public void setString(Set<StringVariable> string) {
 		this.string = string;
 	}
 
-	public List<String> getBoolean() {
+	public Set<String> getBoolean() {
 		return bool;
 	}
 
-	public void setBoolean(List<String> bool) {
+	public void setBoolean(Set<String> bool) {
 		this.bool = bool;
+	}
+
+	@JsonIgnore
+	public boolean isEmpty() {
+		return isNullOrEmpty(numeric) && isNullOrEmpty(string) && isNullOrEmpty(bool);
 	}
 
 	/**
@@ -59,7 +70,7 @@ public class ContextRecord {
 
 		if (!isNullOrEmpty(other.numeric)) {
 			if (this.numeric == null) {
-				this.numeric = new ArrayList<>();
+				this.numeric = new HashSet<>();
 			}
 
 			this.numeric.addAll(other.numeric);
@@ -67,7 +78,7 @@ public class ContextRecord {
 
 		if (!isNullOrEmpty(other.string)) {
 			if (this.string == null) {
-				this.string = new ArrayList<>();
+				this.string = new HashSet<>();
 			}
 
 			this.string.addAll(other.string);
@@ -75,14 +86,14 @@ public class ContextRecord {
 
 		if (!isNullOrEmpty(other.bool)) {
 			if (this.bool == null) {
-				this.bool = new ArrayList<>();
+				this.bool = new HashSet<>();
 			}
 
 			this.bool.addAll(other.bool);
 		}
 	}
 
-	private boolean isNullOrEmpty(List<?> list) {
+	private boolean isNullOrEmpty(Collection<?> list) {
 		return (list == null) || list.isEmpty();
 	}
 
