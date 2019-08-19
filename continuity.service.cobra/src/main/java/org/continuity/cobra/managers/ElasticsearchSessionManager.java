@@ -20,6 +20,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.metrics.ParsedMax;
+import org.elasticsearch.search.aggregations.metrics.ParsedMin;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,6 +200,51 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 		ParsedMax max = response.getAggregations().get("max_timestamp");
 		double micros = max.getValue();
+
+		return new Date(Math.round(micros / 1000));
+	}
+
+	/**
+	 * Gets the earliest date occurring in the stored sessions.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param version
+	 *            The version or timestamp. Can be {@code null}. In this case, it will be ignored.
+	 * @param tailoring
+	 *            The list of services to which the sessions are tailored. Use a singleton list with
+	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
+	 * @return The found date. In case no sessions could be found, 292278994-08-17 08:12:55 (max
+	 *         value of long) will be returned.
+	 * @throws IOException
+	 */
+	public Date getEarliestDate(AppId aid, VersionOrTimestamp version, List<String> tailoring) throws IOException {
+		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+
+		if (!indexExists(index)) {
+			return new Date(Long.MAX_VALUE);
+		}
+
+		SearchSourceBuilder source = new SearchSourceBuilder();
+
+		if (version != null) {
+			source.query(QueryBuilders.termQuery("version", Session.convertTailoringToString(tailoring)));
+		}
+
+		source.aggregation(AggregationBuilders.min("min_timestamp").field("start-micros").missing(0));
+
+		SearchRequest search = new SearchRequest(index).source(source);
+
+		SearchResponse response;
+		try {
+			response = client.search(search, RequestOptions.DEFAULT);
+		} catch (ElasticsearchStatusException e) {
+			LOGGER.info("Could not get any elements from {} {}: {}", aid, index, e.getMessage());
+			return new Date(Long.MAX_VALUE);
+		}
+
+		ParsedMin min = response.getAggregations().get("min_timestamp");
+		double micros = min.getValue();
 
 		return new Date(Math.round(micros / 1000));
 	}

@@ -170,39 +170,43 @@ public class MeasurementDataAmqpHandler {
 				sessionManager.storeOrUpdateSessions(aid, updatedSessions, services, true);
 
 				Date latestDateAfterUpdate = sessionManager.getLatestDate(aid, null, services);
+				Date startDateOfSessions = sessionManager.getEarliestDate(aid, null, services);
 
-				LOGGER.info("{}@{} {}: Sessions stored. Latest date before update: {} and after: {}.", aid, version, services, latestDateBeforeUpdate, latestDateAfterUpdate);
+				LOGGER.info("{}@{} {}: Sessions stored. Latest date before update: {}, start of new sessions: {}, and latest date after: {}.", aid, version, services, latestDateBeforeUpdate,
+						startDateOfSessions, latestDateAfterUpdate);
 
-				triggerClustering(aid, version, services, latestDateBeforeUpdate, latestDateAfterUpdate);
+				triggerClustering(aid, version, services, startDateOfSessions, latestDateBeforeUpdate, latestDateAfterUpdate);
 			} else {
 				LOGGER.info("{}@{} {}: No sessions have been updated.", aid, version, services);
 			}
 		}
 	}
 
-	private void triggerClustering(AppId aid, VersionOrTimestamp version, List<String> services, Date latestDateBeforeUpdate, Date latestDateAfterUpdate) throws IOException, TimeoutException {
+	private void triggerClustering(AppId aid, VersionOrTimestamp version, List<String> services, Date startDateOfSessions, Date latestDateBeforeUpdate, Date latestDateAfterUpdate)
+			throws IOException, TimeoutException {
 		CobraConfiguration config = configProvider.getConfiguration(aid);
 
 		Duration interval = config.getClustering().getInterval();
 		Duration overlap = config.getClustering().getOverlap();
-
+		Duration timeout = config.getSessions().getTimeout();
 		long intervalMillis = (interval.getSeconds() * 1000) + (interval.getNano() / 1000000);
-		long latestClusteringBeforeUpdate = (latestDateAfterUpdate.getTime() / intervalMillis) * intervalMillis;
+		long overlapMillis = (overlap.getSeconds() * 1000) + (overlap.getNano() / 1000000);
+		long timeoutMillis = (timeout.getSeconds() * 1000) + (timeout.getNano() / 1000000);
+
+		long lastClusteringEnd = clusteringTimestamp(latestDateBeforeUpdate, intervalMillis, timeoutMillis);
+		long clusteringEnd = clusteringTimestamp(latestDateAfterUpdate, intervalMillis, timeoutMillis);
 
 		if (config.getClustering().isOmit()) {
 			LOGGER.info("{}@{} {}: Clustering is omitted by configuration.", aid, version, services);
-		} else if (latestClusteringBeforeUpdate <= latestDateBeforeUpdate.getTime()) {
-			LOGGER.info("{}@{} {}: Clustering is not due, yet. Next will be after: {}.", aid, version, services, new Date(latestClusteringBeforeUpdate + intervalMillis));
+		} else if ((clusteringEnd <= lastClusteringEnd) || (clusteringEnd <= startDateOfSessions.getTime())) {
+			LOGGER.info("{}@{} {}: Clustering is not due, yet. Next will be after upload of: {}.", aid, version, services, new Date(clusteringEnd + intervalMillis + timeoutMillis));
 		} else {
-			Duration timeout = config.getSessions().getTimeout();
-			long timeoutMillis = (timeout.getSeconds() * 1000) + (timeout.getNano() / 1000000);
-			long overlapMillis = (overlap.getSeconds() * 1000) + (overlap.getNano() / 1000000);
-			long end = latestClusteringBeforeUpdate - timeoutMillis;
+			long end = clusteringEnd;
 			long start = end - intervalMillis - overlapMillis;
 			long intervalStart = end - intervalMillis;
 
-			LOGGER.info("{}@{} {}: subtracting {} from the clustering interval for respecting the session timeout.", aid, version, services, timeout);
-			LOGGER.info("{}@{} {}: Triggering clustering with start {}, interval start {}, end {} ...", aid, version, services, new Date(start), new Date(intervalStart), new Date(end));
+			LOGGER.info("{}@{} {}: Triggering clustering with start {}, interval start {}, end {} (respecting the session timeout of {}) ...", aid, version, services, new Date(start),
+					new Date(intervalStart), new Date(end), timeout);
 
 			List<Session> sessions = sessionManager.readSessionsInRange(aid, version, services, new Date(start), new Date(end));
 			List<String> endpoints = sessions.stream().map(Session::getRequests).flatMap(Set::stream).map(SessionRequest::getEndpoint).distinct().collect(Collectors.toList());
@@ -231,6 +235,10 @@ public class MeasurementDataAmqpHandler {
 
 			LOGGER.info("{}@{} {}: Clustering triggered. Waiting for the clustinator.", aid, version, services);
 		}
+	}
+
+	private long clusteringTimestamp(Date date, long intervalMillis, long timeoutMillis) {
+		return ((date.getTime() - timeoutMillis) / intervalMillis) * intervalMillis;
 	}
 
 	private void indexTracesWithSessions(List<TraceRecord> traces, Set<Session> sessions) {
