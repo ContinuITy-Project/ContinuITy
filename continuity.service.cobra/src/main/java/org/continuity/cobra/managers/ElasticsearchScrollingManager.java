@@ -11,9 +11,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpHost;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.session.Session;
@@ -28,6 +28,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -39,12 +40,15 @@ import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
  *
@@ -79,9 +83,13 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * Transforms an element to JSON.
 	 *
 	 * @param element
-	 * @return A pair of the JSON (left) and the document ID (right).
+	 * @return the JSON.
+	 * @throws JsonProcessingException
+	 *             if the JSON serialization fails.
 	 */
-	protected abstract Pair<String, String> serialize(T element);
+	protected abstract String serialize(T element) throws JsonProcessingException;
+
+	protected abstract String getDocumentId(T element);
 
 	protected abstract T deserialize(String json);
 
@@ -124,11 +132,81 @@ public abstract class ElasticsearchScrollingManager<T> {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 		initIndex(index);
 
+		doBulkRequest(index, elements, waitFor, (request, element, json, id) -> request.add(new IndexRequest(index).source(json, XContentType.JSON).id(id)));
+	}
+
+	/**
+	 * Stores the elements or updates existing ones. The already stored fields of elements that are
+	 * not contained in the new JSON will be retained.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param elements
+	 * @throws IOException
+	 */
+	protected void storeOrUpdateElements(AppId aid, List<String> tailoring, Collection<T> elements) throws IOException {
+		storeOrUpdateElements(aid, tailoring, elements, false);
+	}
+
+	/**
+	 * Stores the elements or updates existing ones. The already stored fields of elements that are
+	 * not contained in the new JSON will be retained.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param elements
+	 * @param waitFor
+	 *            Whether the request should wait until the data is indexed.
+	 * @throws IOException
+	 */
+	protected void storeOrUpdateElements(AppId aid, List<String> tailoring, Collection<T> elements, boolean waitFor) throws IOException {
+		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+		initIndex(index);
+
+		doBulkRequest(index, elements, waitFor, (request, element, json, id) -> request.add(new UpdateRequest(index, id).doc(json, XContentType.JSON).docAsUpsert(true)));
+	}
+
+	/**
+	 * Updates the elements by using the provided scripts or stores the respective element if there
+	 * is none, yet.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param elements
+	 * @param scriptSupplier
+	 * @param waitFor
+	 *            Whether the request should wait until the data is indexed.
+	 * @throws IOException
+	 */
+	protected void storeOrUpdateByScript(AppId aid, List<String> tailoring, Collection<T> elements, Function<T, Script> scriptSupplier) throws IOException {
+		storeOrUpdateByScript(aid, tailoring, elements, scriptSupplier, false);
+	}
+
+	/**
+	 * Updates the elements by using the provided scripts or stores the respective element if there
+	 * is none, yet.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param elements
+	 * @param scriptSupplier
+	 * @param waitFor
+	 *            Whether the request should wait until the data is indexed.
+	 * @throws IOException
+	 */
+	protected void storeOrUpdateByScript(AppId aid, List<String> tailoring, Collection<T> elements, Function<T, Script> scriptSupplier, boolean waitFor) throws IOException {
+		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+		initIndex(index);
+
+		doBulkRequest(index, elements, waitFor, (request, element, json, id) -> request.add(new UpdateRequest(index, id).script(scriptSupplier.apply(element)).upsert(json, XContentType.JSON)));
+	}
+
+	private void doBulkRequest(String index, Collection<T> elements, boolean waitFor, RequestAdder<T> requestAdder) throws IOException {
 		BulkRequest request = new BulkRequest();
 
-		elements.stream().map(this::serialize).filter(Objects::nonNull).forEach(json -> {
-			request.add(new IndexRequest(index).source(json.getLeft(), XContentType.JSON).id(json.getRight()));
-		});
+		for (T elem : elements) {
+			requestAdder.add(request, elem, serialize(elem), getDocumentId(elem));
+		}
 
 		if (waitFor) {
 			request.setRefreshPolicy(RefreshPolicy.WAIT_UNTIL);
@@ -343,6 +421,12 @@ public abstract class ElasticsearchScrollingManager<T> {
 		} else {
 			return ApiFormats.DATE_FORMAT.format(date);
 		}
+	}
+
+	private interface RequestAdder<T> {
+
+		void add(BulkRequest request, T element, String json, String id);
+
 	}
 
 }

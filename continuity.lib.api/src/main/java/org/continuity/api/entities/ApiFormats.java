@@ -4,6 +4,9 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 
 /**
@@ -37,6 +40,17 @@ public class ApiFormats {
 		} else {
 			return DATE_FORMAT.parse(source);
 		}
+	}
+
+	public static <T> Map<Date, T> parseKeys(Map<String, T> map) throws ParseException {
+		Map<Date, T> dateMap = new HashMap<>();
+
+		for (Entry<String, T> entry : map.entrySet()) {
+			Date date = ApiFormats.DATE_FORMAT.parse(entry.getKey());
+			dateMap.put(date, entry.getValue());
+		}
+
+		return dateMap;
 	}
 
 }

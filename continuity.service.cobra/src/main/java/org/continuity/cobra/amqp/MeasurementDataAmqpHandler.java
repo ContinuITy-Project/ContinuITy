@@ -167,7 +167,7 @@ public class MeasurementDataAmqpHandler {
 				Date latestDateBeforeUpdate = sessionManager.getLatestDate(aid, null, services);
 
 				LOGGER.info("{}@{} {}: Storing sessions...", aid, version, services);
-				sessionManager.storeOrUpdateSessions(aid, updatedSessions, services, true);
+				sessionManager.storeSessions(aid, updatedSessions, services, true);
 
 				Date latestDateAfterUpdate = sessionManager.getLatestDate(aid, null, services);
 				Date startDateOfSessions = sessionManager.getEarliestDate(aid, null, services);

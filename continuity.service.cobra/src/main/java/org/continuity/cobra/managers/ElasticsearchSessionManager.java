@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionView;
 import org.continuity.idpa.AppId;
@@ -57,7 +56,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	 *            Whether the request should wait until the data is indexed.
 	 * @throws IOException
 	 */
-	public void storeOrUpdateSessions(AppId aid, Collection<Session> sessions, List<String> tailoring, boolean waitFor) throws IOException {
+	public void storeSessions(AppId aid, Collection<Session> sessions, List<String> tailoring, boolean waitFor) throws IOException {
 		storeElements(aid, tailoring, sessions, waitFor);
 	}
 
@@ -255,13 +254,13 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	}
 
 	@Override
-	protected Pair<String, String> serialize(Session session) {
-		try {
-			return Pair.of(mapper.writerWithView(SessionView.Internal.class).writeValueAsString(session), session.getUniqueId());
-		} catch (JsonProcessingException e) {
-			LOGGER.error("Could not write Session to JSON string!", e);
-			return null;
-		}
+	protected String serialize(Session session) throws JsonProcessingException {
+		return mapper.writerWithView(SessionView.Internal.class).writeValueAsString(session);
+	}
+
+	@Override
+	protected String getDocumentId(Session session) {
+		return session.getUniqueId();
 	}
 
 	@Override
