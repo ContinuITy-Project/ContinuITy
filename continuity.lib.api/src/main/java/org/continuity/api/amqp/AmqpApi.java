@@ -35,6 +35,8 @@ public class AmqpApi {
 
 		public static final ExchangeDefinition<ServiceName> EVENT_FINISHED = ExchangeDefinition.event(SCOPE, "finished").nonDurable().autoDelete().withRoutingKey(ServiceName.INSTANCE);
 
+		public static final ExchangeDefinition<ServiceName> EVENT_FAILED = ExchangeDefinition.event(SCOPE, "failed").nonDurable().autoDelete().withRoutingKey(ServiceName.INSTANCE);
+
 		public static final ExchangeDefinition<ServiceNameAndTarget> TASK_CREATE = ExchangeDefinition.task(SCOPE, "create").nonDurable().autoDelete().withRoutingKey(ServiceNameAndTarget.INSTANCE);
 
 		private Global() {

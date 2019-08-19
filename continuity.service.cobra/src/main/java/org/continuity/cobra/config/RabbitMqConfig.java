@@ -81,7 +81,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	Queue taskCreateQueue() {
-		return QueueBuilder.nonDurable(TASK_CREATE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+		return QueueBuilder.nonDurable(TASK_CREATE_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.Global.EVENT_FAILED.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
@@ -91,23 +91,29 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
+	TopicExchange eventFinishedExchange() {
+		return AmqpApi.Global.EVENT_FINISHED.create();
+	}
+
+	@Bean
+	TopicExchange eventFailedExchange() {
+		return AmqpApi.Global.EVENT_FAILED.create();
+	}
+
+	@Bean
 	TopicExchange eventConfigAvailableExchange() {
 		return AmqpApi.Orchestrator.EVENT_CONFIG_AVAILABLE.create();
 	}
 
 	@Bean
 	Queue eventConfigAvailableQueue() {
-		return QueueBuilder.nonDurable(EVENT_CONFIG_AVAILABLE_NAME).build();
+		return QueueBuilder.nonDurable(EVENT_CONFIG_AVAILABLE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
 	Binding eventConfigAvailableBinding() {
 		return BindingBuilder.bind(eventConfigAvailableQueue()).to(eventConfigAvailableExchange()).with(CobraConfiguration.SERVICE);
-	}
-
-	@Bean
-	TopicExchange taskFinishedExchange() {
-		return AmqpApi.Global.EVENT_FINISHED.create();
 	}
 
 	@Bean
@@ -117,7 +123,8 @@ public class RabbitMqConfig {
 
 	@Bean
 	Queue taskProcessTracesQueue() {
-		return QueueBuilder.nonDurable(TASK_PROCESS_TRACES_QUEUE_NAME).build();
+		return QueueBuilder.nonDurable(TASK_PROCESS_TRACES_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
@@ -137,7 +144,8 @@ public class RabbitMqConfig {
 
 	@Bean
 	Queue eventClustinatorFinishedQueue() {
-		return QueueBuilder.nonDurable(EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME).build();
+		return QueueBuilder.nonDurable(EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean

@@ -87,8 +87,13 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
+	TopicExchange eventFailedExchange() {
+		return AmqpApi.Global.EVENT_FAILED.create();
+	}
+
+	@Bean
 	Binding eventFailedBinding() {
-		return BindingBuilder.bind(eventFailedQueue()).to(deadLetterExchange()).with("#");
+		return BindingBuilder.bind(eventFailedQueue()).to(eventFailedExchange()).with("#");
 	}
 
 	// Dead letter exchange and queue
