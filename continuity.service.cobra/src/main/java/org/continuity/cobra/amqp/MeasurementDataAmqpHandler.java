@@ -109,7 +109,7 @@ public class MeasurementDataAmqpHandler {
 
 		LOGGER.info("{}@{}: Indexing done. Grouping to sessions...", aid, version);
 
-		if (configProvider.getOrDefault(aid).getSessions().isOmit()) {
+		if (configProvider.getConfiguration(aid).getSessions().isOmit()) {
 			LOGGER.info("{}@{}: Session grouping and clustering is omitted by configuration.", aid, version);
 		} else {
 			LOGGER.info("{}@{}: Grouping and updating the corresponding sessions...", aid, version);
@@ -148,7 +148,7 @@ public class MeasurementDataAmqpHandler {
 
 	private void groupSessions(AppId aid, VersionOrTimestamp version, List<TraceRecord> traces, boolean forceFinish) throws IOException, TimeoutException {
 		RequestTailorer tailorer = new RequestTailorer(aid, version, restTemplate);
-		CobraConfiguration config = configProvider.getOrDefault(aid);
+		CobraConfiguration config = configProvider.getConfiguration(aid);
 
 		for (List<String> services : config.getTailoring()) {
 			LOGGER.info("{}@{}: Tailoring to {}...", aid, version, services);
@@ -181,7 +181,7 @@ public class MeasurementDataAmqpHandler {
 	}
 
 	private void triggerClustering(AppId aid, VersionOrTimestamp version, List<String> services, Date latestDateBeforeUpdate, Date latestDateAfterUpdate) throws IOException, TimeoutException {
-		CobraConfiguration config = configProvider.getOrDefault(aid);
+		CobraConfiguration config = configProvider.getConfiguration(aid);
 
 		Duration interval = config.getClustering().getInterval();
 		Duration overlap = config.getClustering().getOverlap();

@@ -58,12 +58,12 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 	}
 
 	/**
-	 * Gets the stored configuration.
+	 * Gets the stored configuration or {@code null} if no one is specified.
 	 *
 	 * @param aid
 	 * @return
 	 */
-	public T getConfiguration(AppId aid) {
+	public T getConfigurationOrNull(AppId aid) {
 		return configurations.get(aid);
 	}
 
@@ -73,11 +73,11 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 	 * @param aid
 	 * @return
 	 */
-	public T getOrDefault(AppId aid) {
-		T config = getConfiguration(aid);
+	public T getConfiguration(AppId aid) {
+		T config = getConfigurationOrNull(aid);
 
 		if ((config == null) && !aid.isAll()) {
-			getConfiguration(aid.dropService());
+			config = getConfigurationOrNull(aid.dropService());
 		}
 
 		if (config == null) {
