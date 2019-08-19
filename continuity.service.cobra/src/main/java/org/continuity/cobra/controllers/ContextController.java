@@ -4,6 +4,8 @@ import static org.continuity.api.rest.RestApi.Cobra.Context.ROOT;
 import static org.continuity.api.rest.RestApi.Cobra.Context.Paths.PUSH;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,9 +15,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
+import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.api.rest.RestApi;
@@ -72,7 +73,15 @@ public class ContextController {
 
 	@RequestMapping(value = PUSH, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<ContextValidityReport> storeContexts(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestBody Map<Date, ContextRecord> contextMap) throws IOException, TimeoutException {
+	public ResponseEntity<ContextValidityReport> storeContexts(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestBody Map<String, ContextRecord> contextMap) throws IOException, TimeoutException {
+		Map<Date, ContextRecord> contextPerDate;
+		try {
+			contextPerDate = ApiFormats.parseKeys(contextMap);
+		} catch (ParseException e) {
+			LOGGER.error("Cannot parse date keys!", e);
+			return ResponseEntity.badRequest().build();
+		}
+
 		CobraConfiguration config = configProvider.getConfiguration(aid);
 		ContextSchema schema = config.getContext();
 
@@ -90,7 +99,7 @@ public class ContextController {
 			uploadSchema(config);
 		}
 
-		storeContextsToDb(aid, contextMap, config);
+		storeContextsToDb(aid, contextPerDate, config);
 
 		return ResponseEntity.ok(report);
 	}
@@ -113,41 +122,36 @@ public class ContextController {
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity<CobraConfiguration> entity = new HttpEntity<>(config, headers);
 
-		ResponseEntity<String> response;
+		boolean successful;
 		try {
-			response = restTemplate.exchange(RestApi.Orchestrator.Configuration.POST.requestUrl().get(), HttpMethod.POST, entity, String.class);
-		} catch (HttpStatusCodeException e) {
-			response = ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+			restTemplate.exchange(RestApi.Orchestrator.Configuration.POST.requestUrl().get(), HttpMethod.POST, entity, String.class);
+			successful = true;
+		} catch (HttpStatusCodeException | IllegalStateException e) {
+			successful = false;
 			inconsistentConfigs.put(config.getAppId(), true);
 			LOGGER.error("Could not upload updated configuration to the orchestrator! The configuration might be in an inconsistent state! Will try later again.", e);
 		}
 
-		if (response.getStatusCode().is2xxSuccessful()) {
+		if (successful) {
 			inconsistentConfigs.remove(config.getAppId());
 			LOGGER.info("Successfully uploaded config with updated schema for app-id {} to orchestrator.", config.getAppId());
 		}
 	}
 
 	private void storeContextsToDb(AppId aid, Map<Date, ContextRecord> contextMap, CobraConfiguration config) throws IOException, TimeoutException {
+		Duration resolution = configProvider.getConfiguration(aid).getIntensity().getResolution();
+		long resolutionMillis = (resolution.getSeconds() * 1000) + (resolution.getNano() / 1000000);
+
 		for (List<String> tailoring : config.getTailoring()) {
-			storeContextsToDb(aid, contextMap, tailoring);
+			elasticManager.storeOrUpdateIntensities(aid, tailoring, toIntensityRecords(contextMap, resolutionMillis));
 		}
 	}
 
-	private void storeContextsToDb(AppId aid, Map<Date, ContextRecord> contextMap, List<String> tailoring) throws IOException, TimeoutException {
-		long start = contextMap.keySet().stream().mapToLong(Date::getTime).min().orElse(0);
-		long end = contextMap.keySet().stream().mapToLong(Date::getTime).max().orElse(Long.MAX_VALUE);
-
-		List<IntensityRecord> intensities = elasticManager.readIntensitiesInRange(aid, tailoring, start, end);
-		elasticManager.storeOrUpdateIntensities(aid, tailoring, updateIntensities(intensities, contextMap));
-	}
-
-	private Collection<IntensityRecord> updateIntensities(List<IntensityRecord> intensities, Map<Date, ContextRecord> contextMap) {
-		Map<Long, IntensityRecord> intensityPerDate = intensities.stream().collect(Collectors.toMap(IntensityRecord::getTimestamp, Function.identity()));
-		Map<Long, IntensityRecord> changed = new HashMap<>();
+	private Collection<IntensityRecord> toIntensityRecords(Map<Date, ContextRecord> contextMap, long resolutionMillis) {
+		Map<Long, IntensityRecord> intensityPerDate = new HashMap<>();
 
 		for (Entry<Date, ContextRecord> entry : contextMap.entrySet()) {
-			long timestamp = entry.getKey().getTime();
+			long timestamp = (entry.getKey().getTime() / resolutionMillis) * resolutionMillis;
 			IntensityRecord record = intensityPerDate.get(timestamp);
 
 			if (record == null) {
@@ -159,10 +163,9 @@ public class ContextController {
 			}
 
 			record.getContext().merge(entry.getValue());
-			changed.put(timestamp, record);
 		}
 
-		return changed.values();
+		return intensityPerDate.values();
 	}
 
 }

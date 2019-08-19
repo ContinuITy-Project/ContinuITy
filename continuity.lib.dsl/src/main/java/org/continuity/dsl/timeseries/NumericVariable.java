@@ -1,5 +1,7 @@
 package org.continuity.dsl.timeseries;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
@@ -29,6 +31,22 @@ public class NumericVariable {
 
 	public void setValue(double value) {
 		this.value = value;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ((obj == null) || !(obj instanceof NumericVariable)) {
+			return false;
+		}
+
+		NumericVariable other = (NumericVariable) obj;
+
+		return Objects.equals(this.name, other.name);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(name);
 	}
 
 }

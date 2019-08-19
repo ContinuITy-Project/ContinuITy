@@ -35,6 +35,8 @@ public class CobraConfiguration implements ServiceConfiguration {
 
 	private ClusteringConfiguration clustering = new ClusteringConfiguration();
 
+	private IntensityConfiguration intensity = new IntensityConfiguration();
+
 	@Override
 	public String getService() {
 		return SERVICE;
@@ -51,7 +53,7 @@ public class CobraConfiguration implements ServiceConfiguration {
 
 	/**
 	 * Defines how traces are treated.
-	 * 
+	 *
 	 * @return
 	 */
 	public TracesConfiguration getTraces() {
@@ -137,6 +139,22 @@ public class CobraConfiguration implements ServiceConfiguration {
 
 	public void setClustering(ClusteringConfiguration clustering) {
 		this.clustering = clustering;
+	}
+
+	public IntensityConfiguration getIntensity() {
+		if (intensity == null) {
+			synchronized (this) {
+				if (intensity == null) {
+					intensity = new IntensityConfiguration();
+				}
+			}
+		}
+
+		return intensity;
+	}
+
+	public void setIntensity(IntensityConfiguration intensity) {
+		this.intensity = intensity;
 	}
 
 	@Override

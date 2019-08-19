@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
@@ -179,13 +178,13 @@ public class ElasticsearchTraceManager extends ElasticsearchScrollingManager<Tra
 	}
 
 	@Override
-	protected Pair<String, String> serialize(TraceRecord record) {
-		try {
-			return Pair.of(mapper.writeValueAsString(record), Long.toString(record.getTrace().getTraceId()));
-		} catch (JsonProcessingException e) {
-			LOGGER.error("Could not write TraceRecord to JSON string!", e);
-			return null;
-		}
+	protected String serialize(TraceRecord record) throws JsonProcessingException {
+		return mapper.writeValueAsString(record);
+	}
+
+	@Override
+	protected String getDocumentId(TraceRecord record) {
+		return Long.toString(record.getTrace().getTraceId());
 	}
 
 	@Override

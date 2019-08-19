@@ -691,6 +691,27 @@ public class RestApi {
 
 		}
 
+		public static class Intensity {
+
+			public static final String ROOT = "/intensitiy";
+
+			/** {@value #ROOT}/{app-id}/{tailoring}/{group} */
+			public static final RestEndpoint UPLOAD = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPLOAD, RequestMethod.POST);
+
+			private Intensity() {
+			}
+
+			public static class Paths {
+
+				public static final String UPLOAD = "/{app-id:.+}/{tailoring:.+}/{group}";
+
+				private Paths() {
+				}
+
+			}
+
+		}
+
 	}
 
 	/**

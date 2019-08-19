@@ -3,6 +3,8 @@ package org.continuity.dsl.timeseries;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -25,9 +27,11 @@ public class IntensityRecord {
 
 	private long timestamp;
 
+	@JsonInclude(Include.NON_EMPTY)
 	@JsonDeserialize(as = TreeMap.class)
-	private Map<Integer, Long> intensity;
+	private Map<String, Long> intensity;
 
+	@JsonInclude(Include.NON_NULL)
 	private ContextRecord context;
 
 	public long getTimestamp() {
@@ -38,11 +42,11 @@ public class IntensityRecord {
 		this.timestamp = timestamp;
 	}
 
-	public Map<Integer, Long> getIntensity() {
+	public Map<String, Long> getIntensity() {
 		return intensity;
 	}
 
-	public void setIntensity(Map<Integer, Long> intensity) {
+	public void setIntensity(Map<String, Long> intensity) {
 		this.intensity = intensity;
 	}
 

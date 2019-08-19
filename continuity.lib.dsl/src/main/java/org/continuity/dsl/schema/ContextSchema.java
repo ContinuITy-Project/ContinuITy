@@ -26,7 +26,7 @@ public class ContextSchema {
 
 	@JsonProperty("ignore-by-default")
 	@JsonInclude(Include.NON_ABSENT)
-	private Optional<IgnoreByDefaultValue> ignoreByDefault;
+	private Optional<IgnoreByDefaultValue> ignoreByDefault = Optional.empty();
 
 	@JsonProperty("auto-detect")
 	@JsonInclude(Include.NON_ABSENT)
@@ -73,16 +73,22 @@ public class ContextSchema {
 	public ContextValidityReport validate(ContextRecord record) {
 		ContextValidityReport report = new ContextValidityReport();
 
-		for (NumericVariable var : record.getNumeric()) {
-			validate(var.getName(), VariableType.NUMERIC, report);
+		if (record.getNumeric() != null) {
+			for (NumericVariable var : record.getNumeric()) {
+				validate(var.getName(), VariableType.NUMERIC, report);
+			}
 		}
 
-		for (StringVariable var : record.getString()) {
-			validate(var.getName(), VariableType.STRING, report);
+		if (record.getString() != null) {
+			for (StringVariable var : record.getString()) {
+				validate(var.getName(), VariableType.STRING, report);
+			}
 		}
 
-		for (String var : record.getBoolean()) {
-			validate(var, VariableType.BOOLEAN, report);
+		if (record.getBoolean() != null) {
+			for (String var : record.getBoolean()) {
+				validate(var, VariableType.BOOLEAN, report);
+			}
 		}
 
 		return report;
@@ -93,12 +99,12 @@ public class ContextSchema {
 
 		if (varSchema == null) {
 			if (autoDetect) {
-				report.reportNewlyAdded(name, VariableType.NUMERIC);
+				report.reportNewlyAdded(name, type);
 			} else {
-				report.reportUnknown(name, VariableType.NUMERIC);
+				report.reportUnknown(name, type);
 			}
-		} else if (varSchema.getType() != VariableType.NUMERIC) {
-			report.reportWrongType(name, varSchema.getType(), VariableType.NUMERIC);
+		} else if (varSchema.getType() != type) {
+			report.reportWrongType(name, varSchema.getType(), type);
 		}
 	}
 
