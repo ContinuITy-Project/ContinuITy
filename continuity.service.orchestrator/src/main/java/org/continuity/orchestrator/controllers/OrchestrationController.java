@@ -27,6 +27,7 @@ import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.exchange.ArtifactType;
 import org.continuity.api.entities.order.Order;
+import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.entities.report.OrderResponse;
 import org.continuity.api.rest.RestApi;
@@ -167,7 +168,8 @@ public class OrchestrationController {
 		}
 
 		Map<ArtifactType, Map<String, ArtifactType>> producerMap = createProducerMap();
-		Map<ArtifactType, String> producers = order.getOptions().getProducersOrDefault();
+		OrderOptions options = order.getOptions() == null ? new OrderOptions() : order.getOptions();
+		Map<ArtifactType, String> producers = options.getProducersOrDefault();
 
 		String recipeId = recipeStorage.reserve(order.getAppId());
 		List<RecipeStep> steps = new LinkedList<>();
@@ -188,7 +190,7 @@ public class OrchestrationController {
 
 		LOGGER.info("{} Processing new recipe with target {}...", LoggingUtils.formatPrefix(orderId, recipeId), order.getTarget());
 
-		Recipe recipe = new Recipe(orderId, recipeId, order.getAppId(), order.getServices(), order.getVersion(), steps, source, useTestingContext, testingContext, order.getOptions(),
+		Recipe recipe = new Recipe(orderId, recipeId, order.getAppId(), order.getServices(), order.getVersion(), steps, source, useTestingContext, testingContext, options,
 				order.getContext());
 
 		if (recipe.hasNext()) {

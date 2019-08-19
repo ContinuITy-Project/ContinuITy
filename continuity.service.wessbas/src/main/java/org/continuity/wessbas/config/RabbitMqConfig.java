@@ -77,13 +77,13 @@ public class RabbitMqConfig {
 
 	@Bean
 	Queue taskCreateWorkloadQueue() {
-		return QueueBuilder.nonDurable(TASK_CREATE_WORKLOAD_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+		return QueueBuilder.nonDurable(TASK_CREATE_WORKLOAD_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.Global.EVENT_FAILED.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
 	@Bean
 	Queue taskCreateBehaviorQueue() {
-		return QueueBuilder.nonDurable(TASK_CREATE_BEHAVIOR_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+		return QueueBuilder.nonDurable(TASK_CREATE_BEHAVIOR_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.Global.EVENT_FAILED.name())
 				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
 	}
 
@@ -100,6 +100,11 @@ public class RabbitMqConfig {
 	@Bean
 	TopicExchange finishedExchange() {
 		return AmqpApi.Global.EVENT_FINISHED.create();
+	}
+
+	@Bean
+	TopicExchange eventFailedExchange() {
+		return AmqpApi.Global.EVENT_FAILED.create();
 	}
 
 	// Dead letter exchange and queue
