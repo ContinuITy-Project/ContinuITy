@@ -20,7 +20,7 @@ public class IntensityMultipliedAdjustment implements WorkloadAdjustment {
 	private double with;
 
 	@JsonInclude(Include.NON_ABSENT)
-	private Optional<Integer> group;
+	private Optional<String> group;
 
 	public double getWith() {
 		return with;
@@ -30,11 +30,11 @@ public class IntensityMultipliedAdjustment implements WorkloadAdjustment {
 		this.with = with;
 	}
 
-	public Optional<Integer> getGroup() {
+	public Optional<String> getGroup() {
 		return group;
 	}
 
-	public void setGroup(Optional<Integer> group) {
+	public void setGroup(Optional<String> group) {
 		this.group = group;
 	}
 

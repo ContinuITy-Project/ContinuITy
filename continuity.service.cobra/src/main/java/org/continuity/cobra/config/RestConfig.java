@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+
 @Configuration
 public class RestConfig {
 
@@ -31,6 +34,11 @@ public class RestConfig {
 	@Bean
 	VersionOrTimestampConverter versionOrTimestampConverter() {
 		return new VersionOrTimestampConverter();
+	}
+
+	@Bean
+	Module jdk8Module() {
+		return new Jdk8Module();
 	}
 
 }

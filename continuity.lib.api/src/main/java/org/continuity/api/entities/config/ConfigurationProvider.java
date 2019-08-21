@@ -3,11 +3,15 @@ package org.continuity.api.entities.config;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.continuity.api.exception.ServiceConfigurationException;
 import org.continuity.idpa.AppId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +28,9 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationProvider.class);
 
-	private final Map<AppId, T> configurations = new HashMap<>();
+	private final Map<AppId, T> configurations = new ConcurrentHashMap<>();
 
-	private final List<Consumer<T>> listeners = new ArrayList<>();
+	private final List<Pair<Listener<T>, String>> listeners = new ArrayList<>();
 
 	private final Constructor<T> constructor;
 
@@ -50,11 +54,27 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 	 * Initializes the provider with a list of configurations.
 	 *
 	 * @param configurations
+	 * @throws ServiceConfigurationException
 	 */
-	public void init(List<T> configurations) {
+	public void init(List<T> configurations) throws ServiceConfigurationException {
 		LOGGER.info("Initializing the configurations...");
-		configurations.forEach(this::refresh);
+
+		ServiceConfigurationException exception = null;
+
+		for (T config : configurations) {
+			try {
+				refresh(config);
+			} catch (ServiceConfigurationException e) {
+				LOGGER.error("Error when refreshing config " + config.getAppId(), e);
+				exception = e;
+			}
+		}
+
 		LOGGER.info("Initialization done.");
+
+		if (exception != null) {
+			throw exception;
+		}
 	}
 
 	/**
@@ -68,7 +88,9 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 	}
 
 	/**
-	 * Gets the stored configuration or the default one if no such exists.
+	 * Gets the stored configuration or the default one if no such exists. Make sure to call
+	 * {@link #refresh(ServiceConfiguration)} if you changed the configuration. Otherwise, the
+	 * changes might not be propagated or even result in inconsistent configurations.
 	 *
 	 * @param aid
 	 * @return
@@ -83,7 +105,12 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 		if (config == null) {
 			try {
 				config = constructor.newInstance();
-				config.init(aid);
+				T existing = configurations.putIfAbsent(aid, config);
+				if (existing == null) {
+					config.init(aid);
+				} else {
+					config = existing;
+				}
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				LOGGER.error("Could not instantiate new ServiceConfiguration!", e);
 				return null;
@@ -97,13 +124,40 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 	 * Updates the stored configuration and notifies all listeners.
 	 *
 	 * @param config
+	 * @throws ServiceConfigurationException
 	 */
-	public void refresh(T config) {
+	public void refresh(T config) throws ServiceConfigurationException {
+		storeConfig(config);
+
+		for (Pair<Listener<T>, String> pair : listeners) {
+			pair.getLeft().accept(config);
+		}
+	}
+
+	/**
+	 * Updates the stored configuration and notifies all listeners except for the ignored ones.
+	 *
+	 * @param config
+	 * @param ignoredListeners
+	 *            Listeners not to be notified.
+	 * @throws ServiceConfigurationException
+	 */
+	public void refresh(T config, String... ignoredListeners) throws ServiceConfigurationException {
+		storeConfig(config);
+
+		Set<String> ignored = new HashSet<>(Arrays.asList(ignoredListeners));
+
+		for (Pair<Listener<T>, String> pair : listeners) {
+			if (!ignored.contains(pair.getRight())) {
+				pair.getLeft().accept(config);
+			}
+		}
+	}
+
+	private void storeConfig(T config) {
 		this.configurations.put(config.getAppId(), config);
 
 		LOGGER.info("Configuration for app-id {} refreshed.", config.getAppId());
-
-		listeners.forEach(c -> c.accept(config));
 	}
 
 	/**
@@ -111,8 +165,14 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 	 *
 	 * @param listener
 	 */
-	public void registerListener(Consumer<T> listener) {
-		listeners.add(listener);
+	public void registerListener(Listener<T> listener, String id) {
+		listeners.add(Pair.of(listener, id));
+	}
+
+	public static interface Listener<T> {
+
+		void accept(T config) throws ServiceConfigurationException;
+
 	}
 
 }

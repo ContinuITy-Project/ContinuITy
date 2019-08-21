@@ -15,6 +15,8 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * @author Henning Schulz
  *
@@ -33,8 +35,8 @@ public class RabbitMqConfig {
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
 	@Bean
-	MessageConverter jsonMessageConverter() {
-		return new Jackson2JsonMessageConverter();
+	MessageConverter jsonMessageConverter(ObjectMapper mapper) {
+		return new Jackson2JsonMessageConverter(mapper);
 	}
 
 	@Bean
@@ -46,9 +48,9 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
-	AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+	AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter converter) {
 		final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-		rabbitTemplate.setMessageConverter(jsonMessageConverter());
+		rabbitTemplate.setMessageConverter(converter);
 		rabbitTemplate.setBeforePublishPostProcessors(typeRemovingProcessor());
 
 		return rabbitTemplate;

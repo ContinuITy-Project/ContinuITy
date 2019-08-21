@@ -20,7 +20,7 @@ public class VariableSchema {
 
 	@JsonProperty("ignore-by-default")
 	@JsonInclude(Include.NON_ABSENT)
-	private Optional<Boolean> ignoreByDefault;
+	private Optional<Boolean> ignoreByDefault = Optional.empty();
 
 	public VariableSchema() {
 	}

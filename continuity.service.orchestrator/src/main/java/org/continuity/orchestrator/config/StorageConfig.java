@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+
 @Configuration
 public class StorageConfig {
 
@@ -28,7 +30,7 @@ public class StorageConfig {
 
 	@Bean
 	public ConfigurationStorage configStorage(@Value("${config.storage.path:storage/config}") String storagePath) {
-		return new ConfigurationStorage(Paths.get(storagePath), new YamlJackson2HttpMessageConverter().getObjectMapper());
+		return new ConfigurationStorage(Paths.get(storagePath), new YamlJackson2HttpMessageConverter().getObjectMapper().registerModule(new Jdk8Module()));
 	}
 
 }
