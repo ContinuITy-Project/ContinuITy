@@ -313,7 +313,7 @@ public class OrderCommands extends AbstractCommands {
 
 		IntensityIncreasedAdjustment intIncreased = new IntensityIncreasedAdjustment();
 		intIncreased.setBy(200);
-		intIncreased.setGroup(2);
+		intIncreased.setGroup("2");
 		adjustments.add(intIncreased);
 
 		context.setAdjusted(adjustments);

@@ -36,6 +36,7 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 public class ContextSerializationTest {
 
@@ -99,12 +100,12 @@ public class ContextSerializationTest {
 
 		IntensityIncreasedAdjustment intIncreased = new IntensityIncreasedAdjustment();
 		intIncreased.setBy(200);
-		intIncreased.setGroup(2);
+		intIncreased.setGroup("2");
 		adjustments.add(intIncreased);
 
 		context.setAdjusted(adjustments);
 
-		mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID));
+		mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID)).registerModule(new Jdk8Module());
 	}
 
 	@Test

@@ -18,6 +18,8 @@ import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainer
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Configuration
 public class RabbitMqConfig {
 
@@ -44,8 +46,8 @@ public class RabbitMqConfig {
 	// General
 
 	@Bean
-	MessageConverter jsonMessageConverter() {
-		return new Jackson2JsonMessageConverter();
+	MessageConverter jsonMessageConverter(ObjectMapper mapper) {
+		return new Jackson2JsonMessageConverter(mapper);
 	}
 
 	@Bean
@@ -57,19 +59,19 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
-	AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+	AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter converter) {
 		final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-		rabbitTemplate.setMessageConverter(jsonMessageConverter());
+		rabbitTemplate.setMessageConverter(converter);
 		rabbitTemplate.setBeforePublishPostProcessors(typeRemovingProcessor());
 
 		return rabbitTemplate;
 	}
 
 	@Bean
-	SimpleRabbitListenerContainerFactory containerFactory(ConnectionFactory connectionFactory, SimpleRabbitListenerContainerFactoryConfigurer configurer) {
+	SimpleRabbitListenerContainerFactory containerFactory(ConnectionFactory connectionFactory, MessageConverter converter, SimpleRabbitListenerContainerFactoryConfigurer configurer) {
 		SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
 		configurer.configure(factory, connectionFactory);
-		factory.setMessageConverter(jsonMessageConverter());
+		factory.setMessageConverter(converter);
 		factory.setAfterReceivePostProcessors(typeRemovingProcessor());
 		return factory;
 	}
