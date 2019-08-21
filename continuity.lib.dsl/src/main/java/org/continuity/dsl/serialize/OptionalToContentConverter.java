@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.util.StdConverter;
  * @author Henning Schulz
  *
  */
-public class OptionalConverter<T> extends StdConverter<Optional<T>, T> {
+public class OptionalToContentConverter<T> extends StdConverter<Optional<T>, T> {
 
 	@Override
 	public T convert(Optional<T> value) {

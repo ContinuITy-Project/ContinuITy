@@ -57,7 +57,7 @@ public class ConfigurationController {
 	@Autowired
 	private AmqpTemplate amqpTemplate;
 
-	@RequestMapping(path = POST, method = RequestMethod.POST, consumes = "application/x-yaml", produces = "application/x-yaml")
+	@RequestMapping(path = POST, method = RequestMethod.POST, consumes = { "application/x-yaml", "application/json" }, produces = "application/x-yaml")
 	public ResponseEntity<String> post(@RequestBody ServiceConfiguration config, HttpServletRequest servletRequest)
 			throws JsonGenerationException, JsonMappingException, IOException {
 		storage.put(config);
