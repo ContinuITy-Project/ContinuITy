@@ -15,6 +15,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -156,6 +157,43 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 		query.must(QueryBuilders.termQuery("finished", false));
 
 		return readElements(aid, query, String.format("with version %s and open sessions", version));
+	}
+
+	/**
+	 * Reads all sessions having one of the passed IDs.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param sessionIds
+	 *            The IDs of the searched sessions.
+	 * @return The list of found sessions.
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	public List<Session> readSessionsWithId(AppId aid, List<String> sessionIds) throws IOException, TimeoutException {
+		return readSessionsWithId(aid, sessionIds.toArray(new String[sessionIds.size()]));
+	}
+
+	/**
+	 * Reads all sessions having one of the passed IDs.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param sessionIds
+	 *            The IDs of the searched sessions.
+	 * @return The list of found sessions.
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	public List<Session> readSessionsWithId(AppId aid, String... sessionIds) throws IOException, TimeoutException {
+		IdsQueryBuilder query = new IdsQueryBuilder().addIds(sessionIds);
+		List<Session> sessions = readElements(aid, query, String.format("with one of the %d passed IDs", sessionIds.length));
+
+		if (sessions.size() != sessionIds.length) {
+			LOGGER.warn("Found {} sessions for app-id {}, but searched for {} session IDs!", sessions.size(), aid, sessionIds.length);
+		}
+
+		return sessions;
 	}
 
 	/**

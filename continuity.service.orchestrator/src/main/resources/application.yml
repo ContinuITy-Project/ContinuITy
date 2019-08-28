@@ -24,6 +24,9 @@ zuul:
     cobra: /cobra/**
     request-rates: /request-rates/**
     wessbas: /wessbas/**
+  host:
+    connect-timeout-millis: 10000
+    socket-timeout-millis: 300000
 hystrix:
   command:
     default:
@@ -31,3 +34,6 @@ hystrix:
         isolation:
           thread:
             timeoutInMilliseconds: 300000
+ribbon:
+  ReadTimeout: 300000
+  ConnectTimeout: 10000

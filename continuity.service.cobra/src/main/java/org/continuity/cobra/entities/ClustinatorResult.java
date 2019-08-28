@@ -44,6 +44,8 @@ public class ClustinatorResult {
 	@JsonProperty("mean-markov-chains")
 	private Map<String, double[]> meanMarkovChains;
 
+	private Map<String, String[]> sessions;
+
 	public AppId getAppId() {
 		return appId;
 	}
@@ -106,6 +108,14 @@ public class ClustinatorResult {
 
 	public void setMeanMarkovChains(Map<String, double[]> meanMarkovChains) {
 		this.meanMarkovChains = meanMarkovChains;
+	}
+
+	public Map<String, String[]> getSessions() {
+		return sessions;
+	}
+
+	public void setSessions(Map<String, String[]> sessions) {
+		this.sessions = sessions;
 	}
 
 }
