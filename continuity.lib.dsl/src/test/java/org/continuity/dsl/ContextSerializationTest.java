@@ -4,129 +4,121 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.continuity.dsl.adjustment.IntensityIncreasedAdjustment;
-import org.continuity.dsl.adjustment.IntensityMultipliedAdjustment;
-import org.continuity.dsl.context.Context;
-import org.continuity.dsl.context.TimeSpecification;
-import org.continuity.dsl.context.WorkloadAdjustment;
-import org.continuity.dsl.context.WorkloadInfluence;
-import org.continuity.dsl.context.influence.FixedInfluence;
-import org.continuity.dsl.context.influence.IncreasedInfluence;
-import org.continuity.dsl.context.influence.IsAbsentInfluence;
-import org.continuity.dsl.context.influence.MultipliedInfluence;
-import org.continuity.dsl.context.influence.OccursInfluence;
-import org.continuity.dsl.context.timespec.AbsentSpecification;
-import org.continuity.dsl.context.timespec.AfterSpecification;
-import org.continuity.dsl.context.timespec.BeforeSpecification;
-import org.continuity.dsl.context.timespec.EqualSpecification;
-import org.continuity.dsl.context.timespec.LessSpecification;
-import org.continuity.dsl.context.timespec.PlusSpecification;
+import org.continuity.dsl.elements.ContextSpecification;
+import org.continuity.dsl.elements.TimeSpecification;
+import org.continuity.dsl.elements.TypedProperties;
+import org.continuity.dsl.elements.timeframe.Condition;
+import org.continuity.dsl.elements.timeframe.ConditionalTimespec;
+import org.continuity.dsl.elements.timeframe.ExtendingTimespec;
+import org.continuity.dsl.elements.timeframe.Timerange;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 public class ContextSerializationTest {
 
-	private Context context;
+	private WorkloadDescription description;
 
-	private ObjectMapper mapper;
+	private ObjectMapper yamlMapper;
+
+	private ObjectMapper jsonMapper;
 
 	@Before
 	public void setup() {
-		context = new Context();
+		description = new WorkloadDescription();
 
-		List<TimeSpecification> when = new ArrayList<>();
-		EqualSpecification equal = new EqualSpecification();
-		equal.setWhat("my_var");
-		equal.setTo(new StringOrNumeric(123.4));
-		when.add(equal);
+		List<TimeSpecification> timeframe = new ArrayList<>();
 
-		AbsentSpecification absent = new AbsentSpecification();
-		absent.setWhat("bool_var");
-		when.add(absent);
+		ConditionalTimespec conditional = new ConditionalTimespec();
+		conditional.getConditions().put("my_var", new Condition().setIs(new ContextValue(123.4)));
+		conditional.getConditions().put("bool_var", new Condition().setIs(new ContextValue(false)));
+		timeframe.add(conditional);
 
-		AfterSpecification after = new AfterSpecification();
-		after.setDate(new Date(0));
-		when.add(after);
+		Timerange timerange = new Timerange().setFrom(LocalDateTime.of(2019, 9, 1, 0, 0));
+		timeframe.add(timerange);
 
-		LessSpecification less = new LessSpecification();
-		less.setWhat("num_var");
-		less.setThan(42);
-		when.add(less);
+		ConditionalTimespec conditional2 = new ConditionalTimespec();
+		conditional2.getConditions().put("num_var", new Condition().setLess(42D));
+		timeframe.add(conditional2);
 
-		PlusSpecification plus = new PlusSpecification();
-		plus.setDuration(Duration.ofHours(1));
-		when.add(plus);
+		ExtendingTimespec extending = new ExtendingTimespec().setEnd(Duration.ofHours(1));
+		timeframe.add(extending);
 
-		context.setWhen(when);
+		description.setTimeframe(timeframe);
 
-		Map<String, List<WorkloadInfluence>> influences = new HashMap<>();
-		FixedInfluence fixed = new FixedInfluence();
-		fixed.setValue(new StringOrNumeric("foo"));
-		influences.put("other_var", Collections.singletonList(fixed));
+		Map<String, List<ContextSpecification>> context = new HashMap<>();
 
-		OccursInfluence occurs = new OccursInfluence();
-		IsAbsentInfluence isAbsent = new IsAbsentInfluence();
-		BeforeSpecification absentBefore = new BeforeSpecification();
-		absentBefore.setDate(new Date(1000000));
-		isAbsent.setWhen(Collections.singletonList(absentBefore));
-		influences.put("bool_var", Arrays.asList(occurs, isAbsent));
+		context.put("other_var", Collections.singletonList(new ContextSpecification().setIs(new ContextValue("foo"))));
 
-		MultipliedInfluence multiplied = new MultipliedInfluence();
-		multiplied.setWith(1.3);
-		IncreasedInfluence increased = new IncreasedInfluence();
-		increased.setBy(5);
-		influences.put("num_var", Arrays.asList(multiplied, increased));
+		ContextSpecification occurs = new ContextSpecification().setIs(new ContextValue(true));
+		ContextSpecification isAbsent = new ContextSpecification().setIs(new ContextValue(false)).setDuring(Collections.singletonList(new Timerange().setTo(LocalDateTime.of(2019, 9, 3, 0, 0))));
+		context.put("bool_var", Arrays.asList(occurs, isAbsent));
 
-		context.setInfluencing(influences);
+		context.put("num_var", Collections.singletonList(new ContextSpecification().setMultiplied(1.3).setAdded(5D)));
 
-		List<WorkloadAdjustment> adjustments = new ArrayList<>();
-		IntensityMultipliedAdjustment intMultiplied = new IntensityMultipliedAdjustment();
-		intMultiplied.setWith(1.5);
-		adjustments.add(intMultiplied);
+		description.setContext(context);
 
-		IntensityIncreasedAdjustment intIncreased = new IntensityIncreasedAdjustment();
-		intIncreased.setBy(200);
-		intIncreased.setGroup("2");
-		adjustments.add(intIncreased);
+		description.setAggregation(new TypedProperties().setType("percentile").setProperties(Collections.singletonMap("p", 95)));
 
-		context.setAdjusted(adjustments);
+		TypedProperties usersMultiplied = new TypedProperties().setType("users-multiplied");
+		TypedProperties usersAdded = new TypedProperties().setType("users-added").setProperties(Collections.singletonMap("group", "2"));
+		description.setAdjustments(Arrays.asList(usersMultiplied, usersAdded));
 
-		mapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID)).registerModule(new Jdk8Module());
+		yamlMapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES).enable(Feature.USE_NATIVE_OBJECT_ID)).registerModule(new Jdk8Module()).registerModule(new JavaTimeModule())
+				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+		jsonMapper = new ObjectMapper().registerModule(new Jdk8Module()).registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 	}
 
 	@Test
-	public void testWriteRead() throws IOException {
-		String yaml = mapper.writeValueAsString(context);
+	public void testWriteReadYaml() throws IOException {
+		testWriteRead(yamlMapper);
+	}
 
-		System.out.println(yaml);
+	@Test
+	public void testWriteReadJson() throws IOException {
+		testWriteRead(jsonMapper);
+	}
 
-		Context parsed = mapper.readValue(yaml, Context.class);
+	public void testWriteRead(ObjectMapper mapper) throws IOException {
+		String serialized = mapper.writeValueAsString(description);
 
-		assertThat(parsed.getWhen()).extracting(TimeSpecification::getClass).extracting(Class::toString)
-				.containsExactlyElementsOf(context.getWhen().stream().map(TimeSpecification::getClass).map(Class::toString).collect(Collectors.toList()));
+		System.out.println(serialized);
 
-		assertThat(parsed.getInfluencing().keySet()).containsExactlyElementsOf(context.getInfluencing().keySet());
-		assertThat(parsed.getInfluencing().values()).flatExtracting(t -> t).extracting(WorkloadInfluence::getClass).extracting(Class::toString)
-				.containsExactlyElementsOf(context.getInfluencing().values().stream().flatMap(List::stream).map(WorkloadInfluence::getClass).map(Class::toString).collect(Collectors.toList()));
+		WorkloadDescription parsed = mapper.readValue(serialized, WorkloadDescription.class);
 
-		assertThat(parsed.getAdjusted()).extracting(WorkloadAdjustment::getClass).extracting(Class::toString)
-				.containsExactlyElementsOf(context.getAdjusted().stream().map(WorkloadAdjustment::getClass).map(Class::toString).collect(Collectors.toList()));
+		assertThat(parsed.getTimeframe()).extracting(TimeSpecification::getClass).extracting(Class::toString)
+				.containsExactlyElementsOf(description.getTimeframe().stream().map(TimeSpecification::getClass).map(Class::toString).collect(Collectors.toList()));
 
-		assertThat(mapper.writeValueAsString(parsed)).isEqualTo(yaml);
+		assertThat(parsed.getContext().keySet()).containsExactlyElementsOf(description.getContext().keySet());
+		assertThat(parsed.getContext().values()).flatExtracting(t -> t).extracting(ContextSpecification::getClass).extracting(Class::toString)
+				.containsExactlyElementsOf(description.getContext().values().stream().flatMap(List::stream).map(ContextSpecification::getClass).map(Class::toString).collect(Collectors.toList()));
+
+		assertThat(parsed.getAggregation().getType()).isEqualTo(description.getAggregation().getType());
+		assertThat(parsed.getAggregation().getProperties()).isEqualTo(description.getAggregation().getProperties());
+
+		assertThat(parsed.getAdjustments()).extracting(TypedProperties::getType).isEqualTo(description.getAdjustments().stream().map(TypedProperties::getType).collect(Collectors.toList()));
+		assertThat(parsed.getAdjustments()).extracting(TypedProperties::getProperties).filteredOn(Objects::nonNull).flatExtracting(Map::keySet).containsExactlyElementsOf(
+				description.getAdjustments().stream().map(TypedProperties::getProperties).filter(Objects::nonNull).map(Map::keySet).flatMap(Set::stream).collect(Collectors.toList()));
+
+		assertThat(mapper.writeValueAsString(parsed)).isEqualTo(serialized);
 
 	}
 

@@ -1,9 +1,11 @@
 package org.continuity.cobra.amqp;
 
 import java.io.IOException;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -23,9 +25,8 @@ import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.commons.utils.TailoringUtils;
-import org.continuity.dsl.context.Context;
-import org.continuity.dsl.context.timespec.AfterSpecification;
-import org.continuity.dsl.context.timespec.BeforeSpecification;
+import org.continuity.dsl.WorkloadDescription;
+import org.continuity.dsl.elements.timeframe.Timerange;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.slf4j.Logger;
@@ -55,15 +56,16 @@ public class PreparationAmqpHandler {
 
 		Date from = null;
 		Date to = null;
-		Context context = task.getContext();
+		WorkloadDescription description = task.getWorkloadDescription();
 
-		if ((context != null) && (context.getWhen() != null)) {
-			from = context.getWhen().stream().filter(AfterSpecification.class::isInstance).map(AfterSpecification.class::cast).map(AfterSpecification::getDate).map(Date::getTime).reduce(Math::max)
-					.map(Date::new).orElse(null);
-			to = context.getWhen().stream().filter(BeforeSpecification.class::isInstance).map(BeforeSpecification.class::cast).map(BeforeSpecification::getDate).map(Date::getTime).reduce(Math::min)
-					.map(Date::new).orElse(null);
+		if ((description != null) && (description.getTimeframe() != null)) {
+			from = description.getTimeframe().stream().filter(Timerange.class::isInstance).map(Timerange.class::cast).map(Timerange::getFrom).filter(Optional::isPresent).map(Optional::get)
+					.map(d -> d.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()).reduce(Math::min).map(Date::new).orElse(null);
 
-			LOGGER.warn("Currently, only the before and after when specifications are used!");
+			to = description.getTimeframe().stream().filter(Timerange.class::isInstance).map(Timerange.class::cast).map(Timerange::getTo).filter(Optional::isPresent).map(Optional::get)
+					.map(d -> d.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()).reduce(Math::max).map(Date::new).orElse(null);
+
+			LOGGER.warn("Currently, only the timerange from and to when specifications are used!");
 		}
 
 		// TODO: read intensities based on context and use the resulting time ranges for retrieving

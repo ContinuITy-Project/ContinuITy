@@ -16,7 +16,7 @@ import java.util.TimeZone;
 
 import org.apache.commons.math3.util.Pair;
 import org.continuity.api.entities.artifact.ForecastBundle;
-import org.continuity.dsl.context.Context;
+import org.continuity.dsl.WorkloadDescription;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.influxdb.InfluxDB;
@@ -40,7 +40,7 @@ public class ForecastPipelineManager {
 
 	private AppId aid;
 
-	private Context context;
+	private WorkloadDescription context;
 
 	private int workloadIntensity;
 
@@ -61,7 +61,7 @@ public class ForecastPipelineManager {
 	/**
 	 * Constructor.
 	 */
-	public ForecastPipelineManager(InfluxDB influxDb, AppId aid, Context context, long interval, String forecastingApproach) {
+	public ForecastPipelineManager(InfluxDB influxDb, AppId aid, WorkloadDescription context, long interval, String forecastingApproach) {
 		this.influxDb = influxDb;
 		this.aid = aid;
 		this.context = context;
