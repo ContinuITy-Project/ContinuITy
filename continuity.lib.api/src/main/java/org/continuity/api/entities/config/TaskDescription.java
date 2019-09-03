@@ -8,7 +8,7 @@ import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.exchange.ArtifactType;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
-import org.continuity.dsl.context.Context;
+import org.continuity.dsl.WorkloadDescription;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
@@ -41,7 +41,8 @@ public class TaskDescription {
 
 	private OrderOptions options;
 
-	private Context context;
+	@JsonProperty("workload-description")
+	private WorkloadDescription workloadDescription;
 
 	public String getTaskId() {
 		return taskId;
@@ -107,12 +108,12 @@ public class TaskDescription {
 		this.options = options;
 	}
 
-	public Context getContext() {
-		return context;
+	public WorkloadDescription getWorkloadDescription() {
+		return workloadDescription;
 	}
 
-	public void setContext(Context context) {
-		this.context = context;
+	public void setWorkloadDescription(WorkloadDescription workloadDescription) {
+		this.workloadDescription = workloadDescription;
 	}
 
 	/**

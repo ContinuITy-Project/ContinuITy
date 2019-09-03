@@ -3,10 +3,10 @@ package org.continuity.cli.commands;
 import java.awt.Desktop;
 import java.text.ParseException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,22 +26,14 @@ import org.continuity.cli.manage.Shorthand;
 import org.continuity.cli.storage.OrderStorage;
 import org.continuity.cli.utils.ResponseBuilder;
 import org.continuity.commons.utils.WebUtils;
-import org.continuity.dsl.StringOrNumeric;
-import org.continuity.dsl.adjustment.IntensityIncreasedAdjustment;
-import org.continuity.dsl.adjustment.IntensityMultipliedAdjustment;
-import org.continuity.dsl.context.Context;
-import org.continuity.dsl.context.TimeSpecification;
-import org.continuity.dsl.context.WorkloadAdjustment;
-import org.continuity.dsl.context.WorkloadInfluence;
-import org.continuity.dsl.context.influence.FixedInfluence;
-import org.continuity.dsl.context.influence.IncreasedInfluence;
-import org.continuity.dsl.context.influence.IsAbsentInfluence;
-import org.continuity.dsl.context.influence.MultipliedInfluence;
-import org.continuity.dsl.context.influence.OccursInfluence;
-import org.continuity.dsl.context.timespec.AbsentSpecification;
-import org.continuity.dsl.context.timespec.AfterSpecification;
-import org.continuity.dsl.context.timespec.BeforeSpecification;
-import org.continuity.dsl.context.timespec.PlusSpecification;
+import org.continuity.dsl.ContextValue;
+import org.continuity.dsl.WorkloadDescription;
+import org.continuity.dsl.elements.ContextSpecification;
+import org.continuity.dsl.elements.TimeSpecification;
+import org.continuity.dsl.elements.TypedProperties;
+import org.continuity.dsl.elements.timeframe.Condition;
+import org.continuity.dsl.elements.timeframe.ConditionalTimespec;
+import org.continuity.dsl.elements.timeframe.Timerange;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.jline.utils.AttributedString;
@@ -262,63 +254,42 @@ public class OrderCommands extends AbstractCommands {
 
 		order.setOptions(options);
 
-		order.setContext(createContext());
+		order.setWorkloadDescription(createWorkloadDescription());
 
 		return order;
 	}
 
-	private Context createContext() {
-		Context context = new Context();
+	private WorkloadDescription createWorkloadDescription() {
+		WorkloadDescription description = new WorkloadDescription();
 
-		List<TimeSpecification> when = new ArrayList<>();
+		List<TimeSpecification> timeframe = new ArrayList<>();
 
-		AbsentSpecification absent = new AbsentSpecification();
-		absent.setWhat("black-friday");
-		when.add(absent);
+		Timerange timerange = new Timerange().setFrom(LocalDateTime.now()).setDuration(Duration.ofDays(14));
+		timeframe.add(timerange);
 
-		AfterSpecification after = new AfterSpecification();
-		after.setDate(new Date());
-		when.add(after);
+		ConditionalTimespec conditional = new ConditionalTimespec();
+		conditional.getConditions().put("weather", new Condition().setIs(new ContextValue("sunny")));
+		timeframe.add(conditional);
 
-		PlusSpecification plus = new PlusSpecification();
-		plus.setDuration(Duration.ofHours(1));
-		when.add(plus);
+		description.setTimeframe(timeframe);
 
-		context.setWhen(when);
+		Map<String, List<ContextSpecification>> context = new HashMap<>();
 
-		Map<String, List<WorkloadInfluence>> influences = new HashMap<>();
-		FixedInfluence fixed = new FixedInfluence();
-		fixed.setValue(new StringOrNumeric("sunny"));
-		influences.put("weather", Collections.singletonList(fixed));
+		context.put("temperature", Collections.singletonList(new ContextSpecification().setMultiplied(1.3).setAdded(5.0)));
 
-		MultipliedInfluence multiplied = new MultipliedInfluence();
-		multiplied.setWith(1.3);
-		IncreasedInfluence increased = new IncreasedInfluence();
-		increased.setBy(5);
-		influences.put("temperature", Arrays.asList(multiplied, increased));
+		Timerange outageRange = new Timerange().setFrom(LocalDateTime.now().plus(Duration.ofHours(72))).setTo(LocalDateTime.now().plus(Duration.ofHours(74)));
+		context.put("outage", Collections.singletonList(new ContextSpecification().setIs(new ContextValue(true)).setDuring(Collections.singletonList(outageRange))));
 
-		OccursInfluence occurs = new OccursInfluence();
-		IsAbsentInfluence isAbsent = new IsAbsentInfluence();
-		BeforeSpecification absentBefore = new BeforeSpecification();
-		absentBefore.setDate(new Date());
-		isAbsent.setWhen(Collections.singletonList(absentBefore));
-		influences.put("outage", Arrays.asList(occurs, isAbsent));
+		description.setContext(context);
 
-		context.setInfluencing(influences);
+		description.setAggregation(new TypedProperties().setType("maximum"));
 
-		List<WorkloadAdjustment> adjustments = new ArrayList<>();
-		IntensityMultipliedAdjustment intMultiplied = new IntensityMultipliedAdjustment();
-		intMultiplied.setWith(1.5);
-		adjustments.add(intMultiplied);
+		Map<String, Object> adjustmentProps = new HashMap<>();
+		adjustmentProps.put("amount", 200);
+		adjustmentProps.put("group", 2);
+		description.setAdjustments(Collections.singletonList(new TypedProperties().setType("users-added").setProperties(adjustmentProps)));
 
-		IntensityIncreasedAdjustment intIncreased = new IntensityIncreasedAdjustment();
-		intIncreased.setBy(200);
-		intIncreased.setGroup("2");
-		adjustments.add(intIncreased);
-
-		context.setAdjusted(adjustments);
-
-		return context;
+		return description;
 	}
 
 }
