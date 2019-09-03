@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.continuity.dsl.context.Context;
+import org.continuity.dsl.WorkloadDescription;
 import org.continuity.dsl.timeseries.IntensityRecord;
 import org.continuity.dsl.timeseries.NumericVariable;
 import org.continuity.dsl.timeseries.StringVariable;
@@ -191,14 +192,14 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 * @param aid
 	 *            The app-id.
 	 * @param tailoring
-	 * @param context
+	 * @param workloadDescription
 	 *            The context.
 	 * @return The found intensities.
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	public List<IntensityRecord> readIntensitiesInContext(AppId aid, List<String> tailoring, Context context) throws IOException, TimeoutException {
-		return readElements(aid, tailoring, context.toElasticQuery(), "for passed context");
+	public List<IntensityRecord> readDescripedIntensities(AppId aid, List<String> tailoring, WorkloadDescription workloadDescription) throws IOException, TimeoutException {
+		return readElements(aid, tailoring, workloadDescription.toElasticQuery(), "for passed context");
 	}
 
 	/**
@@ -207,7 +208,7 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 * @param aid
 	 *            The app-id.
 	 * @param tailoring
-	 * @param context
+	 * @param workloadDescription
 	 *            The context.
 	 * @param applied
 	 *            The dates that are selected.
@@ -217,8 +218,9 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	public List<IntensityRecord> readPostprocessing(AppId aid, List<String> tailoring, Context context, List<Date> applied, Duration step) throws IOException, TimeoutException {
-		return readElements(aid, tailoring, context.toPostprocessingElasticQuery(applied, step), "for postprocessing of passed context");
+	public List<IntensityRecord> readPostprocessing(AppId aid, List<String> tailoring, WorkloadDescription workloadDescription, List<LocalDateTime> applied, Duration step)
+			throws IOException, TimeoutException {
+		return readElements(aid, tailoring, workloadDescription.toPostprocessingElasticQuery(applied, step), "for postprocessing of passed context");
 	}
 
 	@Override

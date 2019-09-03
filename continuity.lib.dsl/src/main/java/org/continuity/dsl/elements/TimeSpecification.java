@@ -1,20 +1,14 @@
-package org.continuity.dsl.context;
+package org.continuity.dsl.elements;
 
 import java.time.Duration;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.continuity.dsl.context.timespec.AbsentSpecification;
-import org.continuity.dsl.context.timespec.AfterSpecification;
-import org.continuity.dsl.context.timespec.BeforeSpecification;
-import org.continuity.dsl.context.timespec.EqualSpecification;
-import org.continuity.dsl.context.timespec.GreaterSpecification;
-import org.continuity.dsl.context.timespec.LessSpecification;
-import org.continuity.dsl.context.timespec.OccurringSpecification;
-import org.continuity.dsl.context.timespec.PlusBeforeSpecification;
-import org.continuity.dsl.context.timespec.PlusSpecification;
-import org.continuity.dsl.context.timespec.UnequalSpecification;
+import org.apache.commons.lang3.tuple.Pair;
+import org.continuity.dsl.elements.timeframe.ConditionalTimespec;
+import org.continuity.dsl.elements.timeframe.ExtendingTimespec;
+import org.continuity.dsl.elements.timeframe.Timerange;
 import org.elasticsearch.index.query.QueryBuilder;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -30,10 +24,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
  *
  */
 @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY)
-@JsonSubTypes({ @Type(value = AfterSpecification.class, name = "after"), @Type(value = BeforeSpecification.class, name = "before"), @Type(value = OccurringSpecification.class, name = "occurring"),
-		@Type(value = AbsentSpecification.class, name = "absent"), @Type(value = GreaterSpecification.class, name = "greater"), @Type(value = LessSpecification.class, name = "less"),
-		@Type(value = EqualSpecification.class, name = "equal"), @Type(value = UnequalSpecification.class, name = "unequal"), @Type(value = PlusSpecification.class, name = "plus"),
-		@Type(value = PlusBeforeSpecification.class, name = "plus-before") })
+@JsonSubTypes({ @Type(value = Timerange.class, name = "timerange"), @Type(value = ConditionalTimespec.class, name = "conditional"), @Type(value = ExtendingTimespec.class, name = "extended") })
 public interface TimeSpecification {
 
 	public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH-mm-ss-SSSX";
@@ -45,7 +36,7 @@ public interface TimeSpecification {
 	 *            The date to check.
 	 * @return {@code true} it the passed date is within the time specification.
 	 */
-	boolean appliesToDate(Date date);
+	boolean appliesToDate(LocalDateTime date);
 
 	/**
 	 * Returns whether the time specification applies to a given value of a numerical variable.
@@ -97,34 +88,29 @@ public interface TimeSpecification {
 	 *            The step width.
 	 * @return List of finally applied dates.
 	 */
-	default List<Date> postprocess(List<Date> applied, Duration step) {
+	default List<LocalDateTime> postprocess(List<LocalDateTime> applied, Duration step) {
 		return applied;
 	}
 
 	/**
-	 * Transforms the time specification to an elasticsearch query.
+	 * Transforms the time specification to elasticsearch queries.
 	 *
-	 * @return The query.
+	 * @return The queries as pair of the query it self and a boolean indicating whether the query
+	 *         returned by {@link #toElasticQuery()} should be treated positively ({@code true};
+	 *         {@code must}) or negatively ({@code false}; {@code must_not}).
 	 */
-	Optional<QueryBuilder> toElasticQuery();
+	List<Pair<QueryBuilder, Boolean>> toElasticQuery();
 
 	/**
-	 * Defines whether the query returned by {@link #toElasticQuery()} should be negated.
-	 *
-	 * @return {@code true} if {@code must_not} should be used instead of {@code must}.
-	 */
-	boolean negateElasticQuery();
-
-	/**
-	 * Transforms the time specification to a query that fetches missing dates from the database.
+	 * Transforms the time specification to queries that fetches missing dates from the database.
 	 *
 	 * @param applied
 	 *            The dates fetched from the database.
 	 * @param step
 	 *            The step width.
-	 * @return The query.
+	 * @return The queries.
 	 */
-	default Optional<QueryBuilder> toPostprocessElasticQuery(List<Date> applied, Duration step) {
+	default Optional<QueryBuilder> toPostprocessElasticQuery(List<LocalDateTime> applied, Duration step) {
 		return Optional.empty();
 	}
 

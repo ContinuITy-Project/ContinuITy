@@ -93,7 +93,7 @@ public class ForecastAmqpHandler {
 				dateAndAmountOfUsersStorage.put(pathParams.get(0), dateAndAmountOfUserGroups);
 			}
 
-			ForecastPipelineManager pipelineManager = new ForecastPipelineManager(influxDb, task.getAppId(), task.getContext(), interval, task.getOptions().getForecastApproachOrDefault());
+			ForecastPipelineManager pipelineManager = new ForecastPipelineManager(influxDb, task.getAppId(), task.getWorkloadDescription(), interval, task.getOptions().getForecastApproachOrDefault());
 			ForecastBundle forecastBundle = pipelineManager.runPipeline(dateAndAmountOfUsersStorage.get(pathParams.get(0)));
 			influxDb.close();
 

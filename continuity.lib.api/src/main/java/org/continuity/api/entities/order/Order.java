@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.exchange.ArtifactType;
-import org.continuity.dsl.context.Context;
+import org.continuity.dsl.WorkloadDescription;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "target", "mode", "app-id", "services", "version", "testing-context", "context", "options", "source" })
+@JsonPropertyOrder({ "target", "mode", "app-id", "services", "version", "testing-context", "workload-description", "options", "source" })
 public class Order {
 
 	@JsonProperty("app-id")
@@ -32,8 +32,9 @@ public class Order {
 	@JsonInclude(Include.NON_EMPTY)
 	private Set<String> testingContext;
 
+	@JsonProperty("workload-description")
 	@JsonInclude(Include.NON_NULL)
-	private Context context;
+	private WorkloadDescription workloadDescription;
 
 	@JsonInclude(Include.NON_NULL)
 	private ArtifactExchangeModel source;
@@ -81,12 +82,12 @@ public class Order {
 		this.testingContext = testingContext;
 	}
 
-	public Context getContext() {
-		return context;
+	public WorkloadDescription getWorkloadDescription() {
+		return workloadDescription;
 	}
 
-	public void setContext(Context context) {
-		this.context = context;
+	public void setWorkloadDescription(WorkloadDescription workloadDescription) {
+		this.workloadDescription = workloadDescription;
 	}
 
 	public ArtifactExchangeModel getSource() {

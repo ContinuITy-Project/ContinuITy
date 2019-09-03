@@ -15,53 +15,65 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
- * Automatically determines whether the deserialized field is a string or a number and serializes it
- * accordingly.
+ * Automatically determines whether the deserialized field is a string, boolean, or a number and
+ * serializes it accordingly.
  *
  * @author Henning Schulz
  *
  */
-@JsonSerialize(using = StringOrNumeric.Serializer.class)
-@JsonDeserialize(using = StringOrNumeric.Deserializer.class)
-public class StringOrNumeric {
+@JsonSerialize(using = ContextValue.Serializer.class)
+@JsonDeserialize(using = ContextValue.Deserializer.class)
+public class ContextValue {
 
 	private Optional<String> stringValue;
 
 	private Optional<Double> doubleValue;
 
+	private Optional<Boolean> booleanValue;
+
 	/**
 	 * Creates a numerical instance.
-	 * 
+	 *
 	 * @param value
 	 */
-	public StringOrNumeric(double value) {
-		this(null, value);
+	public ContextValue(double value) {
+		this(null, value, null);
 	}
 
 	/**
 	 * Creates a string instance.
-	 * 
+	 *
 	 * @param value
 	 */
-	public StringOrNumeric(String value) {
-		this(value, null);
+	public ContextValue(String value) {
+		this(value, null, null);
+	}
+
+	/**
+	 * Creates a boolean value.
+	 *
+	 * @param value
+	 */
+	public ContextValue(boolean value) {
+		this(null, null, value);
 	}
 
 	/**
 	 * Creates a {@code null} instance.
 	 */
-	public StringOrNumeric() {
-		this(null, null);
+	public ContextValue() {
+		this(null, null, null);
 	}
 
-	private StringOrNumeric(String stringValue, Double doubleValue) {
+	private ContextValue(String stringValue, Double doubleValue, Boolean booleanValue) {
 		this.stringValue = Optional.ofNullable(stringValue);
 		this.doubleValue = Optional.ofNullable(doubleValue);
+		this.booleanValue = Optional.ofNullable(booleanValue);
 	}
 
 	public double getAsNumber() {
 		if (!isNumeric()) {
-			throw new IllegalStateException("Cannot get string field as number!");
+			throw new IllegalStateException("This is not a number!");
 		}
 
 		return doubleValue.get();
@@ -69,10 +81,18 @@ public class StringOrNumeric {
 
 	public String getAsString() {
 		if (!isString()) {
-			throw new IllegalStateException("Cannot get numeric field as string!");
+			throw new IllegalStateException("This is not a string!");
 		}
 
 		return stringValue.get();
+	}
+
+	public boolean getAsBoolean() {
+		if (!isBoolean()) {
+			throw new IllegalStateException("This is not a boolean!");
+		}
+
+		return booleanValue.get();
 	}
 
 	public boolean isNumeric() {
@@ -83,24 +103,30 @@ public class StringOrNumeric {
 		return stringValue.isPresent();
 	}
 
+	public boolean isBoolean() {
+		return booleanValue.isPresent();
+	}
+
 	public boolean isNull() {
 		return !isNumeric() && !isString();
 	}
 
-	public static class Serializer extends StdSerializer<StringOrNumeric> {
+	public static class Serializer extends StdSerializer<ContextValue> {
 
 		private static final long serialVersionUID = 1644078031650138946L;
 
 		protected Serializer() {
-			super(StringOrNumeric.class);
+			super(ContextValue.class);
 		}
 
 		@Override
-		public void serialize(StringOrNumeric value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+		public void serialize(ContextValue value, JsonGenerator gen, SerializerProvider provider) throws IOException {
 			if (value.isNumeric()) {
 				gen.writeNumber(value.getAsNumber());
 			} else if (value.isString()) {
 				gen.writeString(value.getAsString());
+			} else if (value.isBoolean()) {
+				gen.writeBoolean(value.getAsBoolean());
 			} else {
 				gen.writeNull();
 			}
@@ -108,24 +134,26 @@ public class StringOrNumeric {
 
 	}
 
-	public static class Deserializer extends StdDeserializer<StringOrNumeric> {
+	public static class Deserializer extends StdDeserializer<ContextValue> {
 
 		private static final long serialVersionUID = -2929243696707998274L;
 
 		protected Deserializer() {
-			super(StringOrNumeric.class);
+			super(ContextValue.class);
 		}
 
 		@Override
-		public StringOrNumeric deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+		public ContextValue deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 			JsonNode node = p.getCodec().readTree(p);
 
 			if (node.isNumber()) {
-				return new StringOrNumeric(null, node.asDouble());
+				return new ContextValue(node.asDouble());
 			} else if (node.isTextual()) {
-				return new StringOrNumeric(node.asText(), null);
+				return new ContextValue(node.asText());
+			} else if (node.isBoolean()) {
+				return new ContextValue(node.asBoolean());
 			} else {
-				return new StringOrNumeric(null, null);
+				return new ContextValue();
 			}
 		}
 

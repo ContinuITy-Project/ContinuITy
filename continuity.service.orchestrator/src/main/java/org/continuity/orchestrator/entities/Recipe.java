@@ -9,7 +9,7 @@ import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.report.TaskReport;
-import org.continuity.dsl.context.Context;
+import org.continuity.dsl.WorkloadDescription;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
@@ -33,7 +33,7 @@ public class Recipe {
 
 	private final OrderOptions options;
 
-	private Context context;
+	private WorkloadDescription workloadDescription;
 
 	private final boolean longTermUse;
 
@@ -41,7 +41,7 @@ public class Recipe {
 
 	public Recipe(String orderId, String recipeId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, List<RecipeStep> steps, ArtifactExchangeModel source, boolean longTermUse,
 			Set<String> testingContext,
-			OrderOptions options, Context context) {
+			OrderOptions options, WorkloadDescription workloadDescription) {
 		this.orderId = orderId;
 		this.recipeId = recipeId;
 		this.iterator = steps.listIterator(steps.size());
@@ -51,7 +51,7 @@ public class Recipe {
 		this.source = source == null ? new ArtifactExchangeModel() : source;
 		this.longTermUse = longTermUse;
 		this.testingContext = testingContext;
-		this.context = context;
+		this.workloadDescription = workloadDescription;
 		this.options = options;
 		initIterator(source);
 	}
@@ -91,7 +91,7 @@ public class Recipe {
 		task.setVersion(version);
 		task.setSource(source);
 		task.setOptions(options);
-		task.setContext(context);
+		task.setWorkloadDescription(workloadDescription);
 		task.setLongTermUse(longTermUse);
 
 		nextStep.setTask(task);
@@ -117,12 +117,12 @@ public class Recipe {
 		}
 	}
 
-	public Context getContext() {
-		return context;
+	public WorkloadDescription getWorkloadDescription() {
+		return workloadDescription;
 	}
 
-	public void setContext(Context context) {
-		this.context = context;
+	public void setWorkloadDescription(WorkloadDescription workloadDescription) {
+		this.workloadDescription = workloadDescription;
 	}
 
 }
