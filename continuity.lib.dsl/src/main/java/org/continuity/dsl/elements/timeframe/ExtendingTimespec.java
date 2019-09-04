@@ -98,6 +98,11 @@ public class ExtendingTimespec implements TimeSpecification {
 		return Collections.emptyList();
 	}
 
+	@Override
+	public boolean requiresPostprocessing() {
+		return true;
+	}
+
 	private void postprocessBefore(List<LocalDateTime> applied, PostprocessConsumer consumer, Duration step) {
 		if (!beginning.isPresent() || beginning.get().isZero() || beginning.get().isNegative()) {
 			return;
@@ -173,6 +178,16 @@ public class ExtendingTimespec implements TimeSpecification {
 		}
 
 		query.should(range);
+	}
+
+	@Override
+	public Optional<Duration> getMaxBeginningAddition() {
+		return end;
+	}
+
+	@Override
+	public Optional<Duration> getMaxEndAddition() {
+		return beginning;
 	}
 
 	protected static interface PostprocessConsumer {

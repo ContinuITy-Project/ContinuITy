@@ -674,6 +674,9 @@ public class RestApi {
 
 			public static final String ROOT = "/behavior-model";
 
+			/** {@value #ROOT}/{app-id:.+}/{tailoring:.+}/latest */
+			public static final RestEndpoint GET_LATEST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_LATEST, RequestMethod.GET);
+
 			/** {@value #ROOT}/create */
 			public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.POST);
 
@@ -681,6 +684,8 @@ public class RestApi {
 			}
 
 			public static class Paths {
+
+				public static final String GET_LATEST = "/{app-id:.+}/{tailoring:.+}/latest";
 
 				public static final String CREATE = "/create";
 

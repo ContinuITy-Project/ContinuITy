@@ -5,11 +5,14 @@ import static org.continuity.api.rest.RestApi.Cobra.Sessions.Paths.GET_SIMPLE;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.session.Session;
@@ -65,8 +68,8 @@ public class SessionLogsController {
 	 */
 	@RequestMapping(value = GET_SIMPLE, method = RequestMethod.GET, produces = { "text/plain" })
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> getSimpleSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) String from,
-			@RequestParam(required = false) String to) throws IOException, TimeoutException {
+	public ResponseEntity<String> getSimpleSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
+			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
 		return getSessionLogs(aid, tailoring, from, to, true);
 	}
 
@@ -87,25 +90,21 @@ public class SessionLogsController {
 	 */
 	@RequestMapping(value = GET_EXTENDED, method = RequestMethod.GET, produces = { "text/plain" })
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> getExtendedSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) String from,
-			@RequestParam(required = false) String to) throws IOException, TimeoutException {
+	public ResponseEntity<String> getExtendedSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
+			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
 		return getSessionLogs(aid, tailoring, from, to, false);
 	}
 
-	private ResponseEntity<String> getSessionLogs(AppId aid, String tailoring, String from, String to, boolean simple) throws IOException, TimeoutException {
-		Triple<BadRequestResponse, Date, Date> check = checkDates(from, to);
+	private ResponseEntity<String> getSessionLogs(AppId aid, String tailoring, List<String> from, List<String> to, boolean simple) throws IOException, TimeoutException {
+		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to);
 
-		if (check.getLeft() != null) {
-			return check.getLeft().toStringResponse();
-		}
-
-		List<Session> sessions = elasticManager.readSessionsInRange(aid, null, Session.convertStringToTailoring(tailoring), check.getMiddle(), check.getRight());
-
-		if ((sessions == null) || sessions.isEmpty()) {
+		if (sessions.getLeft() != null) {
+			return sessions.getLeft().toStringResponse();
+		} else if ((sessions.getRight() == null) || sessions.getRight().isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
 
-		String logs = sessions.stream().map(simple ? Session::toSimpleLog : Session::toExtensiveLog).collect(Collectors.joining("\n"));
+		String logs = sessions.getRight().stream().map(simple ? Session::toSimpleLog : Session::toExtensiveLog).collect(Collectors.joining("\n"));
 
 		return ResponseEntity.ok(logs);
 	}
@@ -128,8 +127,8 @@ public class SessionLogsController {
 	@RequestMapping(value = GET_SIMPLE, method = RequestMethod.GET, produces = { "application/json" })
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	@JsonView(SessionView.Simple.class)
-	public ResponseEntity<?> getSessionsAsSimpleJson(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) String from,
-			@RequestParam(required = false) String to) throws IOException, TimeoutException {
+	public ResponseEntity<?> getSessionsAsSimpleJson(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
+			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
 		return getSessionsAsJson(aid, tailoring, from, to, true);
 	}
 
@@ -151,25 +150,47 @@ public class SessionLogsController {
 	@RequestMapping(value = GET_EXTENDED, method = RequestMethod.GET, produces = { "application/json" })
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	@JsonView(SessionView.Extended.class)
-	public ResponseEntity<?> getSessionsAsExtendedJson(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) String from,
-			@RequestParam(required = false) String to) throws IOException, TimeoutException {
+	public ResponseEntity<?> getSessionsAsExtendedJson(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
+			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
 		return getSessionsAsJson(aid, tailoring, from, to, false);
 	}
 
-	public ResponseEntity<?> getSessionsAsJson(AppId aid, String tailoring, String from, String to, boolean simple) throws IOException, TimeoutException {
-		Triple<BadRequestResponse, Date, Date> check = checkDates(from, to);
+	public ResponseEntity<?> getSessionsAsJson(AppId aid, String tailoring, List<String> from, List<String> to, boolean simple) throws IOException, TimeoutException {
+		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to);
 
-		if (check.getLeft() != null) {
-			return check.getLeft().toObjectResponse();
-		}
-
-		List<Session> sessions = elasticManager.readSessionsInRange(aid, null, Session.convertStringToTailoring(tailoring), check.getMiddle(), check.getRight());
-
-		if ((sessions == null) || sessions.isEmpty()) {
+		if (sessions.getLeft() != null) {
+			return sessions.getLeft().toObjectResponse();
+		} else if ((sessions.getRight() == null) || sessions.getRight().isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
 
-		return ResponseEntity.ok(sessions);
+		return ResponseEntity.ok(sessions.getRight());
+	}
+
+	private Pair<BadRequestResponse, List<Session>> readSessions(AppId aid, String tailoring, List<String> from, List<String> to) throws IOException, TimeoutException {
+		if ((from == null) || (to == null)) {
+			return Pair.of(null, elasticManager.readSessionsInRange(aid, null, Session.convertStringToTailoring(tailoring), null, null));
+		} else {
+			Iterator<String> fromIter = from.iterator();
+			Iterator<String> toIter = to.iterator();
+
+			List<Session> sessions = new ArrayList<>();
+
+			while (fromIter.hasNext() && toIter.hasNext()) {
+				String f = fromIter.next();
+				String t = toIter.next();
+
+				Triple<BadRequestResponse, Date, Date> check = checkDates(f, t);
+
+				if (check.getLeft() != null) {
+					return Pair.of(check.getLeft(), null);
+				}
+
+				sessions.addAll(elasticManager.readSessionsInRange(aid, null, Session.convertStringToTailoring(tailoring), check.getMiddle(), check.getRight()));
+			}
+
+			return Pair.of(null, sessions);
+		}
 	}
 
 	private Triple<BadRequestResponse, Date, Date> checkDates(String from, String to) {
