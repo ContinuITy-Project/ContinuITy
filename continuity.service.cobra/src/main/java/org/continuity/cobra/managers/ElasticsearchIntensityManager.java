@@ -16,11 +16,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.continuity.commons.utils.DateUtils;
 import org.continuity.dsl.WorkloadDescription;
 import org.continuity.dsl.timeseries.IntensityRecord;
 import org.continuity.dsl.timeseries.NumericVariable;
 import org.continuity.dsl.timeseries.StringVariable;
+import org.continuity.dsl.utils.DateUtils;
 import org.continuity.idpa.AppId;
 import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
