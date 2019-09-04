@@ -27,6 +27,13 @@ public class IntensityRecord {
 
 	private long timestamp;
 
+	public IntensityRecord() {
+	}
+
+	public IntensityRecord(long timestamp) {
+		this.timestamp = timestamp;
+	}
+
 	@JsonInclude(Include.NON_EMPTY)
 	@JsonDeserialize(as = TreeMap.class)
 	private Map<String, Long> intensity;

@@ -53,4 +53,8 @@ public class ApiFormats {
 		return dateMap;
 	}
 
+	public static String formatMillisAsDate(long millis) {
+		return DATE_FORMAT.format(new Date(millis));
+	}
+
 }

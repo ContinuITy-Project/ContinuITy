@@ -11,6 +11,7 @@ import org.continuity.dsl.elements.timeframe.ExtendingTimespec;
 import org.continuity.dsl.elements.timeframe.Timerange;
 import org.elasticsearch.index.query.QueryBuilder;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -28,6 +29,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 public interface TimeSpecification {
 
 	public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH-mm-ss-SSSX";
+
+	@JsonIgnore
+	default void setDefaultMinDate(LocalDateTime min) {
+	}
+
+	@JsonIgnore
+	default void setDefaultMaxDate(LocalDateTime max) {
+	}
 
 	/**
 	 * Returns whether the time specification applies to a given date.
@@ -102,6 +111,15 @@ public interface TimeSpecification {
 	List<Pair<QueryBuilder, Boolean>> toElasticQuery();
 
 	/**
+	 * Returns whether this specification requires postprocessing.
+	 *
+	 * @return {@code true} if postprocessing is required.
+	 */
+	default boolean requiresPostprocessing() {
+		return false;
+	}
+
+	/**
 	 * Transforms the time specification to queries that fetches missing dates from the database.
 	 *
 	 * @param applied
@@ -111,6 +129,26 @@ public interface TimeSpecification {
 	 * @return The queries.
 	 */
 	default Optional<QueryBuilder> toPostprocessElasticQuery(List<LocalDateTime> applied, Duration step) {
+		return Optional.empty();
+	}
+
+	@JsonIgnore
+	default Optional<LocalDateTime> getMaxDate() {
+		return Optional.empty();
+	}
+
+	@JsonIgnore
+	default Optional<Duration> getMaxEndAddition() {
+		return Optional.empty();
+	}
+
+	@JsonIgnore
+	default Optional<LocalDateTime> getMinDate() {
+		return Optional.empty();
+	}
+
+	@JsonIgnore
+	default Optional<Duration> getMaxBeginningAddition() {
 		return Optional.empty();
 	}
 

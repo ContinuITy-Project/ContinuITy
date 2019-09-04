@@ -2,6 +2,7 @@ package org.continuity.cobra.managers;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -59,6 +60,25 @@ public class ElasticsearchBehaviorManager extends ElasticsearchScrollingManager<
 		FieldSortBuilder sort = new FieldSortBuilder("timestamp").order(SortOrder.DESC);
 
 		List<MarkovBehaviorModel> models = readElements(aid, tailoring, QueryBuilders.matchAllQuery(), sort, 1, "for latest behavior model");
+		return ((models == null) || (models.size() == 0)) ? null : models.get(0);
+	}
+
+	/**
+	 * Reads the latest behavior model, i.e., the one with the greatest timestamp (before a given
+	 * timestamp).
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param before
+	 *            A timestamp before which the result must be.
+	 * @return The latest model or {@code null} if there is none.
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	public MarkovBehaviorModel readLatest(AppId aid, List<String> tailoring, long before) throws IOException, TimeoutException {
+		FieldSortBuilder sort = new FieldSortBuilder("timestamp").order(SortOrder.DESC);
+
+		List<MarkovBehaviorModel> models = readElements(aid, tailoring, QueryBuilders.rangeQuery("timestamp").lte(before), sort, 1, "for latest behavior model before " + new Date(before));
 		return ((models == null) || (models.size() == 0)) ? null : models.get(0);
 	}
 

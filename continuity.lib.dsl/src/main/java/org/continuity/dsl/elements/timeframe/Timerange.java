@@ -3,7 +3,6 @@ package org.continuity.dsl.elements.timeframe;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +26,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class Timerange implements TimeSpecification {
 
 	@JsonIgnore
-	private LocalDateTime now;
+	private LocalDateTime defaultFrom;
+
+	@JsonIgnore
+	private LocalDateTime defaultTo;
 
 	@JsonInclude(Include.NON_ABSENT)
 	private Optional<LocalDateTime> from = Optional.empty();
@@ -38,8 +40,14 @@ public class Timerange implements TimeSpecification {
 	@JsonInclude(Include.NON_ABSENT)
 	private Optional<Duration> duration = Optional.empty();
 
-	public Timerange() {
-		this.now = LocalDateTime.now();
+	@Override
+	public void setDefaultMinDate(LocalDateTime min) {
+		this.defaultFrom = min;
+	}
+
+	@Override
+	public void setDefaultMaxDate(LocalDateTime max) {
+		this.defaultTo = max;
 	}
 
 	public Optional<LocalDateTime> getFrom() {
@@ -86,24 +94,41 @@ public class Timerange implements TimeSpecification {
 
 	@Override
 	public boolean appliesToDate(LocalDateTime date) {
-		LocalDateTime from = this.from.orElse(now);
-		Duration duration = this.duration.orElse(Duration.of(1, ChronoUnit.YEARS));
-		LocalDateTime to = this.to.orElse(now.plus(Duration.of(1, ChronoUnit.YEARS)));
+		LocalDateTime from = effectiveFrom();
+		LocalDateTime to = effectiveTo();
 
-		return !from.isAfter(date) && !to.isBefore(date) && !from.plus(duration).isBefore(date);
+		return !from.isAfter(date) && !to.isBefore(date);
 	}
 
 	@Override
 	public List<Pair<QueryBuilder, Boolean>> toElasticQuery() {
-		LocalDateTime from = this.from.orElse(now);
-		Duration duration = this.duration.orElse(Duration.of(1, ChronoUnit.YEARS));
-		LocalDateTime to = this.to.orElse(now.plus(Duration.of(1, ChronoUnit.YEARS)));
+		return Collections.singletonList(Pair.of(QueryBuilders.rangeQuery(IntensityRecord.PATH_TIMESTAMP).gte(toMillis(effectiveFrom())).lte(toMillis(effectiveTo())), true));
+	}
 
-		if (from.plus(duration).isBefore(to)) {
-			to = from.plus(duration);
+	@Override
+	public Optional<LocalDateTime> getMaxDate() {
+		return Optional.of(effectiveTo());
+	}
+
+	@Override
+	public Optional<LocalDateTime> getMinDate() {
+		return Optional.of(effectiveFrom());
+	}
+
+	private LocalDateTime effectiveFrom() {
+		return this.from.orElse(defaultFrom);
+	}
+
+	private LocalDateTime effectiveTo() {
+		LocalDateTime from = effectiveFrom();
+
+		if (this.to.isPresent()) {
+			return this.to.get();
+		} else if (this.duration.isPresent()) {
+			return from.plus(this.duration.get());
+		} else {
+			return defaultTo;
 		}
-
-		return Collections.singletonList(Pair.of(QueryBuilders.rangeQuery(IntensityRecord.PATH_TIMESTAMP).gte(toMillis(from)).lte(toMillis(to)), true));
 	}
 
 	private long toMillis(LocalDateTime date) {

@@ -2,6 +2,7 @@ package org.continuity.cobra.controllers;
 
 import static org.continuity.api.rest.RestApi.Cobra.BehaviorModel.ROOT;
 import static org.continuity.api.rest.RestApi.Cobra.BehaviorModel.Paths.CREATE;
+import static org.continuity.api.rest.RestApi.Cobra.BehaviorModel.Paths.GET_LATEST;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -11,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
 import org.continuity.api.entities.artifact.markovbehavior.NormalDistribution;
 import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
 import org.continuity.api.entities.artifact.session.Session;
@@ -22,6 +24,7 @@ import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.cobra.extractor.RequestTailorer;
 import org.continuity.cobra.extractor.SessionUpdater;
 import org.continuity.cobra.extractor.SessionsToMarkovChainAggregator;
+import org.continuity.cobra.managers.ElasticsearchBehaviorManager;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
@@ -29,11 +32,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  *
@@ -50,10 +58,23 @@ public class BehaviorModelController {
 	private RestTemplate restTemplate;
 
 	@Autowired
-	private ElasticsearchTraceManager elasticManager;
+	private ElasticsearchTraceManager traceManager;
+
+	@Autowired
+	private ElasticsearchBehaviorManager behaviorManager;
 
 	@Autowired
 	private ConfigurationProvider<CobraConfiguration> configProvider;
+
+	@RequestMapping(value = GET_LATEST, method = RequestMethod.GET, produces = "application/json")
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<MarkovBehaviorModel> getLatestBehaviorModel(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, Long before) throws IOException, TimeoutException {
+		if (before == null) {
+			return ResponseEntity.ok(behaviorManager.readLatest(aid, Session.convertStringToTailoring(tailoring)));
+		} else {
+			return ResponseEntity.ok(behaviorManager.readLatest(aid, Session.convertStringToTailoring(tailoring), before));
+		}
+	}
 
 	@RequestMapping(value = CREATE, method = RequestMethod.POST, produces = "application/json")
 	public ResponseEntity<RelativeMarkovChain> getTailoredMarkovChainAsJson(@RequestBody SessionTailoringDescription description) throws IOException, TimeoutException {
@@ -76,7 +97,7 @@ public class BehaviorModelController {
 
 		LOGGER.info("Generating tailored Markov chain for app-id {}, root endpoint {}, version {}, and services {}...", aid, rootEndpoint, version, services);
 
-		List<TraceRecord> traces = elasticManager.readTraceRecords(aid, rootEndpoint, description.getSessionIds());
+		List<TraceRecord> traces = traceManager.readTraceRecords(aid, rootEndpoint, description.getSessionIds());
 
 		RequestTailorer tailorer = new RequestTailorer(aid, version, restTemplate, includePrePost);
 		SessionUpdater updater = new SessionUpdater(version, Long.MAX_VALUE, true, configProvider.getConfiguration(aid).getSessions().isIgnoreRedirects());

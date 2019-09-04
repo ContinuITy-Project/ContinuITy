@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeoutException;
@@ -78,64 +79,58 @@ public class MeasurementDataController {
 
 	@RequestMapping(value = GET, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> getTraces(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) String from, @RequestParam(required = false) String to)
+	public ResponseEntity<String> getTraces(@ApiIgnore @PathVariable("app-id") AppId aid, @RequestParam(required = false) List<String> from, @RequestParam(required = false) List<String> to)
 			throws IOException, TimeoutException {
-		Date dFrom = null;
 
-		if (from != null) {
-			try {
-				dFrom = ApiFormats.DATE_FORMAT.parse(from);
-			} catch (ParseException e) {
-				LOGGER.error("Cannot parse from date!", e);
-				return ResponseEntity.badRequest().body("Illegal date format of 'from' date: " + from);
-			}
-		}
-
-		Date dTo = null;
-
-		if (to != null) {
-			try {
-				dTo = ApiFormats.DATE_FORMAT.parse(to);
-			} catch (ParseException e) {
-				LOGGER.error("Cannot parse to date!", e);
-				return ResponseEntity.badRequest().body("Illegal date format of 'to' date: " + to);
-			}
-		}
-
-		List<Trace> traces = manager.readTraces(aid, null, dFrom, dTo);
-		String json = OPENxtraceUtils.serializeTraceListToJsonString(traces);
-
-		return ResponseEntity.ok(json);
+		return getTracesForVersion(aid, null, from, to);
 	}
 
 	@RequestMapping(value = GET_VERSION, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<String> getTracesForVersion(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version,
-			@RequestParam(required = false) String from, @RequestParam(required = false) String to) throws IOException, TimeoutException {
-		Date dFrom = null;
+			@RequestParam(required = false) List<String> from, @RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
 
-		if (from != null) {
-			try {
-				dFrom = ApiFormats.DATE_FORMAT.parse(from);
-			} catch (ParseException e) {
-				LOGGER.error("Cannot parse from date!", e);
-				return ResponseEntity.badRequest().body("Illegal date format of 'from' date: " + from);
+		if (((from == null) && (to != null)) || ((from != null) && (to == null)) || ((from != null) && (to != null) && (from.size() != to.size()))) {
+			return ResponseEntity.badRequest().body("'from' and 'to' need to have same length!");
+		}
+
+		List<Trace> traces;
+
+		if ((from == null) && (to == null)) {
+			traces = manager.readTraces(aid, version, null, null);
+		} else {
+			Iterator<String> fromIter = from.iterator();
+			Iterator<String> toIter = to.iterator();
+
+			traces = new ArrayList<>();
+
+			while (fromIter.hasNext() && toIter.hasNext()) {
+				String f = fromIter.next();
+				String t = toIter.next();
+
+				Date dFrom = null;
+
+				try {
+					dFrom = ApiFormats.DATE_FORMAT.parse(f);
+				} catch (ParseException e) {
+					LOGGER.error("Cannot parse from date!", e);
+					return ResponseEntity.badRequest().body("Illegal date format of 'from' date: " + f);
+				}
+
+				Date dTo = null;
+
+				try {
+					dTo = ApiFormats.DATE_FORMAT.parse(t);
+				} catch (ParseException e) {
+					LOGGER.error("Cannot parse to date!", e);
+					return ResponseEntity.badRequest().body("Illegal date format of 'to' date: " + t);
+				}
+
+				traces.addAll(manager.readTraces(aid, version, dFrom, dTo));
 			}
 		}
 
-		Date dTo = null;
-
-		if (to != null) {
-			try {
-				dTo = ApiFormats.DATE_FORMAT.parse(to);
-			} catch (ParseException e) {
-				LOGGER.error("Cannot parse to date!", e);
-				return ResponseEntity.badRequest().body("Illegal date format of 'to' date: " + to);
-			}
-		}
-
-		List<Trace> traces = manager.readTraces(aid, version, dFrom, dTo);
 		String json = OPENxtraceUtils.serializeTraceListToJsonString(traces);
 
 		return ResponseEntity.ok(json);
