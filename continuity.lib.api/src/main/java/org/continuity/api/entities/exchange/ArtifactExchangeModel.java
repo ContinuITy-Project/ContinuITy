@@ -55,6 +55,9 @@ public class ArtifactExchangeModel {
 	@JsonManagedReference
 	private final LoadTestResultLinks resultLinks = new LoadTestResultLinks(this);
 
+	@JsonInclude(Include.NON_NULL)
+	private String intensity;
+
 	public AppId getAppId() {
 		return appId;
 	}
@@ -97,6 +100,15 @@ public class ArtifactExchangeModel {
 		return resultLinks;
 	}
 
+	public String getIntensity() {
+		return intensity;
+	}
+
+	public ArtifactExchangeModel setIntensity(String intensity) {
+		this.intensity = intensity;
+		return this;
+	}
+
 	@JsonIgnore
 	public boolean isPresent(ArtifactType type) {
 		return type.isPresentInModel(this);
@@ -105,6 +117,10 @@ public class ArtifactExchangeModel {
 	public void merge(ArtifactExchangeModel other) {
 		if (this.getAppId() == null) {
 			this.setAppId(other.getAppId());
+		}
+
+		if (other.getIntensity() != null) {
+			this.setIntensity(other.getIntensity());
 		}
 
 		for (Field field : ArtifactExchangeModel.class.getDeclaredFields()) {

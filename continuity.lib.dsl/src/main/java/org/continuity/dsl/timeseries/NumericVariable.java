@@ -17,6 +17,14 @@ public class NumericVariable {
 
 	private double value;
 
+	public NumericVariable() {
+	}
+
+	public NumericVariable(String name, double value) {
+		this.name = name;
+		this.value = value;
+	}
+
 	public String getName() {
 		return name;
 	}

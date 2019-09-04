@@ -4,11 +4,14 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.dsl.elements.timeframe.ConditionalTimespec;
 import org.continuity.dsl.elements.timeframe.ExtendingTimespec;
 import org.continuity.dsl.elements.timeframe.Timerange;
+import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.dsl.utils.DateUtils;
 import org.elasticsearch.index.query.QueryBuilder;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -39,6 +42,26 @@ public interface TimeSpecification {
 	}
 
 	/**
+	 * Returns whether the time specification applies to a given intensity record.
+	 * 
+	 * @param record
+	 *            The intensity record (potentially including a context)
+	 * @return {@code true} if the specification applies to the passed record.
+	 */
+	default boolean appliesTo(IntensityRecord record) {
+		boolean appliesToDate = appliesToDate(DateUtils.fromEpochMillis(record.getTimestamp()));
+
+		boolean contextIsNull = record.getContext() == null;
+		boolean appliesToBoolean = contextIsNull || (record.getContext().getBoolean() == null) || appliesToBoolean(record.getContext().getBoolean());
+		boolean appliesToNumeric = contextIsNull || (record.getContext().getNumeric() == null)
+				|| record.getContext().getNumeric().stream().map(n -> appliesToNumerical(n.getName(), n.getValue())).reduce(Boolean::logicalAnd).orElse(true);
+		boolean appliesToString = contextIsNull || (record.getContext().getString() == null)
+				|| record.getContext().getString().stream().map(s -> appliesToString(s.getName(), s.getValue())).reduce(Boolean::logicalAnd).orElse(true);
+
+		return appliesToDate && appliesToBoolean && appliesToNumeric && appliesToString;
+	}
+
+	/**
 	 * Returns whether the time specification applies to a given date.
 	 *
 	 * @param date
@@ -66,7 +89,7 @@ public interface TimeSpecification {
 	 *            The boolean variables to check.
 	 * @return {@code true} if the passed variables fit to the specification.
 	 */
-	boolean appliesToBoolean(List<String> occurring);
+	boolean appliesToBoolean(Set<String> occurring);
 
 	/**
 	 * Returns whether the time specification applies to a given value of a string variable.

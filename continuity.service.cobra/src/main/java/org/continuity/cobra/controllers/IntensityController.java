@@ -1,6 +1,7 @@
 package org.continuity.cobra.controllers;
 
 import static org.continuity.api.rest.RestApi.Cobra.Intensity.ROOT;
+import static org.continuity.api.rest.RestApi.Cobra.Intensity.Paths.GET_FOR_ID;
 import static org.continuity.api.rest.RestApi.Cobra.Intensity.Paths.UPLOAD;
 
 import java.io.IOException;
@@ -15,10 +16,12 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.ApiFormats;
+import org.continuity.api.entities.artifact.ForecastIntensityRecord;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.cobra.managers.ElasticsearchIntensityManager;
+import org.continuity.commons.storage.MixedStorage;
 import org.continuity.dsl.timeseries.IntensityRecord;
 import org.continuity.idpa.AppId;
 import org.slf4j.Logger;
@@ -51,6 +54,20 @@ public class IntensityController {
 
 	@Autowired
 	private ElasticsearchIntensityManager elasticManager;
+
+	@Autowired
+	private MixedStorage<List<ForecastIntensityRecord>> intensityStorage;
+
+	@RequestMapping(value = GET_FOR_ID, method = RequestMethod.GET)
+	public ResponseEntity<List<ForecastIntensityRecord>> getForId(@PathVariable String id) throws IOException {
+		List<ForecastIntensityRecord> records = intensityStorage.get(id);
+
+		if (records == null) {
+			return ResponseEntity.notFound().build();
+		} else {
+			return ResponseEntity.ok(records);
+		}
+	}
 
 	@RequestMapping(value = UPLOAD, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),

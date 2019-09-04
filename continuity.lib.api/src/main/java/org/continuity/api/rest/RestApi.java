@@ -700,13 +700,18 @@ public class RestApi {
 
 			public static final String ROOT = "/intensitiy";
 
-			/** {@value #ROOT}/{app-id}/{tailoring}/{group} */
+			/** {@value #ROOT}/{id} */
+			public static final RestEndpoint GET_FOR_ID = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_FOR_ID, RequestMethod.GET);
+
+			/** {@value #ROOT}/{app-id:.+}/{tailoring:.+}/{group} */
 			public static final RestEndpoint UPLOAD = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPLOAD, RequestMethod.POST);
 
 			private Intensity() {
 			}
 
 			public static class Paths {
+
+				public static final String GET_FOR_ID = "/{id}";
 
 				public static final String UPLOAD = "/{app-id:.+}/{tailoring:.+}/{group}";
 
@@ -719,47 +724,26 @@ public class RestApi {
 
 	}
 
-	/**
-	 * REST API of the Forecast service.
-	 *
-	 * @author Alper Hidiroglu
-	 *
-	 */
-	public static class Forecast {
+	public static class Forecastic {
 
-		public static final String SERVICE_NAME = "forecast";
+		public static final String SERVICE_NAME = "forecastic";
 
-		private Forecast() {
+		public static final String ROOT = "/";
+
+		private Forecastic() {
 		}
 
-		public static class ForecastResult {
-			public static final String ROOT = "/forecastbundle";
+		/** {@value #ROOT}/forecast */
+		public static final RestEndpoint FORECAST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.FORECAST, RequestMethod.POST);
 
-			/** {@value #ROOT}/{id} */
-			public static final RestEndpoint GET = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET, RequestMethod.GET);
+		public static class Paths {
 
-			public static class Paths {
+			public static final String FORECAST = "/forecast";
 
-				public static final String GET = "/{id}";
-
-				private Paths() {
-				}
+			private Paths() {
 			}
 		}
-		public static class Context {
-			public static final String ROOT = "/context";
 
-			/** {@value #ROOT}/submit */
-			public static final RestEndpoint SUBMIT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.SUBMIT, RequestMethod.GET);
-
-			public static class Paths {
-
-				public static final String SUBMIT = "/submit";
-
-				private Paths() {
-				}
-			}
-		}
 	}
 
 	/**

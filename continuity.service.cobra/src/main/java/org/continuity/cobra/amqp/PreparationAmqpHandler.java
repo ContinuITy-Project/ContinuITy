@@ -9,12 +9,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
+import org.continuity.api.entities.artifact.ForecastIntensityRecord;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.TaskDescription;
@@ -30,11 +33,17 @@ import org.continuity.api.rest.RestApi;
 import org.continuity.api.rest.RestEndpoint;
 import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.entities.ForecastTimerange;
+import org.continuity.cobra.entities.ForecasticInput;
+import org.continuity.cobra.entities.ForecasticResult;
+import org.continuity.cobra.entities.TimedContextRecord;
+import org.continuity.cobra.entities.TypeAndProperties;
 import org.continuity.cobra.managers.ElasticsearchIntensityManager;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
+import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.utils.TailoringUtils;
 import org.continuity.dsl.WorkloadDescription;
+import org.continuity.dsl.schema.IgnoreByDefaultValue;
 import org.continuity.dsl.timeseries.IntensityRecord;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
@@ -44,6 +53,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 @Component
 public class PreparationAmqpHandler {
@@ -52,6 +62,9 @@ public class PreparationAmqpHandler {
 
 	@Autowired
 	private AmqpTemplate amqpTemplate;
+
+	@Autowired
+	private RestTemplate restTemplate;
 
 	@Autowired
 	private ElasticsearchSessionManager elasticSessionManager;
@@ -64,6 +77,9 @@ public class PreparationAmqpHandler {
 
 	@Autowired
 	private ConfigurationProvider<CobraConfiguration> configProvider;
+
+	@Autowired
+	private MixedStorage<List<ForecastIntensityRecord>> intensityStorage;
 
 	@RabbitListener(queues = RabbitMqConfig.TASK_CREATE_QUEUE_NAME)
 	public void prepareInitialData(TaskDescription task) throws IOException, TimeoutException {
@@ -101,7 +117,9 @@ public class PreparationAmqpHandler {
 			break;
 		}
 
-		// TODO: add intensity to report.
+		if (report.isSuccessful()) {
+			report.getResult().setIntensity(doForecast(task, ranges, intensities));
+		}
 
 		sendReport(report);
 	}
@@ -117,8 +135,7 @@ public class PreparationAmqpHandler {
 			List<LocalDateTime> appliedDates = intensities.stream().map(IntensityRecord::getTimestamp).map(t -> Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()).toLocalDateTime())
 					.collect(Collectors.toList());
 
-			List<IntensityRecord> additional = elasticIntensityManager.readPostprocessing(aid, tailoring, description, appliedDates,
-					resolution);
+			List<IntensityRecord> additional = elasticIntensityManager.readPostprocessing(aid, tailoring, description, appliedDates, resolution);
 
 			intensities.addAll(additional);
 			intensities.sort((a, b) -> Long.compare(a.getTimestamp(), b.getTimestamp()));
@@ -231,6 +248,52 @@ public class PreparationAmqpHandler {
 		}
 
 		return reqBuilder.withoutProtocol().get();
+	}
+
+	private String doForecast(TaskDescription task, List<ForecastTimerange> ranges, List<IntensityRecord> intensities) {
+		LOGGER.info("Task {}: Doing forecast...", task.getTaskId());
+
+		CobraConfiguration config = configProvider.getConfiguration(task.getAppId());
+		WorkloadDescription description = task.getWorkloadDescription();
+
+		IgnoreByDefaultValue ignore = config.getContext().ignoreByDefault();
+
+		for (IntensityRecord record : intensities) {
+			if (record.getContext() != null) {
+				if (record.getContext().getNumeric() != null) {
+					record.getContext().getNumeric().removeIf(v -> ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
+				}
+
+				if (record.getContext().getString() != null) {
+					record.getContext().getString().removeIf(v -> ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
+				}
+
+				if (record.getContext().getBoolean() != null) {
+					record.getContext().getBoolean().removeIf(v -> ignore.ignore(config.getContext().getVariables().get(v).getIgnoreByDefault()));
+				}
+			}
+		}
+
+		description.adjustContext(intensities);
+
+		ForecasticInput input = new ForecasticInput().setAppId(task.getAppId()).setTailoring(extractServices(task)).setApproach(task.getOptions().getForecastApproachOrDefault());
+
+		input.setRanges(ranges).setResolution(config.getIntensity().getResolution().toMillis());
+
+		input.setContext(intensities.stream().map(TimedContextRecord::fromIntensity).filter(Objects::nonNull).collect(Collectors.toList()));
+
+		input.setAggregation(TypeAndProperties.fromTypedProperties(description.getAggregation()));
+
+		input.setAdjustments(
+				Optional.ofNullable(description.getAdjustments()).map(l -> l.stream().map(TypeAndProperties::fromTypedProperties).collect(Collectors.toList())).orElse(Collections.emptyList()));
+
+		ForecasticResult result = restTemplate.postForObject(RestApi.Forecastic.FORECAST.requestUrl().get(), input, ForecasticResult.class);
+		LOGGER.info("Task {}: Received {} intensity records from forecastic.", task.getTaskId(), result.getIntensities().size());
+
+		String id = intensityStorage.put(result.getIntensities(), task.getAppId(), task.isLongTermUse());
+		LOGGER.info("Task {}: Stored intensity records to storage with ID {}.", task.getTaskId(), id);
+
+		return RestApi.Cobra.Intensity.GET_FOR_ID.requestUrl(id).withoutProtocol().get();
 	}
 
 	private void sendReport(TaskReport report) {

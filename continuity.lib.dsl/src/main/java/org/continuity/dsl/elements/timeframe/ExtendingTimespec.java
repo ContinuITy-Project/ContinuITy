@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -63,7 +64,7 @@ public class ExtendingTimespec implements TimeSpecification {
 	}
 
 	@Override
-	public boolean appliesToBoolean(List<String> occurring) {
+	public boolean appliesToBoolean(Set<String> occurring) {
 		return true;
 	}
 

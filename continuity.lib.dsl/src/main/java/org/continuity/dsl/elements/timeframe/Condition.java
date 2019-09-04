@@ -1,8 +1,8 @@
 package org.continuity.dsl.elements.timeframe;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.continuity.dsl.ContextValue;
 import org.continuity.dsl.timeseries.IntensityRecord;
@@ -68,7 +68,7 @@ public class Condition {
 		}
 	}
 
-	public boolean appliesToBoolean(String variable, List<String> occurring) {
+	public boolean appliesToBoolean(String variable, Set<String> occurring) {
 		if (!is.isPresent() || !is.get().isBoolean()) {
 			return true;
 		}

@@ -1,5 +1,6 @@
-package org.continuity.commons.utils;
+package org.continuity.dsl.utils;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -22,6 +23,18 @@ public class DateUtils {
 	 */
 	public static long toEpochMillis(LocalDateTime datetime) {
 		return datetime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+	}
+
+	/**
+	 * Gets a {@link LocalDateTime} for the given epoch milliseconds using the system default time
+	 * zone.
+	 * 
+	 * @param millis
+	 *            The epoch milliseconds.
+	 * @return The date.
+	 */
+	public static LocalDateTime fromEpochMillis(long millis) {
+		return Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
 
 }
