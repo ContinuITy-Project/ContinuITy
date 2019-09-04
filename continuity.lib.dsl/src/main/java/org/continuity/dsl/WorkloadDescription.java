@@ -5,11 +5,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import org.continuity.dsl.elements.ContextSpecification;
 import org.continuity.dsl.elements.TimeSpecification;
 import org.continuity.dsl.elements.TypedProperties;
+import org.continuity.dsl.timeseries.IntensityRecord;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -171,6 +173,24 @@ public class WorkloadDescription {
 		for (TimeSpecification spec : timeframe) {
 			spec.setDefaultMinDate(now);
 			spec.setDefaultMaxDate(now.plus(DEFAULT_DURATION));
+		}
+	}
+
+	/**
+	 * Adjusts the context as specified in {@link #context}.
+	 *
+	 * @param intensities
+	 *            The intensity record to adjust.
+	 */
+	public void adjustContext(List<IntensityRecord> intensities) {
+		if (context == null) {
+			return;
+		}
+
+		for (Entry<String, List<ContextSpecification>> entry : context.entrySet()) {
+			for (ContextSpecification spec : entry.getValue()) {
+				spec.adjustContext(intensities, entry.getKey());
+			}
 		}
 	}
 

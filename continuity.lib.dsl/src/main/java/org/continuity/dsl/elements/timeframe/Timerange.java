@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.dsl.elements.TimeSpecification;
@@ -83,7 +84,7 @@ public class Timerange implements TimeSpecification {
 	}
 
 	@Override
-	public boolean appliesToBoolean(List<String> occurring) {
+	public boolean appliesToBoolean(Set<String> occurring) {
 		return true;
 	}
 
