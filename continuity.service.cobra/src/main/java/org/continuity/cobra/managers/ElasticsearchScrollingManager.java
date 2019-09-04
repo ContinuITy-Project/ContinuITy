@@ -57,6 +57,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
  */
 public abstract class ElasticsearchScrollingManager<T> {
 
+	protected static final int DEFAULT_SIZE = 10000; // is the maximum
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchScrollingManager.class);
 
 	private static final long SCROLL_MINUTES = 1;
@@ -129,10 +131,28 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @throws IOException
 	 */
 	protected void storeElements(AppId aid, List<String> tailoring, Collection<T> elements, boolean waitFor) throws IOException {
+		storeElements(aid, tailoring, elements, waitFor, false);
+	}
+
+	/**
+	 * Stores the elements if absent using the defined tailoring.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param elements
+	 * @param waitFor
+	 *            Whether the request should wait until the data is indexed.
+	 * @throws IOException
+	 */
+	protected void storeElementsIfAbsent(AppId aid, List<String> tailoring, Collection<T> elements, boolean waitFor) throws IOException {
+		storeElements(aid, tailoring, elements, waitFor, true);
+	}
+
+	private void storeElements(AppId aid, List<String> tailoring, Collection<T> elements, boolean waitFor, boolean create) throws IOException {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 		initIndex(index);
 
-		doBulkRequest(index, elements, waitFor, (request, element, json, id) -> request.add(new IndexRequest(index).source(json, XContentType.JSON).id(id)));
+		doBulkRequest(index, elements, waitFor, (request, element, json, id) -> request.add(new IndexRequest(index).source(json, XContentType.JSON).id(id).create(create)));
 	}
 
 	/**
@@ -255,7 +275,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @throws TimeoutException
 	 */
 	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, String message) throws IOException, TimeoutException {
-		return readElements(aid, tailoring, query, null, 10000, message); // 10000 is the maximum
+		return readElements(aid, tailoring, query, null, DEFAULT_SIZE, message);
 	}
 
 	/**

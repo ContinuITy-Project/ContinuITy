@@ -14,7 +14,9 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.continuity.commons.utils.DateUtils;
 import org.continuity.dsl.WorkloadDescription;
 import org.continuity.dsl.timeseries.IntensityRecord;
 import org.continuity.dsl.timeseries.NumericVariable;
@@ -31,6 +33,8 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,6 +154,28 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	}
 
 	/**
+	 * Fills the intensities in the given time range. Will wait until the data can be queried.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param tailoring
+	 * @param from
+	 *            The lower bound of the time range.
+	 * @param to
+	 *            The upper bound of the time range.
+	 * @param resolution
+	 *            The step width between two intensity records.
+	 * @throws IOException
+	 */
+	public void fillIntensities(AppId aid, List<String> tailoring, LocalDateTime from, LocalDateTime to, Duration resolution) throws IOException {
+		long numIntensities = ((DateUtils.toEpochMillis(to) - DateUtils.toEpochMillis(from)) / resolution.toMillis()) + 1;
+
+		List<IntensityRecord> intensities = Stream.iterate(from, d -> d.plus(resolution)).limit(numIntensities).map(DateUtils::toEpochMillis).map(IntensityRecord::new).collect(Collectors.toList());
+
+		storeElementsIfAbsent(aid, tailoring, intensities, true);
+	}
+
+	/**
 	 * Reads the intensities between two dates.
 	 *
 	 * @param aid
@@ -163,8 +189,8 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	public List<IntensityRecord> readIntensitiesInRange(AppId aid, List<String> tailoring, Date from, Date to) throws IOException, TimeoutException {
-		return readIntensitiesInRange(aid, tailoring, from.getTime(), to.getTime());
+	public List<IntensityRecord> readIntensitiesInRange(AppId aid, List<String> tailoring, LocalDateTime from, LocalDateTime to) throws IOException, TimeoutException {
+		return readIntensitiesInRange(aid, tailoring, DateUtils.toEpochMillis(from), DateUtils.toEpochMillis(to));
 	}
 
 	/**
@@ -187,29 +213,30 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	}
 
 	/**
-	 * Reads the intensities defined by a {@link Context}.
+	 * Reads the intensities defined by a {@link WorkloadDescription}.
 	 *
 	 * @param aid
 	 *            The app-id.
 	 * @param tailoring
 	 * @param workloadDescription
-	 *            The context.
+	 *            The workload description.
 	 * @return The found intensities.
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	public List<IntensityRecord> readDescripedIntensities(AppId aid, List<String> tailoring, WorkloadDescription workloadDescription) throws IOException, TimeoutException {
-		return readElements(aid, tailoring, workloadDescription.toElasticQuery(), "for passed context");
+	public List<IntensityRecord> readDescribedIntensities(AppId aid, List<String> tailoring, WorkloadDescription workloadDescription) throws IOException, TimeoutException {
+		FieldSortBuilder sort = new FieldSortBuilder("timestamp").order(SortOrder.ASC);
+		return readElements(aid, tailoring, workloadDescription.toElasticQuery(), sort, DEFAULT_SIZE, "for passed workload description");
 	}
 
 	/**
-	 * Reads the intensities described by the postprocessing of a {@link Context}.
+	 * Reads the intensities described by the postprocessing of a {@link WorkloadDescription}.
 	 *
 	 * @param aid
 	 *            The app-id.
 	 * @param tailoring
 	 * @param workloadDescription
-	 *            The context.
+	 *            The workload description.
 	 * @param applied
 	 *            The dates that are selected.
 	 * @param step
@@ -220,7 +247,7 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 */
 	public List<IntensityRecord> readPostprocessing(AppId aid, List<String> tailoring, WorkloadDescription workloadDescription, List<LocalDateTime> applied, Duration step)
 			throws IOException, TimeoutException {
-		return readElements(aid, tailoring, workloadDescription.toPostprocessingElasticQuery(applied, step), "for postprocessing of passed context");
+		return readElements(aid, tailoring, workloadDescription.toPostprocessingElasticQuery(applied, step), "for postprocessing of passed workload description");
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package org.continuity.dsl;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -26,6 +28,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({ "timeframe", "context", "aggregation", "adjustments" })
 public class WorkloadDescription {
 
+	private static final Duration DEFAULT_DURATION = Duration.of(265, ChronoUnit.DAYS);
+
+	@JsonIgnore
+	private LocalDateTime now;
+
 	@JsonInclude(Include.NON_EMPTY)
 	private List<TimeSpecification> timeframe;
 
@@ -37,6 +44,10 @@ public class WorkloadDescription {
 
 	@JsonInclude(Include.NON_EMPTY)
 	private List<TypedProperties> adjustments;
+
+	public WorkloadDescription() {
+		this.now = LocalDateTime.now();
+	}
 
 	public List<TimeSpecification> getTimeframe() {
 		return timeframe;
@@ -76,6 +87,8 @@ public class WorkloadDescription {
 	 * @return The query.
 	 */
 	public QueryBuilder toElasticQuery() {
+		setDefaultDates();
+
 		BoolQueryBuilder query = QueryBuilders.boolQuery();
 
 		timeframe.stream().map(TimeSpecification::toElasticQuery).flatMap(List::stream).forEach(p -> {
@@ -89,6 +102,10 @@ public class WorkloadDescription {
 		return query;
 	}
 
+	public boolean requiresPostprocessing() {
+		return timeframe.stream().map(TimeSpecification::requiresPostprocessing).reduce(Boolean::logicalOr).orElse(false);
+	}
+
 	/**
 	 * Transforms the {@code when} specification to an elasticsearch query that should be submitted
 	 * based on the initially retrieved dates.
@@ -100,6 +117,8 @@ public class WorkloadDescription {
 	 * @return The query.
 	 */
 	public QueryBuilder toPostprocessingElasticQuery(List<LocalDateTime> applied, Duration step) {
+		setDefaultDates();
+
 		BoolQueryBuilder query = QueryBuilders.boolQuery();
 
 		for (TimeSpecification timespec : timeframe) {
@@ -111,6 +130,48 @@ public class WorkloadDescription {
 		}
 
 		return query;
+	}
+
+	/**
+	 * Gets the minimum date specified.
+	 *
+	 * @return
+	 */
+	@JsonIgnore
+	public LocalDateTime getMinDate() {
+		setDefaultDates();
+
+		LocalDateTime minDate = timeframe.stream().map(TimeSpecification::getMinDate).filter(Optional::isPresent).map(Optional::get).reduce((a, b) -> a.isBefore(b) ? a : b).orElse(now);
+
+		Duration addition = timeframe.stream().map(TimeSpecification::getMaxBeginningAddition).filter(Optional::isPresent).map(Optional::get).reduce((a, b) -> a.minus(b).toMillis() > 0 ? a : b)
+				.orElse(Duration.ZERO);
+
+		return minDate.minus(addition);
+	}
+
+	/**
+	 * Gets the maximum date specified.
+	 *
+	 * @return
+	 */
+	@JsonIgnore
+	public LocalDateTime getMaxDate() {
+		setDefaultDates();
+
+		LocalDateTime minDate = timeframe.stream().map(TimeSpecification::getMaxDate).filter(Optional::isPresent).map(Optional::get).reduce((a, b) -> a.isAfter(b) ? a : b)
+				.orElse(now.plus(DEFAULT_DURATION));
+
+		Duration addition = timeframe.stream().map(TimeSpecification::getMaxEndAddition).filter(Optional::isPresent).map(Optional::get).reduce((a, b) -> a.minus(b).toMillis() > 0 ? a : b)
+				.orElse(Duration.ZERO);
+
+		return minDate.plus(addition);
+	}
+
+	private void setDefaultDates() {
+		for (TimeSpecification spec : timeframe) {
+			spec.setDefaultMinDate(now);
+			spec.setDefaultMaxDate(now.plus(DEFAULT_DURATION));
+		}
 	}
 
 }
