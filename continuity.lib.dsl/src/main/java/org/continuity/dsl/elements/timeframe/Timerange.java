@@ -11,6 +11,7 @@ import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.dsl.elements.TimeSpecification;
 import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.dsl.utils.DateUtils;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
@@ -102,8 +103,9 @@ public class Timerange implements TimeSpecification {
 	}
 
 	@Override
-	public List<Pair<QueryBuilder, Boolean>> toElasticQuery() {
-		return Collections.singletonList(Pair.of(QueryBuilders.rangeQuery(IntensityRecord.PATH_TIMESTAMP).gte(toMillis(effectiveFrom())).lte(toMillis(effectiveTo())), true));
+	public List<Pair<QueryBuilder, Boolean>> toElasticQuery(ZoneId timeZone) {
+		return Collections.singletonList(
+				Pair.of(QueryBuilders.rangeQuery(IntensityRecord.PATH_TIMESTAMP).gte(DateUtils.toEpochMillis(effectiveFrom(), timeZone)).lte(DateUtils.toEpochMillis(effectiveTo(), timeZone)), true));
 	}
 
 	@Override
@@ -130,10 +132,6 @@ public class Timerange implements TimeSpecification {
 		} else {
 			return defaultTo;
 		}
-	}
-
-	private long toMillis(LocalDateTime date) {
-		return date.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 
 }

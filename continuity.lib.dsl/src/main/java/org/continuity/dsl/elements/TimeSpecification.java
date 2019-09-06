@@ -2,6 +2,7 @@ package org.continuity.dsl.elements;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,13 +44,15 @@ public interface TimeSpecification {
 
 	/**
 	 * Returns whether the time specification applies to a given intensity record.
-	 * 
+	 *
 	 * @param record
 	 *            The intensity record (potentially including a context)
+	 * @param timeZone
+	 *            The time zone in which the timestamps should be evaluated.
 	 * @return {@code true} if the specification applies to the passed record.
 	 */
-	default boolean appliesTo(IntensityRecord record) {
-		boolean appliesToDate = appliesToDate(DateUtils.fromEpochMillis(record.getTimestamp()));
+	default boolean appliesTo(IntensityRecord record, ZoneId timeZone) {
+		boolean appliesToDate = appliesToDate(DateUtils.fromEpochMillis(record.getTimestamp(), timeZone));
 
 		boolean contextIsNull = record.getContext() == null;
 		boolean appliesToBoolean = contextIsNull || (record.getContext().getBoolean() == null) || appliesToBoolean(record.getContext().getBoolean());
@@ -127,11 +130,14 @@ public interface TimeSpecification {
 	/**
 	 * Transforms the time specification to elasticsearch queries.
 	 *
+	 * @param timeZone
+	 *            The time zone.
+	 *
 	 * @return The queries as pair of the query it self and a boolean indicating whether the query
 	 *         returned by {@link #toElasticQuery()} should be treated positively ({@code true};
 	 *         {@code must}) or negatively ({@code false}; {@code must_not}).
 	 */
-	List<Pair<QueryBuilder, Boolean>> toElasticQuery();
+	List<Pair<QueryBuilder, Boolean>> toElasticQuery(ZoneId timeZone);
 
 	/**
 	 * Returns whether this specification requires postprocessing.

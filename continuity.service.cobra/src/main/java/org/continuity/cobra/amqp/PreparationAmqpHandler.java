@@ -125,11 +125,13 @@ public class PreparationAmqpHandler {
 	}
 
 	private List<IntensityRecord> readIntensities(AppId aid, List<String> tailoring, WorkloadDescription description) throws IOException, TimeoutException {
-		Duration resolution = configProvider.getConfiguration(aid).getIntensity().getResolution();
+		CobraConfiguration config = configProvider.getConfiguration(aid);
+		Duration resolution = config.getIntensity().getResolution();
+		ZoneId timeZone = config.getTimeZone();
 
-		elasticIntensityManager.fillIntensities(aid, tailoring, description.getMinDate(), description.getMaxDate(), resolution);
+		elasticIntensityManager.fillIntensities(aid, tailoring, description.getMinDate(), description.getMaxDate(), resolution, timeZone);
 
-		List<IntensityRecord> intensities = elasticIntensityManager.readDescribedIntensities(aid, tailoring, description);
+		List<IntensityRecord> intensities = elasticIntensityManager.readDescribedIntensities(aid, tailoring, description, timeZone);
 
 		if (description.requiresPostprocessing()) {
 			List<LocalDateTime> appliedDates = intensities.stream().map(IntensityRecord::getTimestamp).map(t -> Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()).toLocalDateTime())
@@ -274,7 +276,7 @@ public class PreparationAmqpHandler {
 			}
 		}
 
-		description.adjustContext(intensities);
+		description.adjustContext(intensities, config.getTimeZone());
 
 		ForecasticInput input = new ForecasticInput().setAppId(task.getAppId()).setTailoring(extractServices(task)).setApproach(task.getOptions().getForecastApproachOrDefault());
 

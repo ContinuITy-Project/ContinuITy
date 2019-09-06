@@ -95,7 +95,7 @@ public class ExtendingTimespec implements TimeSpecification {
 	}
 
 	@Override
-	public List<Pair<QueryBuilder, Boolean>> toElasticQuery() {
+	public List<Pair<QueryBuilder, Boolean>> toElasticQuery(ZoneId timeZone) {
 		return Collections.emptyList();
 	}
 
