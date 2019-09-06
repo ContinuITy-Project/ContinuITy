@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -165,12 +166,15 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 *            The upper bound of the time range.
 	 * @param resolution
 	 *            The step width between two intensity records.
+	 * @param timeZone
+	 *            The time zone of the dates.
 	 * @throws IOException
 	 */
-	public void fillIntensities(AppId aid, List<String> tailoring, LocalDateTime from, LocalDateTime to, Duration resolution) throws IOException {
-		long numIntensities = ((DateUtils.toEpochMillis(to) - DateUtils.toEpochMillis(from)) / resolution.toMillis()) + 1;
+	public void fillIntensities(AppId aid, List<String> tailoring, LocalDateTime from, LocalDateTime to, Duration resolution, ZoneId timeZone) throws IOException {
+		long numIntensities = ((DateUtils.toEpochMillis(to, timeZone) - DateUtils.toEpochMillis(from, timeZone)) / resolution.toMillis()) + 1;
 
-		List<IntensityRecord> intensities = Stream.iterate(from, d -> d.plus(resolution)).limit(numIntensities).map(DateUtils::toEpochMillis).map(IntensityRecord::new).collect(Collectors.toList());
+		List<IntensityRecord> intensities = Stream.iterate(from, d -> d.plus(resolution)).limit(numIntensities).map(d -> DateUtils.toEpochMillis(d, timeZone)).map(IntensityRecord::new)
+				.collect(Collectors.toList());
 
 		storeElementsIfAbsent(aid, tailoring, intensities, true);
 	}
@@ -185,12 +189,14 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 *            The lower bound.
 	 * @param to
 	 *            The upper bound.
+	 * @param timeZone
+	 *            The time zone of the dates.
 	 * @return The found intensities.
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	public List<IntensityRecord> readIntensitiesInRange(AppId aid, List<String> tailoring, LocalDateTime from, LocalDateTime to) throws IOException, TimeoutException {
-		return readIntensitiesInRange(aid, tailoring, DateUtils.toEpochMillis(from), DateUtils.toEpochMillis(to));
+	public List<IntensityRecord> readIntensitiesInRange(AppId aid, List<String> tailoring, LocalDateTime from, LocalDateTime to, ZoneId timeZone) throws IOException, TimeoutException {
+		return readIntensitiesInRange(aid, tailoring, DateUtils.toEpochMillis(from, timeZone), DateUtils.toEpochMillis(to, timeZone));
 	}
 
 	/**
@@ -220,13 +226,15 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 * @param tailoring
 	 * @param workloadDescription
 	 *            The workload description.
+	 * @param timeZone
+	 *            The time zone of the dates.
 	 * @return The found intensities.
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	public List<IntensityRecord> readDescribedIntensities(AppId aid, List<String> tailoring, WorkloadDescription workloadDescription) throws IOException, TimeoutException {
+	public List<IntensityRecord> readDescribedIntensities(AppId aid, List<String> tailoring, WorkloadDescription workloadDescription, ZoneId timeZone) throws IOException, TimeoutException {
 		FieldSortBuilder sort = new FieldSortBuilder("timestamp").order(SortOrder.ASC);
-		return readElements(aid, tailoring, workloadDescription.toElasticQuery(), sort, DEFAULT_SIZE, "for passed workload description");
+		return readElements(aid, tailoring, workloadDescription.toElasticQuery(timeZone), sort, DEFAULT_SIZE, "for passed workload description");
 	}
 
 	/**

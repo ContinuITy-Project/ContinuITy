@@ -1,6 +1,7 @@
 package org.continuity.api.entities.config.cobra;
 
 import java.time.Duration;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -9,6 +10,9 @@ import org.continuity.api.entities.config.ServiceConfiguration;
 import org.continuity.dsl.schema.ContextSchema;
 import org.continuity.idpa.AppId;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
 /**
@@ -36,6 +40,11 @@ public class CobraConfiguration implements ServiceConfiguration {
 	private ClusteringConfiguration clustering = new ClusteringConfiguration();
 
 	private IntensityConfiguration intensity = new IntensityConfiguration();
+
+	@JsonProperty("time-zone")
+	@JsonSerialize(converter = ZoneIdToStringConverter.class)
+	@JsonDeserialize(converter = StringToZoneIdConverter.class)
+	private ZoneId timeZone = ZoneId.systemDefault();
 
 	@Override
 	public String getService() {
@@ -157,6 +166,14 @@ public class CobraConfiguration implements ServiceConfiguration {
 		this.intensity = intensity;
 	}
 
+	public ZoneId getTimeZone() {
+		return timeZone;
+	}
+
+	public void setTimeZone(ZoneId timeZone) {
+		this.timeZone = timeZone;
+	}
+
 	@Override
 	public void init(AppId aid) {
 		setAppId(aid);
@@ -176,6 +193,25 @@ public class CobraConfiguration implements ServiceConfiguration {
 		@Override
 		public Duration convert(String value) {
 			return Duration.parse(value);
+		}
+
+	}
+
+	public static class ZoneIdToStringConverter extends StdConverter<ZoneId, String> {
+
+		@Override
+		public String convert(ZoneId value) {
+			value.toString();
+			return Objects.toString(value);
+		}
+
+	}
+
+	public static class StringToZoneIdConverter extends StdConverter<String, ZoneId> {
+
+		@Override
+		public ZoneId convert(String value) {
+			return ZoneId.of(value);
 		}
 
 	}

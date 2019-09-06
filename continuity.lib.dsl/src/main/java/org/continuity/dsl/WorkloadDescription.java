@@ -2,6 +2,7 @@ package org.continuity.dsl;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -86,14 +87,17 @@ public class WorkloadDescription {
 	/**
 	 * Transforms the {@code timeframe} specification to an elasticsearch query.
 	 *
+	 * @param timeZone
+	 *            The time zone.
+	 *
 	 * @return The query.
 	 */
-	public QueryBuilder toElasticQuery() {
+	public QueryBuilder toElasticQuery(ZoneId timeZone) {
 		setDefaultDates();
 
 		BoolQueryBuilder query = QueryBuilders.boolQuery();
 
-		timeframe.stream().map(TimeSpecification::toElasticQuery).flatMap(List::stream).forEach(p -> {
+		timeframe.stream().map(ts -> ts.toElasticQuery(timeZone)).flatMap(List::stream).forEach(p -> {
 			if (p.getRight()) {
 				query.must(p.getLeft());
 			} else {
@@ -181,15 +185,17 @@ public class WorkloadDescription {
 	 *
 	 * @param intensities
 	 *            The intensity record to adjust.
+	 * @param timeZone
+	 *            The time zone in which the timestamps should be evaluated.
 	 */
-	public void adjustContext(List<IntensityRecord> intensities) {
+	public void adjustContext(List<IntensityRecord> intensities, ZoneId timeZone) {
 		if (context == null) {
 			return;
 		}
 
 		for (Entry<String, List<ContextSpecification>> entry : context.entrySet()) {
 			for (ContextSpecification spec : entry.getValue()) {
-				spec.adjustContext(intensities, entry.getKey());
+				spec.adjustContext(intensities, timeZone, entry.getKey());
 			}
 		}
 	}
