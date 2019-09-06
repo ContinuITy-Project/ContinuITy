@@ -1,6 +1,7 @@
 package org.continuity.dsl.elements.timeframe;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -75,7 +76,7 @@ public class ConditionalTimespec implements TimeSpecification {
 	}
 
 	@Override
-	public List<Pair<QueryBuilder, Boolean>> toElasticQuery() {
+	public List<Pair<QueryBuilder, Boolean>> toElasticQuery(ZoneId timeZone) {
 		if ((conditions == null) || conditions.isEmpty()) {
 			return Collections.emptyList();
 		}

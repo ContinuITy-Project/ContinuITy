@@ -1,5 +1,6 @@
 package org.continuity.dsl.elements;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -74,9 +75,9 @@ public class ContextSpecification {
 		return this;
 	}
 
-	public void adjustContext(List<IntensityRecord> intensities, String variable) {
+	public void adjustContext(List<IntensityRecord> intensities, ZoneId timeZone, String variable) {
 		for (IntensityRecord record : intensities) {
-			if (appliesTo(record)) {
+			if (appliesTo(record, timeZone)) {
 				if (is.isPresent()) {
 					if (is.get().isBoolean() && is.get().getAsBoolean()) {
 						initContext(record, "boolean").getBoolean().add(variable);
@@ -102,8 +103,8 @@ public class ContextSpecification {
 		}
 	}
 
-	private boolean appliesTo(IntensityRecord record) {
-		return (during == null) || during.isEmpty() || during.stream().map(t -> t.appliesTo(record)).reduce(Boolean::logicalAnd).orElse(true);
+	private boolean appliesTo(IntensityRecord record, ZoneId timeZone) {
+		return (during == null) || during.isEmpty() || during.stream().map(t -> t.appliesTo(record, timeZone)).reduce(Boolean::logicalAnd).orElse(true);
 	}
 
 	private ContextRecord initContext(IntensityRecord record, String type) {
