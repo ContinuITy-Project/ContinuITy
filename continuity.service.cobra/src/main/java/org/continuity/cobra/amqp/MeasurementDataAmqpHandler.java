@@ -1,8 +1,10 @@
 package org.continuity.cobra.amqp;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +45,7 @@ import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spec.research.open.xtrace.api.core.callables.HTTPMethod;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -280,10 +283,13 @@ public class MeasurementDataAmqpHandler {
 		}
 
 		RequestUriMapper rootMapper = new RequestUriMapper(rootApp);
-		List<String> unmapped = new ArrayList<>();
+		Set<String> unmapped = new HashSet<>();
+		int numUnmapped = 0;
 
 		ListIterator<TraceRecord> iterator = traces.listIterator();
-		boolean discard = configProvider.getConfiguration(aid).getTraces().isDiscardUmapped();
+
+		CobraConfiguration config = configProvider.getConfiguration(aid);
+		boolean discard = config.getTraces().isDiscardUmapped();
 
 		while (iterator.hasNext()) {
 			TraceRecord trace = iterator.next();
@@ -299,7 +305,11 @@ public class MeasurementDataAmqpHandler {
 			if (endpoint != null) {
 				trace.setRawEndpoint(endpoint);
 			} else {
-				unmapped.add(rootCallables.get(0).getUri());
+				String method = rootCallables.get(0).getRequestMethod().map(HTTPMethod::name).orElse("?");
+				String path = rootCallables.get(0).getUri();
+				unmapped.add(new StringBuilder().append(method).append(" ").append(path).toString());
+
+				numUnmapped++;
 
 				if (discard) {
 					iterator.remove();
@@ -307,12 +317,18 @@ public class MeasurementDataAmqpHandler {
 			}
 		}
 
-		List<String> distinctUnmapped = unmapped.stream().distinct().collect(Collectors.toList());
+		if (config.getTraces().isLogUnmapped()) {
+			try {
+				Files.write(Paths.get(toUnmappedFilename(aid)), unmapped);
+			} catch (IOException e) {
+				LOGGER.error("Could not store unmapped log file!", e);
+			}
+		}
 
-		if (distinctUnmapped.size() > 100) {
-			LOGGER.warn("{}@{}: Could not find an endpoint for {} traces!", aid, version, unmapped.size());
+		if (numUnmapped > 50) {
+			LOGGER.warn("{}@{}: Could not find an endpoint for {} traces with {} endpoints!", aid, version, numUnmapped, unmapped.size());
 		} else if (!unmapped.isEmpty()) {
-			LOGGER.warn("{}@{}: Could not find an endpoint for {} traces with the following paths: {}", aid, version, unmapped.size(), distinctUnmapped);
+			LOGGER.warn("{}@{}: Could not find an endpoint for {} traces with the following endpoints: {}", aid, version, unmapped.size(), unmapped);
 		} else {
 			LOGGER.info("{}@{}: All traces have been mapped to endpoints successfully.", aid, version);
 		}
@@ -320,6 +336,10 @@ public class MeasurementDataAmqpHandler {
 		if (!unmapped.isEmpty() && discard) {
 			LOGGER.info("{}@{}: The traces without endpoint won't be stored.", aid, version);
 		}
+	}
+
+	private String toUnmappedFilename(AppId aid) {
+		return new StringBuilder().append(LocalDateTime.now()).append(".").append(aid).append(".unmapped.txt").toString();
 	}
 
 }
