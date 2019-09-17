@@ -33,7 +33,7 @@ group = 'continuityproject'
 apply plugin: 'com.palantir.docker'
 
 docker {
-    name "${project.group}/idpa-application"
+    name "${project.group}/idpa"
     files jar.archivePath
     buildArgs(['JAR_FILE': "${jar.archiveName}"])
 }
