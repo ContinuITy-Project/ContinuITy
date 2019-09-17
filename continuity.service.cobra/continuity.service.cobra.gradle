@@ -64,7 +64,7 @@ group = 'continuityproject'
 apply plugin: 'com.palantir.docker'
 
 docker {
-	name "${project.group}/session-logs"
+	name "${project.group}/cobra"
 	files jar.archivePath
 	copySpec.from('.') {
 		include 'configuration/**'
