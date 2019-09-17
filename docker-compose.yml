@@ -8,6 +8,14 @@ services:
       - continuity-network
     ports:
       - '8761:8761'
+  rabbitmq:
+    image: rabbitmq:3.6.8-management
+    hostname: rabbitmq
+    networks:
+      - continuity-network
+    ports:
+      - '5672:5672'
+      - '15672:15672'
   orchestrator:
     image: continuityproject/orchestrator
     hostname: orchestrator
@@ -18,26 +26,9 @@ services:
     depends_on:
       - rabbitmq
       - eureka
-  rabbitmq:
-    image: rabbitmq:3.6.8-management
-    hostname: rabbitmq
-    networks:
-      - continuity-network
-    ports:
-      - '15672:15672'
-  idpa-application:
-    image: continuityproject/idpa-application
-    hostname: idpa-application
-    networks:
-      - continuity-network
-    ports:
-      - '8085:80'
-    depends_on:
-      - rabbitmq
-      - eureka
-  idpa-annotation:
-    image: continuityproject/idpa-annotation
-    hostname: idpa-annotation
+  idpa:
+    image: continuityproject/idpa
+    hostname: idpa
     networks:
       - continuity-network
     ports:
@@ -75,9 +66,9 @@ services:
     depends_on:
       - rabbitmq
       - eureka
-  session-logs:
-    image: continuityproject/session-logs
-    hostname: session-logs
+  cobra:
+    image: continuityproject/cobra
+    hostname: cobra
     networks:
       - continuity-network
     ports:
@@ -85,15 +76,35 @@ services:
     depends_on:
       - rabbitmq
       - eureka
-  forecast:
-    image: continuityproject/forecast
-    hostname: forecast
+  cobra-db:
+    image: elasticsearch:7.3.2
+    hostname: cobra-db
+    networks:
+      - continuity-network
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    environment:
+      - discovery.type=single-node
+  clustinator:
+    image: continuityproject/clustinator
+    hostname: clustinator
+    networks:
+      - continuity-network
+    ports:
+      - '8088:80'
+    depends_on:
+      - rabbitmq
+  forecastic:
+    image: continuityproject/forecastic
+    hostname: forecastic
     networks:
       - continuity-network
     ports:
       - '8087:80'
+    environment:
+      - ELASTIC=cobra-db
     depends_on:
-      - rabbitmq
       - eureka
 networks:
   continuity-network:
