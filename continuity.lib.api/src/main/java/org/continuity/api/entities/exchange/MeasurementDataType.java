@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum MeasurementDataType {
-	OPEN_XTRACE, INSPECTIT, CSV, ACCESS_LOGS;
+	OPEN_XTRACE, INSPECTIT, CSV, ACCESS_LOGS, SESSION_LOGS;
 
 	private static final Map<String, MeasurementDataType> prettyStringToApproach = new HashMap<>();
 

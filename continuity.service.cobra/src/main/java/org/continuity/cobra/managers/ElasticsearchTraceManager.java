@@ -9,10 +9,14 @@ import java.util.stream.Collectors;
 import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermsQueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Trace;
@@ -136,10 +140,20 @@ public class ElasticsearchTraceManager extends ElasticsearchScrollingManager<Tra
 			query = query.must(QueryBuilders.termQuery("version", version.toNormalizedString()));
 		}
 
-		if ((from != null) && (to != null)) {
-			query.must(QueryBuilders.rangeQuery("trace.rootOfTrace.rootOfSubTrace.timeStamp").from(from.getTime(), false).to(to.getTime(), true));
+		RangeQueryBuilder range = QueryBuilders.rangeQuery("trace.rootOfTrace.rootOfSubTrace.timeStamp");
+
+		if (from != null) {
+			range.from(from.getTime(), false);
+		}
+
+		if (to != null) {
+			range.to(to.getTime(), true);
+		}
+
+		if ((from != null) || (to != null)) {
+			query.must(range);
 		} else {
-			LOGGER.warn("The provided time range ({} - {}) contains null elements! Ignoring.", from, to);
+			LOGGER.warn("The provided time range ({} - {}) contains null elements! Ignoring the respective bound(s).", from, to);
 		}
 
 		return query;
@@ -170,6 +184,31 @@ public class ElasticsearchTraceManager extends ElasticsearchScrollingManager<Tra
 		}
 
 		return readElements(aid, query, "for unique IDs");
+	}
+
+	/**
+	 * Deletes all traces before a given date.
+	 * 
+	 * @param aid
+	 *            The app-id.
+	 * @param before
+	 *            The date before which all traces are to be deleted.
+	 * @throws IOException
+	 */
+	public void deleteTracesBefore(AppId aid, Date before) throws IOException {
+		String index = toIndex(aid, null);
+
+		LOGGER.info("Deleting all traces from {} before {}...", index, formatOrNull(before));
+
+		if (!indexExists(index)) {
+			return;
+		}
+
+		DeleteByQueryRequest delete = new DeleteByQueryRequest(index).setQuery(createRangeQuery(null, null, before));
+
+		BulkByScrollResponse response = client.deleteByQuery(delete, RequestOptions.DEFAULT);
+
+		LOGGER.info("The delete request to {} took {} and resulted in status {}.", index, response.getTook(), response.getStatus());
 	}
 
 	@Override

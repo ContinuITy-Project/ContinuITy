@@ -5,15 +5,18 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -130,7 +133,7 @@ public class MeasurementDataAmqpHandler {
 	}
 
 	private void storeTraces(AppId aid, VersionOrTimestamp version, List<TraceRecord> traces) throws IOException {
-		traceManager.storeTraceRecords(aid, version, traces);
+		CobraConfiguration config = configProvider.getConfiguration(aid);
 
 		Date from = null;
 		Date to = null;
@@ -146,6 +149,23 @@ public class MeasurementDataAmqpHandler {
 			to = new Date(toOpt.getAsLong());
 		}
 
+		long retention = config.getTraces().getRetention().toMillis();
+
+		if (retention > 0) {
+			if (to != null) {
+				long before = to.getTime() - retention;
+
+				if (before > 0) {
+					LOGGER.info("{}@{}: Deleting the traces before {}.", aid, version, new Date(before));
+					traceManager.deleteTracesBefore(aid, new Date(before));
+				}
+			}
+
+			traceManager.storeTraceRecords(aid, version, traces);
+		} else {
+			LOGGER.info("{}@{}: Not storing the traces by configuration.", aid, version);
+		}
+
 		LOGGER.info("{}@{}: Traces range from {} to {}.", aid, version, from, to);
 	}
 
@@ -153,10 +173,24 @@ public class MeasurementDataAmqpHandler {
 		RequestTailorer tailorer = new RequestTailorer(aid, version, restTemplate);
 		CobraConfiguration config = configProvider.getConfiguration(aid);
 
-		for (List<String> services : config.getTailoring()) {
+		List<List<String>> tailoring = config.getTailoring();
+
+		if (!config.getTraces().isMapToIdpa()) {
+			LOGGER.info("{}@{}: Not mapping to an IDPA. Therefore, ignoring all configured service combinations for tailoring and using [ \"all\" ].", aid, version);
+			tailoring = Collections.singletonList(Collections.singletonList(AppId.SERVICE_ALL));
+		}
+
+		for (List<String> services : tailoring) {
 			LOGGER.info("{}@{}: Tailoring to {}...", aid, version, services);
 
-			List<SessionRequest> requests = tailorer.tailorTraces(services, traces);
+			List<SessionRequest> requests;
+
+			if (config.getTraces().isMapToIdpa()) {
+				requests = tailorer.tailorTraces(services, traces);
+			} else {
+				requests = tailorer.tailorTracesWithoutMapping(traces);
+			}
+
 			List<Session> openSessions = sessionManager.readOpenSessions(aid, null, services);
 
 			SessionUpdater updater = new SessionUpdater(version, config.getSessions().getTimeout().getSeconds() * SECONDS_TO_MICROS, forceFinish, config.getSessions().isIgnoreRedirects());
@@ -178,14 +212,14 @@ public class MeasurementDataAmqpHandler {
 				LOGGER.info("{}@{} {}: Sessions stored. Latest date before update: {}, start of new sessions: {}, and latest date after: {}.", aid, version, services, latestDateBeforeUpdate,
 						startDateOfSessions, latestDateAfterUpdate);
 
-				triggerClustering(aid, version, services, startDateOfSessions, latestDateBeforeUpdate, latestDateAfterUpdate);
+				triggerClustering(aid, version, services, startDateOfSessions, latestDateBeforeUpdate, latestDateAfterUpdate, forceFinish);
 			} else {
 				LOGGER.info("{}@{} {}: No sessions have been updated.", aid, version, services);
 			}
 		}
 	}
 
-	private void triggerClustering(AppId aid, VersionOrTimestamp version, List<String> services, Date startDateOfSessions, Date latestDateBeforeUpdate, Date latestDateAfterUpdate)
+	private void triggerClustering(AppId aid, VersionOrTimestamp version, List<String> services, Date startDateOfSessions, Date latestDateBeforeUpdate, Date latestDateAfterUpdate, boolean forceFinish)
 			throws IOException, TimeoutException {
 		CobraConfiguration config = configProvider.getConfiguration(aid);
 
@@ -197,7 +231,7 @@ public class MeasurementDataAmqpHandler {
 		long timeoutMillis = (timeout.getSeconds() * 1000) + (timeout.getNano() / 1000000);
 
 		long lastClusteringEnd = clusteringTimestamp(latestDateBeforeUpdate, intervalMillis, timeoutMillis);
-		long clusteringEnd = clusteringTimestamp(latestDateAfterUpdate, intervalMillis, timeoutMillis);
+		long clusteringEnd = forceFinish ? latestDateAfterUpdate.getTime() : clusteringTimestamp(latestDateAfterUpdate, intervalMillis, timeoutMillis);
 
 		if (config.getClustering().isOmit()) {
 			LOGGER.info("{}@{} {}: Clustering is omitted by configuration.", aid, version, services);
@@ -273,23 +307,49 @@ public class MeasurementDataAmqpHandler {
 	}
 
 	private void indexTracesWithEndpoints(AppId aid, VersionOrTimestamp version, List<TraceRecord> traces) {
-		Application rootApp;
-		try {
-			rootApp = restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid).withQuery("version", version.toString()).get(), Application.class);
-		} catch (HttpStatusCodeException e) {
-			LOGGER.error("Could not get root application for app-id {} and version {}! {} ({}): {}", aid, version, e.getStatusCode(), e.getStatusCode().getReasonPhrase(),
-					e.getResponseBodyAsString());
-			return;
-		}
+		CobraConfiguration config = configProvider.getConfiguration(aid);
+		boolean discard = config.getTraces().isDiscardUmapped();
 
-		RequestUriMapper rootMapper = new RequestUriMapper(rootApp);
 		Set<String> unmapped = new HashSet<>();
 		int numUnmapped = 0;
 
-		ListIterator<TraceRecord> iterator = traces.listIterator();
+		BiFunction<TraceRecord, HTTPRequestProcessingImpl, Boolean> endpointSetter;
 
-		CobraConfiguration config = configProvider.getConfiguration(aid);
-		boolean discard = config.getTraces().isDiscardUmapped();
+		if (config.getTraces().isMapToIdpa()) {
+			Application rootApp;
+			try {
+				rootApp = restTemplate.getForObject(RestApi.Idpa.Application.GET.requestUrl(aid).withQuery("version", version.toString()).get(), Application.class);
+			} catch (HttpStatusCodeException e) {
+				LOGGER.error("Could not get root application for app-id {} and version {}! {} ({}): {}", aid, version, e.getStatusCode(), e.getStatusCode().getReasonPhrase(),
+						e.getResponseBodyAsString());
+				return;
+			}
+
+			RequestUriMapper rootMapper = new RequestUriMapper(rootApp);
+
+			endpointSetter = (trace, callable) -> {
+				HttpEndpoint endpoint = rootMapper.map(callable.getUri(), callable.getRequestMethod().get().name());
+
+				if (endpoint != null) {
+					trace.setRawEndpoint(endpoint);
+				}
+
+				return endpoint != null;
+			};
+		} else {
+			endpointSetter = (trace, callable) -> {
+				Optional<String> bt = OPENxtraceUtils.getBusinessTransaction(callable);
+
+				if (bt.isPresent() && !bt.get().isEmpty()) {
+					trace.setEndpoint(bt.get());
+					return true;
+				} else {
+					return false;
+				}
+			};
+		}
+
+		ListIterator<TraceRecord> iterator = traces.listIterator();
 
 		while (iterator.hasNext()) {
 			TraceRecord trace = iterator.next();
@@ -298,13 +358,13 @@ public class MeasurementDataAmqpHandler {
 
 			if (rootCallables.size() == 0) {
 				LOGGER.warn("Trace {} does not contain HTTPRequestprocessings. Cannot set endpoint to TraceRecord!", trace.getTrace().getTraceId());
+				iterator.remove();
+				continue;
 			}
 
-			HttpEndpoint endpoint = rootMapper.map(rootCallables.get(0).getUri(), rootCallables.get(0).getRequestMethod().get().name());
+			boolean endpointSet = endpointSetter.apply(trace, rootCallables.get(0));
 
-			if (endpoint != null) {
-				trace.setRawEndpoint(endpoint);
-			} else {
+			if (!endpointSet) {
 				String method = rootCallables.get(0).getRequestMethod().map(HTTPMethod::name).orElse("?");
 				String path = rootCallables.get(0).getUri();
 				unmapped.add(new StringBuilder().append(method).append(" ").append(path).toString());
@@ -317,7 +377,8 @@ public class MeasurementDataAmqpHandler {
 			}
 		}
 
-		if (config.getTraces().isLogUnmapped()) {
+
+		if (config.getTraces().isLogUnmapped() && !unmapped.isEmpty()) {
 			try {
 				Files.write(Paths.get(toUnmappedFilename(aid)), unmapped);
 			} catch (IOException e) {

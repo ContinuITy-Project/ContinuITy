@@ -11,6 +11,7 @@ import org.continuity.dsl.schema.ContextSchema;
 import org.continuity.idpa.AppId;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
@@ -21,6 +22,7 @@ import com.fasterxml.jackson.databind.util.StdConverter;
  * @author Henning Schulz
  *
  */
+@JsonPropertyOrder({ "service", "app-id", "time-zone", "traces", "tailoring", "sessions", "clustering", "intensity", "context" })
 public class CobraConfiguration implements ServiceConfiguration {
 
 	public static final String SERVICE = "cobra";

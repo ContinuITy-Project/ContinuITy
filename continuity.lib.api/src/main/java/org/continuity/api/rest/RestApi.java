@@ -619,6 +619,9 @@ public class RestApi {
 			/** {@value #ROOT}/{app-id:.+}/{version:.+}/csv */
 			public static final RestEndpoint PUSH_CSV = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_CSV, RequestMethod.POST);
 
+			/** {@value #ROOT}/{app-id:.+}/{version:.+}/session-logs */
+			public static final RestEndpoint PUSH_SESSION_LOGS = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH_SESSION_LOGS, RequestMethod.POST);
+
 			/** {@value #ROOT}/{app-id:.+}/{version:.+}/{type} */
 			public static final Map<MeasurementDataType, RestEndpoint> PUSH_FOR_TYPE = new HashMap<>();
 
@@ -626,6 +629,7 @@ public class RestApi {
 				PUSH_FOR_TYPE.put(MeasurementDataType.OPEN_XTRACE, PUSH_OPEN_XTRACE);
 				PUSH_FOR_TYPE.put(MeasurementDataType.ACCESS_LOGS, PUSH_ACCESS_LOGS);
 				PUSH_FOR_TYPE.put(MeasurementDataType.CSV, PUSH_CSV);
+				PUSH_FOR_TYPE.put(MeasurementDataType.SESSION_LOGS, PUSH_SESSION_LOGS);
 			}
 
 			public static class Paths {
@@ -641,6 +645,8 @@ public class RestApi {
 				public static final String PUSH_ACCESS_LOGS = "/{app-id:.+}/{version:.+}/access-logs";
 
 				public static final String PUSH_CSV = "/{app-id:.+}/{version:.+}/csv";
+
+				public static final String PUSH_SESSION_LOGS = "/{app-id:.+}/{version:.+}/session-logs";
 
 				private Paths() {
 				}
