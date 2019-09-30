@@ -129,6 +129,32 @@ public class RequestTailorer {
 		return requests;
 	}
 
+	/**
+	 * Tailors a list of traces to the root requests by using the business transactions as endpoint
+	 * names instead of mapping them to IDPA endpoints.
+	 *
+	 * @param traces
+	 *            The traces to be tailored.
+	 * @return A list of {@link SessionRequest}s per tailored requests.
+	 */
+	public List<SessionRequest> tailorTracesWithoutMapping(List<TraceRecord> traces) {
+		LOGGER.info("{}@{} Tailoring using the provided endpoint names...", aid.getApplication(), version);
+
+		List<String> hostNames = Collections.emptyList();
+
+		List<SessionRequest> requests = traces.stream().map(t -> extractChildRequests(t, hostNames)).flatMap(List::stream).map(this::labelRequestWithBusinessTransaction).map(this::mapToSession)
+				.collect(Collectors.toList());
+
+		LOGGER.info("{}@{} Tailoring done.", aid.getApplication(), version);
+
+		return requests;
+	}
+
+	private RequestBundle labelRequestWithBusinessTransaction(RequestBundle bundle) {
+		bundle.setEndpoint(defaultEndpoint(OPENxtraceUtils.getBusinessTransaction(bundle.getCallable())));
+		return bundle;
+	}
+
 	private List<RequestBundle> extractChildRequests(TraceRecord trace, List<String> targetHostNames) {
 		OpenXtraceTracer tracer;
 

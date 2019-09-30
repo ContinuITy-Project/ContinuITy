@@ -7,10 +7,12 @@ import static org.continuity.api.rest.RestApi.Cobra.MeasurementData.Paths.PUSH_A
 import static org.continuity.api.rest.RestApi.Cobra.MeasurementData.Paths.PUSH_CSV;
 import static org.continuity.api.rest.RestApi.Cobra.MeasurementData.Paths.PUSH_LINK;
 import static org.continuity.api.rest.RestApi.Cobra.MeasurementData.Paths.PUSH_OPEN_XTRACE;
+import static org.continuity.api.rest.RestApi.Cobra.MeasurementData.Paths.PUSH_SESSION_LOGS;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +28,7 @@ import org.continuity.api.rest.RestApi;
 import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.converter.AccessLogsToOpenXtraceConverter;
 import org.continuity.cobra.converter.CsvRowToOpenXtraceConverter;
+import org.continuity.cobra.converter.SessionLogsToOpenXtraceConverter;
 import org.continuity.cobra.entities.CsvRow;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.commons.accesslogs.AccessLogEntry;
@@ -158,6 +161,9 @@ public class MeasurementDataController {
 		case CSV:
 			String csvContent = plainRestTemplate.getForObject(spec.getLink(), String.class);
 			return pushCsv(aid, version, csvContent, finish);
+		case SESSION_LOGS:
+			String sessionContent = plainRestTemplate.getForObject(spec.getLink(), String.class);
+			return pushSessionLogs(aid, version, sessionContent, finish);
 		case INSPECTIT:
 		default:
 			return ResponseEntity.badRequest().body("Unsupported measurement data type: " + spec.getType().toPrettyString());
@@ -203,6 +209,19 @@ public class MeasurementDataController {
 		List<CsvRow> csvRows = CsvRow.listFromString(csvContent);
 
 		List<Trace> traces = new CsvRowToOpenXtraceConverter(configProvider.getConfiguration(aid).getSessions().isHashId()).convert(csvRows);
+		return storeTraces(aid, version, traces, finish);
+	}
+
+	@RequestMapping(value = PUSH_SESSION_LOGS, method = RequestMethod.POST)
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
+			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<String> pushSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String sessionContent,
+			@RequestParam(defaultValue = "false") boolean finish) throws IOException {
+		LOGGER.info("Received session logs for {}@{}.", aid, version);
+
+		List<String> sessionLogs = Arrays.asList(sessionContent.split("\\n"));
+
+		List<Trace> traces = new SessionLogsToOpenXtraceConverter().convert(sessionLogs);
 		return storeTraces(aid, version, traces, finish);
 	}
 
