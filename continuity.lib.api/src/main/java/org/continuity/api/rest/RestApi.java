@@ -728,6 +728,53 @@ public class RestApi {
 
 		}
 
+		public static class Clustering {
+
+			public static final String ROOT = "/clustering";
+
+			/** {@value #ROOT}/{app-id:.+}/{tailoring:.+} */
+			public static final RestEndpoint TRIGGER_LATEST = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.TRIGGER_LATEST, RequestMethod.POST);
+
+			private Clustering() {
+			}
+
+			public static class Paths {
+
+				public static final String TRIGGER_LATEST = "/{app-id:.+}/{tailoring:.+}";
+
+				private Paths() {
+				}
+
+			}
+
+		}
+
+		public static class KnnDIstance {
+
+			public static final String ROOT = "/knndistance";
+
+			/** {@value #ROOT}/{app-id:.+}/{tailoring:.+} */
+			public static final RestEndpoint CREATE_PLOT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE_PLOT, RequestMethod.POST);
+
+			/** {@value #ROOT}/{app-id:.+}/{tailoring:.+}/knndistance.png */
+			public static final RestEndpoint GET_PLOT = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.GET_PLOT, RequestMethod.GET);
+
+			private KnnDIstance() {
+			}
+
+			public static class Paths {
+
+				public static final String CREATE_PLOT = "/{app-id:.+}/{tailoring:.+}";
+
+				public static final String GET_PLOT = "/{app-id:.+}/{tailoring:.+}/knndistance.pdf";
+
+				private Paths() {
+				}
+
+			}
+
+		}
+
 	}
 
 	public static class Forecastic {

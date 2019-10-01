@@ -104,7 +104,7 @@ public class RestEndpoint {
 	 * @return An endpoint indirectly targeting the original endpoint via the orchestrator.
 	 */
 	public RestEndpoint viaOrchestrator() {
-		return of(RestApi.Orchestrator.SERVICE_NAME, this.serviceName, genericPath(), this.method);
+		return of(RestApi.Orchestrator.SERVICE_NAME, "/" + this.serviceName, genericPath(), this.method);
 	}
 
 	/**
