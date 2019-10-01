@@ -194,7 +194,7 @@ public class GenericShorthands {
 		return contextManager.getAvailablility("check");
 	}
 
-	@ShellMethod(key = { "unify" }, value = "Shorthand for '<context> unify'. Available in 'accesslogs'.")
+	@ShellMethod(key = { "unify" }, value = "Shorthand for '<context> unify'. Available in 'data'.")
 	@ShellMethodAvailability({ "unifyAvailability" })
 	public AttributedString unify(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String path, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId)
 			throws Throwable {
@@ -204,6 +204,31 @@ public class GenericShorthands {
 
 	public Availability unifyAvailability() {
 		return contextManager.getAvailablility("unify");
+	}
+
+	@ShellMethod(key = { "knndist" }, value = "Shorthand for '<context> knndist'. Available in 'data'.")
+	@ShellMethodAvailability({ "knndistAvailability" })
+	public AttributedString knndist(@ShellOption(value = "--app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
+			@ShellOption(value = "--tailoring", defaultValue = Shorthand.DEFAULT_VALUE) String tailoring)
+			throws Throwable {
+		Shorthand shorthand = contextManager.getShorthand("knndist");
+		return shorthand.execute(appId, tailoring);
+	}
+
+	public Availability knndistAvailability() {
+		return contextManager.getAvailablility("knndist");
+	}
+
+	@ShellMethod(key = { "getimg" }, value = "Shorthand for '<context> getimg'. Available in 'data'.")
+	@ShellMethodAvailability({ "getimgAvailability" })
+	public AttributedString getimg(@ShellOption(value = "--link") String link, @ShellOption(value = { "--timeout", "-t" }, defaultValue = "1000") long timeout)
+			throws Throwable {
+		Shorthand shorthand = contextManager.getShorthand("getimg");
+		return shorthand.execute(link, timeout);
+	}
+
+	public Availability getimgAvailability() {
+		return contextManager.getAvailablility("getimg");
 	}
 
 }

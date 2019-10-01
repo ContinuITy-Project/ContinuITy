@@ -93,6 +93,10 @@ public class AmqpApi {
 
 			public static final ExchangeDefinition<AppId> EVENT_FINISHED = ExchangeDefinition.event(SCOPE, "finished").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
 
+			public static final ExchangeDefinition<AppId> TASK_KNN_DISTANCE = ExchangeDefinition.task(SCOPE, "knndistance").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
+
+			public static final ExchangeDefinition<AppId> EVENT_IMAGEGENERATED = ExchangeDefinition.event(SCOPE, "imagegenerated").nonDurable().autoDelete().withRoutingKey(AppId.INSTANCE);
+
 			private Clustinator() {
 			}
 
