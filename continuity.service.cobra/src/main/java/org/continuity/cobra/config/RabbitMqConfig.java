@@ -155,6 +155,16 @@ public class RabbitMqConfig {
 		return BindingBuilder.bind(eventClustinatorFinishedQueue()).to(eventClustinatorFinishedExchange()).with(EVENT_CLUSTINATOR_FINISHED_ROUTING_KEY);
 	}
 
+	@Bean
+	TopicExchange taskClustinatorKnnDistanceExchange() {
+		return AmqpApi.Cobra.Clustinator.TASK_KNN_DISTANCE.create();
+	}
+
+	@Bean
+	TopicExchange eventClustinatorImagegeneratedExchange() {
+		return AmqpApi.Cobra.Clustinator.EVENT_IMAGEGENERATED.create();
+	}
+
 	// Dead letter exchange and queue
 
 	@Bean

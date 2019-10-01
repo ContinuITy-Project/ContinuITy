@@ -1,14 +1,18 @@
 package org.continuity.cli.commands;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.continuity.api.entities.config.MeasurementDataSpec;
 import org.continuity.api.entities.exchange.MeasurementDataType;
 import org.continuity.api.rest.RestApi;
+import org.continuity.api.rest.RestEndpoint;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContext;
 import org.continuity.cli.manage.CliContextManager;
@@ -41,7 +45,9 @@ public class DataCommands extends AbstractCommands {
 
 	private final CliContext context = new CliContext(CONTEXT_NAME, //
 			new Shorthand("unify", this, "createUnifiedCsv", String.class, String.class), //
-			new Shorthand("upload", this, "upload", String.class, String.class, String.class, String.class, boolean.class) //
+			new Shorthand("upload", this, "upload", String.class, String.class, String.class, String.class, boolean.class), //
+			new Shorthand("knndist", this, "createKnnDistance", String.class, String.class), //
+			new Shorthand("getimg", this, "getImage", String.class, long.class) //
 	);
 
 	private final RestTemplate restTemplate;
@@ -73,7 +79,7 @@ public class DataCommands extends AbstractCommands {
 
 	@ShellMethod(key = { "data upload" }, value = "Uploads data of a certain type (open-xtrace, access-logs, csv) for later use.")
 	public AttributedString upload(@ShellOption(help = "Location where the data can be found. Can be a URL or a file path. A file name can contain UNIX-like wildcards.") String path,
-			@ShellOption(defaultValue = "open-xtrace") String type, @ShellOption(value = "app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
+			@ShellOption(defaultValue = "open-xtrace") String type, @ShellOption(value = "--app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
 			@ShellOption(value = "--version", defaultValue = Shorthand.DEFAULT_VALUE) String passedVersion, @ShellOption(value = { "--finish", "-f" }, defaultValue = "false") boolean finish)
 			throws Exception {
 
@@ -97,8 +103,7 @@ public class DataCommands extends AbstractCommands {
 
 				try {
 					response = restTemplate.postForEntity(
-							RestApi.Cobra.MeasurementData.PUSH_LINK.viaOrchestrator().requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(), spec,
-							String.class);
+							RestApi.Cobra.MeasurementData.PUSH_LINK.viaOrchestrator().requestUrl(aid, version).withQuery("finish", Boolean.toString(finish)).withHost(url).get(), spec, String.class);
 				} catch (HttpStatusCodeException e) {
 					response = new ResponseEntity<String>(e.getResponseBodyAsString(), e.getStatusCode());
 				}
@@ -147,6 +152,57 @@ public class DataCommands extends AbstractCommands {
 	private void appendError(ResponseBuilder answer, MeasurementDataType mType, String path, ResponseEntity<String> response) {
 		answer.error("Could not upload the specified data of type ").boldError(mType.toPrettyString()).error(" at ").boldError(path).error("! The response was ").boldError(response.getStatusCode())
 				.error(" (").error(response.getStatusCode().getReasonPhrase()).error("): ").error(response.getBody());
+	}
+
+	@ShellMethod(key = { "data knndist" }, value = "Triggers creation of a knn distance plot for estimating the optimal epsilon value for DBSCAN.")
+	public AttributedString createKnnDistance(@ShellOption(value = "--app-id", defaultValue = Shorthand.DEFAULT_VALUE) String appId,
+			@ShellOption(value = "--tailoring", defaultValue = Shorthand.DEFAULT_VALUE) String tailoring) throws Exception {
+		return executeWithAppId(appId, aid -> {
+			String tail = tailoring;
+
+			if (Shorthand.DEFAULT_VALUE.equals(tail)) {
+				tail = aid.getService();
+			}
+
+			String host = WebUtils.addProtocolIfMissing(propertiesProvider.getProperty(PropertiesProvider.KEY_URL));
+			String url = RestApi.Cobra.KnnDIstance.CREATE_PLOT.viaOrchestrator().requestUrl(aid, tail).withHost(host).get();
+
+			String link = restTemplate.postForObject(url, null, String.class);
+
+			return new ResponseBuilder().normal("Knn distance plot creation triggered. Once ready, the image can be downloaded using ").bold("data getimg ").bold(link).normal(".").build();
+		});
+	}
+
+	@ShellMethod(key = { "data getimg" }, value = "Downloads the image at the provided link with a given timeout.")
+	public AttributedString getImage(@ShellOption(value = "--link") String link, @ShellOption(value = { "--timeout", "-t" }, defaultValue = "1000") long timeout) throws Exception {
+		return execute(() -> {
+			byte[] bytes;
+			try {
+				bytes = restTemplate.getForObject(RestEndpoint.urlViaOrchestrator(link, propertiesProvider.getProperty(PropertiesProvider.KEY_URL)) + "?timeout=" + timeout, byte[].class);
+			} catch (HttpStatusCodeException e) {
+				if (e.getStatusCode().is4xxClientError()) {
+					return new ResponseBuilder().error("The image could not be found. Response is ").boldError(e.getRawStatusCode()).error(". The image might not be ready yet.").build();
+				} else {
+					throw e;
+				}
+			}
+
+			List<String> params = RestApi.Cobra.KnnDIstance.GET_PLOT.parsePathParameters(link);
+
+			Path path = Paths.get(propertiesProvider.getProperty(PropertiesProvider.KEY_WORKING_DIR));
+
+			if (params == null) {
+				path = path.resolve(link);
+			} else {
+				path = path.resolve(params.get(0)).resolve("knndist").resolve(params.get(1) + "-" + LocalDate.now() + ".pdf");
+			}
+
+			org.apache.commons.io.FileUtils.writeByteArrayToFile(path.toFile(), bytes);
+
+			Desktop.getDesktop().open(path.toFile());
+
+			return new ResponseBuilder().normal("Stored the image to ").normal(path).normal(".").build();
+		});
 	}
 
 	@ShellMethod(key = { "data unify" }, value = "Creates a unified CSV from access logs holding the required information for session logs creation based on an application model.")
