@@ -30,6 +30,6 @@ RUN apt-get --assume-yes --fix-missing install xdg-utils && \
     echo "[Desktop Entry]\nVersion=1.0\nEncoding=UTF-8\nType=Application\nName=gedit\nNoDisplay=true\nExec=sh /bin/gedit_silent.sh" > /root/.local/share/applications/gedit_silent.desktop && \
     xdg-mime default gedit_silent.desktop application/x-yaml
 
-VOLUME /working-dir
+RUN mkdir /working-dir
 
 ENTRYPOINT [ "java", "-jar", "/bin/cli.jar" ]

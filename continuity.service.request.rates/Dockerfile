@@ -1,6 +1,5 @@
 FROM openjdk:8-jdk
-VOLUME /tmp
-VOLUME /storage
+RUN mkdir /storage
 
 ARG JAR_FILE
 ADD ${JAR_FILE} /bin/app.jar
