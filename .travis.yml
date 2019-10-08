@@ -8,28 +8,22 @@ jdk:
 branches:
   only:
   - master
-  - refact-2.0
 
 services:
   - docker
 env:
   global:
-    - GIT_MAJOR_VERSION=1
-    - GIT_MINOR_VERSION=6
+    - GIT_MAJOR_VERSION=2
+    - GIT_MINOR_VERSION=0
 after_success:
   - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
 
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD;
 
-    docker tag continuityproject/idpa-annotation continuityproject/idpa-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker push continuityproject/idpa-annotation:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker tag continuityproject/idpa-annotation continuityproject/idpa-annotation:latest;
-    docker push continuityproject/idpa-annotation:latest;
-
-    docker tag continuityproject/idpa-application continuityproject/idpa-application:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker push continuityproject/idpa-application:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker tag continuityproject/idpa-application continuityproject/idpa-application:latest;
-    docker push continuityproject/idpa-application:latest;
+    docker tag continuityproject/idpa continuityproject/idpa:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker push continuityproject/idpa:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
+    docker tag continuityproject/idpa continuityproject/idpa:latest;
+    docker push continuityproject/idpa:latest;
 
     docker tag continuityproject/wessbas continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/wessbas:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
@@ -60,16 +54,6 @@ after_success:
     docker push continuityproject/eureka:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker tag continuityproject/eureka continuityproject/eureka:latest;
     docker push continuityproject/eureka:latest;
-
-    docker tag continuityproject/benchflow continuityproject/benchflow:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker push continuityproject/benchflow:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker tag continuityproject/benchflow continuityproject/benchflow:latest;
-    docker push continuityproject/benchflow:latest;
-
-    docker tag continuityproject/forecast continuityproject/forecast:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker push continuityproject/forecast:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
-    docker tag continuityproject/forecast continuityproject/forecast:latest;
-    docker push continuityproject/forecast:latest;
 
     docker tag continuityproject/cli continuityproject/cli:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
     docker push continuityproject/cli:$GIT_MAJOR_VERSION.$GIT_MINOR_VERSION.$TRAVIS_BUILD_NUMBER;
