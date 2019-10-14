@@ -12,26 +12,18 @@ import static org.continuity.api.rest.RestApi.Cobra.MeasurementData.Paths.PUSH_S
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.OptionalLong;
 import java.util.concurrent.TimeoutException;
 
 import org.continuity.api.amqp.AmqpApi;
+import org.continuity.api.amqp.ExchangeDefinition;
+import org.continuity.api.amqp.RoutingKeyFormatter.AppIdAndVersion;
 import org.continuity.api.entities.ApiFormats;
-import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.MeasurementDataSpec;
-import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.api.rest.RestApi;
-import org.continuity.cobra.config.RabbitMqConfig;
-import org.continuity.cobra.converter.AccessLogsToOpenXtraceConverter;
-import org.continuity.cobra.converter.CsvRowToOpenXtraceConverter;
-import org.continuity.cobra.converter.SessionLogsToOpenXtraceConverter;
-import org.continuity.cobra.entities.CsvRow;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
-import org.continuity.commons.accesslogs.AccessLogEntry;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.slf4j.Logger;
@@ -76,9 +68,6 @@ public class MeasurementDataController {
 
 	@Autowired
 	private ElasticsearchTraceManager manager;
-
-	@Autowired
-	private ConfigurationProvider<CobraConfiguration> configProvider;
 
 	@RequestMapping(value = GET, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
@@ -177,7 +166,8 @@ public class MeasurementDataController {
 			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
 		LOGGER.info("Received OPEN.xtraces for {}@{}.", aid, version);
-		return storeTraces(aid, version, tracesAsJson, null, null, finish);
+
+		return forwardData(AmqpApi.Cobra.TASK_PROCESS_TRACES, aid, version, tracesAsJson, finish);
 	}
 
 	@RequestMapping(value = PUSH_ACCESS_LOGS, method = RequestMethod.POST)
@@ -188,14 +178,7 @@ public class MeasurementDataController {
 			throws IOException {
 		LOGGER.info("Received access logs for {}@{}.", aid, version);
 
-		List<AccessLogEntry> parsedLogs = new ArrayList<>();
-
-		for (String line : accessLogs.split("\\n")) {
-			parsedLogs.add(AccessLogEntry.fromLogLine(line));
-		}
-
-		List<Trace> traces = new AccessLogsToOpenXtraceConverter(configProvider.getConfiguration(aid).getSessions().isHashId()).convert(parsedLogs);
-		return storeTraces(aid, version, traces, finish);
+		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_ACCESSLOGS, aid, version, accessLogs, finish);
 	}
 
 	@RequestMapping(value = PUSH_CSV, method = RequestMethod.POST)
@@ -206,10 +189,7 @@ public class MeasurementDataController {
 			throws IOException {
 		LOGGER.info("Received CSV for {}@{}.", aid, version);
 
-		List<CsvRow> csvRows = CsvRow.listFromString(csvContent);
-
-		List<Trace> traces = new CsvRowToOpenXtraceConverter(configProvider.getConfiguration(aid).getSessions().isHashId()).convert(csvRows);
-		return storeTraces(aid, version, traces, finish);
+		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_CSV, aid, version, csvContent, finish);
 	}
 
 	@RequestMapping(value = PUSH_SESSION_LOGS, method = RequestMethod.POST)
@@ -219,52 +199,17 @@ public class MeasurementDataController {
 			@RequestParam(defaultValue = "false") boolean finish) throws IOException {
 		LOGGER.info("Received session logs for {}@{}.", aid, version);
 
-		List<String> sessionLogs = Arrays.asList(sessionContent.split("\\n"));
-
-		List<Trace> traces = new SessionLogsToOpenXtraceConverter().convert(sessionLogs);
-		return storeTraces(aid, version, traces, finish);
+		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_SESSIONLOGS, aid, version, sessionContent, finish);
 	}
 
-	private ResponseEntity<String> storeTraces(AppId aid, VersionOrTimestamp version, List<Trace> traces, boolean finish) throws IOException {
-		Date from = null;
-		Date to = null;
+	private ResponseEntity<String> forwardData(ExchangeDefinition<AppIdAndVersion> exchange, AppId aid, VersionOrTimestamp version, String data, boolean finish) {
+		amqpTemplate.convertAndSend(exchange.name(), exchange.formatRoutingKey().of(aid, version), data, AmqpApi.Cobra.finishHeader(finish));
 
-		OptionalLong fromOpt = traces.stream().mapToLong(t -> t.getRoot().getRoot().getTimestamp()).min();
-		OptionalLong toOpt = traces.stream().mapToLong(t -> t.getRoot().getRoot().getTimestamp()).max();
+		LOGGER.info("{}@{} Forwarded data to {}.", aid, version, exchange.name());
 
-		if (fromOpt.isPresent()) {
-			from = new Date(fromOpt.getAsLong() - 1);
-		}
-
-		if (toOpt.isPresent()) {
-			to = new Date(toOpt.getAsLong());
-		}
-
-		String tracesAsJson = OPENxtraceUtils.serializeTraceListToJsonString(traces);
-
-		return storeTraces(aid, version, tracesAsJson, from, to, finish);
-	}
-
-	private ResponseEntity<String> storeTraces(AppId aid, VersionOrTimestamp version, String tracesAsJson, Date from, Date to, boolean finish) {
-		amqpTemplate.convertAndSend(AmqpApi.Cobra.TASK_PROCESS_TRACES.name(), AmqpApi.Cobra.TASK_PROCESS_TRACES.formatRoutingKey().of(aid, version), tracesAsJson, message -> {
-			message.getMessageProperties().setHeader(RabbitMqConfig.HEADER_FINISH, finish);
-			return message;
-		});
-
-		LOGGER.info("{}@{} Forwarded traces to AMQP handler.", aid, version);
-
-		String link = RestApi.Cobra.MeasurementData.GET_VERSION.requestUrl(aid, version).withQueryIfNotEmpty("from", formatOrNull(from)).withQueryIfNotEmpty("to", formatOrNull(to))
-				.withoutProtocol().get();
+		String link = RestApi.Cobra.MeasurementData.GET_VERSION.requestUrl(aid, version).withoutProtocol().get();
 
 		return ResponseEntity.accepted().body(link);
-	}
-
-	private String formatOrNull(Date date) {
-		if (date == null) {
-			return null;
-		} else {
-			return ApiFormats.DATE_FORMAT.format(date);
-		}
 	}
 
 }

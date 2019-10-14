@@ -5,6 +5,7 @@ import org.continuity.api.amqp.RoutingKeyFormatter.AppIdAndVersion;
 import org.continuity.api.amqp.RoutingKeyFormatter.RecipeId;
 import org.continuity.api.amqp.RoutingKeyFormatter.ServiceName;
 import org.continuity.api.amqp.RoutingKeyFormatter.ServiceNameAndTarget;
+import org.springframework.amqp.core.MessagePostProcessor;
 
 /**
  * Holds all AMQP exchange definitions of all ContinuITy services.
@@ -73,8 +74,25 @@ public class AmqpApi {
 
 		private static final String SCOPE = "cobra";
 
+		public static final ExchangeDefinition<AppIdAndVersion> TASK_TRANSFORM_ACCESSLOGS = ExchangeDefinition.task(SCOPE, "transform_accesslogs").nonDurable().autoDelete()
+				.withRoutingKey(AppIdAndVersion.INSTANCE);
+
+		public static final ExchangeDefinition<AppIdAndVersion> TASK_TRANSFORM_CSV = ExchangeDefinition.task(SCOPE, "transform_csv").nonDurable().autoDelete().withRoutingKey(AppIdAndVersion.INSTANCE);
+
+		public static final ExchangeDefinition<AppIdAndVersion> TASK_TRANSFORM_SESSIONLOGS = ExchangeDefinition.task(SCOPE, "transform_sessionlogs").nonDurable().autoDelete()
+				.withRoutingKey(AppIdAndVersion.INSTANCE);
+
 		public static final ExchangeDefinition<AppIdAndVersion> TASK_PROCESS_TRACES = ExchangeDefinition.task(SCOPE, "process_traces").nonDurable().autoDelete()
 				.withRoutingKey(AppIdAndVersion.INSTANCE);
+
+		public static final String HEADER_FINISH = "continuity.finish";
+
+		public static MessagePostProcessor finishHeader(boolean finish) {
+			return message -> {
+				message.getMessageProperties().setHeader(HEADER_FINISH, finish);
+				return message;
+			};
+		}
 
 		private Cobra() {
 		}

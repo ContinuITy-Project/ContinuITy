@@ -25,21 +25,23 @@ public class RabbitMqConfig {
 
 	public static final String SERVICE_NAME = "cobra";
 
+	public static final String ROUTING_KEY_ALL = "#";
+
 	public static final String TASK_CREATE_QUEUE_NAME = "continuity.cobra.task.global.create";
 
 	public static final String TASK_CREATE_ROUTING_KEY = AmqpApi.Global.TASK_CREATE.formatRoutingKey().ofGenericTarget(SERVICE_NAME);
 
 	public static final String EVENT_CONFIG_AVAILABLE_NAME = "continuity.cobra.event.orchestrator.configavailable";
 
+	public static final String TASK_TRANSFORM_ACESSLOGS_QUEUE_NAME = "continuity.cobra.task.cobra.transform_accesslogs";
+
+	public static final String TASK_TRANSFORM_CSV_QUEUE_NAME = "continuity.cobra.task.cobra.transform_csv";
+
+	public static final String TASK_TRANSFORM_SESSIONLOGS_QUEUE_NAME = "continuity.cobra.task.cobra.transform_sessionlogs";
+
 	public static final String TASK_PROCESS_TRACES_QUEUE_NAME = "continuity.cobra.task.cobra.process_traces";
 
-	public static final String TASK_PROCESS_TRACES_ROUTING_KEY = "#";
-
-	public static final String HEADER_FINISH = "continuity.finish";
-
 	public static final String EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME = "continuity.cobra.event.clustinator.finished";
-
-	public static final String EVENT_CLUSTINATOR_FINISHED_ROUTING_KEY = "#";
 
 	public static final String DEAD_LETTER_QUEUE_NAME = AmqpApi.DEAD_LETTER_EXCHANGE.deriveQueueName(SERVICE_NAME);
 
@@ -119,6 +121,54 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
+	TopicExchange taskTransformAccesslogsExchange() {
+		return AmqpApi.Cobra.TASK_TRANSFORM_ACCESSLOGS.create();
+	}
+
+	@Bean
+	Queue taskTransformAccesslogsQueue() {
+		return QueueBuilder.nonDurable(TASK_TRANSFORM_ACESSLOGS_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
+	}
+
+	@Bean
+	Binding taskTransformAccesslogsBinding() {
+		return BindingBuilder.bind(taskTransformAccesslogsQueue()).to(taskTransformAccesslogsExchange()).with(ROUTING_KEY_ALL);
+	}
+
+	@Bean
+	TopicExchange taskTransformCsvExchange() {
+		return AmqpApi.Cobra.TASK_TRANSFORM_CSV.create();
+	}
+
+	@Bean
+	Queue taskTransformCsvQueue() {
+		return QueueBuilder.nonDurable(TASK_TRANSFORM_CSV_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
+	}
+
+	@Bean
+	Binding taskTransformCsvBinding() {
+		return BindingBuilder.bind(taskTransformCsvQueue()).to(taskTransformCsvExchange()).with(ROUTING_KEY_ALL);
+	}
+
+	@Bean
+	TopicExchange taskTransformSessionlogsExchange() {
+		return AmqpApi.Cobra.TASK_TRANSFORM_SESSIONLOGS.create();
+	}
+
+	@Bean
+	Queue taskTransformSessionlogsQueue() {
+		return QueueBuilder.nonDurable(TASK_TRANSFORM_SESSIONLOGS_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
+				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
+	}
+
+	@Bean
+	Binding taskTransformSessionlogsBinding() {
+		return BindingBuilder.bind(taskTransformSessionlogsQueue()).to(taskTransformSessionlogsExchange()).with(ROUTING_KEY_ALL);
+	}
+
+	@Bean
 	TopicExchange taskProcessTracesExchange() {
 		return AmqpApi.Cobra.TASK_PROCESS_TRACES.create();
 	}
@@ -131,7 +181,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	Binding taskProcessTracesBinding() {
-		return BindingBuilder.bind(taskProcessTracesQueue()).to(taskProcessTracesExchange()).with(TASK_PROCESS_TRACES_ROUTING_KEY);
+		return BindingBuilder.bind(taskProcessTracesQueue()).to(taskProcessTracesExchange()).with(ROUTING_KEY_ALL);
 	}
 
 	@Bean
@@ -152,7 +202,7 @@ public class RabbitMqConfig {
 
 	@Bean
 	Binding eventClustinatorFinishedBinding() {
-		return BindingBuilder.bind(eventClustinatorFinishedQueue()).to(eventClustinatorFinishedExchange()).with(EVENT_CLUSTINATOR_FINISHED_ROUTING_KEY);
+		return BindingBuilder.bind(eventClustinatorFinishedQueue()).to(eventClustinatorFinishedExchange()).with(ROUTING_KEY_ALL);
 	}
 
 	@Bean
