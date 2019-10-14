@@ -61,9 +61,9 @@ import open.xtrace.OPENxtraceUtils;
  *
  */
 @Component
-public class MeasurementDataAmqpHandler {
+public class IncomingTracesAmqpHandler {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(MeasurementDataAmqpHandler.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(IncomingTracesAmqpHandler.class);
 
 	private static final long SECONDS_TO_MICROS = 1000 * 1000;
 
@@ -83,7 +83,7 @@ public class MeasurementDataAmqpHandler {
 	private ClusteringController clusteringController;
 
 	@RabbitListener(queues = RabbitMqConfig.TASK_PROCESS_TRACES_QUEUE_NAME)
-	public void processTraces(String tracesAsJson, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(RabbitMqConfig.HEADER_FINISH) boolean finish)
+	public void processTraces(String tracesAsJson, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(AmqpApi.Cobra.HEADER_FINISH) boolean finish)
 			throws IOException, TimeoutException {
 		Pair<AppId, VersionOrTimestamp> aav = AmqpApi.Cobra.TASK_PROCESS_TRACES.formatRoutingKey().from(routingKey);
 
