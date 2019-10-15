@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,7 +92,13 @@ public class MeasurementDataTransformationAmqpHandler {
 	private void forwardTraces(AppId aid, VersionOrTimestamp version, List<Trace> traces, boolean finish) throws IOException {
 		String tracesAsJson = OPENxtraceUtils.serializeTraceListToJsonString(traces);
 
-		amqpTemplate.convertAndSend(AmqpApi.Cobra.TASK_PROCESS_TRACES.name(), AmqpApi.Cobra.TASK_PROCESS_TRACES.formatRoutingKey().of(aid, version), tracesAsJson, AmqpApi.Cobra.finishHeader(finish));
+		MessageProperties props = new MessageProperties();
+		props.setHeader(AmqpApi.Cobra.HEADER_FINISH, true);
+		props.setContentEncoding(AmqpApi.Cobra.CONTENT_CHARSET.name());
+		props.setContentType("application/json");
+
+		Message message = new Message(tracesAsJson.getBytes(AmqpApi.Cobra.CONTENT_CHARSET), props);
+		amqpTemplate.send(AmqpApi.Cobra.TASK_PROCESS_TRACES.name(), AmqpApi.Cobra.TASK_PROCESS_TRACES.formatRoutingKey().of(aid, version), message);
 
 		LOGGER.info("{}@{} Forwarded traces to AMQP handler.", aid, version);
 	}
