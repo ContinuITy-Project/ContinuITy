@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -167,7 +169,7 @@ public class MeasurementDataController {
 			throws IOException {
 		LOGGER.info("Received OPEN.xtraces for {}@{}.", aid, version);
 
-		return forwardData(AmqpApi.Cobra.TASK_PROCESS_TRACES, aid, version, tracesAsJson, finish);
+		return forwardData(AmqpApi.Cobra.TASK_PROCESS_TRACES, false, aid, version, tracesAsJson, finish);
 	}
 
 	@RequestMapping(value = PUSH_ACCESS_LOGS, method = RequestMethod.POST)
@@ -178,7 +180,7 @@ public class MeasurementDataController {
 			throws IOException {
 		LOGGER.info("Received access logs for {}@{}.", aid, version);
 
-		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_ACCESSLOGS, aid, version, accessLogs, finish);
+		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_ACCESSLOGS, true, aid, version, accessLogs, finish);
 	}
 
 	@RequestMapping(value = PUSH_CSV, method = RequestMethod.POST)
@@ -189,7 +191,7 @@ public class MeasurementDataController {
 			throws IOException {
 		LOGGER.info("Received CSV for {}@{}.", aid, version);
 
-		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_CSV, aid, version, csvContent, finish);
+		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_CSV, true, aid, version, csvContent, finish);
 	}
 
 	@RequestMapping(value = PUSH_SESSION_LOGS, method = RequestMethod.POST)
@@ -199,11 +201,22 @@ public class MeasurementDataController {
 			@RequestParam(defaultValue = "false") boolean finish) throws IOException {
 		LOGGER.info("Received session logs for {}@{}.", aid, version);
 
-		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_SESSIONLOGS, aid, version, sessionContent, finish);
+		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_SESSIONLOGS, true, aid, version, sessionContent, finish);
 	}
 
-	private ResponseEntity<String> forwardData(ExchangeDefinition<AppIdAndVersion> exchange, AppId aid, VersionOrTimestamp version, String data, boolean finish) {
-		amqpTemplate.convertAndSend(exchange.name(), exchange.formatRoutingKey().of(aid, version), data, AmqpApi.Cobra.finishHeader(finish));
+	private ResponseEntity<String> forwardData(ExchangeDefinition<AppIdAndVersion> exchange, boolean asPlainText, AppId aid, VersionOrTimestamp version, String data, boolean finish) {
+		MessageProperties props = new MessageProperties();
+		props.setHeader(AmqpApi.Cobra.HEADER_FINISH, true);
+		props.setContentEncoding(AmqpApi.Cobra.CONTENT_CHARSET.name());
+
+		if (asPlainText) {
+			props.setContentType("text/plain");
+		} else {
+			props.setContentType("application/json");
+		}
+
+		Message message = new Message(data.getBytes(AmqpApi.Cobra.CONTENT_CHARSET), props);
+		amqpTemplate.send(exchange.name(), exchange.formatRoutingKey().of(aid, version), message);
 
 		LOGGER.info("{}@{} Forwarded data to {}.", aid, version, exchange.name());
 

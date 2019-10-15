@@ -1,6 +1,7 @@
 package org.continuity.cobra.amqp;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -42,8 +43,10 @@ import org.continuity.idpa.application.Application;
 import org.continuity.idpa.application.HttpEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.HTTPMethod;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
+import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,8 +85,21 @@ public class IncomingTracesAmqpHandler {
 	@Autowired
 	private ClusteringController clusteringController;
 
+	/**
+	 * Receives and processes new traces.
+	 *
+	 * @param message
+	 *            The message (instead of typical payload object for custom OPEN.xtrace
+	 *            deserialization).
+	 * @param routingKey
+	 *            The routing key used by the sender.
+	 * @param finish
+	 *            Whether to finish all sessions created out of the traces.
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
 	@RabbitListener(queues = RabbitMqConfig.TASK_PROCESS_TRACES_QUEUE_NAME)
-	public void processTraces(String tracesAsJson, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(AmqpApi.Cobra.HEADER_FINISH) boolean finish)
+	public void processTraces(Message message, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(AmqpApi.Cobra.HEADER_FINISH) boolean finish)
 			throws IOException, TimeoutException {
 		Pair<AppId, VersionOrTimestamp> aav = AmqpApi.Cobra.TASK_PROCESS_TRACES.formatRoutingKey().from(routingKey);
 
@@ -97,7 +113,7 @@ public class IncomingTracesAmqpHandler {
 		AppId aid = aav.getLeft().dropService();
 		VersionOrTimestamp version = aav.getRight();
 
-		List<TraceRecord> traces = OPENxtraceUtils.deserializeIntoTraceList(tracesAsJson).stream().map(t -> new TraceRecord(version, t)).collect(Collectors.toList());
+		List<TraceRecord> traces = convertMessage(message).stream().map(t -> new TraceRecord(version, t)).collect(Collectors.toList());
 
 		LOGGER.info("{}@{}: Deserialization done. Indexing with endpoints...", aid, version);
 
@@ -120,6 +136,16 @@ public class IncomingTracesAmqpHandler {
 
 		long endMillis = System.currentTimeMillis();
 		LOGGER.info("{}@{}: Processing of the traces done. It took {}", aid, version, DurationFormatUtils.formatDurationHMS(endMillis - startMillis));
+	}
+
+	private List<Trace> convertMessage(Message message) {
+		Charset charset = Charset.forName(message.getMessageProperties().getContentEncoding());
+
+		if (charset == null) {
+			charset = AmqpApi.Cobra.CONTENT_CHARSET;
+		}
+
+		return OPENxtraceUtils.deserializeIntoTraceList(new String(message.getBody(), charset));
 	}
 
 	private void storeTraces(AppId aid, VersionOrTimestamp version, List<TraceRecord> traces) throws IOException {

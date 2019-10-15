@@ -1,5 +1,7 @@
 package org.continuity.api.amqp;
 
+import java.nio.charset.Charset;
+
 import org.continuity.api.amqp.RoutingKeyFormatter.AppId;
 import org.continuity.api.amqp.RoutingKeyFormatter.AppIdAndVersion;
 import org.continuity.api.amqp.RoutingKeyFormatter.RecipeId;
@@ -86,6 +88,8 @@ public class AmqpApi {
 				.withRoutingKey(AppIdAndVersion.INSTANCE);
 
 		public static final String HEADER_FINISH = "continuity.finish";
+
+		public static final Charset CONTENT_CHARSET = Charset.forName("UTF-8");
 
 		public static MessagePostProcessor finishHeader(boolean finish) {
 			return message -> {
