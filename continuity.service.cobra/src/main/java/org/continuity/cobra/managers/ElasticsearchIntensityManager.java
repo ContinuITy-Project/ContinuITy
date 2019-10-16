@@ -1,9 +1,6 @@
 package org.continuity.cobra.managers;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -23,13 +20,6 @@ import org.continuity.dsl.timeseries.NumericVariable;
 import org.continuity.dsl.timeseries.StringVariable;
 import org.continuity.dsl.utils.DateUtils;
 import org.continuity.idpa.AppId;
-import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequest;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
@@ -78,46 +68,15 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 
 		if (containsContexts) {
 			try {
-				initUpdateScript();
+				if (!updateScriptInitialized) {
+					updateScriptInitialized = initUpdateScript(UPDATE_SCRIPT_ID);
+				}
 			} catch (Exception e) {
 				LOGGER.error("Could not initialize update script! Hoping it is already present...", e);
 			}
 			storeOrUpdateByScript(aid, tailoring, records, this::createUpdateScript);
 		} else {
 			storeOrUpdateElements(aid, tailoring, records);
-		}
-	}
-
-	private void initUpdateScript() throws IOException {
-		if (!updateScriptInitialized) {
-			String scriptSource;
-
-			try (InputStream in = ElasticsearchIntensityManager.class.getResourceAsStream("/" + UPDATE_SCRIPT_ID + ".painless")) {
-				scriptSource = new BufferedReader(new InputStreamReader(in)).lines().map(String::trim).collect(Collectors.joining(" "));
-			}
-
-			XContentBuilder script = XContentFactory.jsonBuilder();
-			script.startObject();
-			{
-				script.startObject("script");
-				{
-					script.field("lang", "painless");
-					script.field("source", scriptSource);
-				}
-				script.endObject();
-			}
-			script.endObject();
-
-			PutStoredScriptRequest request = new PutStoredScriptRequest().id(UPDATE_SCRIPT_ID).content(BytesReference.bytes(script), XContentType.JSON);
-
-			AcknowledgedResponse response = client.putScript(request, RequestOptions.DEFAULT);
-
-			if (response.isAcknowledged()) {
-				updateScriptInitialized = true;
-				LOGGER.info("Initialized update script.");
-			} else {
-				LOGGER.error("Could not initialize update script! Elasticsearch did not acknowledge the request. Hoping it is already present...");
-			}
 		}
 	}
 

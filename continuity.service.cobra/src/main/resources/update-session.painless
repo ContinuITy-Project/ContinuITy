@@ -1,0 +1,9 @@
+
+if (ctx.op == "create") {
+    ctx._source.putAll(params);
+} else {
+    List old_requests = ctx._source.requests;
+    ctx._source.putAll(params);
+    old_requests.addAll(params.requests);
+    ctx._source.requests = old_requests;
+}

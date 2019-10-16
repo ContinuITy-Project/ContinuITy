@@ -3,9 +3,11 @@ package org.continuity.cobra.extractor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,8 +29,6 @@ public class SessionUpdater {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SessionUpdater.class);
 
 	private static final Set<Integer> REDIRECT_CODES = Arrays.asList(300, 301, 302, 303, 305, 307, 308).stream().collect(Collectors.toSet());
-
-	private static final String FLAG_REDIRECT_CONSIDERED = "SessionUpdater.redirect_considered";
 
 	private final VersionOrTimestamp version;
 
@@ -59,7 +59,6 @@ public class SessionUpdater {
 		int numNew = 0;
 		AtomicInteger numFinished = new AtomicInteger(0);
 		int numDuplicate = 0;
-		int numRedirect = 0;
 		int numError = 0;
 
 		Collections.sort(requests);
@@ -94,14 +93,6 @@ public class SessionUpdater {
 					continue;
 				}
 
-				SessionRequest previous = session.getRequests().floor(req);
-
-				if ((session.getRequests().size() > 0) && isRedirect(previous)) {
-					numRedirect++;
-					previous.getFlags().add(FLAG_REDIRECT_CONSIDERED);
-					continue;
-				}
-
 				session.addRequest(req);
 
 				newSessions.add(session);
@@ -128,15 +119,51 @@ public class SessionUpdater {
 			numFinished.incrementAndGet();
 		});
 
-		LOGGER.info("Session grouping done. old: {}, updated: {}, new: {}, finished: {}, ignored (redirect): {}, ignored (duplicate): {}, ignored (error): {}", numOld, numUpdated, numNew,
-				numFinished, numRedirect, numDuplicate, numError);
+		int numRedirect = 0;
+
+		if (!ignoreRedirects) {
+			numRedirect = newSessions.stream().mapToInt(this::removeRedirects).sum();
+		}
+
+		LOGGER.info("Session grouping done. old: {}, updated: {}, new: {}, finished: {}, ignored (redirect): {}, ignored (duplicate): {}, ignored (error): {}", numOld, numUpdated, numNew, numFinished,
+				numRedirect, numDuplicate, numError);
 
 		return newSessions;
 	}
 
+	private int removeRedirects(Session session) {
+		if (session.getRequests().isEmpty()) {
+			return 0;
+		}
+
+		Iterator<SessionRequest> iter = session.getRequests().descendingIterator();
+		Set<SessionRequest> toRemove = new TreeSet<>();
+
+		SessionRequest curr = iter.next();
+		SessionRequest last = curr;
+
+		while (iter.hasNext()) {
+			SessionRequest prev = iter.next();
+
+			if (isRedirect(prev)) {
+				toRemove.add(curr);
+			}
+
+			curr = prev;
+		}
+
+		if (session.isRedirectEnding()) {
+			toRemove.add(curr);
+		}
+
+		session.setRedirectEnding(isRedirect(last));
+		session.getRequests().removeAll(toRemove);
+
+		return toRemove.size();
+	}
+
 	private boolean isRedirect(SessionRequest request) {
-		return !ignoreRedirects && (request != null) && (request.getExtendedInformation() != null) && REDIRECT_CODES.contains(request.getExtendedInformation().getResponseCode())
-				&& !request.getFlags().contains(FLAG_REDIRECT_CONSIDERED);
+		return !ignoreRedirects && (request != null) && (request.getExtendedInformation() != null) && REDIRECT_CODES.contains(request.getExtendedInformation().getResponseCode());
 	}
 
 	private Session createFreshSession(String sessionId) {

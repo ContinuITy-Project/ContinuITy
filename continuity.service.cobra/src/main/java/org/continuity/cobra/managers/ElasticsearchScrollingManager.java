@@ -2,6 +2,7 @@ package org.continuity.cobra.managers;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +20,7 @@ import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.idpa.AppId;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -28,6 +30,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
@@ -37,7 +40,10 @@ import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.script.Script;
@@ -152,7 +158,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 		initIndex(index);
 
-		doBulkRequest(index, elements, waitFor, (request, element, json, id) -> request.add(new IndexRequest(index).source(json, XContentType.JSON).id(id).create(create)));
+		doBulkRequest(index, elements, waitFor, true, (request, element, json, id) -> request.add(new IndexRequest(index).source(json, XContentType.JSON).id(id).create(create)));
 	}
 
 	/**
@@ -183,7 +189,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 		initIndex(index);
 
-		doBulkRequest(index, elements, waitFor, (request, element, json, id) -> request.add(new UpdateRequest(index, id).doc(json, XContentType.JSON).docAsUpsert(true)));
+		doBulkRequest(index, elements, waitFor, true, (request, element, json, id) -> request.add(new UpdateRequest(index, id).doc(json, XContentType.JSON).docAsUpsert(true)));
 	}
 
 	/**
@@ -194,8 +200,6 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @param tailoring
 	 * @param elements
 	 * @param scriptSupplier
-	 * @param waitFor
-	 *            Whether the request should wait until the data is indexed.
 	 * @throws IOException
 	 */
 	protected void storeOrUpdateByScript(AppId aid, List<String> tailoring, Collection<T> elements, Function<T, Script> scriptSupplier) throws IOException {
@@ -215,17 +219,45 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @throws IOException
 	 */
 	protected void storeOrUpdateByScript(AppId aid, List<String> tailoring, Collection<T> elements, Function<T, Script> scriptSupplier, boolean waitFor) throws IOException {
+		storeOrUpdateByScript(aid, tailoring, elements, scriptSupplier, false, waitFor);
+	}
+
+	/**
+	 * Updates the elements by using the provided scripts or stores the respective element if there
+	 * is none, yet.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param elements
+	 * @param scriptSupplier
+	 * @param scriptedUpsert
+	 *            Whether the script should also be executed if the document does not exist yet.
+	 * @param waitFor
+	 *            Whether the request should wait until the data is indexed.
+	 * @throws IOException
+	 */
+	protected void storeOrUpdateByScript(AppId aid, List<String> tailoring, Collection<T> elements, Function<T, Script> scriptSupplier, boolean scriptedUpsert, boolean waitFor) throws IOException {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 		initIndex(index);
 
-		doBulkRequest(index, elements, waitFor, (request, element, json, id) -> request.add(new UpdateRequest(index, id).script(scriptSupplier.apply(element)).upsert(json, XContentType.JSON)));
+		doBulkRequest(index, elements, waitFor, !scriptedUpsert, (request, element, json, id) -> {
+			UpdateRequest update = new UpdateRequest(index, id).script(scriptSupplier.apply(element));
+
+			if (scriptedUpsert) {
+				update.scriptedUpsert(true).upsert();
+			} else {
+				update.upsert(json, XContentType.JSON);
+			}
+
+			request.add(update);
+		});
 	}
 
-	private void doBulkRequest(String index, Collection<T> elements, boolean waitFor, RequestAdder<T> requestAdder) throws IOException {
+	private void doBulkRequest(String index, Collection<T> elements, boolean waitFor, boolean requiresJson, RequestAdder<T> requestAdder) throws IOException {
 		BulkRequest request = new BulkRequest();
 
 		for (T elem : elements) {
-			requestAdder.add(request, elem, serialize(elem), getDocumentId(elem));
+			requestAdder.add(request, elem, requiresJson ? serialize(elem) : null, getDocumentId(elem));
 		}
 
 		if (waitFor) {
@@ -264,6 +296,38 @@ public abstract class ElasticsearchScrollingManager<T> {
 	}
 
 	/**
+	 * Reads the elements using the default tailoring (all).
+	 *
+	 * @param aid
+	 * @param query
+	 * @param message
+	 * @param fields
+	 *            The object fields to include in the response.
+	 * @return
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	protected List<T> readElementsIncluding(AppId aid, QueryBuilder query, String message, String... fields) throws IOException, TimeoutException {
+		return readElements(aid, Collections.emptyList(), query, null, DEFAULT_SIZE, message, fields, null);
+	}
+
+	/**
+	 * Reads the elements using the default tailoring (all).
+	 *
+	 * @param aid
+	 * @param query
+	 * @param message
+	 * @param fields
+	 *            The object fields to exclude in the response.
+	 * @return
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	protected List<T> readElementsExcluding(AppId aid, QueryBuilder query, String message, String... fields) throws IOException, TimeoutException {
+		return readElements(aid, Collections.emptyList(), query, null, DEFAULT_SIZE, message, null, fields);
+	}
+
+	/**
 	 * Reads the elements using the defined tailoring.
 	 *
 	 * @param aid
@@ -275,7 +339,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @throws TimeoutException
 	 */
 	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, String message) throws IOException, TimeoutException {
-		return readElements(aid, tailoring, query, null, DEFAULT_SIZE, message);
+		return readElements(aid, tailoring, query, null, DEFAULT_SIZE, message, null, null);
 	}
 
 	/**
@@ -287,11 +351,34 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @param sort
 	 * @param size
 	 * @param message
+	 * @param includes
 	 * @return
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
 	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, SortBuilder<?> sort, int size, String message) throws IOException, TimeoutException {
+		return readElements(aid, tailoring, query, sort, size, message, null, null);
+	}
+
+	/**
+	 * Reads the elements using the defined tailoring, sort, and number of elements to be retrieved.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param query
+	 * @param sort
+	 * @param size
+	 * @param message
+	 * @param includes
+	 *            The object fields to include in the response.
+	 * @param excludes
+	 *            The object fields to exclude in the response.
+	 * @return
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, SortBuilder<?> sort, int size, String message, String[] includes, String[] excludes)
+			throws IOException, TimeoutException {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 
 		if (!indexExists(index)) {
@@ -299,6 +386,10 @@ public abstract class ElasticsearchScrollingManager<T> {
 		}
 
 		SearchSourceBuilder source = new SearchSourceBuilder().query(query).size(size);
+
+		if (((includes != null) && (includes.length > 0)) || ((excludes != null) && (excludes.length > 0))) {
+			source.fetchSource(includes, excludes);
+		}
 
 		if (sort != null) {
 			source.sort(sort);
@@ -432,6 +523,38 @@ public abstract class ElasticsearchScrollingManager<T> {
 			LOGGER.info("Index {} has been created.", index);
 		} else {
 			LOGGER.warn("Creation of index {} has not been acknowledged!", index);
+		}
+	}
+
+	protected boolean initUpdateScript(String scriptId) throws IOException {
+		String scriptSource;
+
+		try (InputStream in = ElasticsearchScrollingManager.class.getResourceAsStream("/" + scriptId + ".painless")) {
+			scriptSource = new BufferedReader(new InputStreamReader(in)).lines().map(String::trim).collect(Collectors.joining(" "));
+		}
+
+		XContentBuilder script = XContentFactory.jsonBuilder();
+		script.startObject();
+		{
+			script.startObject("script");
+			{
+				script.field("lang", "painless");
+				script.field("source", scriptSource);
+			}
+			script.endObject();
+		}
+		script.endObject();
+
+		PutStoredScriptRequest request = new PutStoredScriptRequest().id(scriptId).content(BytesReference.bytes(script), XContentType.JSON);
+
+		AcknowledgedResponse response = client.putScript(request, RequestOptions.DEFAULT);
+
+		if (response.isAcknowledged()) {
+			LOGGER.info("Initialized update script.");
+			return true;
+		} else {
+			LOGGER.error("Could not initialize update script! Elasticsearch did not acknowledge the request.");
+			return false;
 		}
 	}
 

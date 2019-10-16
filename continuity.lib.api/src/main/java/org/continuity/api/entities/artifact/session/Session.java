@@ -51,6 +51,10 @@ public class Session {
 	@JsonView(SessionView.Simple.class)
 	private NavigableSet<SessionRequest> requests = new TreeSet<>();
 
+	@JsonProperty("redirect-ending")
+	@JsonView(SessionView.Internal.class)
+	private boolean redirectEnding = false;
+
 	public String getSessionId() {
 		return sessionId;
 	}
@@ -120,6 +124,14 @@ public class Session {
 
 	public void setRequests(NavigableSet<SessionRequest> requests) {
 		this.requests = requests;
+	}
+
+	public boolean isRedirectEnding() {
+		return redirectEnding;
+	}
+
+	public void setRedirectEnding(boolean redirectEnding) {
+		this.redirectEnding = redirectEnding;
 	}
 
 	@JsonIgnore

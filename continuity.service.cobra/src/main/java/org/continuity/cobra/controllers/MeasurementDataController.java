@@ -206,7 +206,7 @@ public class MeasurementDataController {
 
 	private ResponseEntity<String> forwardData(ExchangeDefinition<AppIdAndVersion> exchange, boolean asPlainText, AppId aid, VersionOrTimestamp version, String data, boolean finish) {
 		MessageProperties props = new MessageProperties();
-		props.setHeader(AmqpApi.Cobra.HEADER_FINISH, true);
+		props.setHeader(AmqpApi.Cobra.HEADER_FINISH, finish);
 		props.setContentEncoding(AmqpApi.Cobra.CONTENT_CHARSET.name());
 
 		if (asPlainText) {

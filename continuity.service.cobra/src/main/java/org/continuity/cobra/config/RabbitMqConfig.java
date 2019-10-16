@@ -51,8 +51,8 @@ public class RabbitMqConfig {
 
 	@Bean
 	MessageConverter jsonMessageConverter(ObjectMapper mapper) {
-		ContentTypeDelegatingMessageConverter converter = new ContentTypeDelegatingMessageConverter(new SimpleMessageConverter());
-		converter.addDelegate("application/json", new Jackson2JsonMessageConverter(mapper));
+		ContentTypeDelegatingMessageConverter converter = new ContentTypeDelegatingMessageConverter(new Jackson2JsonMessageConverter(mapper));
+		converter.addDelegate("text/plain", new SimpleMessageConverter());
 
 		return converter;
 	}
