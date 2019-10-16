@@ -5,6 +5,7 @@ import java.time.Duration;
 import org.continuity.api.entities.config.cobra.CobraConfiguration.DurationToStringConverter;
 import org.continuity.api.entities.config.cobra.CobraConfiguration.StringToDurationConverter;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @author Henning Schulz
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ClusteringConfiguration {
 
 	@JsonSerialize(converter = DurationToStringConverter.class)
@@ -24,7 +26,8 @@ public class ClusteringConfiguration {
 	@JsonDeserialize(converter = StringToDurationConverter.class)
 	private Duration overlap = Duration.ofHours(5);
 
-	private double epsilon = 1.5;
+	@JsonProperty("avg-transition-tolerance")
+	private double avgTransitionTolerance = 0.075;
 
 	@JsonProperty("min-sample-size")
 	private long minSampleSize = 10;
@@ -59,16 +62,18 @@ public class ClusteringConfiguration {
 	}
 
 	/**
-	 * The epsilon parameter for the DBSCAN algorithm.
+	 * The average transition tolerance for the DBSCAN algorithm. Corresponds to the epsilon
+	 * parameter with {@code n} = number of endpoints:
+	 * {@code epsilon = (n + 1) * avgTransitionTolerance}.
 	 *
 	 * @return
 	 */
-	public double getEpsilon() {
-		return epsilon;
+	public double getAvgTransitionTolerance() {
+		return avgTransitionTolerance;
 	}
 
-	public void setEpsilon(double epsilon) {
-		this.epsilon = epsilon;
+	public void setAvgTransitionTolerance(double avgTransitionTolerance) {
+		this.avgTransitionTolerance = avgTransitionTolerance;
 	}
 
 	/**
