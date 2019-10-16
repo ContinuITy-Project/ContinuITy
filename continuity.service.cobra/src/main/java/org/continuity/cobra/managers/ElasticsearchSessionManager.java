@@ -3,7 +3,9 @@ package org.continuity.cobra.managers;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.continuity.api.entities.artifact.session.Session;
@@ -18,10 +20,14 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.metrics.ParsedMax;
 import org.elasticsearch.search.aggregations.metrics.ParsedMin;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +43,11 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchSessionManager.class);
 
+	private static final String UPDATE_SCRIPT_ID = "update-session";
+
 	private final ObjectMapper mapper;
+
+	private boolean updateScriptInitialized = false;
 
 	public ElasticsearchSessionManager(String host, ObjectMapper mapper) throws IOException {
 		super(host, "session");
@@ -46,8 +56,8 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	}
 
 	/**
-	 * Stores the passed sessions for the given app-id, potentially overwriting old versions of the
-	 * sessions.
+	 * Stores the passed sessions for the given app-id. If there is already a session, the session
+	 * fields will be overwritten and the requests will be added to the existing list.
 	 *
 	 * @param aid
 	 *            The app-id.
@@ -57,8 +67,19 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	 *            Whether the request should wait until the data is indexed.
 	 * @throws IOException
 	 */
-	public void storeSessions(AppId aid, Collection<Session> sessions, List<String> tailoring, boolean waitFor) throws IOException {
-		storeElements(aid, tailoring, sessions, waitFor);
+	public void storeOrUpdateSessions(AppId aid, Collection<Session> sessions, List<String> tailoring, boolean waitFor) throws IOException {
+		if (!updateScriptInitialized) {
+			updateScriptInitialized = initUpdateScript(UPDATE_SCRIPT_ID);
+		}
+
+		storeOrUpdateByScript(aid, tailoring, sessions, this::createUpdateScript, true, waitFor);
+	}
+
+	private Script createUpdateScript(Session session) {
+		@SuppressWarnings("unchecked")
+		Map<String, Object> params = mapper.convertValue(session, HashMap.class);
+
+		return new Script(ScriptType.STORED, null, UPDATE_SCRIPT_ID, params);
 	}
 
 	/**
@@ -81,8 +102,9 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	 */
 	public List<Session> readSessionsInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException, TimeoutException {
 		QueryBuilder query = createRangeQuery(version, from, to);
+		FieldSortBuilder sort = new FieldSortBuilder("start-micros").order(SortOrder.ASC);
 
-		return readElements(aid, tailoring, query, String.format(" with version %s and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
+		return readElements(aid, tailoring, query, sort, DEFAULT_SIZE, String.format(" with version %s and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
 	}
 
 	/**
@@ -156,7 +178,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 		query.must(QueryBuilders.termQuery("finished", false));
 
-		return readElements(aid, query, String.format("with version %s and open sessions", version));
+		return readElementsExcluding(aid, query, String.format("with version %s and open sessions", version), "requests.*");
 	}
 
 	/**
