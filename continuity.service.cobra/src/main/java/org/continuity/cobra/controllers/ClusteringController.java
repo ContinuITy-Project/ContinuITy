@@ -62,8 +62,7 @@ public class ClusteringController {
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "tailoring", required = true, dataType = "string", paramType = "path") })
 	public void triggerLatestClustering(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable String tailoring,
-			@RequestParam(value = "ignore-timeout", defaultValue = "false") boolean ignoreTimeout)
-			throws IOException, TimeoutException {
+			@RequestParam(value = "ignore-timeout", defaultValue = "false") boolean ignoreTimeout) throws IOException, TimeoutException {
 		triggerLatestClustering(aid, Session.convertStringToTailoring(tailoring), ignoreTimeout);
 	}
 
@@ -102,7 +101,9 @@ public class ClusteringController {
 			previousMarkovChains = converter.convertBehaviorModel(previousBehavior);
 		}
 
-		ClustinatorInput input = new ClustinatorInput().setAppId(aid).setTailoring(tailoring).setEpsilon(config.getClustering().getEpsilon()).setMinSampleSize(config.getClustering().getMinSampleSize())
+		double epsilon = config.getClustering().getAvgTransitionTolerance() * (endpoints.size() - 1);
+
+		ClustinatorInput input = new ClustinatorInput().setAppId(aid).setTailoring(tailoring).setEpsilon(epsilon).setMinSampleSize(config.getClustering().getMinSampleSize())
 				.setStartMicros(clusteringStart * 1000).setIntervalStartMicros(intervalStart * 1000).setEndMicros(clusteringEnd * 1000).setStates(endpoints)
 				.setPreviousMarkovChains(previousMarkovChains).setSessions(sessions);
 
