@@ -3,6 +3,7 @@ package org.continuity.cobra.converter;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -32,6 +33,8 @@ public class CsvRowToOpenXtraceConverter implements OpenXtraceConverter<CsvRow> 
 
 	private final boolean hashSessionId;
 
+	private final AtomicLong idCounter = new AtomicLong(0);
+
 	public CsvRowToOpenXtraceConverter(boolean hashSessionId) {
 		this.hashSessionId = hashSessionId;
 	}
@@ -42,7 +45,7 @@ public class CsvRowToOpenXtraceConverter implements OpenXtraceConverter<CsvRow> 
 	}
 
 	private Trace convert(CsvRow row) {
-		TraceImpl trace = new TraceImpl(row.hashCode());
+		TraceImpl trace = new TraceImpl((row.hashCode() * 31) + idCounter.getAndIncrement());
 		trace.setRoot(createSubTrace(trace, row));
 		return trace;
 	}
@@ -60,6 +63,7 @@ public class CsvRowToOpenXtraceConverter implements OpenXtraceConverter<CsvRow> 
 
 	private HTTPRequestProcessingImpl createCallable(SubTraceImpl subTrace, CsvRow row) {
 		HTTPRequestProcessingImpl request = new HTTPRequestProcessingImpl(null, subTrace);
+		request.setIdentifier(Long.toHexString(subTrace.getSubTraceId()));
 
 		try {
 			Date start = ApiFormats.DATE_FORMAT.parse(row.getStartDate());
@@ -70,6 +74,7 @@ public class CsvRowToOpenXtraceConverter implements OpenXtraceConverter<CsvRow> 
 		} catch (ParseException e) {
 			LOGGER.error("Could not parse timestamp!", e);
 		}
+
 		request.setUri(row.getPath());
 		request.setRequestMethod(HTTPMethod.valueOf(row.getMethod().toUpperCase()));
 		request.setHTTPParameters(WebUtils.formatQueryParameters(row.getParameters()));

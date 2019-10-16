@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -33,6 +34,8 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 
 	private final boolean hashSessionId;
 
+	private final AtomicLong idCounter = new AtomicLong(0);
+
 	public AccessLogsToOpenXtraceConverter(boolean hashSessionId) {
 		this.hashSessionId = hashSessionId;
 	}
@@ -43,7 +46,7 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 	}
 
 	private Trace convert(AccessLogEntry entry) {
-		TraceImpl trace = new TraceImpl(entry.hashCode());
+		TraceImpl trace = new TraceImpl((entry.hashCode() * 31) + idCounter.getAndIncrement());
 		trace.setRoot(createSubTrace(trace, entry));
 		return trace;
 	}
@@ -62,6 +65,7 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 
 	private HTTPRequestProcessingImpl createCallable(SubTraceImpl subTrace, AccessLogEntry entry) {
 		HTTPRequestProcessingImpl request = new HTTPRequestProcessingImpl(null, subTrace);
+		request.setIdentifier(Long.toHexString(subTrace.getSubTraceId()));
 
 		try {
 			request.setTimestamp(entry.getAccessTimeAsDate().getTime());
