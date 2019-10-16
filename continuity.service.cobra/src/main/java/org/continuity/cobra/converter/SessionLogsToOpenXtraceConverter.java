@@ -2,6 +2,7 @@ package org.continuity.cobra.converter;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,6 +27,8 @@ import open.xtrace.OPENxtraceUtils;
 public class SessionLogsToOpenXtraceConverter implements OpenXtraceConverter<String> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SessionLogsToOpenXtraceConverter.class);
+
+	private final AtomicLong idCounter = new AtomicLong(0);
 
 	@Override
 	public List<Trace> convert(List<String> sessionLogs) {
@@ -66,7 +69,7 @@ public class SessionLogsToOpenXtraceConverter implements OpenXtraceConverter<Str
 		String method = elements[7];
 		String parameters = elements[8];
 
-		TraceImpl trace = new TraceImpl(request.hashCode());
+		TraceImpl trace = new TraceImpl((request.hashCode() * 31) + idCounter.getAndIncrement());
 		trace.setRoot(createSubTrace(trace, sessionId, name, startNanos, endNanos, path, port, host, method, parameters));
 		return trace;
 	}
@@ -84,6 +87,7 @@ public class SessionLogsToOpenXtraceConverter implements OpenXtraceConverter<Str
 
 	private HTTPRequestProcessingImpl createCallable(SubTraceImpl subTrace, String sessionId, long startNanos, long endNanos, String path, String method, String parameters) {
 		HTTPRequestProcessingImpl request = new HTTPRequestProcessingImpl(null, subTrace);
+		request.setIdentifier(Long.toHexString(subTrace.getSubTraceId()));
 
 		request.setTimestamp(startNanos / MILLIS_TO_NANOS);
 		request.setResponseTime(endNanos - startNanos);
