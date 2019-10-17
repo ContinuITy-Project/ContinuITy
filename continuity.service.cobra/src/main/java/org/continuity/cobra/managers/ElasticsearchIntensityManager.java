@@ -193,7 +193,7 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 */
 	public List<IntensityRecord> readDescribedIntensities(AppId aid, List<String> tailoring, WorkloadDescription workloadDescription, ZoneId timeZone) throws IOException, TimeoutException {
 		FieldSortBuilder sort = new FieldSortBuilder("timestamp").order(SortOrder.ASC);
-		return readElements(aid, tailoring, workloadDescription.toElasticQuery(timeZone), sort, DEFAULT_SIZE, "for passed workload description");
+		return readElements(aid, tailoring, workloadDescription.toElasticQuery(timeZone), sort, DEFAULT_SCROLL_SIZE, TOTAL_SIZE_ALL, "for passed workload description");
 	}
 
 	/**

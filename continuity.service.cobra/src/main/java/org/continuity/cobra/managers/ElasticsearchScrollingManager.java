@@ -63,7 +63,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
  */
 public abstract class ElasticsearchScrollingManager<T> {
 
-	protected static final int DEFAULT_SIZE = 10000; // is the maximum
+	protected static final int DEFAULT_SCROLL_SIZE = 10000; // is the maximum
+
+	protected static final int TOTAL_SIZE_ALL = -1;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchScrollingManager.class);
 
@@ -300,6 +302,9 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 *
 	 * @param aid
 	 * @param query
+	 * @param scrollSize
+	 * @param totalSize
+	 *            -1 means infinite
 	 * @param message
 	 * @param fields
 	 *            The object fields to include in the response.
@@ -307,8 +312,8 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	protected List<T> readElementsIncluding(AppId aid, QueryBuilder query, String message, String... fields) throws IOException, TimeoutException {
-		return readElements(aid, Collections.emptyList(), query, null, DEFAULT_SIZE, message, fields, null);
+	protected List<T> readElementsIncluding(AppId aid, QueryBuilder query, int scrollSize, int totalSize, String message, String... fields) throws IOException, TimeoutException {
+		return readElements(aid, Collections.emptyList(), query, null, scrollSize, totalSize, message, fields, null);
 	}
 
 	/**
@@ -316,6 +321,9 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 *
 	 * @param aid
 	 * @param query
+	 * @param scrollSize
+	 * @param totalSize
+	 *            -1 means infinite
 	 * @param message
 	 * @param fields
 	 *            The object fields to exclude in the response.
@@ -323,8 +331,8 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	protected List<T> readElementsExcluding(AppId aid, QueryBuilder query, String message, String... fields) throws IOException, TimeoutException {
-		return readElements(aid, Collections.emptyList(), query, null, DEFAULT_SIZE, message, null, fields);
+	protected List<T> readElementsExcluding(AppId aid, QueryBuilder query, int scrollSize, int totalSize, String message, String... fields) throws IOException, TimeoutException {
+		return readElements(aid, Collections.emptyList(), query, null, scrollSize, totalSize, message, null, fields);
 	}
 
 	/**
@@ -339,7 +347,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @throws TimeoutException
 	 */
 	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, String message) throws IOException, TimeoutException {
-		return readElements(aid, tailoring, query, null, DEFAULT_SIZE, message, null, null);
+		return readElements(aid, tailoring, query, null, DEFAULT_SCROLL_SIZE, TOTAL_SIZE_ALL, message, null, null);
 	}
 
 	/**
@@ -349,15 +357,17 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @param tailoring
 	 * @param query
 	 * @param sort
-	 * @param size
+	 * @param scrollSize
+	 * @param totalSize
+	 *            -1 means infinite
 	 * @param message
 	 * @param includes
 	 * @return
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, SortBuilder<?> sort, int size, String message) throws IOException, TimeoutException {
-		return readElements(aid, tailoring, query, sort, size, message, null, null);
+	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, SortBuilder<?> sort, int scrollSize, int totalSize, String message) throws IOException, TimeoutException {
+		return readElements(aid, tailoring, query, sort, scrollSize, totalSize, message, null, null);
 	}
 
 	/**
@@ -367,7 +377,9 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @param tailoring
 	 * @param query
 	 * @param sort
-	 * @param size
+	 * @param scrollSize
+	 * @param totalSize
+	 *            -1 means infinite
 	 * @param message
 	 * @param includes
 	 *            The object fields to include in the response.
@@ -377,7 +389,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, SortBuilder<?> sort, int size, String message, String[] includes, String[] excludes)
+	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, SortBuilder<?> sort, int scrollSize, int totalSize, String message, String[] includes, String[] excludes)
 			throws IOException, TimeoutException {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 
@@ -385,7 +397,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 			return Collections.emptyList();
 		}
 
-		SearchSourceBuilder source = new SearchSourceBuilder().query(query).size(size);
+		SearchSourceBuilder source = new SearchSourceBuilder().query(query).size(scrollSize);
 
 		if (((includes != null) && (includes.length > 0)) || ((excludes != null) && (excludes.length > 0))) {
 			source.fetchSource(includes, excludes);
@@ -408,24 +420,25 @@ public abstract class ElasticsearchScrollingManager<T> {
 		SearchHits hits = response.getHits();
 		LOGGER.info("The search request to {} {} resulted in {}.", index, message, hits.getTotalHits());
 
-		return processSearchResponse(response, aid, message, 0);
+		return processSearchResponse(response, aid, message, 0, totalSize);
 	}
 
-	private List<T> processSearchResponse(SearchResponse response, AppId aid, String message, int scrollNumber) throws IOException, TimeoutException {
+	private List<T> processSearchResponse(SearchResponse response, AppId aid, String message, int scrollNumber, int remaining) throws IOException, TimeoutException {
 		if (response.isTimedOut()) {
 			throw new TimeoutException(String.format("The search request to app-id %s and version %s timed out!", aid.toString()));
 		}
 
 		SearchHits hits = response.getHits();
 		String scrollId = response.getScrollId();
+		int numHits = hits.getHits().length;
 
-		LOGGER.info("Scroll #{} took {} and is {}.", scrollNumber, response.getTook(), response.status());
+		LOGGER.info("Scroll #{} took {}, had {} hits, and is {}.", scrollNumber, response.getTook(), numHits, response.status());
 
-		if (hits.getHits().length > 0) {
+		if ((numHits > 0) && ((remaining < 0) || (numHits < remaining))) {
 			List<T> results = new ArrayList<>();
 			Arrays.stream(hits.getHits()).map(SearchHit::getSourceAsString).map(this::deserialize).filter(Objects::nonNull).forEach(results::add);
 
-			results.addAll(scrollForElements(scrollId, aid, message, scrollNumber));
+			results.addAll(scrollForElements(scrollId, aid, message, scrollNumber, remaining - numHits));
 
 			return results;
 		} else {
@@ -435,10 +448,10 @@ public abstract class ElasticsearchScrollingManager<T> {
 		}
 	}
 
-	private List<T> scrollForElements(String scrollId, AppId aid, String message, int scrollNumber) throws IOException, TimeoutException {
+	private List<T> scrollForElements(String scrollId, AppId aid, String message, int scrollNumber, int remaining) throws IOException, TimeoutException {
 		SearchScrollRequest scroll = new SearchScrollRequest(scrollId);
 		scroll.scroll(TimeValue.timeValueMinutes(SCROLL_MINUTES));
-		return processSearchResponse(client.scroll(scroll, RequestOptions.DEFAULT), aid, message, scrollNumber + 1);
+		return processSearchResponse(client.scroll(scroll, RequestOptions.DEFAULT), aid, message, scrollNumber + 1, remaining);
 	}
 
 	private void clearScroll(String scrollId) throws IOException {

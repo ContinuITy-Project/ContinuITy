@@ -43,6 +43,9 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchSessionManager.class);
 
+	// sessions can be larger
+	private static final int SCROLL_SIZE = DEFAULT_SCROLL_SIZE / 4;
+
 	private static final String UPDATE_SCRIPT_ID = "update-session";
 
 	private final ObjectMapper mapper;
@@ -104,7 +107,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 		QueryBuilder query = createRangeQuery(version, from, to);
 		FieldSortBuilder sort = new FieldSortBuilder("start-micros").order(SortOrder.ASC);
 
-		return readElements(aid, tailoring, query, sort, DEFAULT_SIZE, String.format(" with version %s and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
+		return readElements(aid, tailoring, query, sort, SCROLL_SIZE, TOTAL_SIZE_ALL, String.format(" with version %s and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
 	}
 
 	/**
@@ -178,7 +181,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 		query.must(QueryBuilders.termQuery("finished", false));
 
-		return readElementsExcluding(aid, query, String.format("with version %s and open sessions", version), "requests.*");
+		return readElementsExcluding(aid, query, SCROLL_SIZE, TOTAL_SIZE_ALL, String.format("with version %s and open sessions", version), "requests.*");
 	}
 
 	/**
@@ -209,7 +212,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	 */
 	public List<Session> readSessionsWithId(AppId aid, String... sessionIds) throws IOException, TimeoutException {
 		IdsQueryBuilder query = new IdsQueryBuilder().addIds(sessionIds);
-		List<Session> sessions = readElements(aid, query, String.format("with one of the %d passed IDs", sessionIds.length));
+		List<Session> sessions = readElements(aid, null, query, null, SCROLL_SIZE, TOTAL_SIZE_ALL, String.format("with one of the %d passed IDs", sessionIds.length));
 
 		if (sessions.size() != sessionIds.length) {
 			LOGGER.warn("Found {} sessions for app-id {}, but searched for {} session IDs!", sessions.size(), aid, sessionIds.length);
