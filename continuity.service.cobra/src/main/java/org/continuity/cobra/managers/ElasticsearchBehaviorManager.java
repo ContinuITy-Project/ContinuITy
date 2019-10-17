@@ -59,7 +59,7 @@ public class ElasticsearchBehaviorManager extends ElasticsearchScrollingManager<
 	public MarkovBehaviorModel readLatest(AppId aid, List<String> tailoring) throws IOException, TimeoutException {
 		FieldSortBuilder sort = new FieldSortBuilder("timestamp").order(SortOrder.DESC);
 
-		List<MarkovBehaviorModel> models = readElements(aid, tailoring, QueryBuilders.matchAllQuery(), sort, 1, "for latest behavior model");
+		List<MarkovBehaviorModel> models = readElements(aid, tailoring, QueryBuilders.matchAllQuery(), sort, 1, 1, "for latest behavior model");
 		return ((models == null) || (models.size() == 0)) ? null : models.get(0);
 	}
 
@@ -78,7 +78,7 @@ public class ElasticsearchBehaviorManager extends ElasticsearchScrollingManager<
 	public MarkovBehaviorModel readLatest(AppId aid, List<String> tailoring, long before) throws IOException, TimeoutException {
 		FieldSortBuilder sort = new FieldSortBuilder("timestamp").order(SortOrder.DESC);
 
-		List<MarkovBehaviorModel> models = readElements(aid, tailoring, QueryBuilders.rangeQuery("timestamp").lte(before), sort, 1, "for latest behavior model before " + new Date(before));
+		List<MarkovBehaviorModel> models = readElements(aid, tailoring, QueryBuilders.rangeQuery("timestamp").lte(before), sort, 1, 1, "for latest behavior model before " + new Date(before));
 		return ((models == null) || (models.size() == 0)) ? null : models.get(0);
 	}
 
