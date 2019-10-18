@@ -37,7 +37,7 @@ public class AccessLogEntry {
 	 * clientHost remoteName user [accessTime] "requestMethod path protocol" statusCode
 	 * responseBytes "referer" "userAgent" responseTime
 	 */
-	public static final String DEFAULT_REGEX = "([^ ]+) ([^ ]+) ([^ ]+) \\[([^\\]]+)\\] \"([A-Z]+) ([^\"]+) ([^\"]+)\" (\\d+) (-|\\d+)(?: \"([^\"]+)\")?(?: \"([^\"]+)\")?(?: (\\d+))?";
+	public static final String DEFAULT_REGEX = "([^ ]+) ([^ ]+) ([^ ]+) \\[([^\\]]+)\\] \"([A-Z]+) ([^\" ]+) ?([^\"]*)\" (\\d+) (-|\\d+)(?: \"([^\"]+)\")?(?: \"([^\"]+)\")?(?: (\\d+))?";
 
 	private static final Pattern DEFAULT_PATTERN = Pattern.compile(DEFAULT_REGEX);
 
@@ -45,6 +45,8 @@ public class AccessLogEntry {
 			"responseTime" };
 
 	private static final String DEFAULT_DATE_FORMAT = "dd/MMM/yyyy:HH:mm:ss Z";
+
+	private static final String DEFAULT_PROTOCOL = "HTTP/1.1";
 
 	private String endpoint;
 
@@ -116,7 +118,8 @@ public class AccessLogEntry {
 					}
 					break;
 				case "protocol":
-					entry.setProtocol(matcher.group(group));
+					String protocol = matcher.group(group);
+					entry.setProtocol(protocol.isEmpty() ? DEFAULT_PROTOCOL : protocol);
 					break;
 				case "statusCode":
 					entry.setStatusCode(Integer.parseInt(matcher.group(group)));

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -42,7 +43,7 @@ public class AccessLogsToOpenXtraceConverter implements OpenXtraceConverter<Acce
 
 	@Override
 	public List<Trace> convert(List<AccessLogEntry> accessLogs) {
-		return accessLogs.stream().map(this::convert).collect(Collectors.toList());
+		return accessLogs.stream().filter(Objects::nonNull).map(this::convert).collect(Collectors.toList());
 	}
 
 	private Trace convert(AccessLogEntry entry) {
