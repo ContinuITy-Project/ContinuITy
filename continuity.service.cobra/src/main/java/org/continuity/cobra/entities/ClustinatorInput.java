@@ -1,9 +1,7 @@
 package org.continuity.cobra.entities;
 
 import java.util.List;
-import java.util.Map;
 
-import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.deserialization.TailoringDeserializer;
 import org.continuity.api.entities.deserialization.TailoringSerializer;
 import org.continuity.idpa.AppId;
@@ -31,7 +29,8 @@ public class ClustinatorInput {
 	@JsonDeserialize(using = TailoringDeserializer.class)
 	private List<String> tailoring;
 
-	private double epsilon;
+	@JsonProperty("avg-transition-tolerance")
+	private double avgTransitionTolerance;
 
 	@JsonProperty("min-sample-size")
 	private long minSampleSize;
@@ -44,13 +43,6 @@ public class ClustinatorInput {
 
 	@JsonProperty("end-micros")
 	private long endMicros;
-
-	private List<String> states;
-
-	@JsonProperty("previous-markov-chains")
-	private Map<String, double[]> previousMarkovChains;
-
-	private List<Session> sessions;
 
 	public AppId getAppId() {
 		return appId;
@@ -79,12 +71,12 @@ public class ClustinatorInput {
 		return this;
 	}
 
-	public double getEpsilon() {
-		return epsilon;
+	public double getAvgTransitionTolerance() {
+		return avgTransitionTolerance;
 	}
 
-	public ClustinatorInput setEpsilon(double epsilon) {
-		this.epsilon = epsilon;
+	public ClustinatorInput setAvgTransitionTolerance(double avgTransitionTolerance) {
+		this.avgTransitionTolerance = avgTransitionTolerance;
 		return this;
 	}
 
@@ -121,33 +113,6 @@ public class ClustinatorInput {
 
 	public ClustinatorInput setEndMicros(long endMicros) {
 		this.endMicros = endMicros;
-		return this;
-	}
-
-	public List<String> getStates() {
-		return states;
-	}
-
-	public ClustinatorInput setStates(List<String> states) {
-		this.states = states;
-		return this;
-	}
-
-	public Map<String, double[]> getPreviousMarkovChains() {
-		return previousMarkovChains;
-	}
-
-	public ClustinatorInput setPreviousMarkovChains(Map<String, double[]> previousMarkovChains) {
-		this.previousMarkovChains = previousMarkovChains;
-		return this;
-	}
-
-	public List<Session> getSessions() {
-		return sessions;
-	}
-
-	public ClustinatorInput setSessions(List<Session> sessions) {
-		this.sessions = sessions;
 		return this;
 	}
 

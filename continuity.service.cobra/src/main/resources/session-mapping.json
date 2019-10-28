@@ -6,6 +6,9 @@
         "session-id": {
             "type": "keyword"
         },
+        "group-id": {
+            "type": "keyword"
+        },
         "version": {
             "type": "keyword"
         },

@@ -8,20 +8,16 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.amqp.ExchangeDefinition;
 import org.continuity.api.amqp.RoutingKeyFormatter;
-import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
 import org.continuity.api.entities.artifact.session.Session;
-import org.continuity.api.entities.artifact.session.SessionRequest;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.api.rest.RestApi;
@@ -129,18 +125,12 @@ public class KnnDistanceController {
 
 		LOGGER.info("Creating knn distance plot for {}.{} in range {} - {}...", aid, tailoringList, dFrom, dTo);
 
-		List<Session> sessions = sessionManager.readSessionsInRange(aid, null, tailoringList, dFrom, dTo);
-
-		List<String> endpoints = sessions.stream().map(Session::getRequests).flatMap(Set::stream).map(SessionRequest::getEndpoint).distinct().collect(Collectors.toList());
-		endpoints.add(0, RelativeMarkovChain.INITIAL_STATE);
-		endpoints.add(RelativeMarkovChain.FINAL_STATE);
-
 		ClustinatorInput input = new ClustinatorInput();
 		input.setAppId(aid);
 		input.setTailoring(tailoringList);
 		input.setMinSampleSize(config.getClustering().getMinSampleSize());
-		input.setSessions(sessions);
-		input.setStates(endpoints);
+		input.setStartMicros(from * 1000);
+		input.setEndMicros(to * 1000);
 
 		declareResponseQueue(aid, tailoring);
 

@@ -44,7 +44,13 @@ public class ClustinatorResult {
 	@JsonProperty("mean-markov-chains")
 	private Map<String, double[]> meanMarkovChains;
 
-	private Map<String, String[]> sessions;
+	@JsonProperty("think-time-means")
+	private Map<String, double[]> thinkTimeMeans;
+
+	@JsonProperty("think-time-variances")
+	private Map<String, double[]> thinkTimeVariances;
+
+	private Map<String, Double> frequency;
 
 	public AppId getAppId() {
 		return appId;
@@ -110,12 +116,28 @@ public class ClustinatorResult {
 		this.meanMarkovChains = meanMarkovChains;
 	}
 
-	public Map<String, String[]> getSessions() {
-		return sessions;
+	public Map<String, double[]> getThinkTimeMeans() {
+		return thinkTimeMeans;
 	}
 
-	public void setSessions(Map<String, String[]> sessions) {
-		this.sessions = sessions;
+	public void setThinkTimeMeans(Map<String, double[]> thinkTimeMeans) {
+		this.thinkTimeMeans = thinkTimeMeans;
+	}
+
+	public Map<String, double[]> getThinkTimeVariances() {
+		return thinkTimeVariances;
+	}
+
+	public void setThinkTimeVariances(Map<String, double[]> thinkTimeVariances) {
+		this.thinkTimeVariances = thinkTimeVariances;
+	}
+
+	public Map<String, Double> getFrequency() {
+		return frequency;
+	}
+
+	public void setFrequency(Map<String, Double> frequency) {
+		this.frequency = frequency;
 	}
 
 }

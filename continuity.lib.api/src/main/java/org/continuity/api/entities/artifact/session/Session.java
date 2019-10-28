@@ -34,6 +34,9 @@ public class Session {
 	@JsonProperty("session-id")
 	private String sessionId;
 
+	@JsonProperty("group-id")
+	private String groupId;
+
 	@JsonSerialize(using = VersionOrTimestamp.NormalizedSerializer.class)
 	private VersionOrTimestamp version;
 
@@ -66,6 +69,14 @@ public class Session {
 	@JsonProperty("unique-id")
 	public String getUniqueId() {
 		return new StringBuilder().append(sessionId).append("_").append(startMicros).toString();
+	}
+
+	public String getGroupId() {
+		return groupId;
+	}
+
+	public void setGroupId(String groupId) {
+		this.groupId = groupId;
 	}
 
 	public VersionOrTimestamp getVersion() {
