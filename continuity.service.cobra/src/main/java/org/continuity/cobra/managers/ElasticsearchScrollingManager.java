@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -391,10 +392,19 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 */
 	protected List<T> readElements(AppId aid, List<String> tailoring, QueryBuilder query, SortBuilder<?> sort, int scrollSize, int totalSize, String message, String[] includes, String[] excludes)
 			throws IOException, TimeoutException {
+		List<T> result = new ArrayList<>();
+
+		scrollForElements(aid, tailoring, query, sort, scrollSize, totalSize, message, includes, excludes, result::addAll);
+
+		return result;
+	}
+
+	protected void scrollForElements(AppId aid, List<String> tailoring, QueryBuilder query, SortBuilder<?> sort, int scrollSize, int totalSize, String message, String[] includes, String[] excludes,
+			Consumer<List<T>> callback) throws IOException, TimeoutException {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 
 		if (!indexExists(index)) {
-			return Collections.emptyList();
+			return;
 		}
 
 		SearchSourceBuilder source = new SearchSourceBuilder().query(query).size(scrollSize);
@@ -414,16 +424,16 @@ public abstract class ElasticsearchScrollingManager<T> {
 			response = client.search(search, RequestOptions.DEFAULT);
 		} catch (ElasticsearchStatusException e) {
 			LOGGER.info("Could not get any elements from {} {}: {}", index, message, e.getMessage());
-			return Collections.emptyList();
+			return;
 		}
 
 		SearchHits hits = response.getHits();
 		LOGGER.info("The search request to {} {} resulted in {}.", index, message, hits.getTotalHits());
 
-		return processSearchResponse(response, aid, message, 0, totalSize);
+		processSearchResponse(response, aid, message, 0, totalSize, callback);
 	}
 
-	private List<T> processSearchResponse(SearchResponse response, AppId aid, String message, int scrollNumber, int remaining) throws IOException, TimeoutException {
+	private void processSearchResponse(SearchResponse response, AppId aid, String message, int scrollNumber, int remaining, Consumer<List<T>> callback) throws IOException, TimeoutException {
 		if (response.isTimedOut()) {
 			throw new TimeoutException(String.format("The search request to app-id %s and version %s timed out!", aid.toString()));
 		}
@@ -435,23 +445,19 @@ public abstract class ElasticsearchScrollingManager<T> {
 		LOGGER.info("Scroll #{} took {}, had {} hits, and is {}.", scrollNumber, response.getTook(), numHits, response.status());
 
 		if ((numHits > 0) && ((remaining < 0) || (numHits < remaining))) {
-			List<T> results = new ArrayList<>();
-			Arrays.stream(hits.getHits()).map(SearchHit::getSourceAsString).map(this::deserialize).filter(Objects::nonNull).forEach(results::add);
+			callback.accept(Arrays.stream(hits.getHits()).map(SearchHit::getSourceAsString).map(this::deserialize).filter(Objects::nonNull).collect(Collectors.toList()));
 
-			results.addAll(scrollForElements(scrollId, aid, message, scrollNumber, remaining - numHits));
-
-			return results;
+			scrollForMoreElements(scrollId, aid, message, scrollNumber, remaining - numHits, callback);
 		} else {
 			LOGGER.info("Reached end of scroll.");
 			clearScroll(scrollId);
-			return Collections.emptyList();
 		}
 	}
 
-	private List<T> scrollForElements(String scrollId, AppId aid, String message, int scrollNumber, int remaining) throws IOException, TimeoutException {
+	private void scrollForMoreElements(String scrollId, AppId aid, String message, int scrollNumber, int remaining, Consumer<List<T>> callback) throws IOException, TimeoutException {
 		SearchScrollRequest scroll = new SearchScrollRequest(scrollId);
 		scroll.scroll(TimeValue.timeValueMinutes(SCROLL_MINUTES));
-		return processSearchResponse(client.scroll(scroll, RequestOptions.DEFAULT), aid, message, scrollNumber + 1, remaining);
+		processSearchResponse(client.scroll(scroll, RequestOptions.DEFAULT), aid, message, scrollNumber + 1, remaining, callback);
 	}
 
 	private void clearScroll(String scrollId) throws IOException {

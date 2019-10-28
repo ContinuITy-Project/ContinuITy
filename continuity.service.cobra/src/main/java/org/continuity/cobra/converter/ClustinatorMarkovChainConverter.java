@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
@@ -95,17 +94,23 @@ public class ClustinatorMarkovChainConverter {
 	/**
 	 * Converts a map of arrays as returned by the clustinator to a {@link MarkovBehaviorModel}.
 	 *
-	 * @param map
-	 *            The map of arrays. Each array needs to have exactly {@code n * n} elements
-	 *            ({@code n} = number of endpoints).
+	 * @param probs
+	 *            The map of probability arrays. Each array needs to have exactly {@code n * n}
+	 *            elements ({@code n} = number of endpoints).
+	 * @param thinktimeMeans
+	 *            The map of think time mean arrays. The keys need to correspond to the keys of
+	 *            probs. Each array needs to have exactly {@code n * n} elements.
+	 * @param thinktimeVariances
+	 *            The map of think time variance arrays. The keys need to correspond to the keys of
+	 *            probs. Each array needs to have exactly {@code n * n} elements.
 	 * @return The behavior model.
 	 */
-	public MarkovBehaviorModel convertArrays(Map<String, double[]> map) {
+	public MarkovBehaviorModel convertArrays(Map<String, double[]> probs, Map<String, double[]> thinktimeMeans, Map<String, double[]> thinktimeVariances) {
 		MarkovBehaviorModel model = new MarkovBehaviorModel();
 
-		for (Entry<String, double[]> entry : map.entrySet()) {
-			RelativeMarkovChain chain = convertArray(entry.getValue());
-			chain.setId(entry.getKey());
+		for (String behaviorId : probs.keySet()) {
+			RelativeMarkovChain chain = convertArray(probs.get(behaviorId), thinktimeMeans.get(behaviorId), thinktimeVariances.get(behaviorId));
+			chain.setId(behaviorId);
 			model.addMarkovChain(chain);
 		}
 
@@ -115,14 +120,24 @@ public class ClustinatorMarkovChainConverter {
 	/**
 	 * Converts an array as returned by the clustinator to a Markov chain.
 	 *
-	 * @param array
-	 *            The array, which needs to have exactly {@code n * n} elements ({@code n} = number
-	 *            of endpoints).
+	 * @param probs
+	 *            The probability array, which needs to have exactly {@code n * n} elements
+	 *            ({@code n} = number of endpoints).
+	 * @param thinktimeMeans
+	 *            The think time mean array, which needs to have exactly {@code n * n} elements.
+	 * @param thinktimeVariances
+	 *            The think time variance array, which needs to have exactly {@code n * n} elements.
 	 * @return The parsed Markov chain.
 	 */
-	public RelativeMarkovChain convertArray(double[] array) {
-		if (array.length != (n * n)) {
-			throw new IllegalArgumentException("Cannot convert array of length " + array.length + " to a Markov chain with " + n + " states!");
+	public RelativeMarkovChain convertArray(double[] probs, double[] thinktimeMeans, double[] thinktimeVariances) {
+		if (probs.length != (n * n)) {
+			throw new IllegalArgumentException("Cannot convert probs array of length " + probs.length + " to a Markov chain with " + n + " states!");
+		}
+		if (thinktimeMeans.length != (n * n)) {
+			throw new IllegalArgumentException("Cannot convert think time mean array of length " + thinktimeMeans.length + " to a Markov chain with " + n + " states!");
+		}
+		if (thinktimeVariances.length != (n * n)) {
+			throw new IllegalArgumentException("Cannot convert thin ktime variance array of length " + thinktimeVariances.length + " to a Markov chain with " + n + " states!");
 		}
 
 		RelativeMarkovChain markovChain = new RelativeMarkovChain();
@@ -133,8 +148,8 @@ public class ClustinatorMarkovChainConverter {
 			int j = 0;
 
 			for (String to : endpoints) {
-				double prob = array[transitionToIndex(i, j)];
-				markovChain.setTransition(from, to, new RelativeMarkovTransition(prob, NormalDistribution.ZERO));
+				int index = transitionToIndex(i, j);
+				markovChain.setTransition(from, to, new RelativeMarkovTransition(probs[index], new NormalDistribution(thinktimeMeans[index], thinktimeVariances[index])));
 
 				j++;
 			}

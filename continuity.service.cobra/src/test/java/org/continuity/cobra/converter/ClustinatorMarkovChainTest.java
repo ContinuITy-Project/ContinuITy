@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
 import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
@@ -37,7 +38,7 @@ public class ClustinatorMarkovChainTest {
 		ClustinatorMarkovChainConverter converter = new ClustinatorMarkovChainConverter(states);
 
 		double[] array = converter.convertMarkovChain(orig);
-		RelativeMarkovChain converted = converter.convertArray(array);
+		RelativeMarkovChain converted = converter.convertArray(array, zeroThinkTimeArray(array.length), zeroThinkTimeArray(array.length));
 
 		for (String state : states) {
 			assertThat(converted.getTransitions().get(state).values()).extracting(RelativeMarkovTransition::getProbability).as("transition probabilities from state " + state)
@@ -82,10 +83,14 @@ public class ClustinatorMarkovChainTest {
 	private void testArrayMarkovArray(List<String> states, double[] array) {
 		ClustinatorMarkovChainConverter converter = new ClustinatorMarkovChainConverter(states);
 
-		RelativeMarkovChain chain = converter.convertArray(array);
+		RelativeMarkovChain chain = converter.convertArray(array, zeroThinkTimeArray(array.length), zeroThinkTimeArray(array.length));
 		double[] converted = converter.convertMarkovChain(chain);
 
 		assertThat(converted).isEqualTo(array);
+	}
+
+	private double[] zeroThinkTimeArray(int length) {
+		return DoubleStream.generate(() -> 0D).limit(length).toArray();
 	}
 
 }

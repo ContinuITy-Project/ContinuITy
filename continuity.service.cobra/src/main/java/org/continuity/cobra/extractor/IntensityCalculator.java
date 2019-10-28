@@ -1,13 +1,12 @@
 package org.continuity.cobra.extractor;
 
-import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
-
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,11 +25,15 @@ public class IntensityCalculator {
 
 	private final long resolutionMicros;
 
-	private final long startMicros;
+	private long startMicros;
 
 	private final long endMicros;
 
 	private final long leftShiftMicros;
+
+	private final Map<Long, List<Long>> collectedDurations = new TreeMap<>();
+
+	private final List<IntensityRecord> records = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -57,15 +60,61 @@ public class IntensityCalculator {
 	}
 
 	/**
-	 * Calculates the intensity over time.
+	 * Adds a new set of sessions from which the intensities are calculated. Can be called multiple
+	 * times for multiple chunks of sessions. The chunks must be passed in chronological order
+	 * according to the start-micros.
 	 *
 	 * @param sessions
-	 *            The sessions that are active during the time range under consideration.
-	 * @return The intensity as list of {@link IntensityRecord}.
+	 *            (A chunk of) the sessions that are active during the time range under
+	 *            consideration.
 	 */
-	public List<IntensityRecord> calculate(List<Session> sessions) {
-		return sessions.stream().map(this::extractTimestamps).flatMap(this::split).filter(this::filter).map(this::convertToDuration)
-				.collect(collectingAndThen(groupingBy(Pair::getKey), this::summarizeDurations));
+	public void addSessions(List<Session> sessions) {
+		long nextStart = floorTimestamp(sessions.stream().mapToLong(Session::getStartMicros).max().orElse(this.startMicros));
+
+		collectDurations(sessions);
+		transformDurations(nextStart);
+	}
+
+	/**
+	 * Gets the calculated intensity records, finishing the remaining durations.
+	 *
+	 * @return
+	 */
+	public List<IntensityRecord> getRecords() {
+		transformDurations(Long.MAX_VALUE);
+
+		return records;
+	}
+
+	/**
+	 * Collects the durations split according to the resolution.
+	 *
+	 * @param sessions
+	 */
+	private void collectDurations(List<Session> sessions) {
+		sessions.stream().map(this::extractTimestamps).flatMap(this::split).filter(this::filter).map(this::convertToDuration).forEach(this::collectDuration);
+	}
+
+	/**
+	 * Transforms the durations into intensity records.
+	 *
+	 * @param until
+	 *            The timestamp in microseconds until which the durations should be transformed
+	 *            (exclusively).
+	 */
+	private void transformDurations(long until) {
+		Iterator<Entry<Long, List<Long>>> iterator = collectedDurations.entrySet().iterator();
+
+		while (iterator.hasNext()) {
+			Entry<Long, List<Long>> entry = iterator.next();
+
+			if (entry.getKey() >= until) {
+				break;
+			}
+
+			records.add(calculateIntensity(entry.getKey(), entry.getValue()));
+			iterator.remove();
+		}
 	}
 
 	/**
@@ -112,36 +161,36 @@ public class IntensityCalculator {
 	}
 
 	/**
-	 * Summarizes the durations grouped by floor timestamp.
+	 * Stores the duration to the {@link #collectedDurations} map.
 	 *
-	 * @param groupedDurations
-	 * @return The list of intensity records.
+	 * @param session
+	 *            {@code Pair(floor_start, duration)}.
 	 */
-	private List<IntensityRecord> summarizeDurations(Map<Long, List<Pair<Long, Long>>> groupedDurations) {
-		return groupedDurations.entrySet().stream().map(this::calculateIntensity).map(this::toRecord).collect(toList());
+	private void collectDuration(Pair<Long, Long> session) {
+		List<Long> durations = collectedDurations.get(session.getKey());
+
+		if (durations == null) {
+			durations = new ArrayList<>();
+			collectedDurations.put(session.getKey(), durations);
+		}
+
+		durations.add(session.getValue());
 	}
 
 	/**
 	 * Calculates the intensity based on the durations of the timestamp.
 	 *
+	 * @param timestamp
 	 * @param durations
 	 * @return {@code Pair(floor_start, intensity)}.
 	 */
-	private Pair<Long, Long> calculateIntensity(Entry<Long, List<Pair<Long, Long>>> durations) {
-		double sum = durations.getValue().stream().mapToLong(Pair::getRight).sum();
-		return Pair.of(durations.getKey(), Math.round(sum / resolutionMicros));
-	}
+	private IntensityRecord calculateIntensity(long timestamp, List<Long> durations) {
+		double sum = durations.stream().mapToLong(i -> i).sum();
+		long intensity = Math.round(sum / resolutionMicros);
 
-	/**
-	 * Transforms the intensity pair to a record.
-	 *
-	 * @param intensity
-	 * @return The intensity as record.
-	 */
-	private IntensityRecord toRecord(Pair<Long, Long> intensity) {
 		IntensityRecord record = new IntensityRecord();
-		record.setTimestamp(intensity.getKey() / 1000); // timestamp is in millis
-		record.setIntensity(Collections.singletonMap(group, intensity.getValue()));
+		record.setTimestamp(timestamp / 1000); // timestamp is in millis
+		record.setIntensity(Collections.singletonMap(group, intensity));
 		return record;
 	}
 

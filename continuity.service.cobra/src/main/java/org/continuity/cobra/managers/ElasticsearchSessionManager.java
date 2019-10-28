@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionView;
@@ -219,6 +220,45 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 		}
 
 		return sessions;
+	}
+
+	/**
+	 * Scrolls for the sessions with a given group-id in a given time range and calls a callback for
+	 * each retrieved chunk of sessions.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param tailoring
+	 * @param groupId
+	 *            The group-id.
+	 * @param fromMicros
+	 *            The lower limit of the time range. The <b>end</b>-micros of the sessions need to
+	 *            be after this time stamp.
+	 * @param toMicros
+	 *            The upper limit of the time range. The <b>start</b>-micros of the sessions need to
+	 *            be before this time stamp.
+	 * @param callback
+	 *            Will be called for each retrieved chunk.
+	 * @param includeRequests
+	 *            if {@code false}, the returned sessions won't contain the requests.
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	public void scrollForSessionsWithGroupId(AppId aid, List<String> tailoring, String groupId, long fromMicros, long toMicros, Consumer<List<Session>> callback, boolean includeRequests)
+			throws IOException, TimeoutException {
+		BoolQueryBuilder query = QueryBuilders.boolQuery();
+
+		query.must(QueryBuilders.termQuery("group-id", groupId));
+
+		query.must(QueryBuilders.rangeQuery("start-micros").to(toMicros, true));
+		query.must(QueryBuilders.rangeQuery("end-micros").from(fromMicros, true));
+
+		FieldSortBuilder sort = new FieldSortBuilder("start-micros").order(SortOrder.ASC);
+
+		String[] excludes = includeRequests ? null : new String[] { "requests" };
+
+		scrollForElements(aid, tailoring, query, sort, SCROLL_SIZE, TOTAL_SIZE_ALL,
+				String.format("with group-id %s in range %s - %s", groupId, formatOrNull(new Date(fromMicros / 1000)), formatOrNull(new Date(toMicros / 1000))), null, excludes, callback);
 	}
 
 	/**
