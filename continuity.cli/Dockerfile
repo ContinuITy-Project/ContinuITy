@@ -7,7 +7,7 @@ ARG CONFIGURATION_FILE
 ADD ${CONFIGURATION_FILE} /continuity.cli.properties
 
 # Download and extract JMeter
-ADD https://www-eu.apache.org/dist//jmeter/binaries/apache-jmeter-5.1.1.tgz /apache-jmeter-5.1.1.tgz
+ADD https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.1.1.tgz /apache-jmeter-5.1.1.tgz
 RUN tar -xzf /apache-jmeter-5.1.1.tgz
 RUN rm /apache-jmeter-5.1.1.tgz
 

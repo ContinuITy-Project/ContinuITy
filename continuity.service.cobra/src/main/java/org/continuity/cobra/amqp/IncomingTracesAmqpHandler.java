@@ -110,6 +110,10 @@ public class IncomingTracesAmqpHandler {
 			LOGGER.warn("Dropping service of app-id {}.", aav.getLeft());
 		}
 
+		if (finish) {
+			LOGGER.info("{}@{}: Finishing the sessions is forced.");
+		}
+
 		AppId aid = aav.getLeft().dropService();
 		VersionOrTimestamp version = aav.getRight();
 
