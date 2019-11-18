@@ -93,7 +93,7 @@ public class MeasurementDataTransformationAmqpHandler {
 		String tracesAsJson = OPENxtraceUtils.serializeTraceListToJsonString(traces);
 
 		MessageProperties props = new MessageProperties();
-		props.setHeader(AmqpApi.Cobra.HEADER_FINISH, true);
+		props.setHeader(AmqpApi.Cobra.HEADER_FINISH, finish);
 		props.setContentEncoding(AmqpApi.Cobra.CONTENT_CHARSET.name());
 		props.setContentType("application/json");
 
