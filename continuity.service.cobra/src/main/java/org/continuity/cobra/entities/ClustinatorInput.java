@@ -7,6 +7,8 @@ import org.continuity.api.entities.deserialization.TailoringSerializer;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -30,7 +32,11 @@ public class ClustinatorInput {
 	private List<String> tailoring;
 
 	@JsonProperty("avg-transition-tolerance")
-	private double avgTransitionTolerance;
+	@JsonInclude(Include.NON_NULL)
+	private Double avgTransitionTolerance;
+
+	@JsonInclude(Include.NON_NULL)
+	private Double epsilon;
 
 	@JsonProperty("min-sample-size")
 	private long minSampleSize;
@@ -71,12 +77,21 @@ public class ClustinatorInput {
 		return this;
 	}
 
-	public double getAvgTransitionTolerance() {
+	public Double getAvgTransitionTolerance() {
 		return avgTransitionTolerance;
 	}
 
 	public ClustinatorInput setAvgTransitionTolerance(double avgTransitionTolerance) {
 		this.avgTransitionTolerance = avgTransitionTolerance;
+		return this;
+	}
+
+	public Double getEpsilon() {
+		return epsilon;
+	}
+
+	public ClustinatorInput setEpsilon(double epsilon) {
+		this.epsilon = epsilon;
 		return this;
 	}
 

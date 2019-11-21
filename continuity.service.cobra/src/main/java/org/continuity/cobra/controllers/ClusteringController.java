@@ -73,8 +73,14 @@ public class ClusteringController {
 		LOGGER.info("{} {}: Triggering clustering with start {}, interval start {}, end {} (respecting the session timeout of {}) ...", aid, tailoring, new Date(clusteringStart),
 				new Date(intervalStart), new Date(clusteringEnd), timeout);
 
-		ClustinatorInput input = new ClustinatorInput().setAppId(aid).setTailoring(tailoring).setAvgTransitionTolerance(config.getClustering().getAvgTransitionTolerance())
-				.setMinSampleSize(config.getClustering().getMinSampleSize()).setStartMicros(clusteringStart * 1000).setIntervalStartMicros(intervalStart * 1000).setEndMicros(clusteringEnd * 1000);
+		ClustinatorInput input = new ClustinatorInput().setAppId(aid).setTailoring(tailoring).setMinSampleSize(config.getClustering().getMinSampleSize()).setStartMicros(clusteringStart * 1000)
+				.setIntervalStartMicros(intervalStart * 1000).setEndMicros(clusteringEnd * 1000);
+
+		if (config.getClustering().getEpsilon() == null) {
+			input.setAvgTransitionTolerance(config.getClustering().getAvgTransitionTolerance());
+		} else {
+			input.setEpsilon(config.getClustering().getEpsilon());
+		}
 
 		ExchangeDefinition<RoutingKeyFormatter.AppId> exchange = AmqpApi.Cobra.Clustinator.TASK_CLUSTER;
 		amqpTemplate.convertAndSend(exchange.name(), exchange.formatRoutingKey().of(aid), input);
