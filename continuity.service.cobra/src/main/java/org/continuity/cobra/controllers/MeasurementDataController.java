@@ -23,6 +23,7 @@ import org.continuity.api.amqp.RoutingKeyFormatter.AppIdAndVersion;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.config.MeasurementDataSpec;
 import org.continuity.api.rest.RestApi;
+import org.continuity.cobra.entities.TraceProcessingStatus;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
@@ -34,6 +35,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -70,6 +72,9 @@ public class MeasurementDataController {
 
 	@Autowired
 	private ElasticsearchTraceManager manager;
+
+	@Autowired
+	private TraceProcessingStatus status;
 
 	@RequestMapping(value = GET, method = RequestMethod.GET)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
@@ -140,6 +145,11 @@ public class MeasurementDataController {
 			return ResponseEntity.badRequest().body("Improperly formatted link: " + spec.getLink());
 		}
 
+		if (!status.isActive()) {
+			LOGGER.warn("Rejecting {} link for {}@{} due to previous failures.", spec.getType().toPrettyString(), aid, version);
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+		}
+
 		LOGGER.info("Received link to {} for {}@{}.", spec.getType().toPrettyString(), aid, version);
 
 		switch (spec.getType()) {
@@ -167,6 +177,12 @@ public class MeasurementDataController {
 	public ResponseEntity<String> pushOpenXtraces(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String tracesAsJson,
 			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
+
+		if (!status.isActive()) {
+			LOGGER.warn("Rejecting OPEN.xtraces for {}@{} due to previous failures.", aid, version);
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+		}
+
 		LOGGER.info("Received OPEN.xtraces for {}@{}.", aid, version);
 
 		return forwardData("open-xtrace", aid, version, tracesAsJson, finish);
@@ -178,6 +194,12 @@ public class MeasurementDataController {
 	public ResponseEntity<String> pushAccessLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String accessLogs,
 			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
+
+		if (!status.isActive()) {
+			LOGGER.warn("Rejecting access logs for {}@{} due to previous failures.", aid, version);
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+		}
+
 		LOGGER.info("Received access logs for {}@{}.", aid, version);
 
 		return forwardData("access-logs", aid, version, accessLogs, finish);
@@ -189,6 +211,12 @@ public class MeasurementDataController {
 	public ResponseEntity<String> pushCsv(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String csvContent,
 			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
+
+		if (!status.isActive()) {
+			LOGGER.warn("Rejecting CSV for {}@{} due to previous failures.", aid, version);
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+		}
+
 		LOGGER.info("Received CSV for {}@{}.", aid, version);
 
 		return forwardData("csv", aid, version, csvContent, finish);
@@ -199,6 +227,12 @@ public class MeasurementDataController {
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<String> pushSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String sessionContent,
 			@RequestParam(defaultValue = "false") boolean finish) throws IOException {
+
+		if (!status.isActive()) {
+			LOGGER.warn("Rejecting session logs for {}@{} due to previous failures.", aid, version);
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+		}
+
 		LOGGER.info("Received session logs for {}@{}.", aid, version);
 
 		return forwardData("session-logs", aid, version, sessionContent, finish);

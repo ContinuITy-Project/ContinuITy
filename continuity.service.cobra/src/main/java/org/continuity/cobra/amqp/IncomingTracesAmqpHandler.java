@@ -36,6 +36,7 @@ import org.continuity.cobra.converter.AccessLogsToOpenXtraceConverter;
 import org.continuity.cobra.converter.CsvRowToOpenXtraceConverter;
 import org.continuity.cobra.converter.SessionLogsToOpenXtraceConverter;
 import org.continuity.cobra.entities.CsvRow;
+import org.continuity.cobra.entities.TraceProcessingStatus;
 import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.cobra.extractor.RequestTailorer;
 import org.continuity.cobra.extractor.SessionUpdater;
@@ -53,6 +54,7 @@ import org.slf4j.LoggerFactory;
 import org.spec.research.open.xtrace.api.core.Trace;
 import org.spec.research.open.xtrace.api.core.callables.HTTPMethod;
 import org.spec.research.open.xtrace.dflt.impl.core.callables.HTTPRequestProcessingImpl;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
@@ -61,6 +63,8 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+
+import com.rabbitmq.client.Channel;
 
 import open.xtrace.OPENxtraceUtils;
 
@@ -92,6 +96,9 @@ public class IncomingTracesAmqpHandler {
 	@Autowired
 	private ClusteringController clusteringController;
 
+	@Autowired
+	private TraceProcessingStatus status;
+
 	/**
 	 * Receives and processes new traces.
 	 *
@@ -105,12 +112,37 @@ public class IncomingTracesAmqpHandler {
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	@RabbitListener(queues = RabbitMqConfig.TASK_PROCESS_TRACES_QUEUE_NAME)
-	public void processTraces(Message message, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(AmqpApi.Cobra.HEADER_DATATYPE) String datatype,
-			@Header(AmqpApi.Cobra.HEADER_FINISH) boolean finish)
+	@RabbitListener(queues = RabbitMqConfig.TASK_PROCESS_TRACES_QUEUE_NAME, containerFactory = "incomingTracesContainerFactory")
+	public void processTraces(Message message, Channel channel, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(AmqpHeaders.CONSUMER_TAG) String consumerTag,
+			@Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag, @Header(AmqpApi.Cobra.HEADER_DATATYPE) String datatype, @Header(AmqpApi.Cobra.HEADER_FINISH) boolean finish)
 			throws IOException, TimeoutException {
-		Pair<AppId, VersionOrTimestamp> aav = AmqpApi.Cobra.TASK_PROCESS_TRACES.formatRoutingKey().from(routingKey);
 
+		Pair<AppId, VersionOrTimestamp> aav = Pair.of(null, null);
+
+		try {
+
+			aav = AmqpApi.Cobra.TASK_PROCESS_TRACES.formatRoutingKey().from(routingKey);
+			configProvider.waitForInitialization();
+
+			doProcessing(message, aav, datatype, finish);
+
+		} catch (Exception e) {
+			LOGGER.error("{}@{} {} during processing of the traces!", aav.getLeft(), aav.getRight(), e.getClass().getSimpleName());
+
+			if ((aav.getLeft() != null) && configProvider.getConfiguration(aav.getLeft()).getTraces().isStopOnFailue()) {
+				LOGGER.error("{}@{} Will stop receiving traces until a restart!", aav.getLeft(), aav.getRight());
+				status.setActive(false);
+				channel.basicCancel(consumerTag);
+				throw e;
+			} else {
+				LOGGER.error("Will ignore the failed traces and continue!");
+				throw new AmqpRejectAndDontRequeueException(e);
+			}
+
+		}
+	}
+
+	private void doProcessing(Message message, Pair<AppId, VersionOrTimestamp> aav, String datatype, boolean finish) throws IOException, TimeoutException {
 		long startMillis = System.currentTimeMillis();
 		LOGGER.info("{}@{}: Processing new traces.", aav.getLeft(), aav.getRight());
 
@@ -268,7 +300,6 @@ public class IncomingTracesAmqpHandler {
 			SessionUpdater updater = new SessionUpdater(version, config.getSessions().getTimeout().getSeconds() * SECONDS_TO_MICROS, forceFinish, config.getSessions().isIgnoreRedirects());
 			Set<Session> updatedSessions = updater.updateSessions(openSessions, requests);
 
-
 			if (!updatedSessions.isEmpty()) {
 				LOGGER.info("{}@{} {}: Indexing traces with sessions...", aid, version, services);
 				indexTracesWithSessions(traces, updatedSessions);
@@ -414,7 +445,6 @@ public class IncomingTracesAmqpHandler {
 				}
 			}
 		}
-
 
 		if (config.getTraces().isLogUnmapped() && !unmapped.isEmpty()) {
 			try {

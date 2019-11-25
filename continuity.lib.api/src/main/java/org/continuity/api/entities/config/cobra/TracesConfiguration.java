@@ -29,6 +29,9 @@ public class TracesConfiguration {
 	@JsonDeserialize(converter = StringToDurationConverter.class)
 	private Duration retention = Duration.ofDays(3650);
 
+	@JsonProperty("stop-on-failure")
+	private boolean stopOnFailue = true;
+
 	/**
 	 * Whether the uploaded traces should be mapped to IDPA endpoints. Setting it to {@code false}
 	 * disallows for tailoring and will use the provided business transactions as endpoint names.
@@ -79,6 +82,14 @@ public class TracesConfiguration {
 
 	public void setRetention(Duration retention) {
 		this.retention = retention;
+	}
+
+	public boolean isStopOnFailue() {
+		return stopOnFailue;
+	}
+
+	public void setStopOnFailue(boolean stopOnFailue) {
+		this.stopOnFailue = stopOnFailue;
 	}
 
 }

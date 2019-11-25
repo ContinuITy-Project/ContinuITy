@@ -76,7 +76,7 @@ public class AmqpApi {
 
 		private static final String SCOPE = "cobra";
 
-		public static final ExchangeDefinition<AppIdAndVersion> TASK_PROCESS_TRACES = ExchangeDefinition.task(SCOPE, "process_traces").nonDurable().autoDelete()
+		public static final ExchangeDefinition<AppIdAndVersion> TASK_PROCESS_TRACES = ExchangeDefinition.task(SCOPE, "process_traces").durable().nonAutoDelete()
 				.withRoutingKey(AppIdAndVersion.INSTANCE);
 
 		public static final String HEADER_DATATYPE = "continuity.datatype";
