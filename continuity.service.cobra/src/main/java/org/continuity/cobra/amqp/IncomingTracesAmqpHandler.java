@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,11 +32,16 @@ import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.api.rest.RestApi;
 import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.controllers.ClusteringController;
+import org.continuity.cobra.converter.AccessLogsToOpenXtraceConverter;
+import org.continuity.cobra.converter.CsvRowToOpenXtraceConverter;
+import org.continuity.cobra.converter.SessionLogsToOpenXtraceConverter;
+import org.continuity.cobra.entities.CsvRow;
 import org.continuity.cobra.entities.TraceRecord;
 import org.continuity.cobra.extractor.RequestTailorer;
 import org.continuity.cobra.extractor.SessionUpdater;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
+import org.continuity.commons.accesslogs.AccessLogEntry;
 import org.continuity.commons.idpa.RequestUriMapper;
 import org.continuity.commons.openxtrace.OpenXtraceTracer;
 import org.continuity.idpa.AppId;
@@ -99,12 +106,13 @@ public class IncomingTracesAmqpHandler {
 	 * @throws TimeoutException
 	 */
 	@RabbitListener(queues = RabbitMqConfig.TASK_PROCESS_TRACES_QUEUE_NAME)
-	public void processTraces(Message message, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(AmqpApi.Cobra.HEADER_FINISH) boolean finish)
+	public void processTraces(Message message, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(AmqpApi.Cobra.HEADER_DATATYPE) String datatype,
+			@Header(AmqpApi.Cobra.HEADER_FINISH) boolean finish)
 			throws IOException, TimeoutException {
 		Pair<AppId, VersionOrTimestamp> aav = AmqpApi.Cobra.TASK_PROCESS_TRACES.formatRoutingKey().from(routingKey);
 
 		long startMillis = System.currentTimeMillis();
-		LOGGER.info("{}@{}: Processing new traces. Deserializing...", aav.getLeft(), aav.getRight());
+		LOGGER.info("{}@{}: Processing new traces.", aav.getLeft(), aav.getRight());
 
 		if (!aav.getLeft().isAll()) {
 			LOGGER.warn("Dropping service of app-id {}.", aav.getLeft());
@@ -117,9 +125,9 @@ public class IncomingTracesAmqpHandler {
 		AppId aid = aav.getLeft().dropService();
 		VersionOrTimestamp version = aav.getRight();
 
-		List<TraceRecord> traces = convertMessage(message).stream().map(t -> new TraceRecord(version, t)).collect(Collectors.toList());
+		List<TraceRecord> traces = convertMessage(message, datatype, aid, version).stream().map(t -> new TraceRecord(version, t)).collect(Collectors.toList());
 
-		LOGGER.info("{}@{}: Deserialization done. Indexing with endpoints...", aid, version);
+		LOGGER.info("{}@{}: Deserialized {} traces. Indexing with endpoints...", aid, version, traces.size());
 
 		indexTracesWithEndpoints(aid, version, traces);
 
@@ -142,14 +150,58 @@ public class IncomingTracesAmqpHandler {
 		LOGGER.info("{}@{}: Processing of the traces done. It took {}", aid, version, DurationFormatUtils.formatDurationHMS(endMillis - startMillis));
 	}
 
-	private List<Trace> convertMessage(Message message) {
+	private List<Trace> convertMessage(Message message, String datatype, AppId aid, VersionOrTimestamp version) {
 		Charset charset = Charset.forName(message.getMessageProperties().getContentEncoding());
 
 		if (charset == null) {
 			charset = AmqpApi.Cobra.CONTENT_CHARSET;
 		}
 
-		return OPENxtraceUtils.deserializeIntoTraceList(new String(message.getBody(), charset));
+		String body = new String(message.getBody(), charset);
+
+		switch (datatype) {
+		case "access-logs":
+			return convertAccesslogs(body, aid, version);
+		case "csv":
+			return convertCsv(body, aid, version);
+		case "session-logs":
+			return convertSessionlogs(body, aid, version);
+		case "open-xtrace":
+		default:
+			return deserializeOpenXtrace(body, aid, version);
+		}
+	}
+
+	private List<Trace> convertAccesslogs(String body, AppId aid, VersionOrTimestamp version) {
+		LOGGER.info("{}@{} Transforming access logs to open-xtrace...", aid, version);
+
+		List<AccessLogEntry> parsedLogs = new ArrayList<>();
+
+		for (String line : body.split("\\n")) {
+			parsedLogs.add(AccessLogEntry.fromLogLine(line));
+		}
+
+		return new AccessLogsToOpenXtraceConverter(configProvider.getConfiguration(aid).getSessions().isHashId()).convert(parsedLogs);
+	}
+
+	private List<Trace> convertCsv(String body, AppId aid, VersionOrTimestamp version) {
+		LOGGER.info("{}@{} Transforming CSV data to open-xtrace...", aid, version);
+
+		List<CsvRow> csvRows = CsvRow.listFromString(body);
+		return new CsvRowToOpenXtraceConverter(configProvider.getConfiguration(aid).getSessions().isHashId()).convert(csvRows);
+	}
+
+	private List<Trace> convertSessionlogs(String body, AppId aid, VersionOrTimestamp version) {
+		LOGGER.info("{}@{} Transforming session logs to open-xtrace...", aid, version);
+
+		List<String> sessionLogs = Arrays.asList(body.split("\\n"));
+		return new SessionLogsToOpenXtraceConverter().convert(sessionLogs);
+	}
+
+	private List<Trace> deserializeOpenXtrace(String body, AppId aid, VersionOrTimestamp version) {
+		LOGGER.info("{}@{} Deserializing open-xtrace...", aid, version);
+
+		return OPENxtraceUtils.deserializeIntoTraceList(body);
 	}
 
 	private void storeTraces(AppId aid, VersionOrTimestamp version, List<TraceRecord> traces) throws IOException {
