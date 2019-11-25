@@ -169,7 +169,7 @@ public class MeasurementDataController {
 			throws IOException {
 		LOGGER.info("Received OPEN.xtraces for {}@{}.", aid, version);
 
-		return forwardData(AmqpApi.Cobra.TASK_PROCESS_TRACES, false, aid, version, tracesAsJson, finish);
+		return forwardData("open-xtrace", aid, version, tracesAsJson, finish);
 	}
 
 	@RequestMapping(value = PUSH_ACCESS_LOGS, method = RequestMethod.POST)
@@ -180,7 +180,7 @@ public class MeasurementDataController {
 			throws IOException {
 		LOGGER.info("Received access logs for {}@{}.", aid, version);
 
-		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_ACCESSLOGS, true, aid, version, accessLogs, finish);
+		return forwardData("access-logs", aid, version, accessLogs, finish);
 	}
 
 	@RequestMapping(value = PUSH_CSV, method = RequestMethod.POST)
@@ -191,7 +191,7 @@ public class MeasurementDataController {
 			throws IOException {
 		LOGGER.info("Received CSV for {}@{}.", aid, version);
 
-		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_CSV, true, aid, version, csvContent, finish);
+		return forwardData("csv", aid, version, csvContent, finish);
 	}
 
 	@RequestMapping(value = PUSH_SESSION_LOGS, method = RequestMethod.POST)
@@ -201,20 +201,22 @@ public class MeasurementDataController {
 			@RequestParam(defaultValue = "false") boolean finish) throws IOException {
 		LOGGER.info("Received session logs for {}@{}.", aid, version);
 
-		return forwardData(AmqpApi.Cobra.TASK_TRANSFORM_SESSIONLOGS, true, aid, version, sessionContent, finish);
+		return forwardData("session-logs", aid, version, sessionContent, finish);
 	}
 
-	private ResponseEntity<String> forwardData(ExchangeDefinition<AppIdAndVersion> exchange, boolean asPlainText, AppId aid, VersionOrTimestamp version, String data, boolean finish) {
+	private ResponseEntity<String> forwardData(String datatype, AppId aid, VersionOrTimestamp version, String data, boolean finish) {
 		MessageProperties props = new MessageProperties();
+		props.setHeader(AmqpApi.Cobra.HEADER_DATATYPE, datatype);
 		props.setHeader(AmqpApi.Cobra.HEADER_FINISH, finish);
 		props.setContentEncoding(AmqpApi.Cobra.CONTENT_CHARSET.name());
 
-		if (asPlainText) {
-			props.setContentType("text/plain");
-		} else {
+		if ("open-xtrace".equals(datatype)) {
 			props.setContentType("application/json");
+		} else {
+			props.setContentType("text/plain");
 		}
 
+		ExchangeDefinition<AppIdAndVersion> exchange = AmqpApi.Cobra.TASK_PROCESS_TRACES;
 		Message message = new Message(data.getBytes(AmqpApi.Cobra.CONTENT_CHARSET), props);
 		amqpTemplate.send(exchange.name(), exchange.formatRoutingKey().of(aid, version), message);
 
