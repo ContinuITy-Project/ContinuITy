@@ -34,6 +34,8 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 
 	private final Constructor<T> constructor;
 
+	private boolean initialized = false;
+
 	public ConfigurationProvider(Class<T> type) {
 		Constructor<T> constructor = null;
 
@@ -72,9 +74,43 @@ public class ConfigurationProvider<T extends ServiceConfiguration> {
 
 		LOGGER.info("Initialization done.");
 
+		synchronized (this) {
+			initialized = true;
+			this.notifyAll();
+		}
+
 		if (exception != null) {
 			throw exception;
 		}
+	}
+
+	/**
+	 * Waits until the configuration has been initialized (regardless whether the initialization has
+	 * thrown an error).
+	 *
+	 * @param timeout
+	 *            The time to wait at most.
+	 */
+	public void waitForInitialization(long timeout) {
+		LOGGER.info("Waiting for {} sec for the configuration to be initialized...", timeout / 1000);
+
+		while (!initialized) {
+			synchronized (this) {
+				try {
+					this.wait(timeout);
+				} catch (InterruptedException e) {
+					LOGGER.error("Waiting for initialization interrupted!", e);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Waits until the configuration has been initialized (regardless whether the initialization has
+	 * thrown an error). Will wait at most 5 min.
+	 */
+	public void waitForInitialization() {
+		waitForInitialization(5 * 60 * 1000);
 	}
 
 	/**

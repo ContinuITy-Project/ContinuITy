@@ -19,6 +19,7 @@ import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -69,12 +70,23 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
+	@Primary
 	SimpleRabbitListenerContainerFactory containerFactory(ConnectionFactory connectionFactory, MessageConverter converter, SimpleRabbitListenerContainerFactoryConfigurer configurer) {
 		SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
 		configurer.configure(factory, connectionFactory);
 		factory.setMessageConverter(converter);
 		factory.setAfterReceivePostProcessors(typeRemovingProcessor());
+		return factory;
+	}
+
+	@Bean
+	SimpleRabbitListenerContainerFactory incomingTracesContainerFactory(ConnectionFactory connectionFactory, MessageConverter converter, SimpleRabbitListenerContainerFactoryConfigurer configurer) {
+		SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+		configurer.configure(factory, connectionFactory);
+		factory.setMessageConverter(converter);
+		factory.setAfterReceivePostProcessors(typeRemovingProcessor());
 		factory.setPrefetchCount(1);
+		factory.setDefaultRequeueRejected(true);
 		return factory;
 	}
 
@@ -127,8 +139,10 @@ public class RabbitMqConfig {
 
 	@Bean
 	Queue taskProcessTracesQueue() {
-		return QueueBuilder.nonDurable(TASK_PROCESS_TRACES_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
-				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
+		// Not using a dead letter queue: we want to stop consuming on failure and allow
+		// re-processing the traces after the issue has been fixed.
+		// Durable: we don't want to loose traces, even when RabbitMQ is restarted.
+		return QueueBuilder.durable(TASK_PROCESS_TRACES_QUEUE_NAME).build();
 	}
 
 	@Bean
