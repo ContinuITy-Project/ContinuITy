@@ -145,13 +145,12 @@ public class DataCommands extends AbstractCommands {
 	}
 
 	private void appendSuccess(ResponseBuilder answer, MeasurementDataType mType, String path, ResponseEntity<String> response) {
-		answer.normal("Successfully uploaded the data of type ").bold(mType.toPrettyString()).normal(" at ").bold(path).newline()
-				.normal("The data will now be processed and can be later retrieved at ").bold(response.getBody());
+		answer.normal("Successfully uploaded the data of type ").bold(mType.toPrettyString()).normal(" at ").bold(path).newline().jsonAsYamlNormal(response.getBody());
 	}
 
 	private void appendError(ResponseBuilder answer, MeasurementDataType mType, String path, ResponseEntity<String> response) {
 		answer.error("Could not upload the specified data of type ").boldError(mType.toPrettyString()).error(" at ").boldError(path).error("! The response was ").boldError(response.getStatusCode())
-				.error(" (").error(response.getStatusCode().getReasonPhrase()).error("): ").error(response.getBody());
+				.error(" (").error(response.getStatusCode().getReasonPhrase()).error("): ").newline().jsonAsYamlError(response.getBody());
 	}
 
 	@ShellMethod(key = { "data knndist" }, value = "Triggers creation of a knn distance plot for estimating the optimal epsilon value for DBSCAN.")

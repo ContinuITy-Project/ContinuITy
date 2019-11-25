@@ -11,10 +11,13 @@ import static org.continuity.api.rest.RestApi.Cobra.MeasurementData.Paths.PUSH_S
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.continuity.api.amqp.AmqpApi;
@@ -23,6 +26,7 @@ import org.continuity.api.amqp.RoutingKeyFormatter.AppIdAndVersion;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.config.MeasurementDataSpec;
 import org.continuity.api.rest.RestApi;
+import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.entities.TraceProcessingStatus;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.idpa.AppId;
@@ -33,6 +37,7 @@ import org.spec.research.open.xtrace.api.core.Trace;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -45,6 +50,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
+import com.rabbitmq.client.AMQP.Queue.DeclareOk;
 
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -62,6 +69,9 @@ import springfox.documentation.annotations.ApiIgnore;
 public class MeasurementDataController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MeasurementDataController.class);
+
+	@Autowired
+	private RabbitAdmin rabbitAdmin;
 
 	@Autowired
 	@Qualifier("plainRestTemplate")
@@ -138,16 +148,12 @@ public class MeasurementDataController {
 	@RequestMapping(value = PUSH_LINK, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> pushDataViaLink(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody MeasurementDataSpec spec,
+	public ResponseEntity<Map<String, Object>> pushDataViaLink(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version,
+			@RequestBody MeasurementDataSpec spec,
 			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
 		if (ResourceUtils.isUrl(spec.getLink())) {
-			return ResponseEntity.badRequest().body("Improperly formatted link: " + spec.getLink());
-		}
-
-		if (!status.isActive()) {
-			LOGGER.warn("Rejecting {} link for {}@{} due to previous failures.", spec.getType().toPrettyString(), aid, version);
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+			return responseError(aid, version, spec.getType().toPrettyString(), HttpStatus.BAD_REQUEST, "Improperly formatted link: " + spec.getLink());
 		}
 
 		LOGGER.info("Received link to {} for {}@{}.", spec.getType().toPrettyString(), aid, version);
@@ -167,20 +173,21 @@ public class MeasurementDataController {
 			return pushSessionLogs(aid, version, sessionContent, finish);
 		case INSPECTIT:
 		default:
-			return ResponseEntity.badRequest().body("Unsupported measurement data type: " + spec.getType().toPrettyString());
+			return responseError(aid, version, spec.getType().toPrettyString(), HttpStatus.BAD_REQUEST, "Unsupported measurement data type: " + spec.getType().toPrettyString());
 		}
 	}
 
 	@RequestMapping(value = PUSH_OPEN_XTRACE, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> pushOpenXtraces(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String tracesAsJson,
+	public ResponseEntity<Map<String, Object>> pushOpenXtraces(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version,
+			@RequestBody String tracesAsJson,
 			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
 
 		if (!status.isActive()) {
 			LOGGER.warn("Rejecting OPEN.xtraces for {}@{} due to previous failures.", aid, version);
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+			return responseRejected(aid, version, "open-xtrace");
 		}
 
 		LOGGER.info("Received OPEN.xtraces for {}@{}.", aid, version);
@@ -191,13 +198,14 @@ public class MeasurementDataController {
 	@RequestMapping(value = PUSH_ACCESS_LOGS, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> pushAccessLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String accessLogs,
+	public ResponseEntity<Map<String, Object>> pushAccessLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version,
+			@RequestBody String accessLogs,
 			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
 
 		if (!status.isActive()) {
 			LOGGER.warn("Rejecting access logs for {}@{} due to previous failures.", aid, version);
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+			return responseRejected(aid, version, "access-logs");
 		}
 
 		LOGGER.info("Received access logs for {}@{}.", aid, version);
@@ -208,13 +216,13 @@ public class MeasurementDataController {
 	@RequestMapping(value = PUSH_CSV, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> pushCsv(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String csvContent,
+	public ResponseEntity<Map<String, Object>> pushCsv(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String csvContent,
 			@RequestParam(defaultValue = "false") boolean finish)
 			throws IOException {
 
 		if (!status.isActive()) {
 			LOGGER.warn("Rejecting CSV for {}@{} due to previous failures.", aid, version);
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+			return responseRejected(aid, version, "csv");
 		}
 
 		LOGGER.info("Received CSV for {}@{}.", aid, version);
@@ -225,12 +233,13 @@ public class MeasurementDataController {
 	@RequestMapping(value = PUSH_SESSION_LOGS, method = RequestMethod.POST)
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "version", required = true, dataType = "string", paramType = "path") })
-	public ResponseEntity<String> pushSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version, @RequestBody String sessionContent,
+	public ResponseEntity<Map<String, Object>> pushSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("version") VersionOrTimestamp version,
+			@RequestBody String sessionContent,
 			@RequestParam(defaultValue = "false") boolean finish) throws IOException {
 
 		if (!status.isActive()) {
 			LOGGER.warn("Rejecting session logs for {}@{} due to previous failures.", aid, version);
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Trace processing is stopped due to previous failures.");
+			return responseRejected(aid, version, "session-logs");
 		}
 
 		LOGGER.info("Received session logs for {}@{}.", aid, version);
@@ -238,7 +247,7 @@ public class MeasurementDataController {
 		return forwardData("session-logs", aid, version, sessionContent, finish);
 	}
 
-	private ResponseEntity<String> forwardData(String datatype, AppId aid, VersionOrTimestamp version, String data, boolean finish) {
+	private ResponseEntity<Map<String, Object>> forwardData(String datatype, AppId aid, VersionOrTimestamp version, String data, boolean finish) {
 		MessageProperties props = new MessageProperties();
 		props.setHeader(AmqpApi.Cobra.HEADER_DATATYPE, datatype);
 		props.setHeader(AmqpApi.Cobra.HEADER_FINISH, finish);
@@ -256,9 +265,49 @@ public class MeasurementDataController {
 
 		LOGGER.info("{}@{} Forwarded data to {}.", aid, version, exchange.name());
 
-		String link = RestApi.Cobra.MeasurementData.GET_VERSION.requestUrl(aid, version).withoutProtocol().get();
+		return responseAccepted(aid, version, datatype);
+	}
 
-		return ResponseEntity.accepted().body(link);
+	private ResponseEntity<Map<String, Object>> responseAccepted(AppId aid, VersionOrTimestamp version, String datatype) {
+		Map<String, Object> response = responseBase(aid, version, datatype);
+
+		response.put("status", HttpStatus.ACCEPTED.value());
+		response.put("message", "The data has been accepted for processing");
+		response.put("link", RestApi.Cobra.MeasurementData.GET_VERSION.requestUrl(aid, version).withoutProtocol().get());
+
+		return ResponseEntity.accepted().body(response);
+	}
+
+	private ResponseEntity<Map<String, Object>> responseRejected(AppId aid, VersionOrTimestamp version, String datatype) {
+		return responseError(aid, version, datatype, HttpStatus.CONFLICT, "Trace processing is stopped due to previous failures");
+	}
+
+	private ResponseEntity<Map<String, Object>> responseError(AppId aid, VersionOrTimestamp version, String datatype, HttpStatus status, String message) {
+		Map<String, Object> response = responseBase(aid, version, datatype);
+
+		response.put("status", status.value());
+		response.put("error", status.getReasonPhrase());
+		response.put("message", message);
+
+		return ResponseEntity.status(status).body(response);
+	}
+
+	private Map<String, Object> responseBase(AppId aid, VersionOrTimestamp version, String datatype) {
+		Map<String, Object> response = new HashMap<>();
+
+		response.put("timestamp", LocalDateTime.now());
+		response.put("app-id", aid);
+		response.put("version", version);
+		response.put("type", datatype);
+		response.put("num-queued", getQueuedMessages(aid));
+
+		return response;
+	}
+
+	private int getQueuedMessages(AppId aid) {
+		DeclareOk declareOk = rabbitAdmin.getRabbitTemplate().execute(channel -> channel.queueDeclarePassive(RabbitMqConfig.TASK_PROCESS_TRACES_QUEUE_NAME));
+
+		return declareOk.getMessageCount();
 	}
 
 }
