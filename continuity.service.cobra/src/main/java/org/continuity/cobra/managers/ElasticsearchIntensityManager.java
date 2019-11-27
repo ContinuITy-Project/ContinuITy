@@ -47,7 +47,7 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 
 	private boolean updateScriptInitialized = false;
 
-	public ElasticsearchIntensityManager(String host, ObjectMapper mapper, long bulkTimeoutSeconds) throws IOException {
+	public ElasticsearchIntensityManager(String host, ObjectMapper mapper, int bulkTimeoutSeconds) throws IOException {
 		super(host, "intensity", bulkTimeoutSeconds);
 		this.mapper = mapper;
 	}

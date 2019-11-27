@@ -28,7 +28,7 @@ public class ElasticsearchBehaviorManager extends ElasticsearchScrollingManager<
 
 	private final ObjectMapper mapper;
 
-	public ElasticsearchBehaviorManager(String host, ObjectMapper mapper, long bulkTimeoutSeconds) throws IOException {
+	public ElasticsearchBehaviorManager(String host, ObjectMapper mapper, int bulkTimeoutSeconds) throws IOException {
 		super(host, "behavior", bulkTimeoutSeconds);
 
 		this.mapper = mapper;
