@@ -17,25 +17,25 @@ public class ElasticsearchConfig {
 
 	@Bean(destroyMethod = "destroy")
 	public ElasticsearchTraceManager elasticsearchTraceManager(@Value("${elasticsearch.host:localhost}") String host, ObjectMapper mapper,
-			@Value("${elasticsearch.bulk-timeout:30}") long bulkTimeoutSeconds) throws IOException {
+			@Value("${elasticsearch.bulk-timeout:30}") int bulkTimeoutSeconds) throws IOException {
 		return new ElasticsearchTraceManager(host, mapper, bulkTimeoutSeconds);
 	}
 
 	@Bean(destroyMethod = "destroy")
 	public ElasticsearchSessionManager elasticsearchSessionManager(@Value("${elasticsearch.host:localhost}") String host, ObjectMapper mapper,
-			@Value("${elasticsearch.bulk-timeout:30}") long bulkTimeoutSeconds) throws IOException {
+			@Value("${elasticsearch.bulk-timeout:30}") int bulkTimeoutSeconds) throws IOException {
 		return new ElasticsearchSessionManager(host, mapper, bulkTimeoutSeconds);
 	}
 
 	@Bean(destroyMethod = "destroy")
 	public ElasticsearchIntensityManager elasticsearchIntensityManager(@Value("${elasticsearch.host:localhost}") String host, ObjectMapper mapper,
-			@Value("${elasticsearch.bulk-timeout:30}") long bulkTimeoutSeconds) throws IOException {
+			@Value("${elasticsearch.bulk-timeout:30}") int bulkTimeoutSeconds) throws IOException {
 		return new ElasticsearchIntensityManager(host, mapper, bulkTimeoutSeconds);
 	}
 
 	@Bean(destroyMethod = "destroy")
 	public ElasticsearchBehaviorManager elasticsearchBehaviorManager(@Value("${elasticsearch.host:localhost}") String host, ObjectMapper mapper,
-			@Value("${elasticsearch.bulk-timeout:30}") long bulkTimeoutSeconds) throws IOException {
+			@Value("${elasticsearch.bulk-timeout:30}") int bulkTimeoutSeconds) throws IOException {
 		return new ElasticsearchBehaviorManager(host, mapper, bulkTimeoutSeconds);
 	}
 

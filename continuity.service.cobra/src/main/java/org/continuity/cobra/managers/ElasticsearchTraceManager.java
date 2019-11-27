@@ -35,7 +35,7 @@ public class ElasticsearchTraceManager extends ElasticsearchScrollingManager<Tra
 
 	private final ObjectMapper mapper;
 
-	public ElasticsearchTraceManager(String host, ObjectMapper mapper, long bulkTimeoutSeconds) throws IOException {
+	public ElasticsearchTraceManager(String host, ObjectMapper mapper, int bulkTimeoutSeconds) throws IOException {
 		super(host, "trace", bulkTimeoutSeconds);
 		this.mapper = mapper;
 	}

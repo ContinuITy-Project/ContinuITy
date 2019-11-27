@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
@@ -22,6 +23,7 @@ import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.idpa.AppId;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequest;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -78,8 +80,9 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 	private final long bulkTimeoutSeconds;
 
-	protected ElasticsearchScrollingManager(String host, String mappingName, long bulkTimeoutSeconds) throws IOException {
-		this.client = new RestHighLevelClient(RestClient.builder(new HttpHost(host, 9200, "http"), new HttpHost(host, 9300, "http")));
+	protected ElasticsearchScrollingManager(String host, String mappingName, int bulkTimeoutSeconds) throws IOException {
+		this.client = new RestHighLevelClient(
+				RestClient.builder(new HttpHost(host, 9200, "http"), new HttpHost(host, 9300, "http")).setRequestConfigCallback(cb -> cb.setSocketTimeout(bulkTimeoutSeconds * 1000)));
 
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/" + mappingName + "-mapping.json")))) {
 			this.mapping = reader.lines().collect(Collectors.joining(System.lineSeparator()));
@@ -276,6 +279,31 @@ public abstract class ElasticsearchScrollingManager<T> {
 		BulkResponse response = client.bulk(request, RequestOptions.DEFAULT);
 
 		LOGGER.info("The bulk request to {} took {} and resulted in status {}.", index, response.getTook(), response.status());
+
+		List<T> failedElements = filterFailed(elements, response);
+
+		if (failedElements.size() > 0) {
+			LOGGER.warn("{} of the {} bulk items failed! Retrying...", failedElements.size(), elements.size());
+
+			doBulkRequest(index, failedElements, waitFor, requiresJson, requestAdder);
+		}
+	}
+
+	private List<T> filterFailed(Collection<T> elements, BulkResponse response) {
+		List<T> filteredElements = new ArrayList<>();
+
+		Iterator<T> elemIter = elements.iterator();
+		Iterator<BulkItemResponse> itemIter = Arrays.stream(response.getItems()).iterator();
+
+		while (elemIter.hasNext() && itemIter.hasNext()) {
+			T elem = elemIter.next();
+
+			if (itemIter.next().isFailed()) {
+				filteredElements.add(elem);
+			}
+		}
+
+		return filteredElements;
 	}
 
 	/**
