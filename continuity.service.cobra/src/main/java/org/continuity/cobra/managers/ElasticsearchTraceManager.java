@@ -35,8 +35,8 @@ public class ElasticsearchTraceManager extends ElasticsearchScrollingManager<Tra
 
 	private final ObjectMapper mapper;
 
-	public ElasticsearchTraceManager(String host, ObjectMapper mapper) throws IOException {
-		super(host, "trace");
+	public ElasticsearchTraceManager(String host, ObjectMapper mapper, long bulkTimeoutSeconds) throws IOException {
+		super(host, "trace", bulkTimeoutSeconds);
 		this.mapper = mapper;
 	}
 
@@ -188,7 +188,7 @@ public class ElasticsearchTraceManager extends ElasticsearchScrollingManager<Tra
 
 	/**
 	 * Deletes all traces before a given date.
-	 * 
+	 *
 	 * @param aid
 	 *            The app-id.
 	 * @param before

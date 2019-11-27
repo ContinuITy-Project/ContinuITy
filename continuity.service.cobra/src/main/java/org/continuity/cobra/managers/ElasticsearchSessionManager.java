@@ -53,8 +53,8 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 	private boolean updateScriptInitialized = false;
 
-	public ElasticsearchSessionManager(String host, ObjectMapper mapper) throws IOException {
-		super(host, "session");
+	public ElasticsearchSessionManager(String host, ObjectMapper mapper, long bulkTimeoutSeconds) throws IOException {
+		super(host, "session", bulkTimeoutSeconds);
 
 		this.mapper = mapper;
 	}

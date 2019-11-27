@@ -76,12 +76,16 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 	private final String mapping;
 
-	protected ElasticsearchScrollingManager(String host, String mappingName) throws IOException {
+	private final long bulkTimeoutSeconds;
+
+	protected ElasticsearchScrollingManager(String host, String mappingName, long bulkTimeoutSeconds) throws IOException {
 		this.client = new RestHighLevelClient(RestClient.builder(new HttpHost(host, 9200, "http"), new HttpHost(host, 9300, "http")));
 
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/" + mappingName + "-mapping.json")))) {
 			this.mapping = reader.lines().collect(Collectors.joining(System.lineSeparator()));
 		}
+
+		this.bulkTimeoutSeconds = bulkTimeoutSeconds;
 	}
 
 	public void destroy() throws IOException {
@@ -266,6 +270,8 @@ public abstract class ElasticsearchScrollingManager<T> {
 		if (waitFor) {
 			request.setRefreshPolicy(RefreshPolicy.WAIT_UNTIL);
 		}
+
+		request.timeout(TimeValue.timeValueSeconds(bulkTimeoutSeconds));
 
 		BulkResponse response = client.bulk(request, RequestOptions.DEFAULT);
 
