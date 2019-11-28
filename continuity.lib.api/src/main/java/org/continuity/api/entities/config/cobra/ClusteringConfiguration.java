@@ -42,6 +42,8 @@ public class ClusteringConfiguration {
 	@JsonProperty("min-sample-size")
 	private long minSampleSize = 10;
 
+	private long lookback = 10;
+
 	private boolean omit = false;
 
 	/**
@@ -116,6 +118,19 @@ public class ClusteringConfiguration {
 
 	public void setMinSampleSize(long minSampleSize) {
 		this.minSampleSize = minSampleSize;
+	}
+
+	/**
+	 * The number of previous clustering to look back in the past when correlating the new one.
+	 * 
+	 * @return
+	 */
+	public long getLookback() {
+		return lookback;
+	}
+
+	public void setLookback(long lookback) {
+		this.lookback = lookback;
 	}
 
 	/**

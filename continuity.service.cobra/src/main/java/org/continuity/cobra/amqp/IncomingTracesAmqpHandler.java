@@ -112,7 +112,7 @@ public class IncomingTracesAmqpHandler {
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	@RabbitListener(queues = RabbitMqConfig.TASK_PROCESS_TRACES_QUEUE_NAME, containerFactory = "incomingTracesContainerFactory")
+	@RabbitListener(queues = RabbitMqConfig.TASK_PROCESS_TRACES_QUEUE_NAME, containerFactory = "requeueingContainerFactory")
 	public void processTraces(Message message, Channel channel, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey, @Header(AmqpHeaders.CONSUMER_TAG) String consumerTag,
 			@Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag, @Header(AmqpApi.Cobra.HEADER_DATATYPE) String datatype, @Header(AmqpApi.Cobra.HEADER_FINISH) boolean finish)
 			throws IOException, TimeoutException {
