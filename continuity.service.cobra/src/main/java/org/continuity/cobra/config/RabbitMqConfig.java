@@ -81,7 +81,7 @@ public class RabbitMqConfig {
 	}
 
 	@Bean
-	SimpleRabbitListenerContainerFactory incomingTracesContainerFactory(ConnectionFactory connectionFactory, MessageConverter converter, SimpleRabbitListenerContainerFactoryConfigurer configurer) {
+	SimpleRabbitListenerContainerFactory requeueingContainerFactory(ConnectionFactory connectionFactory, MessageConverter converter, SimpleRabbitListenerContainerFactoryConfigurer configurer) {
 		SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
 		configurer.configure(factory, connectionFactory);
 		factory.setMessageConverter(converter);
@@ -168,8 +168,8 @@ public class RabbitMqConfig {
 
 	@Bean
 	Queue eventClustinatorFinishedQueue() {
-		return QueueBuilder.nonDurable(EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME).withArgument(AmqpApi.DEAD_LETTER_EXCHANGE_KEY, AmqpApi.DEAD_LETTER_EXCHANGE.name())
-				.withArgument(AmqpApi.DEAD_LETTER_ROUTING_KEY_KEY, SERVICE_NAME).build();
+		// no dead letter & durable --> see taskProcessTracesQueue
+		return QueueBuilder.durable(EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME).build();
 	}
 
 	@Bean

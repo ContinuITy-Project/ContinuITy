@@ -50,6 +50,8 @@ public class ClustinatorInput {
 	@JsonProperty("end-micros")
 	private long endMicros;
 
+	private long lookback;
+
 	public AppId getAppId() {
 		return appId;
 	}
@@ -128,6 +130,15 @@ public class ClustinatorInput {
 
 	public ClustinatorInput setEndMicros(long endMicros) {
 		this.endMicros = endMicros;
+		return this;
+	}
+
+	public long getLookback() {
+		return lookback;
+	}
+
+	public ClustinatorInput setLookback(long lookback) {
+		this.lookback = lookback;
 		return this;
 	}
 

@@ -13,6 +13,7 @@ import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.cobra.config.RabbitMqConfig;
 import org.continuity.cobra.converter.ClustinatorMarkovChainConverter;
 import org.continuity.cobra.entities.ClustinatorResult;
+import org.continuity.cobra.entities.TraceProcessingStatus;
 import org.continuity.cobra.extractor.IntensityCalculator;
 import org.continuity.cobra.managers.ElasticsearchBehaviorManager;
 import org.continuity.cobra.managers.ElasticsearchIntensityManager;
@@ -20,9 +21,14 @@ import org.continuity.cobra.managers.ElasticsearchSessionManager;
 import org.continuity.dsl.timeseries.IntensityRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
+
+import com.rabbitmq.client.Channel;
 
 /**
  * Receives and processes the results of the clustinator.
@@ -47,14 +53,34 @@ public class ClustinatorResultAmqpHandler {
 	@Autowired
 	private ElasticsearchIntensityManager intensityManager;
 
-	@RabbitListener(queues = RabbitMqConfig.EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME)
-	public void processClustering(ClustinatorResult result) throws IOException, TimeoutException {
-		LOGGER.info("{}@{} {}: Received result from clustinator in range {} ({}) - {}", result.getAppId(), result.getVersion(), result.getTailoring(), new Date(result.getStartMicros() / 1000),
-				new Date(result.getIntervalStartMicros() / 1000), new Date(result.getEndMicros() / 1000));
+	@Autowired
+	private TraceProcessingStatus status;
 
-		storeClustinatorResult(result);
+	@RabbitListener(queues = RabbitMqConfig.EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME, containerFactory = "requeueingContainerFactory")
+	public void processClustering(ClustinatorResult result, Channel channel, @Header(AmqpHeaders.CONSUMER_TAG) String consumerTag) throws IOException, TimeoutException {
+		try {
 
-		LOGGER.info("{}@{} {}: Processing of the clustinator result finished.", result.getAppId(), result.getVersion(), result.getTailoring());
+			LOGGER.info("{}@{} {}: Received result from clustinator in range {} ({}) - {}", result.getAppId(), result.getVersion(), result.getTailoring(), new Date(result.getStartMicros() / 1000),
+					new Date(result.getIntervalStartMicros() / 1000), new Date(result.getEndMicros() / 1000));
+
+			configProvider.waitForInitialization();
+			storeClustinatorResult(result);
+
+			LOGGER.info("{}@{} {}: Processing of the clustinator result finished.", result.getAppId(), result.getVersion(), result.getTailoring());
+		} catch (Exception e) {
+			LOGGER.error("{}@{} {}: {} during processing of the traces!", result.getAppId(), result.getVersion(), result.getTailoring(), e.getClass().getSimpleName());
+
+			if ((result.getAppId() != null) && configProvider.getConfiguration(result.getAppId()).getTraces().isStopOnFailue()) {
+				LOGGER.error("{}@{} {} Will stop receiving traces until a restart!", result.getAppId(), result.getVersion(), result.getTailoring());
+				status.setActive(false);
+				channel.basicCancel(consumerTag);
+				throw e;
+			} else {
+				LOGGER.error("Will ignore the failed traces and continue!");
+				throw new AmqpRejectAndDontRequeueException(e);
+			}
+
+		}
 	}
 
 	private void storeClustinatorResult(ClustinatorResult result) throws IOException, TimeoutException {

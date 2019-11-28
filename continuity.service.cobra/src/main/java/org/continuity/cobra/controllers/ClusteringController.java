@@ -82,6 +82,8 @@ public class ClusteringController {
 			input.setEpsilon(config.getClustering().getEpsilon());
 		}
 
+		input.setLookback(config.getClustering().getLookback());
+
 		ExchangeDefinition<RoutingKeyFormatter.AppId> exchange = AmqpApi.Cobra.Clustinator.TASK_CLUSTER;
 		amqpTemplate.convertAndSend(exchange.name(), exchange.formatRoutingKey().of(aid), input);
 
