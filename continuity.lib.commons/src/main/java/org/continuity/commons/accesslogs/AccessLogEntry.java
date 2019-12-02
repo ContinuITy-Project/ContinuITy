@@ -114,7 +114,7 @@ public class AccessLogEntry {
 					entry.setPath(pathAndQuery[0]);
 
 					if (pathAndQuery.length > 1) {
-						entry.setRequestParameters(Arrays.stream(pathAndQuery[1].split("&")).map(ParameterRecord::fromString).collect(Collectors.toList()));
+						entry.setRequestParameters(Arrays.stream(pathAndQuery[1].split("&")).map(ParameterRecord::fromString).filter(Objects::nonNull).collect(Collectors.toList()));
 					}
 					break;
 				case "protocol":
