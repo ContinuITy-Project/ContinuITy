@@ -1,6 +1,11 @@
 package org.continuity.commons.accesslogs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ParameterRecord {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ParameterRecord.class);
 
 	private String name;
 
@@ -12,8 +17,25 @@ public class ParameterRecord {
 	}
 
 	public static ParameterRecord fromString(String param) {
-		String[] nameAndValue = param.split("=");
-		return new ParameterRecord(nameAndValue[0], nameAndValue.length > 1 ? nameAndValue[1] : null);
+		int equalsIndex = param.indexOf("=");
+
+		String name;
+		String value;
+
+		if (equalsIndex < 0) {
+			name = param;
+			value = null;
+		} else {
+			name = param.substring(0, equalsIndex);
+			value = param.substring(equalsIndex + 1);
+		}
+
+		if (name.length() == 0) {
+			LOGGER.warn("Ignoring empty parameter: '{}'", param);
+			return null;
+		}
+
+		return new ParameterRecord(name, value);
 	}
 
 	public String getName() {
