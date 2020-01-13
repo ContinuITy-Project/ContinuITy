@@ -25,6 +25,9 @@ public abstract class AbstractMarkovChain<T extends MarkovTransition> {
 
 	private double frequency;
 
+	@JsonProperty("num-sessions")
+	private long numSessions;
+
 	@JsonDeserialize(as = TreeMap.class, contentAs = TreeMap.class)
 	@JsonProperty
 	private final Map<String, Map<String, T>> transitions;
@@ -78,6 +81,25 @@ public abstract class AbstractMarkovChain<T extends MarkovTransition> {
 	 */
 	public void setFrequency(double frequency) {
 		this.frequency = frequency;
+	}
+
+	/**
+	 * Gets the number of sessions aggregated in this Markov chain.
+	 *
+	 * @return The number of sessions as {@code long}.
+	 */
+	public long getNumSessions() {
+		return numSessions;
+	}
+
+	/**
+	 * Sets the number of sessions aggregated in this Markov chain.
+	 * 
+	 * @param numSessions
+	 *            The number of sessions as {@code long}.
+	 */
+	public void setNumSessions(long numSessions) {
+		this.numSessions = numSessions;
 	}
 
 	/**

@@ -2,6 +2,7 @@ package org.continuity.cobra.entities;
 
 import java.util.List;
 
+import org.continuity.api.entities.config.cobra.AppendStrategy;
 import org.continuity.api.entities.deserialization.TailoringDeserializer;
 import org.continuity.api.entities.deserialization.TailoringSerializer;
 import org.continuity.idpa.AppId;
@@ -39,7 +40,14 @@ public class ClustinatorInput {
 	private Double epsilon;
 
 	@JsonProperty("min-sample-size")
-	private long minSampleSize;
+	@JsonInclude(Include.NON_NULL)
+	private Long minSampleSize;
+
+	@JsonInclude(Include.NON_NULL)
+	private Long k;
+
+	@JsonInclude(Include.NON_NULL)
+	private Integer parallelize;
 
 	@JsonProperty("start-micros")
 	private long startMicros;
@@ -51,6 +59,9 @@ public class ClustinatorInput {
 	private long endMicros;
 
 	private long lookback;
+
+	@JsonProperty("append-strategy")
+	private AppendStrategy appendStrategy;
 
 	public AppId getAppId() {
 		return appId;
@@ -83,7 +94,7 @@ public class ClustinatorInput {
 		return avgTransitionTolerance;
 	}
 
-	public ClustinatorInput setAvgTransitionTolerance(double avgTransitionTolerance) {
+	public ClustinatorInput setAvgTransitionTolerance(Double avgTransitionTolerance) {
 		this.avgTransitionTolerance = avgTransitionTolerance;
 		return this;
 	}
@@ -92,17 +103,35 @@ public class ClustinatorInput {
 		return epsilon;
 	}
 
-	public ClustinatorInput setEpsilon(double epsilon) {
+	public ClustinatorInput setEpsilon(Double epsilon) {
 		this.epsilon = epsilon;
 		return this;
 	}
 
-	public long getMinSampleSize() {
+	public Long getMinSampleSize() {
 		return minSampleSize;
 	}
 
-	public ClustinatorInput setMinSampleSize(long minSampleSize) {
+	public ClustinatorInput setMinSampleSize(Long minSampleSize) {
 		this.minSampleSize = minSampleSize;
+		return this;
+	}
+
+	public Long getK() {
+		return k;
+	}
+
+	public ClustinatorInput setK(Long k) {
+		this.k = k;
+		return this;
+	}
+
+	public Integer getParallelize() {
+		return parallelize;
+	}
+
+	public ClustinatorInput setParallelize(Integer parallelize) {
+		this.parallelize = parallelize;
 		return this;
 	}
 
@@ -139,6 +168,15 @@ public class ClustinatorInput {
 
 	public ClustinatorInput setLookback(long lookback) {
 		this.lookback = lookback;
+		return this;
+	}
+
+	public AppendStrategy getAppendStrategy() {
+		return appendStrategy;
+	}
+
+	public ClustinatorInput setAppendStrategy(AppendStrategy appendStrategy) {
+		this.appendStrategy = appendStrategy;
 		return this;
 	}
 

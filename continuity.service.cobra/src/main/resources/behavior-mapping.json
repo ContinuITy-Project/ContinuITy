@@ -5,6 +5,7 @@
             "properties": {
                 "id": { "type": "keyword" },
                 "frequency": { "type": "double" },
+                "num-sessions": { "type": "long" },
                 "transitions": {
                     "type": "object",
                     "enabled": false
