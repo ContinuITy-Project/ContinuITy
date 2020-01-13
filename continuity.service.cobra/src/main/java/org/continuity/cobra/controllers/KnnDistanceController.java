@@ -19,6 +19,8 @@ import org.continuity.api.amqp.ExchangeDefinition;
 import org.continuity.api.amqp.RoutingKeyFormatter;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.config.ConfigurationProvider;
+import org.continuity.api.entities.config.cobra.AppendStrategy;
+import org.continuity.api.entities.config.cobra.AppendStrategyConfiguration;
 import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.api.rest.RestApi;
 import org.continuity.cobra.entities.ClustinatorInput;
@@ -36,12 +38,14 @@ import org.springframework.amqp.rabbit.core.RabbitManagementTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 
 import com.rabbitmq.client.Channel;
 
@@ -101,6 +105,17 @@ public class KnnDistanceController {
 			@ApiImplicitParam(name = "tailoring", required = true, dataType = "string", paramType = "path") })
 	public String createPlot(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable String tailoring) throws IOException, TimeoutException {
 		CobraConfiguration config = configProvider.getConfiguration(aid);
+		AppendStrategyConfiguration appendStrategy;
+
+		if (config.getClustering().getInitial().getStrategy() == AppendStrategy.DBSCAN) {
+			appendStrategy = config.getClustering().getInitial();
+		} else {
+			appendStrategy = config.getClustering().getAppend();
+		}
+
+		if (appendStrategy.getStrategy() != AppendStrategy.DBSCAN) {
+			throw new HttpClientErrorException(HttpStatus.CONFLICT, "DBSCAN is not specified as an append strategy!");
+		}
 
 		List<String> tailoringList = Session.convertStringToTailoring(tailoring);
 
@@ -128,7 +143,7 @@ public class KnnDistanceController {
 		ClustinatorInput input = new ClustinatorInput();
 		input.setAppId(aid);
 		input.setTailoring(tailoringList);
-		input.setMinSampleSize(config.getClustering().getMinSampleSize());
+		input.setMinSampleSize(appendStrategy.getMinSampleSize());
 		input.setStartMicros(from * 1000);
 		input.setEndMicros(to * 1000);
 

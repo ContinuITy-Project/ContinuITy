@@ -3,11 +3,14 @@ package org.continuity.cobra.controllers;
 import static org.continuity.api.rest.RestApi.Cobra.BehaviorModel.ROOT;
 import static org.continuity.api.rest.RestApi.Cobra.BehaviorModel.Paths.CREATE;
 import static org.continuity.api.rest.RestApi.Cobra.BehaviorModel.Paths.GET_LATEST;
+import static org.continuity.api.rest.RestApi.Cobra.BehaviorModel.Paths.UPDATE_NUM_SESSIONS;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -25,6 +28,7 @@ import org.continuity.cobra.extractor.RequestTailorer;
 import org.continuity.cobra.extractor.SessionUpdater;
 import org.continuity.cobra.extractor.SessionsToMarkovChainAggregator;
 import org.continuity.cobra.managers.ElasticsearchBehaviorManager;
+import org.continuity.cobra.managers.ElasticsearchSessionManager;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
@@ -61,6 +65,9 @@ public class BehaviorModelController {
 	private ElasticsearchTraceManager traceManager;
 
 	@Autowired
+	private ElasticsearchSessionManager sessionManager;
+
+	@Autowired
 	private ElasticsearchBehaviorManager behaviorManager;
 
 	@Autowired
@@ -86,6 +93,30 @@ public class BehaviorModelController {
 		RelativeMarkovChain chain = getTailoredMarkovChain(description);
 		String matrix = Arrays.stream(chain.toCsv()).map(Arrays::stream).map(s -> s.collect(Collectors.joining(","))).collect(Collectors.joining("\n"));
 		return ResponseEntity.ok(matrix);
+	}
+
+	@RequestMapping(value = UPDATE_NUM_SESSIONS, method = RequestMethod.POST)
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
+	public void updateNumSessions(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @PathVariable long timestamp) throws IOException, TimeoutException {
+		List<String> lTailoring = Session.convertStringToTailoring(tailoring);
+
+		CobraConfiguration config = configProvider.getConfiguration(aid);
+		long interval = config.getClustering().getInterval().toMillis();
+		long overlap = config.getClustering().getAppend().getStrategy().includeOverlap() ? config.getClustering().getOverlap().toMillis() : 0;
+
+		long clusteringStart = timestamp - overlap;
+		long clusteringEnd = timestamp + interval;
+
+		MarkovBehaviorModel behaviorModel = behaviorManager.readLatest(aid, lTailoring, timestamp);
+		int numGroups = behaviorModel.getMarkovChains().size();
+
+		Map<String, Long> numSessions = sessionManager.countSessionsPerGroupInRange(aid, null, lTailoring, new Date(clusteringStart), new Date(clusteringEnd), numGroups);
+
+		for (RelativeMarkovChain chain : behaviorModel.getMarkovChains()) {
+			chain.setNumSessions(numSessions.getOrDefault(chain.getId(), 0L));
+		}
+
+		behaviorManager.store(aid, lTailoring, behaviorModel);
 	}
 
 	private RelativeMarkovChain getTailoredMarkovChain(SessionTailoringDescription description) throws IOException, TimeoutException {

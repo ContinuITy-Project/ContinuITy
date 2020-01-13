@@ -686,6 +686,9 @@ public class RestApi {
 			/** {@value #ROOT}/create */
 			public static final RestEndpoint CREATE = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CREATE, RequestMethod.POST);
 
+			/** {@value #ROOT}/{app-id:.+}/{tailoring:.+}/{timestamp}/num-sessions */
+			public static final RestEndpoint UPDATE_NUM_SESSIONS = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_NUM_SESSIONS, RequestMethod.POST);
+
 			private BehaviorModel() {
 			}
 
@@ -694,6 +697,8 @@ public class RestApi {
 				public static final String GET_LATEST = "/{app-id:.+}/{tailoring:.+}/latest";
 
 				public static final String CREATE = "/create";
+
+				public static final String UPDATE_NUM_SESSIONS = "/{app-id:.+}/{tailoring:.+}/{timestamp}/num-sessions";
 
 				private Paths() {
 				}

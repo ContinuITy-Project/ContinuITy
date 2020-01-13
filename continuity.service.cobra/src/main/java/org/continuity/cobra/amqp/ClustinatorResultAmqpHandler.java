@@ -86,7 +86,13 @@ public class ClustinatorResultAmqpHandler {
 	private void storeClustinatorResult(ClustinatorResult result) throws IOException, TimeoutException {
 		ClustinatorMarkovChainConverter converter = new ClustinatorMarkovChainConverter(result.getStates());
 		MarkovBehaviorModel behaviorModel = new MarkovBehaviorModel();
-		behaviorModel.setTimestamp(result.getIntervalStartMicros() / 1000);
+
+		if (result.getAppendStrategy().overwriteExisting()) {
+			MarkovBehaviorModel previous = behaviorManager.readLatest(result.getAppId(), result.getTailoring(), result.getIntervalStartMicros() / 1000);
+			behaviorModel.setTimestamp(previous.getTimestamp());
+		} else {
+			behaviorModel.setTimestamp(result.getIntervalStartMicros() / 1000);
+		}
 
 		for (String group : result.getMeanMarkovChains().keySet()) {
 
@@ -107,6 +113,7 @@ public class ClustinatorResultAmqpHandler {
 
 		RelativeMarkovChain behavior = converter.convertArray(markovArray, thinkTimeMeans, thinkTimeVariances);
 		behavior.setFrequency(result.getFrequency().get(group));
+		behavior.setNumSessions(result.getNumSessions().get(group));
 		behavior.setId(group);
 
 		return behavior;

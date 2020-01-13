@@ -2,6 +2,7 @@ package org.continuity.cobra.managers;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
 import org.elasticsearch.search.aggregations.metrics.ParsedMax;
 import org.elasticsearch.search.aggregations.metrics.ParsedMin;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -133,6 +136,58 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 		QueryBuilder query = createRangeQuery(version, from, to);
 
 		return countElements(aid, tailoring, query, String.format(" with version %s and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
+	}
+
+	/**
+	 * Counts all sessions within a given range, grouped by the behavior group.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param version
+	 *            The version or timestamp. Can be {@code null}. In this case, it will be ignored.
+	 * @param tailoring
+	 *            The list of services to which the sessions are tailored. Use a singleton list with
+	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
+	 * @param from
+	 *            The start date of the range.
+	 * @param to
+	 *            The end date of the range.
+	 * @param numGroups
+	 *            The (maximum) number of groups to search for.
+	 * @return A map of the group id to the number of sessions in the range.
+	 * @throws IOException
+	 */
+	public Map<String, Long> countSessionsPerGroupInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to, int numGroups) throws IOException {
+		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+
+		if (!indexExists(index)) {
+			return Collections.emptyMap();
+		}
+
+		SearchSourceBuilder source = new SearchSourceBuilder();
+
+		source.query(createRangeQuery(version, from, to));
+		source.size(0);
+		source.aggregation(AggregationBuilders.terms("num_sessions").field("group-id").size(numGroups));
+
+		SearchRequest search = new SearchRequest(index).source(source);
+
+		SearchResponse response;
+		try {
+			response = client.search(search, RequestOptions.DEFAULT);
+		} catch (ElasticsearchStatusException e) {
+			LOGGER.info("Could not get any elements from {} {}: {}", aid, index, e.getMessage());
+			return Collections.emptyMap();
+		}
+
+		Terms numSessions = response.getAggregations().get("num_sessions");
+		Map<String, Long> sessionsPerGroup = new HashMap<>();
+
+		for (Bucket bucket : numSessions.getBuckets()) {
+			sessionsPerGroup.put(bucket.getKeyAsString(), bucket.getDocCount());
+		}
+
+		return sessionsPerGroup;
 	}
 
 	private QueryBuilder createRangeQuery(VersionOrTimestamp version, Date from, Date to) {

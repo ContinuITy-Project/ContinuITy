@@ -5,11 +5,7 @@ import java.time.Duration;
 import org.continuity.api.entities.config.cobra.CobraConfiguration.DurationToStringConverter;
 import org.continuity.api.entities.config.cobra.CobraConfiguration.StringToDurationConverter;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -29,20 +25,11 @@ public class ClusteringConfiguration {
 	@JsonDeserialize(converter = StringToDurationConverter.class)
 	private Duration overlap = Duration.ofHours(5);
 
-	@JsonProperty("avg-transition-tolerance")
-	@JsonInclude(Include.NON_NULL)
-	private Double avgTransitionTolerance = null;
-
-	@JsonInclude(Include.NON_NULL)
-	private Double epsilon = 1.5;
-
-	@JsonIgnore
-	private boolean epsilonSet = false;
-
-	@JsonProperty("min-sample-size")
-	private long minSampleSize = 10;
-
 	private long lookback = 10;
+
+	private AppendStrategyConfiguration initial = AppendStrategyConfiguration.defaultKmeans();
+
+	private AppendStrategyConfiguration append = AppendStrategyConfiguration.defaultMinimumDistance();
 
 	private boolean omit = false;
 
@@ -74,55 +61,8 @@ public class ClusteringConfiguration {
 	}
 
 	/**
-	 * The average transition tolerance for the DBSCAN algorithm. Corresponds to the epsilon
-	 * parameter with {@code n} = number of endpoints:
-	 * {@code epsilon = (n + 1) * avgTransitionTolerance}.
-	 *
-	 * @return
-	 */
-	public Double getAvgTransitionTolerance() {
-		return avgTransitionTolerance;
-	}
-
-	public void setAvgTransitionTolerance(double avgTransitionTolerance) {
-		this.avgTransitionTolerance = avgTransitionTolerance;
-
-		if (!this.epsilonSet) {
-			this.epsilon = null;
-		}
-	}
-
-	/**
-	 * The epsilon parameter for the DBSCAN algorithm. Alternative to
-	 * {@link #getAvgTransitionTolerance()}.
-	 *
-	 * @return
-	 */
-	public Double getEpsilon() {
-		return epsilon;
-	}
-
-	public void setEpsilon(double epsilon) {
-		this.epsilon = epsilon;
-		this.epsilonSet = true;
-	}
-
-	/**
-	 * The min sample size parameter for the DBSCAN algorithm.
-	 *
-	 * @return
-	 */
-	public long getMinSampleSize() {
-		return minSampleSize;
-	}
-
-	public void setMinSampleSize(long minSampleSize) {
-		this.minSampleSize = minSampleSize;
-	}
-
-	/**
 	 * The number of previous clustering to look back in the past when correlating the new one.
-	 * 
+	 *
 	 * @return
 	 */
 	public long getLookback() {
@@ -131,6 +71,32 @@ public class ClusteringConfiguration {
 
 	public void setLookback(long lookback) {
 		this.lookback = lookback;
+	}
+
+	/**
+	 * Configuration of initial clustering.
+	 * 
+	 * @return
+	 */
+	public AppendStrategyConfiguration getInitial() {
+		return initial;
+	}
+
+	public void setInitial(AppendStrategyConfiguration initial) {
+		this.initial = initial;
+	}
+
+	/**
+	 * Configuration of the strategy defining how to append new sessions.
+	 *
+	 * @return
+	 */
+	public AppendStrategyConfiguration getAppend() {
+		return append;
+	}
+
+	public void setAppend(AppendStrategyConfiguration append) {
+		this.append = append;
 	}
 
 	/**

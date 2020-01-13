@@ -478,9 +478,9 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 		LOGGER.info("Scroll #{} took {}, had {} hits, and is {}.", scrollNumber, response.getTook(), numHits, response.status());
 
-		if ((numHits > 0) && ((remaining < 0) || (numHits < remaining))) {
-			callback.accept(Arrays.stream(hits.getHits()).map(SearchHit::getSourceAsString).map(this::deserialize).filter(Objects::nonNull).collect(Collectors.toList()));
+		callback.accept(Arrays.stream(hits.getHits()).map(SearchHit::getSourceAsString).map(this::deserialize).filter(Objects::nonNull).collect(Collectors.toList()));
 
+		if ((numHits > 0) && ((remaining < 0) || (numHits < remaining))) {
 			scrollForMoreElements(scrollId, aid, message, scrollNumber, remaining - numHits, callback);
 		} else {
 			LOGGER.info("Reached end of scroll.");

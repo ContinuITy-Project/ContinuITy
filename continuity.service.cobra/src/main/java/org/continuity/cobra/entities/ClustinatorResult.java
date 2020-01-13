@@ -3,6 +3,7 @@ package org.continuity.cobra.entities;
 import java.util.List;
 import java.util.Map;
 
+import org.continuity.api.entities.config.cobra.AppendStrategy;
 import org.continuity.api.entities.deserialization.TailoringDeserializer;
 import org.continuity.api.entities.deserialization.TailoringSerializer;
 import org.continuity.idpa.AppId;
@@ -36,6 +37,9 @@ public class ClustinatorResult {
 	@JsonProperty("interval-start-micros")
 	private long intervalStartMicros;
 
+	@JsonProperty("append-strategy")
+	private AppendStrategy appendStrategy;
+
 	@JsonProperty("end-micros")
 	private long endMicros;
 
@@ -51,6 +55,9 @@ public class ClustinatorResult {
 	private Map<String, double[]> thinkTimeVariances;
 
 	private Map<String, Double> frequency;
+
+	@JsonProperty("num-sessions")
+	private Map<String, Long> numSessions;
 
 	public AppId getAppId() {
 		return appId;
@@ -74,6 +81,14 @@ public class ClustinatorResult {
 
 	public void setTailoring(List<String> tailoring) {
 		this.tailoring = tailoring;
+	}
+
+	public AppendStrategy getAppendStrategy() {
+		return appendStrategy;
+	}
+
+	public void setAppendStrategy(AppendStrategy appendStrategy) {
+		this.appendStrategy = appendStrategy;
 	}
 
 	public long getStartMicros() {
@@ -138,6 +153,14 @@ public class ClustinatorResult {
 
 	public void setFrequency(Map<String, Double> frequency) {
 		this.frequency = frequency;
+	}
+
+	public Map<String, Long> getNumSessions() {
+		return numSessions;
+	}
+
+	public void setNumSessions(Map<String, Long> numSessions) {
+		this.numSessions = numSessions;
 	}
 
 }
