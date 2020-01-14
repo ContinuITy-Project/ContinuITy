@@ -94,12 +94,20 @@ public class ClustinatorResultAmqpHandler {
 			behaviorModel.setTimestamp(result.getIntervalStartMicros() / 1000);
 		}
 
+		Date earliest = intensityManager.getEarliestDate(result.getAppId(), result.getTailoring());
+		long startMicros = result.getIntervalStartMicros();
+
+		if ((startMicros / 1000) < earliest.getTime()) {
+			startMicros = result.getStartMicros();
+			LOGGER.info("{}@{} {}: It's the start of the intensities. Therefore, also considering the overlap range.", result.getAppId(), result.getVersion(), result.getTailoring());
+		}
+
 		for (String group : result.getMeanMarkovChains().keySet()) {
 
 			RelativeMarkovChain behavior = createMarkovChain(group, result, converter);
 			behaviorModel.addMarkovChain(behavior);
 
-			updateIntensities(result, group);
+			updateIntensities(result, group, startMicros);
 		}
 
 		behaviorManager.store(result.getAppId(), result.getTailoring(), behaviorModel);
@@ -119,7 +127,7 @@ public class ClustinatorResultAmqpHandler {
 		return behavior;
 	}
 
-	private void updateIntensities(ClustinatorResult result, String group) throws IOException, TimeoutException {
+	private void updateIntensities(ClustinatorResult result, String group, long startMicros) throws IOException, TimeoutException {
 		LOGGER.info("{}@{} {}: Updating the intensities of group {}...", result.getAppId(), result.getVersion(), result.getTailoring(), group);
 
 		CobraConfiguration config = configProvider.getConfiguration(result.getAppId());
@@ -134,8 +142,8 @@ public class ClustinatorResultAmqpHandler {
 			LOGGER.warn("The clustering interval {} is not a multiple of the intensity resolution {}. This can lead to unexpected behavior!", interval, resolution);
 		}
 
-		IntensityCalculator calculator = new IntensityCalculator(group, resolutionMicros, result.getIntervalStartMicros(), result.getEndMicros(), timeoutMicros);
-		sessionManager.scrollForSessionsWithGroupId(result.getAppId(), result.getTailoring(), group, result.getIntervalStartMicros(), result.getEndMicros(), calculator::addSessions, false);
+		IntensityCalculator calculator = new IntensityCalculator(group, resolutionMicros, startMicros, result.getEndMicros(), timeoutMicros);
+		sessionManager.scrollForSessionsWithGroupId(result.getAppId(), result.getTailoring(), group, startMicros, result.getEndMicros(), calculator::addSessions, false);
 
 		List<IntensityRecord> intensities = calculator.getRecords();
 

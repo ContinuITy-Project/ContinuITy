@@ -14,16 +14,24 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.dsl.WorkloadDescription;
 import org.continuity.dsl.timeseries.IntensityRecord;
 import org.continuity.dsl.timeseries.NumericVariable;
 import org.continuity.dsl.timeseries.StringVariable;
 import org.continuity.dsl.utils.DateUtils;
 import org.continuity.idpa.AppId;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.metrics.ParsedMin;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
@@ -215,6 +223,44 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	public List<IntensityRecord> readPostprocessing(AppId aid, List<String> tailoring, WorkloadDescription workloadDescription, List<LocalDateTime> applied, Duration step)
 			throws IOException, TimeoutException {
 		return readElements(aid, tailoring, workloadDescription.toPostprocessingElasticQuery(applied, step), "for postprocessing of passed workload description");
+	}
+
+	/**
+	 * Gets the earliest date occurring in the stored intensities.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param tailoring
+	 *            The list of services to which the intensities belong. Use a singleton list with
+	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
+	 * @return The found date. In case no sessions could be found, 292278994-08-17 08:12:55 (max
+	 *         value of long) will be returned.
+	 * @throws IOException
+	 */
+	public Date getEarliestDate(AppId aid, List<String> tailoring) throws IOException {
+		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+
+		if (!indexExists(index)) {
+			return new Date(Long.MAX_VALUE);
+		}
+
+		SearchSourceBuilder source = new SearchSourceBuilder();
+		source.aggregation(AggregationBuilders.min("min_timestamp").field("timestamp").missing(Long.MAX_VALUE));
+
+		SearchRequest search = new SearchRequest(index).source(source);
+
+		SearchResponse response;
+		try {
+			response = client.search(search, RequestOptions.DEFAULT);
+		} catch (ElasticsearchStatusException e) {
+			LOGGER.info("Could not get any elements from {} {}: {}", aid, index, e.getMessage());
+			return new Date(Long.MAX_VALUE);
+		}
+
+		ParsedMin min = response.getAggregations().get("min_timestamp");
+		double micros = min.getValue();
+
+		return new Date(Math.round(micros / 1000));
 	}
 
 	@Override
