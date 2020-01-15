@@ -60,6 +60,8 @@ public class ClustinatorInput {
 
 	private long lookback;
 
+	private Long dimensions;
+
 	@JsonProperty("append-strategy")
 	private AppendStrategy appendStrategy;
 
@@ -168,6 +170,15 @@ public class ClustinatorInput {
 
 	public ClustinatorInput setLookback(long lookback) {
 		this.lookback = lookback;
+		return this;
+	}
+
+	public Long getDimensions() {
+		return dimensions;
+	}
+
+	public ClustinatorInput setDimensions(Long dimensions) {
+		this.dimensions = dimensions;
 		return this;
 	}
 
