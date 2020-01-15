@@ -17,6 +17,7 @@ import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.cobra.AppendStrategyConfiguration;
 import org.continuity.api.entities.config.cobra.CobraConfiguration;
+import org.continuity.cobra.entities.ClusteringContinuation;
 import org.continuity.cobra.entities.ClustinatorInput;
 import org.continuity.cobra.managers.ElasticsearchBehaviorManager;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
@@ -57,10 +58,11 @@ public class ClusteringController {
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
 			@ApiImplicitParam(name = "tailoring", required = true, dataType = "string", paramType = "path") })
 	public void triggerLatestClustering(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable String tailoring,
-			@RequestParam(value = "ignore-timeout", defaultValue = "false") boolean ignoreTimeout, @RequestParam(defaultValue = "-1") long before) throws IOException, TimeoutException {
+			@RequestParam(value = "ignore-timeout", defaultValue = "false") boolean ignoreTimeout, @RequestParam(defaultValue = "-1") long before,
+			@RequestParam(value = "continue-with-next", defaultValue = "false") boolean continueWithNext) throws IOException, TimeoutException {
 
 		if (before > 0) {
-			triggerLatestClusteringBefore(aid, Session.convertStringToTailoring(tailoring), before, ignoreTimeout);
+			triggerLatestClusteringBefore(aid, Session.convertStringToTailoring(tailoring), before, ignoreTimeout, continueWithNext);
 		} else {
 			triggerLatestClustering(aid, Session.convertStringToTailoring(tailoring), ignoreTimeout);
 		}
@@ -68,10 +70,10 @@ public class ClusteringController {
 
 	public void triggerLatestClustering(AppId aid, List<String> tailoring, boolean ignoreTimeout) throws IOException, TimeoutException {
 		Date sessionsEnd = sessionManager.getLatestDate(aid, null, tailoring);
-		triggerLatestClusteringBefore(aid, tailoring, sessionsEnd.getTime(), ignoreTimeout);
+		triggerLatestClusteringBefore(aid, tailoring, sessionsEnd.getTime(), ignoreTimeout, false);
 	}
 
-	public void triggerLatestClusteringBefore(AppId aid, List<String> tailoring, long clusteringEnd, boolean ignoreTimeout) throws IOException, TimeoutException {
+	public void triggerLatestClusteringBefore(AppId aid, List<String> tailoring, long clusteringEnd, boolean ignoreTimeout, boolean continueWithNext) throws IOException, TimeoutException {
 		CobraConfiguration config = configProvider.getConfiguration(aid);
 
 		Duration interval = config.getClustering().getInterval();
@@ -99,7 +101,8 @@ public class ClusteringController {
 				.setK(appendStrategy.getK()).setNumSeedings(appendStrategy.getNumSeedings()).setMaxIterations(appendStrategy.getMaxIterations())
 				.setConvergenceTolerance(appendStrategy.getConvergenceTolerance()).setParallelize(appendStrategy.getParallelize());
 
-		input.setLookback(appendStrategy.getStrategy().getLookback(config.getClustering().getLookback())).setDimensions(config.getClustering().getDimensions());
+		input.setLookback(appendStrategy.getStrategy().getLookback(config.getClustering().getLookback())).setDimensions(config.getClustering().getDimensions())
+				.setContinuation(ClusteringContinuation.fromBool(ignoreTimeout, continueWithNext));
 
 		ExchangeDefinition<RoutingKeyFormatter.AppId> exchange = AmqpApi.Cobra.Clustinator.TASK_CLUSTER;
 		amqpTemplate.convertAndSend(exchange.name(), exchange.formatRoutingKey().of(aid), input);

@@ -11,7 +11,9 @@ import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.cobra.CobraConfiguration;
 import org.continuity.cobra.config.RabbitMqConfig;
+import org.continuity.cobra.controllers.ClusteringController;
 import org.continuity.cobra.converter.ClustinatorMarkovChainConverter;
+import org.continuity.cobra.entities.ClusteringContinuation;
 import org.continuity.cobra.entities.ClustinatorResult;
 import org.continuity.cobra.entities.TraceProcessingStatus;
 import org.continuity.cobra.extractor.IntensityCalculator;
@@ -54,6 +56,9 @@ public class ClustinatorResultAmqpHandler {
 	private ElasticsearchIntensityManager intensityManager;
 
 	@Autowired
+	private ClusteringController clusteringController;
+
+	@Autowired
 	private TraceProcessingStatus status;
 
 	@RabbitListener(queues = RabbitMqConfig.EVENT_CLUSTINATOR_FINISHED_QUEUE_NAME, containerFactory = "requeueingContainerFactory")
@@ -65,6 +70,7 @@ public class ClustinatorResultAmqpHandler {
 
 			configProvider.waitForInitialization();
 			storeClustinatorResult(result);
+			triggerContinuation(result);
 
 			LOGGER.info("{}@{} {}: Processing of the clustinator result finished.", result.getAppId(), result.getVersion(), result.getTailoring());
 		} catch (Exception e) {
@@ -156,6 +162,30 @@ public class ClustinatorResultAmqpHandler {
 			}
 		} else {
 			LOGGER.info("{}@{} {}: There are no intensities of group {} to be updated.", result.getAppId(), result.getVersion(), result.getTailoring(), group);
+		}
+	}
+
+	private void triggerContinuation(ClustinatorResult result) throws IOException, TimeoutException {
+		if ((result.getContinuation() == null) || (result.getContinuation() == ClusteringContinuation.NO)) {
+			return;
+		}
+
+		CobraConfiguration config = configProvider.getConfiguration(result.getAppId());
+
+		long latestSession = sessionManager.getLatestDate(result.getAppId(), null, result.getTailoring()).getTime() * 1000;
+		long nextClusteringEnd = (2 * result.getEndMicros()) - result.getIntervalStartMicros();
+
+		if (result.getContinuation() == ClusteringContinuation.RESPECTING_TIMEOUT) {
+			latestSession -= config.getSessions().getTimeout().toMillis() * 1000;
+		}
+
+		if (nextClusteringEnd < latestSession) {
+			LOGGER.info("{}@{} {}: Triggering next clustering...", result.getAppId(), result.getVersion(), result.getTailoring());
+
+			clusteringController.triggerLatestClusteringBefore(result.getAppId(), result.getTailoring(), nextClusteringEnd / 1000, result.getContinuation() == ClusteringContinuation.IGNORING_TIMEOUT,
+					true);
+		} else {
+			LOGGER.info("{}@{} {}: There is not enough data for the next clustering to be triggered.", result.getAppId(), result.getVersion(), result.getTailoring());
 		}
 	}
 

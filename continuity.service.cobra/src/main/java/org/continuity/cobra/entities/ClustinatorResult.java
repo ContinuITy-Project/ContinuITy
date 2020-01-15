@@ -59,6 +59,8 @@ public class ClustinatorResult {
 	@JsonProperty("num-sessions")
 	private Map<String, Long> numSessions;
 
+	private ClusteringContinuation continuation;
+
 	public AppId getAppId() {
 		return appId;
 	}
@@ -161,6 +163,14 @@ public class ClustinatorResult {
 
 	public void setNumSessions(Map<String, Long> numSessions) {
 		this.numSessions = numSessions;
+	}
+
+	public ClusteringContinuation getContinuation() {
+		return continuation;
+	}
+
+	public void setContinuation(ClusteringContinuation continuation) {
+		this.continuation = continuation;
 	}
 
 }
