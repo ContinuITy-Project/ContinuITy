@@ -96,7 +96,8 @@ public class ClusteringController {
 				.setIntervalStartMicros(intervalStart * 1000).setEndMicros(clusteringEnd * 1000);
 
 		input.setMinSampleSize(appendStrategy.getMinSampleSize()).setEpsilon(appendStrategy.getEpsilon()).setAvgTransitionTolerance(appendStrategy.getAvgTransitionTolerance())
-				.setK(appendStrategy.getK()).setParallelize(appendStrategy.getParallelize());
+				.setK(appendStrategy.getK()).setNumSeedings(appendStrategy.getNumSeedings()).setMaxIterations(appendStrategy.getMaxIterations())
+				.setConvergenceTolerance(appendStrategy.getConvergenceTolerance()).setParallelize(appendStrategy.getParallelize());
 
 		input.setLookback(appendStrategy.getStrategy().getLookback(config.getClustering().getLookback())).setDimensions(config.getClustering().getDimensions());
 

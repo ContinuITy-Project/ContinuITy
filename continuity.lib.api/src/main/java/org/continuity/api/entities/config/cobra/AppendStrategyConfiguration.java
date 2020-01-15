@@ -33,6 +33,18 @@ public class AppendStrategyConfiguration {
 	@JsonInclude(Include.NON_NULL)
 	private Long k = null;
 
+	@JsonProperty("max-iterations")
+	@JsonInclude(Include.NON_NULL)
+	private Long maxIterations = null;
+
+	@JsonProperty("num-seedings")
+	@JsonInclude(Include.NON_NULL)
+	private Long numSeedings = null;
+
+	@JsonProperty("convergence-tolerance")
+	@JsonInclude(Include.NON_NULL)
+	private Double convergenceTolerance = null;
+
 	@JsonInclude(Include.NON_NULL)
 	private Integer parallelize = null;
 
@@ -132,6 +144,44 @@ public class AppendStrategyConfiguration {
 
 	public void setK(long k) {
 		this.k = k;
+	}
+
+	/**
+	 * The maximum number of iterations KMeans is allowed to run.
+	 *
+	 * @return
+	 */
+	public Long getMaxIterations() {
+		return maxIterations;
+	}
+
+	public void setMaxIterations(long maxIterations) {
+		this.maxIterations = maxIterations;
+	}
+
+	/**
+	 * The number of times KMeans is executed with different centroid seedings.
+	 *
+	 * @return
+	 */
+	public Long getNumSeedings() {
+		return numSeedings;
+	}
+
+	public void setNumSeedings(long numSeedings) {
+		this.numSeedings = numSeedings;
+	}
+
+	/**
+	 * The tolerance for declaring convergence in KMeans.
+	 * @return
+	 */
+	public Double getConvergenceTolerance() {
+		return convergenceTolerance;
+	}
+
+	public void setConvergenceTolerance(double convergenceTolerance) {
+		this.convergenceTolerance = convergenceTolerance;
 	}
 
 	/**
