@@ -46,6 +46,18 @@ public class ClustinatorInput {
 	@JsonInclude(Include.NON_NULL)
 	private Long k;
 
+	@JsonProperty("max-iterations")
+	@JsonInclude(Include.NON_NULL)
+	private Long maxIterations = null;
+
+	@JsonProperty("num-seedings")
+	@JsonInclude(Include.NON_NULL)
+	private Long numSeedings = null;
+
+	@JsonProperty("convergence-tolerance")
+	@JsonInclude(Include.NON_NULL)
+	private Double convergenceTolerance = null;
+
 	@JsonInclude(Include.NON_NULL)
 	private Integer parallelize;
 
@@ -125,6 +137,33 @@ public class ClustinatorInput {
 
 	public ClustinatorInput setK(Long k) {
 		this.k = k;
+		return this;
+	}
+
+	public Long getMaxIterations() {
+		return maxIterations;
+	}
+
+	public ClustinatorInput setMaxIterations(Long maxIterations) {
+		this.maxIterations = maxIterations;
+		return this;
+	}
+
+	public Long getNumSeedings() {
+		return numSeedings;
+	}
+
+	public ClustinatorInput setNumSeedings(Long numSeedings) {
+		this.numSeedings = numSeedings;
+		return this;
+	}
+
+	public Double getConvergenceTolerance() {
+		return convergenceTolerance;
+	}
+
+	public ClustinatorInput setConvergenceTolerance(Double convergenceTolerance) {
+		this.convergenceTolerance = convergenceTolerance;
 		return this;
 	}
 
