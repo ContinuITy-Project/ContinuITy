@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum AppendStrategy {
 
-	DBSCAN(false, true), KMEANS(false, true), MINIMUM_DISTANCE(true, false) {
+	DBSCAN(false, true), KMEANS(false, true), MINIMUM_DISTANCE(false, false) {
 		@Override
 		public long getLookback(long configuredLookback) {
 			return configuredLookback > 0 ? 1 : 0;
