@@ -74,6 +74,8 @@ public class ClustinatorInput {
 
 	private Long dimensions;
 
+	private ClusteringContinuation continuation;
+
 	@JsonProperty("append-strategy")
 	private AppendStrategy appendStrategy;
 
@@ -227,6 +229,15 @@ public class ClustinatorInput {
 
 	public ClustinatorInput setAppendStrategy(AppendStrategy appendStrategy) {
 		this.appendStrategy = appendStrategy;
+		return this;
+	}
+
+	public ClusteringContinuation getContinuation() {
+		return continuation;
+	}
+
+	public ClustinatorInput setContinuation(ClusteringContinuation continuation) {
+		this.continuation = continuation;
 		return this;
 	}
 
