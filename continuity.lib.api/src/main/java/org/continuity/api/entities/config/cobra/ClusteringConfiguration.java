@@ -6,6 +6,8 @@ import org.continuity.api.entities.config.cobra.CobraConfiguration.DurationToStr
 import org.continuity.api.entities.config.cobra.CobraConfiguration.StringToDurationConverter;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -26,6 +28,9 @@ public class ClusteringConfiguration {
 	private Duration overlap = Duration.ofHours(5);
 
 	private long lookback = 10;
+
+	@JsonInclude(Include.NON_NULL)
+	private Long dimensions;
 
 	private AppendStrategyConfiguration initial = AppendStrategyConfiguration.defaultKmeans();
 
@@ -74,8 +79,21 @@ public class ClusteringConfiguration {
 	}
 
 	/**
+	 * The number of dimensions to which the sessions should be reduced for clustering.
+	 *
+	 * @return
+	 */
+	public Long getDimensions() {
+		return dimensions;
+	}
+
+	public void setDimensions(long dimension) {
+		this.dimensions = dimension;
+	}
+
+	/**
 	 * Configuration of initial clustering.
-	 * 
+	 *
 	 * @return
 	 */
 	public AppendStrategyConfiguration getInitial() {

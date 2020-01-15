@@ -98,7 +98,7 @@ public class ClusteringController {
 		input.setMinSampleSize(appendStrategy.getMinSampleSize()).setEpsilon(appendStrategy.getEpsilon()).setAvgTransitionTolerance(appendStrategy.getAvgTransitionTolerance())
 				.setK(appendStrategy.getK()).setParallelize(appendStrategy.getParallelize());
 
-		input.setLookback(appendStrategy.getStrategy().getLookback(config.getClustering().getLookback()));
+		input.setLookback(appendStrategy.getStrategy().getLookback(config.getClustering().getLookback())).setDimensions(config.getClustering().getDimensions());
 
 		ExchangeDefinition<RoutingKeyFormatter.AppId> exchange = AmqpApi.Cobra.Clustinator.TASK_CLUSTER;
 		amqpTemplate.convertAndSend(exchange.name(), exchange.formatRoutingKey().of(aid), input);
