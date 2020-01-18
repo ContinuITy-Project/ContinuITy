@@ -1,6 +1,7 @@
 package org.continuity.wessbas.amqp;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.config.TaskDescription;
@@ -79,29 +80,36 @@ public class WorkloadModelAmqpHandler {
 			LOGGER.error("Task {}: Cannot process {} behavior model for app-id {}!", task.getTaskId(), task.getSource().getBehaviorModelLinks().getType(), task.getAppId());
 			report = TaskReport.error(task.getTaskId(), TaskError.ILLEGAL_TYPE);
 		} else {
-			String behStorageId = RestApi.Wessbas.BehaviorModel.GET.parsePathParameters(task.getSource().getBehaviorModelLinks().getLink()).get(0);
+			List<String> pathParams = RestApi.Wessbas.BehaviorModel.GET.parsePathParameters(task.getSource().getBehaviorModelLinks().getLink());
+			WessbasPipelineManager pipelineManager;
+			BehaviorModelPack behaviorModel;
 
-			if (behStorageId != null) {
-				BehaviorModelPack behaviorModel = behaviorStorage.get(behStorageId);
+			if ((pathParams == null) || pathParams.isEmpty()) {
+				LOGGER.info("Task {}: Transforming externally created Markov behavior model to the WESSBAS format.", task.getTaskId());
+				LOGGER.warn("Task {}: Service-tailoring is currently not supported in this case!", task.getTaskId());
 
-				WessbasPipelineManager pipelineManager = new WessbasPipelineManager(restTemplate, behaviorModel.getPathToBehaviorModelFiles());
-				WorkloadModel workloadModel = pipelineManager.transformBehaviorModelToWorkloadModelIncludingTailoring(behaviorModel, task);
-
-				if (workloadModel == null) {
-					LOGGER.info("Task {}: Could not create a new workload model for app-id '{}'.", task.getTaskId(), task.getAppId());
-
-					report = TaskReport.error(task.getTaskId(), TaskError.INTERNAL_ERROR);
-				} else {
-					String storageId = storage.put(new WessbasBundle(task.getVersion(), workloadModel), task.getAppId(), task.isLongTermUse());
-
-					LOGGER.info("Task {}: Created a new workload model with id '{}'.", task.getTaskId(), storageId);
-
-					WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getAppId(), TailoringUtils.doTailoring(task.getEffectiveServices()));
-					report = TaskReport.successful(task.getTaskId(), responsePack);
-				}
+				pipelineManager = new WessbasPipelineManager(restTemplate);
+				behaviorModel = pipelineManager.createBehaviorModelFromMarkovChains(task);
 			} else {
-				LOGGER.error("Task {}: Creating workload models from non-WESSBAS behavior models is currently not supported! App-id {} failed therefore.", task.getTaskId(), task.getAppId());
-				report = TaskReport.error(task.getTaskId(), TaskError.ILLEGAL_TYPE);
+				LOGGER.info("Task {}: Using internally created behavior model.", task.getTaskId());
+
+				behaviorModel = behaviorStorage.get(pathParams.get(0));
+				pipelineManager = new WessbasPipelineManager(restTemplate, behaviorModel.getPathToBehaviorModelFiles());
+			}
+
+			WorkloadModel workloadModel = pipelineManager.transformBehaviorModelToWorkloadModelIncludingTailoring(behaviorModel, task);
+
+			if (workloadModel == null) {
+				LOGGER.info("Task {}: Could not create a new workload model for app-id '{}'.", task.getTaskId(), task.getAppId());
+
+				report = TaskReport.error(task.getTaskId(), TaskError.INTERNAL_ERROR);
+			} else {
+				String storageId = storage.put(new WessbasBundle(task.getVersion(), workloadModel), task.getAppId(), task.isLongTermUse());
+
+				LOGGER.info("Task {}: Created a new workload model with id '{}'.", task.getTaskId(), storageId);
+
+				WorkloadModelPack responsePack = new WorkloadModelPack(applicationName, storageId, task.getAppId(), TailoringUtils.doTailoring(task.getEffectiveServices()));
+				report = TaskReport.successful(task.getTaskId(), responsePack);
 			}
 		}
 
