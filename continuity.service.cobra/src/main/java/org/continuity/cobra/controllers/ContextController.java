@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import org.continuity.api.entities.ApiFormats;
@@ -100,7 +101,7 @@ public class ContextController {
 	 * @param newlyAdded
 	 * @return Whether the update was successful ({@code true}) or not ({@code false}).
 	 */
-	private boolean updateSchema(CobraConfiguration config, List<NewVariableReport> newlyAdded) {
+	private boolean updateSchema(CobraConfiguration config, Set<NewVariableReport> newlyAdded) {
 		ContextSchema schema = config.getContext();
 		boolean ignoreNew = schema.ignoreByDefault().ignoreNew();
 

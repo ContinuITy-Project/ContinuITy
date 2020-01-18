@@ -1,7 +1,7 @@
 package org.continuity.dsl.validation;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.continuity.dsl.schema.VariableType;
 
@@ -20,15 +20,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class ContextValidityReport {
 
 	@JsonInclude(Include.NON_EMPTY)
-	private List<NewVariableReport> unknown;
+	private Set<NewVariableReport> unknown;
 
 	@JsonProperty("newly-added")
 	@JsonInclude(Include.NON_EMPTY)
-	private List<NewVariableReport> newlyAdded;
+	private Set<NewVariableReport> newlyAdded;
 
 	@JsonProperty("wrong-type")
 	@JsonInclude(Include.NON_EMPTY)
-	private List<WrongTypeReport> wrongType;
+	private Set<WrongTypeReport> wrongType;
 
 	public boolean isErroenous() {
 		return ((unknown != null) && !unknown.isEmpty()) || ((wrongType != null) && !wrongType.isEmpty());
@@ -39,36 +39,36 @@ public class ContextValidityReport {
 		return (newlyAdded != null) && !newlyAdded.isEmpty();
 	}
 
-	public List<NewVariableReport> getUnknown() {
+	public Set<NewVariableReport> getUnknown() {
 		return unknown;
 	}
 
-	public void setUnknown(List<NewVariableReport> unknown) {
+	public void setUnknown(Set<NewVariableReport> unknown) {
 		this.unknown = unknown;
 	}
 
-	public List<NewVariableReport> getNewlyAdded() {
+	public Set<NewVariableReport> getNewlyAdded() {
 		return newlyAdded;
 	}
 
-	public void setNewlyAdded(List<NewVariableReport> newlyAdded) {
+	public void setNewlyAdded(Set<NewVariableReport> newlyAdded) {
 		this.newlyAdded = newlyAdded;
 	}
 
-	public List<WrongTypeReport> getWrongType() {
+	public Set<WrongTypeReport> getWrongType() {
 		return wrongType;
 	}
 
-	public void setWrongType(List<WrongTypeReport> wrongType) {
+	public void setWrongType(Set<WrongTypeReport> wrongType) {
 		this.wrongType = wrongType;
 	}
 
 	@JsonIgnore
-	private List<NewVariableReport> getUnknownNonNull() {
+	private Set<NewVariableReport> getUnknownNonNull() {
 		if (unknown == null) {
 			synchronized (this) {
 				if (unknown == null) {
-					unknown = new ArrayList<>();
+					unknown = new HashSet<>();
 				}
 			}
 		}
@@ -77,11 +77,11 @@ public class ContextValidityReport {
 	}
 
 	@JsonIgnore
-	private List<NewVariableReport> getNewlyAddedNonNull() {
+	private Set<NewVariableReport> getNewlyAddedNonNull() {
 		if (newlyAdded == null) {
 			synchronized (this) {
 				if (newlyAdded == null) {
-					newlyAdded = new ArrayList<>();
+					newlyAdded = new HashSet<>();
 				}
 			}
 		}
@@ -90,11 +90,11 @@ public class ContextValidityReport {
 	}
 
 	@JsonIgnore
-	private List<WrongTypeReport> getWrongTypeNonNull() {
+	private Set<WrongTypeReport> getWrongTypeNonNull() {
 		if (wrongType == null) {
 			synchronized (this) {
 				if (wrongType == null) {
-					wrongType = new ArrayList<>();
+					wrongType = new HashSet<>();
 				}
 			}
 		}
