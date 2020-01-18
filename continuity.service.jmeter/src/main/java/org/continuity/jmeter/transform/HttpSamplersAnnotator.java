@@ -40,7 +40,7 @@ public class HttpSamplersAnnotator extends AbstractSamplerAnnotator {
 		sampler.setPort(endpoint.getPort() == null ? 80 : Integer.parseInt(endpoint.getPort()));
 		setIfNotNull(sampler::setProtocol, endpoint.getProtocol());
 		setIfNotNull(sampler::setMethod, endpoint.getMethod());
-		setIfNotNull(sampler::setPath, endpoint.getPath());
+		setPropertyIfNotNull(sampler, HTTPSamplerProxy.PATH, endpoint.getPath());
 
 		if (!Objects.equals(HttpEndpoint.DEFAULT_ENCODING, endpoint.getEncoding())) {
 			setIfNotNull(sampler::setContentEncoding, endpoint.getEncoding());
@@ -86,6 +86,12 @@ public class HttpSamplersAnnotator extends AbstractSamplerAnnotator {
 	private <T> void setIfNotNull(Consumer<T> setter, T value) {
 		if (value != null) {
 			setter.accept(value);
+		}
+	}
+
+	private void setPropertyIfNotNull(HTTPSamplerProxy sampler, String property, String value) {
+		if (value != null) {
+			sampler.setProperty(property, value);
 		}
 	}
 

@@ -85,6 +85,8 @@ public class PreparationAmqpHandler {
 	public void prepareInitialData(TaskDescription task) throws IOException, TimeoutException {
 		WorkloadDescription description = task.getWorkloadDescription();
 
+		LOGGER.info("Processing task {}...", task.getTaskId());
+
 		if (description == null) {
 			sendReport(TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE));
 			return;
@@ -97,7 +99,7 @@ public class PreparationAmqpHandler {
 
 		LOGGER.warn("Currently, only the past traces, sessions, or behavior model are selected!");
 
-		LOGGER.info("Processing task {}: Get {} in ranges {}...", task.getTaskId(), task.getTarget().toPrettyString(), ranges);
+		LOGGER.info("Task {}: Get {} in ranges {}...", task.getTaskId(), task.getTarget().toPrettyString(), ranges);
 
 		TaskReport report;
 
