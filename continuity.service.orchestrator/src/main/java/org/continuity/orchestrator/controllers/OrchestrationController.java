@@ -178,8 +178,8 @@ public class OrchestrationController {
 		while (target != null) {
 			String service = producers.get(target);
 
-			if (!producerMap.get(target).containsKey(service)) {
-				throw new IllegalStateException("There is no " + service + " available that can produce " + target.toPrettyString() + "!");
+			if ((producerMap.get(target) == null) || !producerMap.get(target).containsKey(service)) {
+				throw new IllegalStateException("There is no " + service + " service available to produce a " + target.toPrettyString() + "!");
 			}
 
 			RecipeStep step = new CreationStep(target, orderId, recipeId, amqpTemplate, service, this::isServiceAvailable);

@@ -39,7 +39,7 @@ public class MarkovBehaviorModel {
 
 	/**
 	 * Timestamp in milliseconds.
-	 * 
+	 *
 	 * @param timestamp
 	 */
 	public void setTimestamp(long timestamp) {
@@ -93,6 +93,22 @@ public class MarkovBehaviorModel {
 			for (String state : remainingStates) {
 				chain.addState(state);
 				LOGGER.debug("Added state {} to Markov chain {}.", state, chain.getId());
+			}
+		}
+	}
+
+	/**
+	 * Ensures the probabilities of the outgoing transitions of each state sum to 1 (or 0, if the
+	 * state is never reached).
+	 */
+	public void sanitizeProbabilities() {
+		for (RelativeMarkovChain chain : markovChains) {
+			for (String state : chain.getRequestStates()) {
+				double probSum = chain.getTransitions().get(state).values().stream().mapToDouble(RelativeMarkovTransition::getProbability).sum();
+
+				if ((Math.abs(probSum - 1.0) > RelativeMarkovTransition.PRECISION) && (probSum > 0)) {
+					chain.getTransitions().get(state).values().forEach(trans -> trans.setProbability(trans.getProbability() / probSum));
+				}
 			}
 		}
 	}
