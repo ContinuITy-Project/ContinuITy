@@ -13,6 +13,8 @@ import java.util.Locale;
  */
 public class RelativeMarkovTransition implements MarkovTransition {
 
+	public static final double PRECISION = 0.00005;
+
 	private static final String FORMAT = "%s; n(%s %s)";
 
 	private static final DecimalFormat PROB_FORMAT = new DecimalFormat("0.0###", new DecimalFormatSymbols(Locale.US));

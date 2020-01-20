@@ -76,10 +76,19 @@ public class BehaviorModelController {
 	@RequestMapping(value = GET_LATEST, method = RequestMethod.GET, produces = "application/json")
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<MarkovBehaviorModel> getLatestBehaviorModel(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, Long before) throws IOException, TimeoutException {
+		MarkovBehaviorModel model;
+
 		if (before == null) {
-			return ResponseEntity.ok(behaviorManager.readLatest(aid, Session.convertStringToTailoring(tailoring)));
+			model = behaviorManager.readLatest(aid, Session.convertStringToTailoring(tailoring));
 		} else {
-			return ResponseEntity.ok(behaviorManager.readLatest(aid, Session.convertStringToTailoring(tailoring), before));
+			model = behaviorManager.readLatest(aid, Session.convertStringToTailoring(tailoring), before);
+		}
+
+		if (model == null) {
+			return ResponseEntity.notFound().build();
+		} else {
+			model.sanitizeProbabilities();
+			return ResponseEntity.ok(model);
 		}
 	}
 

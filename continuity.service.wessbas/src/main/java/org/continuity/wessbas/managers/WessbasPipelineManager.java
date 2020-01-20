@@ -169,11 +169,11 @@ public class WessbasPipelineManager {
 
 		for (RelativeMarkovChain chain : markovModel.getMarkovChains()) {
 			for (String state : chain.getRequestStates()) {
-				double probSum = chain.getTransitions().entrySet().stream().filter(e -> !state.equals(e.getKey())).map(Entry::getValue).map(map -> map.get(state)).filter(Objects::nonNull)
+				double maxProb = chain.getTransitions().entrySet().stream().filter(e -> !state.equals(e.getKey())).map(Entry::getValue).map(map -> map.get(state)).filter(Objects::nonNull)
 						.mapToDouble(RelativeMarkovTransition::getProbability).max().orElse(0);
 
-				if (probSum < 0.00005) {
-					LOGGER.info("Markov chain {}: removing state {} because it has no incoming transitions larger than 0.00005.", chain.getId(), state);
+				if (maxProb < RelativeMarkovTransition.PRECISION) {
+					LOGGER.info("Markov chain {}: removing state {} because it has no incoming transitions larger than {}.", chain.getId(), state, RelativeMarkovTransition.PRECISION);
 					chain.removeState(state, NormalDistribution.ZERO);
 				}
 			}
@@ -250,8 +250,9 @@ public class WessbasPipelineManager {
 
 	private void writeBehaviorMix(MarkovBehaviorModel markovModel, Path dir) throws IOException {
 		List<String> mix = markovModel.getMarkovChains().stream()
-				.map(chain -> new StringBuilder().append("gen_behavior_model" + chain.getId()).append("; ").append(dir.resolve(toCsvFile(chain, "gen_behavior_model")))
-				.append("; ").append(chain.getFrequency()).append("; ").append(dir.resolve(toCsvFile(chain, "behaviormodel"))).append(", \\").toString()).collect(Collectors.toList());
+				.map(chain -> new StringBuilder().append("gen_behavior_model" + chain.getId()).append("; ").append(dir.resolve(toCsvFile(chain, "gen_behavior_model"))).append("; ")
+						.append(chain.getFrequency()).append("; ").append(dir.resolve(toCsvFile(chain, "behaviormodel"))).append(", \\").toString())
+				.collect(Collectors.toList());
 
 		mix.set(0, "behaviorModels = " + mix.get(0));
 		String last = mix.get(mix.size() - 1);
