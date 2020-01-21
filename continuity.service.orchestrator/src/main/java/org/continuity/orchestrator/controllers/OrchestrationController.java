@@ -190,7 +190,7 @@ public class OrchestrationController {
 
 		LOGGER.info("{} Processing new recipe with target {}...", LoggingUtils.formatPrefix(orderId, recipeId), order.getTarget());
 
-		Recipe recipe = new Recipe(orderId, recipeId, order.getAppId(), order.getServices(), order.getVersion(), steps, source, useTestingContext, testingContext, options,
+		Recipe recipe = new Recipe(orderId, recipeId, order.getAppId(), order.getServices(), order.getVersion(), order.getPerspective(), steps, source, useTestingContext, testingContext, options,
 				order.getWorkloadDescription());
 
 		if (recipe.hasNext()) {

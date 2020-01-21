@@ -1,5 +1,6 @@
 package org.continuity.api.entities.config;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +32,9 @@ public class TaskDescription {
 	private List<ServiceSpecification> services;
 
 	private VersionOrTimestamp version;
+
+	@JsonInclude(Include.NON_NULL)
+	private LocalDateTime perspective;
 
 	private ArtifactExchangeModel source;
 
@@ -74,6 +78,14 @@ public class TaskDescription {
 
 	public void setVersion(VersionOrTimestamp version) {
 		this.version = version;
+	}
+
+	public LocalDateTime getPerspective() {
+		return perspective;
+	}
+
+	public void setPerspective(LocalDateTime perspective) {
+		this.perspective = perspective;
 	}
 
 	public ArtifactExchangeModel getSource() {

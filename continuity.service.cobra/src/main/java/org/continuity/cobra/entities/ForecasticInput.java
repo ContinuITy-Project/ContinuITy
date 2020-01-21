@@ -24,6 +24,8 @@ public class ForecasticInput {
 	@JsonDeserialize(using = TailoringDeserializer.class)
 	private List<String> tailoring;
 
+	private Long perspective;
+
 	private List<ForecastTimerange> ranges;
 
 	private List<TimedContextRecord> context;
@@ -51,6 +53,15 @@ public class ForecasticInput {
 
 	public ForecasticInput setTailoring(List<String> tailoring) {
 		this.tailoring = tailoring;
+		return this;
+	}
+
+	public Long getPerspective() {
+		return perspective;
+	}
+
+	public ForecasticInput setPerspective(Long perspective) {
+		this.perspective = perspective;
 		return this;
 	}
 

@@ -97,21 +97,29 @@ public class PreparationAmqpHandler {
 		List<IntensityRecord> intensities = readIntensities(task.getAppId(), tailoring, description);
 		List<ForecastTimerange> ranges = extractRanges(task.getAppId(), intensities);
 
-		LOGGER.warn("Currently, only the past traces, sessions, or behavior model are selected!");
-
 		LOGGER.info("Task {}: Get {} in ranges {}...", task.getTaskId(), task.getTarget().toPrettyString(), ranges);
+
+		CobraConfiguration config = configProvider.getConfiguration(task.getAppId());
+		Optional<Long> perspective = Optional.ofNullable(task.getPerspective()).map(p -> {
+			LOGGER.info("Task {}: Considering {} to be 'now'.", task.getTaskId(), p);
+			return p.atZone(config.getTimeZone()).toInstant().toEpochMilli();
+		});
+
+		List<ForecastTimerange> restrictedRanges = perspective.map(p -> ranges.stream().filter(r -> r.getFrom() < p).map(r -> new ForecastTimerange(r.getFrom(), Math.min(r.getTo(), p)))
+				.filter(r -> r.getTo() < r.getFrom())
+				.collect(Collectors.toList())).orElse(ranges);
 
 		TaskReport report;
 
 		switch (task.getTarget()) {
 		case TRACES:
-			report = createTraceLink(task, ranges);
+			report = createTraceLink(task, restrictedRanges);
 			break;
 		case SESSIONS:
-			report = createSessionLink(task, ranges);
+			report = createSessionLink(task, restrictedRanges);
 			break;
 		case BEHAVIOR_MODEL:
-			report = createBehaviorLink(task, ranges);
+			report = createBehaviorLink(task, restrictedRanges, perspective);
 			break;
 		default:
 			LOGGER.error("Task {}: Cannot generate {}!", task.getTaskId(), task.getTarget().toPrettyString());
@@ -214,13 +222,13 @@ public class PreparationAmqpHandler {
 		}
 	}
 
-	private TaskReport createBehaviorLink(TaskDescription task, List<ForecastTimerange> ranges) throws IOException {
+	private TaskReport createBehaviorLink(TaskDescription task, List<ForecastTimerange> ranges, Optional<Long> perspective) throws IOException {
 		OptionalLong before = ranges.stream().mapToLong(ForecastTimerange::getTo).max();
 
 		RequestBuilder reqBuilder = RestApi.Cobra.BehaviorModel.GET_LATEST.requestUrl(task.getAppId(), Session.convertTailoringToString(extractServices(task)));
 
-		if (before.isPresent()) {
-			reqBuilder.withQuery("before", Long.toString(before.getAsLong()));
+		if (before.isPresent() || perspective.isPresent()) {
+			reqBuilder.withQuery("before", Long.toString(before.orElse(perspective.orElse(0L))));
 		}
 
 		ArtifactExchangeModel artifacts = new ArtifactExchangeModel().getBehaviorModelLinks().setLink(reqBuilder.withoutProtocol().get()).setType(BehaviorModelType.MARKOV_CHAIN).parent();
@@ -293,6 +301,10 @@ public class PreparationAmqpHandler {
 		description.adjustContext(intensities, config.getTimeZone());
 
 		ForecasticInput input = new ForecasticInput().setAppId(task.getAppId()).setTailoring(extractServices(task)).setApproach(task.getOptions().getForecastApproachOrDefault());
+
+		if (task.getPerspective() != null) {
+			input.setPerspective(task.getPerspective().atZone(config.getTimeZone()).toInstant().toEpochMilli());
+		}
 
 		input.setRanges(ranges).setResolution(config.getIntensity().getResolution().toMillis());
 

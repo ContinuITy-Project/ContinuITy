@@ -1,5 +1,6 @@
 package org.continuity.api.entities.order;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -14,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "target", "mode", "app-id", "services", "version", "testing-context", "workload-description", "options", "source" })
+@JsonPropertyOrder({ "target", "app-id", "services", "version", "perspective", "testing-context", "workload-description", "options", "source" })
 public class Order {
 
 	@JsonProperty("app-id")
@@ -27,6 +28,9 @@ public class Order {
 	private VersionOrTimestamp version;
 
 	private ArtifactType target;
+
+	@JsonInclude(Include.NON_NULL)
+	private LocalDateTime perspective;
 
 	@JsonProperty("testing-context")
 	@JsonInclude(Include.NON_EMPTY)
@@ -72,6 +76,14 @@ public class Order {
 
 	public void setTarget(ArtifactType target) {
 		this.target = target;
+	}
+
+	public LocalDateTime getPerspective() {
+		return perspective;
+	}
+
+	public void setPerspective(LocalDateTime perspective) {
+		this.perspective = perspective;
 	}
 
 	public Set<String> getTestingContext() {
