@@ -266,14 +266,26 @@ public class PreparationAmqpHandler {
 			if (record.getContext() != null) {
 				if (record.getContext().getNumeric() != null) {
 					record.getContext().getNumeric().removeIf(v -> ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
+
+					if (record.getContext().getNumeric().isEmpty()) {
+						record.getContext().setNumeric(null);
+					}
 				}
 
 				if (record.getContext().getString() != null) {
 					record.getContext().getString().removeIf(v -> ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
+
+					if (record.getContext().getString().isEmpty()) {
+						record.getContext().setString(null);
+					}
 				}
 
 				if (record.getContext().getBoolean() != null) {
 					record.getContext().getBoolean().removeIf(v -> ignore.ignore(config.getContext().getVariables().get(v).getIgnoreByDefault()));
+
+					if (record.getContext().getBoolean().isEmpty()) {
+						record.getContext().setBoolean(null);
+					}
 				}
 			}
 		}

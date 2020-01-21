@@ -1,5 +1,9 @@
 package org.continuity.wessbas.managers;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingDouble;
+import static java.util.stream.Collectors.toList;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,14 +11,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Range;
+import org.continuity.api.entities.artifact.ForecastIntensityRecord;
 import org.continuity.api.entities.artifact.SessionsBundlePack;
 import org.continuity.api.entities.artifact.SimplifiedSession;
 import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
@@ -181,9 +187,12 @@ public class WessbasPipelineManager {
 
 		markovModel.synchronizeMarkovChains();
 
-		createWorkloadIntensity(1);
+		List<ForecastIntensityRecord> intensities = loadIntensities(task.getSource().getIntensity());
+
+		createWorkloadIntensity(intensities);
 		writeDummySessionsDat();
 		writeUsecases(markovModel, dir);
+		updateBehaviorMix(markovModel, intensities);
 		writeBehaviorMix(markovModel, dir);
 		writeBehaviorModels(markovModel, dir);
 
@@ -221,15 +230,28 @@ public class WessbasPipelineManager {
 		return generateWessbasModel(intensityProps, behaviorProperties);
 	}
 
+	private List<ForecastIntensityRecord> loadIntensities(String link) {
+		if (link == null) {
+			return null;
+		}
+
+		ForecastIntensityRecord[] records = restTemplate.getForObject(WebUtils.addProtocolIfMissing(link), ForecastIntensityRecord[].class);
+		return Arrays.asList(records);
+	}
+
 	private Properties createWorkloadIntensity(String sessionLogs, long interval) throws IOException {
-		Properties properties = new Properties();
-		properties.put("workloadIntensity.type", "constant");
+		return createWorkloadIntensity(calculateIntensity(sessionLogs, interval));
+	}
 
-		properties.put("wl.type.value", Integer.toString(calculateIntensity(sessionLogs, interval)));
+	private Properties createWorkloadIntensity(List<ForecastIntensityRecord> intensities) throws IOException {
+		if ((intensities == null) || (intensities.size() == 0)) {
+			LOGGER.warn("Did not get any intensities. Therefore, using the default value 1.");
+			return createWorkloadIntensity(1);
+		}
 
-		properties.store(Files.newOutputStream(workingDir.resolve("workloadIntensity.properties"), StandardOpenOption.CREATE), null);
+		double totalIntensity = intensities.get(0).getContent().values().stream().mapToDouble(x -> x).sum();
 
-		return properties;
+		return createWorkloadIntensity((int) Math.round(totalIntensity));
 	}
 
 	private Properties createWorkloadIntensity(int intensity) throws IOException {
@@ -248,11 +270,28 @@ public class WessbasPipelineManager {
 		Files.write(dir.resolve("usecases.txt"), usecases);
 	}
 
+	private void updateBehaviorMix(MarkovBehaviorModel markovModel, List<ForecastIntensityRecord> intensities) {
+		if ((intensities == null) || (intensities.size() == 0)) {
+			LOGGER.warn("Did not get any intensities. Therefore, using the default behavior mix.");
+			return;
+		}
+
+		LOGGER.info("Adjusting the behavior mix based on the intensities...");
+
+		Map<String, Double> absFreq = intensities.stream().map(ForecastIntensityRecord::getContent).flatMap(map -> map.entrySet().stream())
+				.collect(groupingBy(Entry::getKey, summingDouble(Entry::getValue)));
+		double total = absFreq.values().stream().mapToDouble(x -> x).sum();
+
+		for (RelativeMarkovChain chain : markovModel.getMarkovChains()) {
+			chain.setFrequency(absFreq.get(chain.getId()) / total);
+		}
+	}
+
 	private void writeBehaviorMix(MarkovBehaviorModel markovModel, Path dir) throws IOException {
 		List<String> mix = markovModel.getMarkovChains().stream()
 				.map(chain -> new StringBuilder().append("gen_behavior_model" + chain.getId()).append("; ").append(dir.resolve(toCsvFile(chain, "gen_behavior_model"))).append("; ")
 						.append(chain.getFrequency()).append("; ").append(dir.resolve(toCsvFile(chain, "behaviormodel"))).append(", \\").toString())
-				.collect(Collectors.toList());
+				.collect(toList());
 
 		mix.set(0, "behaviorModels = " + mix.get(0));
 		String last = mix.get(mix.size() - 1);
