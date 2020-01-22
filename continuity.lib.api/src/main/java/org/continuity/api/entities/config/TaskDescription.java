@@ -3,6 +3,7 @@ package org.continuity.api.entities.config;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.continuity.api.entities.exchange.ArtifactExchangeModel;
@@ -35,6 +36,10 @@ public class TaskDescription {
 
 	@JsonInclude(Include.NON_NULL)
 	private LocalDateTime perspective;
+
+	@JsonProperty("forecast-total")
+	@JsonInclude(Include.NON_ABSENT)
+	private Optional<Boolean> forecastTotal = Optional.empty();
 
 	private ArtifactExchangeModel source;
 
@@ -86,6 +91,14 @@ public class TaskDescription {
 
 	public void setPerspective(LocalDateTime perspective) {
 		this.perspective = perspective;
+	}
+
+	public Optional<Boolean> getForecastTotal() {
+		return forecastTotal;
+	}
+
+	public void setForecastTotal(Optional<Boolean> forecastTotal) {
+		this.forecastTotal = forecastTotal;
 	}
 
 	public ArtifactExchangeModel getSource() {

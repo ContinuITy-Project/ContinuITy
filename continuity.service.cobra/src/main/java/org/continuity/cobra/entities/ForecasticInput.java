@@ -32,6 +32,9 @@ public class ForecasticInput {
 
 	private long resolution;
 
+	@JsonProperty("forecast_total")
+	private boolean forecastTotal;
+
 	private String approach;
 
 	private TypeAndProperties aggregation;
@@ -62,6 +65,15 @@ public class ForecasticInput {
 
 	public ForecasticInput setPerspective(Long perspective) {
 		this.perspective = perspective;
+		return this;
+	}
+
+	public boolean isForecastTotal() {
+		return forecastTotal;
+	}
+
+	public ForecasticInput setForecastTotal(boolean forecastTotal) {
+		this.forecastTotal = forecastTotal;
 		return this;
 	}
 
