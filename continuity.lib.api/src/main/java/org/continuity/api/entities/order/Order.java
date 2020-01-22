@@ -2,6 +2,7 @@ package org.continuity.api.entities.order;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.continuity.api.entities.exchange.ArtifactExchangeModel;
@@ -15,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "target", "app-id", "services", "version", "perspective", "testing-context", "workload-description", "options", "source" })
+@JsonPropertyOrder({ "target", "app-id", "services", "version", "perspective", "forecast-total", "testing-context", "workload-description", "options", "source" })
 public class Order {
 
 	@JsonProperty("app-id")
@@ -31,6 +32,10 @@ public class Order {
 
 	@JsonInclude(Include.NON_NULL)
 	private LocalDateTime perspective;
+
+	@JsonProperty("forecast-total")
+	@JsonInclude(Include.NON_ABSENT)
+	private Optional<Boolean> forecastTotal = Optional.empty();
 
 	@JsonProperty("testing-context")
 	@JsonInclude(Include.NON_EMPTY)
@@ -84,6 +89,14 @@ public class Order {
 
 	public void setPerspective(LocalDateTime perspective) {
 		this.perspective = perspective;
+	}
+
+	public Optional<Boolean> getForecastTotal() {
+		return forecastTotal;
+	}
+
+	public void setForecastTotal(Optional<Boolean> forecastTotal) {
+		this.forecastTotal = forecastTotal;
 	}
 
 	public Set<String> getTestingContext() {

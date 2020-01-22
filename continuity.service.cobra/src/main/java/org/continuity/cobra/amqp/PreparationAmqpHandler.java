@@ -306,6 +306,8 @@ public class PreparationAmqpHandler {
 			input.setPerspective(task.getPerspective().atZone(config.getTimeZone()).toInstant().toEpochMilli());
 		}
 
+		input.setForecastTotal(task.getForecastTotal().orElse(false));
+
 		input.setRanges(ranges).setResolution(config.getIntensity().getResolution().toMillis());
 
 		input.setContext(intensities.stream().map(TimedContextRecord::fromIntensity).filter(Objects::nonNull).collect(Collectors.toList()));

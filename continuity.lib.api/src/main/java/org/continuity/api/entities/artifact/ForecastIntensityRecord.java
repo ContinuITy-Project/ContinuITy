@@ -14,7 +14,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public class ForecastIntensityRecord {
 
-	private static final String KEY_TIMESTAMP = "timestamp";
+	public static final String KEY_TIMESTAMP = "timestamp";
+
+	public static final String KEY_TOTAL = "total__";
 
 	@JsonValue
 	private Map<String, Double> content;

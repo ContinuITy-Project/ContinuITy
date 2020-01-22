@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Range;
 import org.continuity.api.entities.artifact.ForecastIntensityRecord;
@@ -249,7 +251,7 @@ public class WessbasPipelineManager {
 			return createWorkloadIntensity(1);
 		}
 
-		double totalIntensity = intensities.get(0).getContent().values().stream().mapToDouble(x -> x).sum();
+		double totalIntensity = intensities.get(0).getContent().entrySet().stream().filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey())).mapToDouble(Entry::getValue).sum();
 
 		return createWorkloadIntensity((int) Math.round(totalIntensity));
 	}
@@ -273,6 +275,13 @@ public class WessbasPipelineManager {
 	private void updateBehaviorMix(MarkovBehaviorModel markovModel, List<ForecastIntensityRecord> intensities) {
 		if ((intensities == null) || (intensities.size() == 0)) {
 			LOGGER.warn("Did not get any intensities. Therefore, using the default behavior mix.");
+			return;
+		}
+
+		List<String> groups = intensities.stream().map(ForecastIntensityRecord::getGroups).flatMap(Set::stream).collect(Collectors.toList());
+
+		if (groups.contains(ForecastIntensityRecord.KEY_TOTAL)) {
+			LOGGER.info("Got the total intensity. Therefore, using the default behavior mix.");
 			return;
 		}
 
