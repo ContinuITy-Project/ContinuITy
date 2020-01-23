@@ -43,7 +43,7 @@ public class JMeterController {
 			throw new IllegalArgumentException("There is no workload model with id " + workloadModelId + "!");
 		}
 
-		JMeterTestPlanBundle testPlanPack = jmeterConverter.convertToLoadTest(workloadModel.getWorkloadModel());
+		JMeterTestPlanBundle testPlanPack = jmeterConverter.convertToLoadTest(workloadModel);
 
 		LOGGER.info("Created JMeter test plan with id {}.", workloadModelId);
 

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.continuity.api.amqp.AmqpApi;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.ForecastIntensityRecord;
+import org.continuity.api.entities.artifact.markovbehavior.MarkovBehaviorModel;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.config.ConfigurationProvider;
 import org.continuity.api.entities.config.TaskDescription;
@@ -42,6 +43,7 @@ import org.continuity.cobra.managers.ElasticsearchSessionManager;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.utils.TailoringUtils;
+import org.continuity.commons.utils.WebUtils;
 import org.continuity.dsl.WorkloadDescription;
 import org.continuity.dsl.schema.IgnoreByDefaultValue;
 import org.continuity.dsl.timeseries.IntensityRecord;
@@ -53,6 +55,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 @Component
@@ -231,9 +234,23 @@ public class PreparationAmqpHandler {
 			reqBuilder.withQuery("before", Long.toString(before.orElse(perspective.orElse(0L))));
 		}
 
-		ArtifactExchangeModel artifacts = new ArtifactExchangeModel().getBehaviorModelLinks().setLink(reqBuilder.withoutProtocol().get()).setType(BehaviorModelType.MARKOV_CHAIN).parent();
+		String link = reqBuilder.withoutProtocol().get();
 
-		return TaskReport.successful(task.getTaskId(), artifacts);
+		MarkovBehaviorModel behaviorModel;
+		try {
+			behaviorModel = restTemplate.getForObject(WebUtils.addProtocolIfMissing(link), MarkovBehaviorModel.class);
+		} catch (HttpStatusCodeException e) {
+			behaviorModel = null;
+		}
+
+		if (behaviorModel == null) {
+			LOGGER.error("Task {}: There is no such behavior model available: {}", task.getTaskId(), link);
+			return TaskReport.error(task.getTaskId(), TaskError.MISSING_SOURCE);
+		} else {
+			ArtifactExchangeModel artifacts = new ArtifactExchangeModel().getBehaviorModelLinks().setLink(link).setType(BehaviorModelType.MARKOV_CHAIN).parent();
+
+			return TaskReport.successful(task.getTaskId(), artifacts);
+		}
 	}
 
 	private String formatSessionLink(RestEndpoint endpoint, AppId aid, List<String> services, List<ForecastTimerange> ranges) {

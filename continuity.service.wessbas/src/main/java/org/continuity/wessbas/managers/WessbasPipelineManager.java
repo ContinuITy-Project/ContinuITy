@@ -17,9 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.Range;
 import org.continuity.api.entities.artifact.ForecastIntensityRecord;
@@ -60,6 +62,10 @@ import net.sf.markov4jmeter.testplangenerator.util.CSVHandler;
  *
  */
 public class WessbasPipelineManager {
+
+	public static final String KEY_INTENSITY_SERIES = "wl.series.values";
+
+	public static final String KEY_INTENSITY_RESOLUTION = "wl.series.resolution";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WessbasPipelineManager.class);
 
@@ -119,7 +125,7 @@ public class WessbasPipelineManager {
 			return new WessbasBundle(task.getVersion(), WessbasDslInstance.DVDSTORE_PARSED.get());
 		}
 
-		WorkloadModel workloadModel;
+		WessbasBundle workloadModel;
 		try {
 			BehaviorModelPack behaviorModelPack = createBehaviorModelFromSessions(task, interval);
 			workloadModel = transformBehaviorModelToWorkloadModelIncludingTailoring(behaviorModelPack, task);
@@ -128,7 +134,7 @@ public class WessbasPipelineManager {
 			return null;
 		}
 
-		return new WessbasBundle(task.getVersion(), workloadModel);
+		return workloadModel;
 	}
 
 	/**
@@ -214,7 +220,7 @@ public class WessbasPipelineManager {
 	 * @throws SecurityException
 	 * @throws GeneratorException
 	 */
-	public WorkloadModel transformBehaviorModelToWorkloadModelIncludingTailoring(BehaviorModelPack behaviorModelPack, TaskDescription task) throws IOException, SecurityException, GeneratorException {
+	public WessbasBundle transformBehaviorModelToWorkloadModelIncludingTailoring(BehaviorModelPack behaviorModelPack, TaskDescription task) throws IOException, SecurityException, GeneratorException {
 		boolean applyModularization = (task.getOptions() != null) && (task.getOptions().getTailoringApproach() == TailoringApproach.MODEL_BASED)
 				&& TailoringUtils.doTailoring(task.getEffectiveServices());
 
@@ -229,7 +235,10 @@ public class WessbasPipelineManager {
 		Properties behaviorProperties = new Properties();
 		behaviorProperties.load(Files.newInputStream(workingDir.resolve("behaviormodelextractor").resolve("behaviormix.txt")));
 
-		return generateWessbasModel(intensityProps, behaviorProperties);
+		String intensitiesSeries = intensityProps.getProperty(KEY_INTENSITY_SERIES);
+		Integer resolution = Optional.ofNullable(intensityProps.getProperty(KEY_INTENSITY_RESOLUTION)).map(Integer::parseInt).orElse(null);
+
+		return new WessbasBundle(task.getVersion(), generateWessbasModel(intensityProps, behaviorProperties), intensitiesSeries, resolution);
 	}
 
 	private List<ForecastIntensityRecord> loadIntensities(String link) {
@@ -251,15 +260,34 @@ public class WessbasPipelineManager {
 			return createWorkloadIntensity(1);
 		}
 
-		double totalIntensity = intensities.get(0).getContent().entrySet().stream().filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey())).mapToDouble(Entry::getValue).sum();
+		int[] totalIntensities = intensities.stream()
+				.mapToDouble(r -> r.getContent().entrySet().stream().filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey())).mapToDouble(Entry::getValue).sum()).mapToLong(Math::round)
+				.mapToInt(Math::toIntExact).toArray();
 
-		return createWorkloadIntensity((int) Math.round(totalIntensity));
+		int totalMaxIntensity = Arrays.stream(totalIntensities).max().getAsInt();
+
+		if (intensities.size() == 1) {
+			return createWorkloadIntensity(totalMaxIntensity);
+		} else {
+			int resolution = IntStream.range(0, intensities.size() - 2).mapToLong(i -> intensities.get(i + 1).getTimestamp() - intensities.get(i).getTimestamp()).mapToInt(Math::toIntExact).min()
+					.getAsInt();
+			return createWorkloadIntensity(totalMaxIntensity, totalIntensities, resolution);
+		}
 	}
 
 	private Properties createWorkloadIntensity(int intensity) throws IOException {
+		return createWorkloadIntensity(intensity, null, -1);
+	}
+
+	private Properties createWorkloadIntensity(int maxIntensity, int[] intensities, int resolution) throws IOException {
 		Properties properties = new Properties();
 		properties.put("workloadIntensity.type", "constant");
-		properties.put("wl.type.value", Integer.toString(intensity));
+		properties.put("wl.type.value", Integer.toString(maxIntensity));
+
+		if (intensities != null) {
+			properties.put(KEY_INTENSITY_SERIES, Arrays.stream(intensities).mapToObj(Integer::toString).collect(Collectors.joining(",")));
+			properties.put(KEY_INTENSITY_RESOLUTION, Integer.toString(resolution));
+		}
 
 		properties.store(Files.newOutputStream(workingDir.resolve("workloadIntensity.properties"), StandardOpenOption.CREATE), null);
 
