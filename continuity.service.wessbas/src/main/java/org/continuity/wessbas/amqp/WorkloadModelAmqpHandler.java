@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import m4jdsl.WorkloadModel;
 import net.sf.markov4jmeter.m4jdslmodelgenerator.GeneratorException;
 
 /**
@@ -97,14 +96,14 @@ public class WorkloadModelAmqpHandler {
 				pipelineManager = new WessbasPipelineManager(restTemplate, behaviorModel.getPathToBehaviorModelFiles());
 			}
 
-			WorkloadModel workloadModel = pipelineManager.transformBehaviorModelToWorkloadModelIncludingTailoring(behaviorModel, task);
+			WessbasBundle workloadModel = pipelineManager.transformBehaviorModelToWorkloadModelIncludingTailoring(behaviorModel, task);
 
 			if (workloadModel == null) {
 				LOGGER.info("Task {}: Could not create a new workload model for app-id '{}'.", task.getTaskId(), task.getAppId());
 
 				report = TaskReport.error(task.getTaskId(), TaskError.INTERNAL_ERROR);
 			} else {
-				String storageId = storage.put(new WessbasBundle(task.getVersion(), workloadModel), task.getAppId(), task.isLongTermUse());
+				String storageId = storage.put(workloadModel, task.getAppId(), task.isLongTermUse());
 
 				LOGGER.info("Task {}: Created a new workload model with id '{}'.", task.getTaskId(), storageId);
 
