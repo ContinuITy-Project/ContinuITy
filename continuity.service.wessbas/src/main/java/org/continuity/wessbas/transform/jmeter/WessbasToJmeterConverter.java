@@ -25,6 +25,10 @@ public class WessbasToJmeterConverter {
 
 	private final AdaptedTestPlanGenerator generator;
 
+	private final IntensitySeriesTransformer intensityTransformer;
+
+	private final RuntimePropertyEstimator runtimeEstimator;
+
 	/**
 	 *
 	 */
@@ -33,6 +37,8 @@ public class WessbasToJmeterConverter {
 		this.writeToFile = writeToFile;
 		this.generator = new AdaptedTestPlanGenerator();
 		this.generator.init(configurationPath + "/generator.default.properties", configurationPath + "/testplan.default.properties");
+		this.intensityTransformer = new IntensitySeriesTransformer();
+		this.runtimeEstimator = new RuntimePropertyEstimator();
 	}
 
 	/**
@@ -72,7 +78,8 @@ public class WessbasToJmeterConverter {
 			throw new RuntimeException("Error during JMeter Test Plan generation!", e);
 		}
 
-		new IntensitySeriesTransformer().transform(testPlan, workloadModel.getIntensities(), workloadModel.getIntensityResolution());
+		intensityTransformer.transform(testPlan, workloadModel.getIntensities(), workloadModel.getIntensityResolution());
+		runtimeEstimator.adjust(testPlan, workloadModel.getIntensities(), workloadModel.getIntensityResolution());
 
 		if (writeToFile) {
 			generator.writeToFile(testPlan, outputPath + "/testplan.jmx");

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.jmeter.save.SaveService;
@@ -53,7 +54,16 @@ public class JMeterStorage {
 	}
 
 	public Path store(JMeterTestPlanBundle bundle, AppId aid, String jmeterLink) {
-		String orderId = RestApi.JMeter.TestPlan.GET.parsePathParameters(jmeterLink).get(0);
+		List<String> params = RestApi.JMeter.TestPlan.GET.parsePathParameters(jmeterLink);
+		String orderId;
+
+		if ((params == null) || (params.size() == 0)) {
+			String[] segments = jmeterLink.split("/");
+			orderId = new StringBuilder().append("_").append(segments[0]).append("/").append(segments[segments.length - 1]).toString();
+		} else {
+			orderId = params.get(0);
+		}
+
 		Path testPlanDir = directory.getFreshDir(aid, orderId);
 
 		return testPlanWriter.write(bundle.getTestPlan(), bundle.getBehaviors(), testPlanDir);
