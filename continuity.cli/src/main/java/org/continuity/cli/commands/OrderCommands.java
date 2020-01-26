@@ -241,8 +241,6 @@ public class OrderCommands extends AbstractCommands {
 		}
 
 		OrderOptions options = new OrderOptions();
-		options.setDuration(60);
-		options.setRampup(1);
 		options.setTailoringApproach(TailoringApproach.LOG_BASED);
 		options.setForecastApproach("Telescope");
 

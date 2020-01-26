@@ -316,6 +316,7 @@ public class WessbasPipelineManager {
 		LOGGER.info("Adjusting the behavior mix based on the intensities...");
 
 		Map<String, Double> absFreq = intensities.stream().map(ForecastIntensityRecord::getContent).flatMap(map -> map.entrySet().stream())
+				.filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey()))
 				.collect(groupingBy(Entry::getKey, summingDouble(Entry::getValue)));
 		double total = absFreq.values().stream().mapToDouble(x -> x).sum();
 
