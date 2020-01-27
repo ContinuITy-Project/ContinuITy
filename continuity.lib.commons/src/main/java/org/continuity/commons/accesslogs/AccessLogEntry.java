@@ -44,7 +44,7 @@ public class AccessLogEntry {
 	private static final String[] FIELDS = { "clientHost", "remoteName", "user", "accessTime", "requestMethod", "path", "protocol", "statusCode", "responseBytes", "referer", "userAgent",
 			"responseTime" };
 
-	private static final String DEFAULT_DATE_FORMAT = "dd/MMM/yyyy:HH:mm:ss Z";
+	private static final String[] DATE_FORMATS = { "dd/MMM/yyyy:HH:mm:ss Z", "dd/MMM/yyyy:HH:mm:ss", "dd/MMM/yyyy HH:mm:ss", "yyyy-MM-dd HH:mm:ss" };
 
 	private static final String DEFAULT_PROTOCOL = "HTTP/1.1";
 
@@ -191,7 +191,7 @@ public class AccessLogEntry {
 	}
 
 	public Date getAccessTimeAsDate() throws ParseException {
-		return DateUtils.parseDate(accessTime, Locale.ENGLISH, DEFAULT_DATE_FORMAT);
+		return DateUtils.parseDate(accessTime, Locale.ENGLISH, DATE_FORMATS);
 	}
 
 	public void setAccessTime(String accessTime) {
