@@ -1,6 +1,7 @@
 package org.continuity.cobra.entities;
 
 import java.util.List;
+import java.util.Set;
 
 import org.continuity.api.entities.deserialization.TailoringDeserializer;
 import org.continuity.api.entities.deserialization.TailoringSerializer;
@@ -29,6 +30,9 @@ public class ForecasticInput {
 	private List<ForecastTimerange> ranges;
 
 	private List<TimedContextRecord> context;
+
+	@JsonProperty("context_variables")
+	private Set<String> contextVariables;
 
 	private long resolution;
 
@@ -92,6 +96,15 @@ public class ForecasticInput {
 
 	public ForecasticInput setContext(List<TimedContextRecord> context) {
 		this.context = context;
+		return this;
+	}
+
+	public Set<String> getContextVariables() {
+		return contextVariables;
+	}
+
+	public ForecasticInput setContextVariables(Set<String> contextVariables) {
+		this.contextVariables = contextVariables;
 		return this;
 	}
 

@@ -68,6 +68,8 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 	protected static final int DEFAULT_SCROLL_SIZE = 10000; // is the maximum
 
+	protected static final int MAX_BULK_SIZE = 10000;
+
 	protected static final int TOTAL_SIZE_ALL = -1;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchScrollingManager.class);
@@ -164,11 +166,27 @@ public abstract class ElasticsearchScrollingManager<T> {
 		storeElements(aid, tailoring, elements, waitFor, true, true);
 	}
 
+	/**
+	 * Stores the elements if absent using the defined tailoring.
+	 *
+	 * @param aid
+	 * @param tailoring
+	 * @param elements
+	 * @param waitFor
+	 *            Whether the request should wait until the data is indexed.
+	 * @param silent
+	 *            Whether to ignore failed uploads.
+	 * @throws IOException
+	 */
+	protected void storeElementsIfAbsent(AppId aid, List<String> tailoring, Collection<T> elements, boolean waitFor, boolean silent) throws IOException {
+		storeElements(aid, tailoring, elements, waitFor, true, silent);
+	}
+
 	private void storeElements(AppId aid, List<String> tailoring, Collection<T> elements, boolean waitFor, boolean create, boolean silent) throws IOException {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 		initIndex(index);
 
-		doBulkRequest(index, elements, waitFor, true, (request, element, json, id) -> request.add(new IndexRequest(index).source(json, XContentType.JSON).id(id).create(create)), silent);
+		doBulkRequests(index, elements, waitFor, true, (request, element, json, id) -> request.add(new IndexRequest(index).source(json, XContentType.JSON).id(id).create(create)), silent);
 	}
 
 	/**
@@ -199,7 +217,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 		initIndex(index);
 
-		doBulkRequest(index, elements, waitFor, true, (request, element, json, id) -> request.add(new UpdateRequest(index, id).doc(json, XContentType.JSON).docAsUpsert(true)), false);
+		doBulkRequests(index, elements, waitFor, true, (request, element, json, id) -> request.add(new UpdateRequest(index, id).doc(json, XContentType.JSON).docAsUpsert(true)), false);
 	}
 
 	/**
@@ -250,7 +268,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 		initIndex(index);
 
-		doBulkRequest(index, elements, waitFor, !scriptedUpsert, (request, element, json, id) -> {
+		doBulkRequests(index, elements, waitFor, !scriptedUpsert, (request, element, json, id) -> {
 			UpdateRequest update = new UpdateRequest(index, id).script(scriptSupplier.apply(element));
 
 			if (scriptedUpsert) {
@@ -263,7 +281,26 @@ public abstract class ElasticsearchScrollingManager<T> {
 		}, false);
 	}
 
+	private void doBulkRequests(String index, Collection<T> elements, boolean waitFor, boolean requiresJson, RequestAdder<T> requestAdder, boolean silent) throws IOException {
+		List<T> chunk = new ArrayList<>(Math.min(elements.size(), MAX_BULK_SIZE));
+
+		for (T elem : elements) {
+			chunk.add(elem);
+
+			if (chunk.size() == MAX_BULK_SIZE) {
+				doBulkRequest(index, chunk, waitFor, requiresJson, requestAdder, silent);
+				chunk.clear();
+			}
+		}
+
+		if (!chunk.isEmpty()) {
+			doBulkRequest(index, chunk, waitFor, requiresJson, requestAdder, silent);
+		}
+	}
+
 	private void doBulkRequest(String index, Collection<T> elements, boolean waitFor, boolean requiresJson, RequestAdder<T> requestAdder, boolean silent) throws IOException {
+		LOGGER.info("Uploading {} elements in a bulk request...", elements.size());
+
 		BulkRequest request = new BulkRequest();
 
 		for (T elem : elements) {

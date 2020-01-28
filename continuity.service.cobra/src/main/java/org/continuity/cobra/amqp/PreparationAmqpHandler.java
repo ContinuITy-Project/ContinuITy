@@ -9,9 +9,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -38,13 +40,14 @@ import org.continuity.cobra.entities.ForecasticInput;
 import org.continuity.cobra.entities.ForecasticResult;
 import org.continuity.cobra.entities.TimedContextRecord;
 import org.continuity.cobra.entities.TypeAndProperties;
+import org.continuity.cobra.managers.ElasticsearchBehaviorManager;
 import org.continuity.cobra.managers.ElasticsearchIntensityManager;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
 import org.continuity.cobra.managers.ElasticsearchTraceManager;
 import org.continuity.commons.storage.MixedStorage;
 import org.continuity.commons.utils.TailoringUtils;
-import org.continuity.commons.utils.WebUtils;
 import org.continuity.dsl.WorkloadDescription;
+import org.continuity.dsl.elements.TimeSpecification;
 import org.continuity.dsl.schema.IgnoreByDefaultValue;
 import org.continuity.dsl.timeseries.IntensityRecord;
 import org.continuity.idpa.AppId;
@@ -79,6 +82,9 @@ public class PreparationAmqpHandler {
 	private ElasticsearchIntensityManager elasticIntensityManager;
 
 	@Autowired
+	private ElasticsearchBehaviorManager elasticBehaviorManager;
+
+	@Autowired
 	private ConfigurationProvider<CobraConfiguration> configProvider;
 
 	@Autowired
@@ -95,6 +101,13 @@ public class PreparationAmqpHandler {
 			return;
 		}
 
+		CobraConfiguration config = configProvider.getConfiguration(task.getAppId());
+		Optional<Long> perspective = Optional.ofNullable(task.getPerspective()).map(p -> {
+			LOGGER.info("Task {}: Considering {} to be 'now'.", task.getTaskId(), p);
+			description.setNow(p);
+			return p.atZone(config.getTimeZone()).toInstant().toEpochMilli();
+		});
+
 		List<String> tailoring = extractServices(task);
 
 		List<IntensityRecord> intensities = readIntensities(task.getAppId(), tailoring, description);
@@ -102,15 +115,8 @@ public class PreparationAmqpHandler {
 
 		LOGGER.info("Task {}: Get {} in ranges {}...", task.getTaskId(), task.getTarget().toPrettyString(), ranges);
 
-		CobraConfiguration config = configProvider.getConfiguration(task.getAppId());
-		Optional<Long> perspective = Optional.ofNullable(task.getPerspective()).map(p -> {
-			LOGGER.info("Task {}: Considering {} to be 'now'.", task.getTaskId(), p);
-			return p.atZone(config.getTimeZone()).toInstant().toEpochMilli();
-		});
-
 		List<ForecastTimerange> restrictedRanges = perspective.map(p -> ranges.stream().filter(r -> r.getFrom() < p).map(r -> new ForecastTimerange(r.getFrom(), Math.min(r.getTo(), p)))
-				.filter(r -> r.getTo() < r.getFrom())
-				.collect(Collectors.toList())).orElse(ranges);
+				.filter(r -> r.getTo() < r.getFrom()).collect(Collectors.toList())).orElse(ranges);
 
 		TaskReport report;
 
@@ -131,7 +137,7 @@ public class PreparationAmqpHandler {
 		}
 
 		if (report.isSuccessful()) {
-			report.getResult().setIntensity(doForecast(task, ranges, intensities));
+			report.getResult().setIntensity(doForecast(task, ranges, intensities, perspective));
 		}
 
 		sendReport(report);
@@ -225,10 +231,12 @@ public class PreparationAmqpHandler {
 		}
 	}
 
-	private TaskReport createBehaviorLink(TaskDescription task, List<ForecastTimerange> ranges, Optional<Long> perspective) throws IOException {
+	private TaskReport createBehaviorLink(TaskDescription task, List<ForecastTimerange> ranges, Optional<Long> perspective) throws IOException, TimeoutException {
+		AppId aid = task.getAppId();
+		List<String> tailoring = extractServices(task);
 		OptionalLong before = ranges.stream().mapToLong(ForecastTimerange::getTo).max();
 
-		RequestBuilder reqBuilder = RestApi.Cobra.BehaviorModel.GET_LATEST.requestUrl(task.getAppId(), Session.convertTailoringToString(extractServices(task)));
+		RequestBuilder reqBuilder = RestApi.Cobra.BehaviorModel.GET_LATEST.requestUrl(aid, Session.convertTailoringToString(tailoring));
 
 		if (before.isPresent() || perspective.isPresent()) {
 			reqBuilder.withQuery("before", Long.toString(before.orElse(perspective.orElse(0L))));
@@ -238,7 +246,8 @@ public class PreparationAmqpHandler {
 
 		MarkovBehaviorModel behaviorModel;
 		try {
-			behaviorModel = restTemplate.getForObject(WebUtils.addProtocolIfMissing(link), MarkovBehaviorModel.class);
+			behaviorModel = (before.isPresent() || perspective.isPresent()) ? elasticBehaviorManager.readLatest(aid, tailoring, before.orElse(perspective.orElse(0L)))
+					: elasticBehaviorManager.readLatest(aid, tailoring);
 		} catch (HttpStatusCodeException e) {
 			behaviorModel = null;
 		}
@@ -279,43 +288,11 @@ public class PreparationAmqpHandler {
 		return reqBuilder.withoutProtocol().get();
 	}
 
-	private String doForecast(TaskDescription task, List<ForecastTimerange> ranges, List<IntensityRecord> intensities) {
+	private String doForecast(TaskDescription task, List<ForecastTimerange> ranges, List<IntensityRecord> intensities, Optional<Long> perspective) {
 		LOGGER.info("Task {}: Doing forecast...", task.getTaskId());
 
 		CobraConfiguration config = configProvider.getConfiguration(task.getAppId());
 		WorkloadDescription description = task.getWorkloadDescription();
-
-		IgnoreByDefaultValue ignore = config.getContext().ignoreByDefault();
-
-		for (IntensityRecord record : intensities) {
-			if (record.getContext() != null) {
-				if (record.getContext().getNumeric() != null) {
-					record.getContext().getNumeric().removeIf(v -> ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
-
-					if (record.getContext().getNumeric().isEmpty()) {
-						record.getContext().setNumeric(null);
-					}
-				}
-
-				if (record.getContext().getString() != null) {
-					record.getContext().getString().removeIf(v -> ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
-
-					if (record.getContext().getString().isEmpty()) {
-						record.getContext().setString(null);
-					}
-				}
-
-				if (record.getContext().getBoolean() != null) {
-					record.getContext().getBoolean().removeIf(v -> ignore.ignore(config.getContext().getVariables().get(v).getIgnoreByDefault()));
-
-					if (record.getContext().getBoolean().isEmpty()) {
-						record.getContext().setBoolean(null);
-					}
-				}
-			}
-		}
-
-		description.adjustContext(intensities, config.getTimeZone());
 
 		ForecasticInput input = new ForecasticInput().setAppId(task.getAppId()).setTailoring(extractServices(task)).setApproach(task.getOptions().getForecastApproachOrDefault());
 
@@ -327,7 +304,12 @@ public class PreparationAmqpHandler {
 
 		input.setRanges(ranges).setResolution(config.getIntensity().getResolution().toMillis());
 
-		input.setContext(intensities.stream().map(TimedContextRecord::fromIntensity).filter(Objects::nonNull).collect(Collectors.toList()));
+		IgnoreByDefaultValue ignore = config.getContext().ignoreByDefault();
+		Set<String> contextVariables = config.getContext().getVariables().entrySet().stream().filter(e -> !ignore.ignore(e.getValue().getIgnoreByDefault())).map(Entry::getKey)
+				.collect(Collectors.toSet());
+		description.getTimeframe().stream().map(TimeSpecification::getReferredContextVariables).flatMap(Set::stream).forEach(contextVariables::add);
+		input.setContext(prepareFutureContext(intensities, perspective, config, description));
+		input.setContextVariables(contextVariables);
 
 		input.setAggregation(TypeAndProperties.fromTypedProperties(description.getAggregation()));
 
@@ -341,6 +323,49 @@ public class PreparationAmqpHandler {
 		LOGGER.info("Task {}: Stored intensity records to storage with ID {}.", task.getTaskId(), id);
 
 		return RestApi.Cobra.Intensity.GET_FOR_ID.requestUrl(id).withoutProtocol().get();
+	}
+
+	private List<TimedContextRecord> prepareFutureContext(List<IntensityRecord> intensities, Optional<Long> perspective, CobraConfiguration config, WorkloadDescription description) {
+		long maxIntensityTimestamp = intensities.stream().filter(i -> (i.getIntensity() != null) && !i.getIntensity().isEmpty()).mapToLong(IntensityRecord::getTimestamp).max().orElse(0);
+		long effectivePerspective = perspective.map(p -> Math.min(p, maxIntensityTimestamp)).orElse(maxIntensityTimestamp);
+
+		List<IntensityRecord> futureRecords = intensities.stream().filter(i -> i.getTimestamp() > effectivePerspective).collect(Collectors.toList());
+
+		IgnoreByDefaultValue ignore = config.getContext().ignoreByDefault();
+		Set<String> timeframeVariables = description.getTimeframe().stream().map(TimeSpecification::getReferredContextVariables).flatMap(Set::stream).collect(Collectors.toSet());
+
+		for (IntensityRecord record : futureRecords) {
+			if (record.getContext() != null) {
+				if (record.getContext().getNumeric() != null) {
+					record.getContext().getNumeric()
+							.removeIf(v -> !timeframeVariables.contains(v.getName()) && ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
+
+					if (record.getContext().getNumeric().isEmpty()) {
+						record.getContext().setNumeric(null);
+					}
+				}
+
+				if (record.getContext().getString() != null) {
+					record.getContext().getString().removeIf(v -> !timeframeVariables.contains(v.getName()) && ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
+
+					if (record.getContext().getString().isEmpty()) {
+						record.getContext().setString(null);
+					}
+				}
+
+				if (record.getContext().getBoolean() != null) {
+					record.getContext().getBoolean().removeIf(v -> !timeframeVariables.contains(v) && ignore.ignore(config.getContext().getVariables().get(v).getIgnoreByDefault()));
+
+					if (record.getContext().getBoolean().isEmpty()) {
+						record.getContext().setBoolean(null);
+					}
+				}
+			}
+		}
+
+		description.adjustContext(futureRecords, config.getTimeZone());
+
+		return intensities.stream().map(TimedContextRecord::fromIntensity).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	private void sendReport(TaskReport report) {
