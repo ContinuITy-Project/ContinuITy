@@ -13,7 +13,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.api.entities.artifact.session.SessionView;
@@ -69,8 +68,8 @@ public class SessionLogsController {
 	@RequestMapping(value = GET_SIMPLE, method = RequestMethod.GET, produces = { "text/plain" })
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<String> getSimpleSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
-			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
-		return getSessionLogs(aid, tailoring, from, to, true);
+			@RequestParam(required = false) List<String> to, @RequestParam(required = false) String overlapping) throws IOException, TimeoutException {
+		return getSessionLogs(aid, tailoring, from, to, overlapping, true);
 	}
 
 	/**
@@ -91,12 +90,12 @@ public class SessionLogsController {
 	@RequestMapping(value = GET_EXTENDED, method = RequestMethod.GET, produces = { "text/plain" })
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<String> getExtendedSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
-			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
-		return getSessionLogs(aid, tailoring, from, to, false);
+			@RequestParam(required = false) List<String> to, @RequestParam(required = false) String overlapping) throws IOException, TimeoutException {
+		return getSessionLogs(aid, tailoring, from, to, overlapping, false);
 	}
 
-	private ResponseEntity<String> getSessionLogs(AppId aid, String tailoring, List<String> from, List<String> to, boolean simple) throws IOException, TimeoutException {
-		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to);
+	private ResponseEntity<String> getSessionLogs(AppId aid, String tailoring, List<String> from, List<String> to, String overlapping, boolean simple) throws IOException, TimeoutException {
+		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to, overlapping);
 
 		if (sessions.getLeft() != null) {
 			return sessions.getLeft().toStringResponse();
@@ -128,8 +127,8 @@ public class SessionLogsController {
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	@JsonView(SessionView.Simple.class)
 	public ResponseEntity<?> getSessionsAsSimpleJson(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
-			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
-		return getSessionsAsJson(aid, tailoring, from, to, true);
+			@RequestParam(required = false) List<String> to, @RequestParam(required = false) String overlapping) throws IOException, TimeoutException {
+		return getSessionsAsJson(aid, tailoring, from, to, overlapping, true);
 	}
 
 	/**
@@ -151,12 +150,12 @@ public class SessionLogsController {
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	@JsonView(SessionView.Extended.class)
 	public ResponseEntity<?> getSessionsAsExtendedJson(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
-			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
-		return getSessionsAsJson(aid, tailoring, from, to, false);
+			@RequestParam(required = false) List<String> to, @RequestParam(required = false) String overlapping) throws IOException, TimeoutException {
+		return getSessionsAsJson(aid, tailoring, from, to, overlapping, false);
 	}
 
-	public ResponseEntity<?> getSessionsAsJson(AppId aid, String tailoring, List<String> from, List<String> to, boolean simple) throws IOException, TimeoutException {
-		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to);
+	public ResponseEntity<?> getSessionsAsJson(AppId aid, String tailoring, List<String> from, List<String> to, String overlapping, boolean simple) throws IOException, TimeoutException {
+		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to, overlapping);
 
 		if (sessions.getLeft() != null) {
 			return sessions.getLeft().toObjectResponse();
@@ -167,9 +166,19 @@ public class SessionLogsController {
 		return ResponseEntity.ok(sessions.getRight());
 	}
 
-	private Pair<BadRequestResponse, List<Session>> readSessions(AppId aid, String tailoring, List<String> from, List<String> to) throws IOException, TimeoutException {
+	private Pair<BadRequestResponse, List<Session>> readSessions(AppId aid, String tailoring, List<String> from, List<String> to, String overlapping) throws IOException, TimeoutException {
 		if ((from == null) || (to == null)) {
-			return Pair.of(null, elasticManager.readSessionsInRange(aid, null, Session.convertStringToTailoring(tailoring), null, null));
+			if (overlapping == null) {
+				return Pair.of(null, elasticManager.readSessionsInRange(aid, null, Session.convertStringToTailoring(tailoring), null, null));
+			} else {
+				Pair<BadRequestResponse, Date> check = checkDate("from", overlapping);
+
+				if (check.getLeft() != null) {
+					return Pair.of(check.getLeft(), null);
+				}
+
+				return Pair.of(null, elasticManager.readSessionsOverlapping(aid, null, Session.convertStringToTailoring(tailoring), check.getRight()));
+			}
 		} else {
 			Iterator<String> fromIter = from.iterator();
 			Iterator<String> toIter = to.iterator();
@@ -180,43 +189,38 @@ public class SessionLogsController {
 				String f = fromIter.next();
 				String t = toIter.next();
 
-				Triple<BadRequestResponse, Date, Date> check = checkDates(f, t);
+				Pair<BadRequestResponse, Date> checkF = checkDate("from", f);
 
-				if (check.getLeft() != null) {
-					return Pair.of(check.getLeft(), null);
+				if (checkF.getLeft() != null) {
+					return Pair.of(checkF.getLeft(), null);
 				}
 
-				sessions.addAll(elasticManager.readSessionsInRange(aid, null, Session.convertStringToTailoring(tailoring), check.getMiddle(), check.getRight()));
+				Pair<BadRequestResponse, Date> checkT = checkDate("to", t);
+
+				if (checkT.getLeft() != null) {
+					return Pair.of(checkT.getLeft(), null);
+				}
+
+				sessions.addAll(elasticManager.readSessionsInRange(aid, null, Session.convertStringToTailoring(tailoring), checkF.getRight(), checkT.getRight()));
 			}
 
 			return Pair.of(null, sessions);
 		}
 	}
 
-	private Triple<BadRequestResponse, Date, Date> checkDates(String from, String to) {
-		Date dFrom = null;
+	private Pair<BadRequestResponse, Date> checkDate(String name, String date) {
+		Date dDate = null;
 
-		if (from != null) {
+		if (date != null) {
 			try {
-				dFrom = ApiFormats.DATE_FORMAT.parse(from);
+				dDate = ApiFormats.DATE_FORMAT.parse(date);
 			} catch (ParseException e) {
 				LOGGER.error("Cannot parse from date: {}", e.getMessage());
-				return Triple.of(new BadRequestResponse("Illegal date format of 'from' date: " + from), null, null);
+				return Pair.of(new BadRequestResponse("Illegal date format of '" + name + "' date: " + date), null);
 			}
 		}
 
-		Date dTo = null;
-
-		if (to != null) {
-			try {
-				dTo = ApiFormats.DATE_FORMAT.parse(to);
-			} catch (ParseException e) {
-				LOGGER.error("Cannot parse to date: {}", e.getMessage());
-				return Triple.of(new BadRequestResponse("Illegal date format of 'to' date: " + to), null, null);
-			}
-		}
-
-		return Triple.of(null, dFrom, dTo);
+		return Pair.of(null, dDate);
 	}
 
 	@JsonView(SessionView.Simple.class)

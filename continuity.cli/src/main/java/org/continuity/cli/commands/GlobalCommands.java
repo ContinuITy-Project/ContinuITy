@@ -8,11 +8,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.continuity.api.entities.exchange.ArtifactType;
+import org.continuity.api.entities.report.OrderReport;
 import org.continuity.api.rest.RestEndpoint;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.cli.manage.CliContextManager;
 import org.continuity.cli.manage.Shorthand;
+import org.continuity.cli.storage.OrderStorage;
 import org.continuity.cli.utils.ResponseBuilder;
+import org.continuity.idpa.AppId;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStyle;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,13 +48,16 @@ public class GlobalCommands extends AbstractCommands implements Quit.Command {
 
 	private final ObjectMapper mapper;
 
+	private final OrderStorage orderStorage;
+
 	@Autowired
-	public GlobalCommands(CliContextManager contextManager, PropertiesProvider propertiesProvider, RestTemplate restTemplate, ObjectMapper mapper) {
+	public GlobalCommands(CliContextManager contextManager, PropertiesProvider propertiesProvider, RestTemplate restTemplate, ObjectMapper mapper, OrderStorage orderStorage) {
 		super(contextManager);
 		this.propertiesProvider = propertiesProvider;
 		this.contextManager = contextManager;
 		this.restTemplate = restTemplate;
 		this.mapper = mapper;
+		this.orderStorage = orderStorage;
 	}
 
 	@ShellMethod(key = { "props" }, value = "Shows the content of the current properties.")
@@ -84,10 +91,56 @@ public class GlobalCommands extends AbstractCommands implements Quit.Command {
 	}
 
 	@ShellMethod(key = { "get" }, value = "Gets an artifact.")
-	public AttributedString get(String link) throws Exception {
+	public AttributedString get(@ShellOption(help = "Link as contained in an order report or field of the latest report.") String link,
+			@ShellOption(help = "Indicates to store the retrieved artifact to the latest order's folder.") boolean store,
+			@ShellOption(help = "Indicates not to print the retrieved artifact to console.") boolean silent) throws Exception {
 		return execute(() -> {
-			ResponseEntity<JsonNode> response = restTemplate.getForEntity(RestEndpoint.urlViaOrchestrator(link, propertiesProvider.getProperty(PropertiesProvider.KEY_URL)), JsonNode.class);
-			return new ResponseBuilder().normal(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody())).build();
+			String linkToArtifact = link;
+
+			if (!link.contains("/")) {
+				AppId aid = contextManager.getCurrentAppId();
+
+				if (aid == null) {
+					return new ResponseBuilder().error("Missing an app-id! Please specify one using ").boldError("app-id <your_id>").error("!").build();
+				}
+
+				OrderReport report = orderStorage.readLatestReport(aid);
+
+				if (report == null) {
+					return new ResponseBuilder().error("Missing an order report! Please execute one first and get its result.").build();
+				}
+
+				String[] jsonPath = link.split("\\.");
+				ArtifactType type = ArtifactType.fromPrettyString(jsonPath[0]);
+
+				if (type == null) {
+					return new ResponseBuilder().error("Unknown artifact name: ").boldError(jsonPath[0]).build();
+				}
+
+				if (jsonPath.length == 1) {
+					linkToArtifact = type.getFromModel(report.getArtifacts()).getDefaultLink();
+				} else {
+					linkToArtifact = type.getFromModel(report.getArtifacts()).getLink(jsonPath[1]);
+				}
+
+				if (linkToArtifact == null) {
+					return new ResponseBuilder().error("There is no artifact present at ").boldError(link).build();
+				}
+			}
+
+			ResponseEntity<JsonNode> response = restTemplate.getForEntity(RestEndpoint.urlViaOrchestrator(linkToArtifact, propertiesProvider.getProperty(PropertiesProvider.KEY_URL)), JsonNode.class);
+
+			if (store) {
+				AppId aid = contextManager.getCurrentAppId();
+
+				if (aid == null) {
+					return new ResponseBuilder().error("Missing an app-id! Please specify one using ").boldError("app-id <your_id>").error("!").build();
+				}
+
+				orderStorage.storeArtifact(aid, linkToArtifact, response.getBody());
+			}
+
+			return silent ? null : new ResponseBuilder().normal(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody())).build();
 		});
 	}
 

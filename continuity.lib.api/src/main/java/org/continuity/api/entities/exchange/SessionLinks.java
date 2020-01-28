@@ -42,6 +42,24 @@ public class SessionLinks extends AbstractLinks<SessionLinks> {
 		return this;
 	}
 
+	@Override
+	public String getDefaultLink() {
+		return getSimpleLink();
+	}
+
+	@Override
+	public String getLink(String name) {
+		switch (name) {
+		case "extended-link":
+		case "extended":
+			return getExtendedLink();
+		case "simple-link":
+		case "simple":
+			return getDefaultLink();
+		default:
+			return null;
+		}
+	}
 
 	@Override
 	public boolean isEmpty() {

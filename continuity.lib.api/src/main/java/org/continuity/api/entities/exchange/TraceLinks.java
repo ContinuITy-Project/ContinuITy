@@ -23,6 +23,16 @@ public class TraceLinks extends AbstractLinks<TraceLinks> {
 	}
 
 	@Override
+	public String getDefaultLink() {
+		return getLink();
+	}
+
+	@Override
+	public String getLink(String name) {
+		return ((name == null) || name.isEmpty() || "link".equals(name)) ? link : null;
+	}
+
+	@Override
 	public boolean isEmpty() {
 		for (Field field : TraceLinks.class.getDeclaredFields()) {
 			try {

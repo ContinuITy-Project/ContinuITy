@@ -115,6 +115,31 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	}
 
 	/**
+	 * Reads all sessions overlapping a given timestamp.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param version
+	 *            The version or timestamp. Can be {@code null}. In this case, it will be ignored.
+	 * @param tailoring
+	 *            The list of services to which the sessions are tailored. Use a singleton list with
+	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
+	 * @param from
+	 *            The start date of the range.
+	 * @param to
+	 *            The end date of the range.
+	 * @return The list of sessions in the range.
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	public List<Session> readSessionsOverlapping(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date overlapping) throws IOException, TimeoutException {
+		QueryBuilder query = createOverlappingQuery(version, overlapping);
+		FieldSortBuilder sort = new FieldSortBuilder("start-micros").order(SortOrder.ASC);
+
+		return readElements(aid, tailoring, query, sort, SCROLL_SIZE, TOTAL_SIZE_ALL, String.format(" with version %s overlapping %s", version, formatOrNull(overlapping)));
+	}
+
+	/**
 	 * Counts all sessions within a given range.
 	 *
 	 * @param aid
@@ -205,6 +230,31 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 			empty = false;
 		} else {
 			LOGGER.warn("The provided time range ({} - {}) contains null elements! Ignoring.", formatOrNull(from), formatOrNull(to));
+		}
+
+		if (empty) {
+			return QueryBuilders.matchAllQuery();
+		} else {
+			return query;
+		}
+	}
+
+	private QueryBuilder createOverlappingQuery(VersionOrTimestamp version, Date overlapping) {
+		boolean empty = true;
+
+		BoolQueryBuilder query = QueryBuilders.boolQuery();
+
+		if (version != null) {
+			query = query.must(QueryBuilders.termQuery("version", version.toNormalizedString()));
+			empty = false;
+		}
+
+		if (overlapping != null) {
+			query.must(QueryBuilders.rangeQuery("start-micros").to(overlapping.getTime() * 1000, true));
+			query.must(QueryBuilders.rangeQuery("end-micros").from(overlapping.getTime() * 1000, true));
+			empty = false;
+		} else {
+			LOGGER.warn("The provided time stamp is null! Ignoring.", formatOrNull(overlapping));
 		}
 
 		if (empty) {
