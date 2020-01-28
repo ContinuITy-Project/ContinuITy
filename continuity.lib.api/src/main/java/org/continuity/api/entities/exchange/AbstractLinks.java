@@ -19,6 +19,12 @@ public abstract class AbstractLinks<T extends AbstractLinks<T>> {
 	@JsonIgnore
 	public abstract boolean isEmpty();
 
+	@JsonIgnore
+	public abstract String getDefaultLink();
+
+	@JsonIgnore
+	public abstract String getLink(String name);
+
 	public abstract void merge(T other) throws IllegalArgumentException, IllegalAccessException;
 
 	public static class ValueFilter {

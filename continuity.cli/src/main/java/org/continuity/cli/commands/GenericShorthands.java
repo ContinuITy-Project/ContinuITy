@@ -24,11 +24,18 @@ public class GenericShorthands {
 	@Autowired
 	private CliContextManager contextManager;
 
-	@ShellMethod(key = { "download" }, value = "Shorthand for '<context> download'. Available in 'idpa' and 'jmeter'.")
+	@ShellMethod(key = { "download" }, value = "Shorthand for '<context> download'. Available in 'config', 'idpa', and 'jmeter'.")
 	@ShellMethodAvailability({ "downloadAvailability" })
-	public AttributedString download(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String link, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg2) throws Throwable {
+	public AttributedString download(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String link, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String arg2, boolean silent)
+			throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("download");
-		return shorthand.execute(link, arg2);
+
+		// Quick fix due to limitations of Spring Shell
+		if (shorthand.getCommandName().startsWith("jmeter")) {
+			return shorthand.execute(link, silent);
+		} else {
+			return shorthand.execute(link, arg2);
+		}
 	}
 
 	public Availability downloadAvailability() {
@@ -152,9 +159,9 @@ public class GenericShorthands {
 
 	@ShellMethod(key = { "wait" }, value = "Shorthand for '<context> wait'. Available in 'order'.")
 	@ShellMethodAvailability({ "waitAvailability" })
-	public AttributedString wait(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String timeout, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id) throws Throwable {
+	public AttributedString wait(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String timeout, @ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String id, boolean retry) throws Throwable {
 		Shorthand shorthand = contextManager.getShorthand("wait");
-		return shorthand.execute(timeout, id);
+		return shorthand.execute(timeout, id, retry);
 	}
 
 	public Availability waitAvailability() {

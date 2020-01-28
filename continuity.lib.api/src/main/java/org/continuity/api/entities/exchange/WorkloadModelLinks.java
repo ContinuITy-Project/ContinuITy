@@ -19,7 +19,7 @@ public class WorkloadModelLinks extends AbstractLinks<WorkloadModelLinks> {
 	@JsonProperty(value = "jmeter-link", required = false)
 	@JsonInclude(Include.NON_NULL)
 	private String jmeterLink;
-	
+
 	@JsonProperty(value = "behavior-link", required = false)
 	@JsonInclude(Include.NON_NULL)
 	private String behaviorLink;
@@ -66,11 +66,11 @@ public class WorkloadModelLinks extends AbstractLinks<WorkloadModelLinks> {
 		this.jmeterLink = jmeterLink;
 		return this;
 	}
-	
+
 	public String getBehaviorLink() {
 		return behaviorLink;
 	}
-	
+
 	public WorkloadModelLinks setBehaviorLink(String behaviorLink) {
 		this.behaviorLink = behaviorLink;
 		return this;
@@ -92,6 +92,38 @@ public class WorkloadModelLinks extends AbstractLinks<WorkloadModelLinks> {
 	public WorkloadModelLinks setInitialAnnotationLink(String initialAnnotationLink) {
 		this.initialAnnotationLink = initialAnnotationLink;
 		return this;
+	}
+
+	@Override
+	public String getDefaultLink() {
+		return getLink();
+	}
+
+	@Override
+	public String getLink(String name) {
+		if (name == null) {
+			return getDefaultLink();
+		}
+
+		switch (name) {
+		case "jmeter-link":
+		case "jmeter":
+			return getJmeterLink();
+		case "behavior-link":
+		case "behavior":
+			return getBehaviorLink();
+		case "application-link":
+		case "application":
+			return getBehaviorLink();
+		case "initial-annotation-link":
+		case "initial-annotation":
+			return getInitialAnnotationLink();
+		case "link":
+		case "":
+			return getDefaultLink();
+		default:
+			return null;
+		}
 	}
 
 	@Override

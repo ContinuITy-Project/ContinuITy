@@ -39,7 +39,7 @@ public class JMeterCommands extends AbstractCommands {
 
 	private final CliContext context = new CliContext(CONTEXT_NAME, //
 			new Shorthand("home", this, "setJMeterHome", String.class), //
-			new Shorthand("download", this, "downloadLoadTest", String.class), //
+			new Shorthand("download", this, "downloadLoadTest", String.class, boolean.class), //
 			new Shorthand("upload", this, "uploadLoadTest", String.class, String.class, boolean.class), //
 			new Shorthand("open", this, "openLoadTest", String.class) //
 	);
@@ -87,7 +87,8 @@ public class JMeterCommands extends AbstractCommands {
 	}
 
 	@ShellMethod(key = { "jmeter download" }, value = "Downloads and opens a JMeter load test specified by a link.")
-	public AttributedString downloadLoadTest(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String loadTestLink) throws Exception {
+	public AttributedString downloadLoadTest(@ShellOption(defaultValue = Shorthand.DEFAULT_VALUE) String loadTestLink,
+			@ShellOption(help = "Indicates that the downloaded test should not be opened.") boolean silent) throws Exception {
 		return executeWithCurrentAppId((aid) -> {
 			storage.init();
 
@@ -113,7 +114,7 @@ public class JMeterCommands extends AbstractCommands {
 				return new ResponseBuilder().error(response.toString()).build();
 			}
 
-			Path testPlanPath = storage.storeAndOpen(response.getBody(), aid, link);
+			Path testPlanPath = silent ? storage.store(response.getBody(), aid, link) : storage.storeAndOpen(response.getBody(), aid, link);
 
 			return new ResponseBuilder().normal("Stored and opened JMeter test plan at ").normal(testPlanPath).build();
 		});

@@ -62,7 +62,7 @@ public class OrderCommands extends AbstractCommands {
 			new Shorthand("create", this, "createOrder", String.class), //
 			new Shorthand("edit", this, "editOrder", String.class), //
 			new Shorthand("submit", this, "submitOrder"), //
-			new Shorthand("wait", this, "waitForOrder", String.class, String.class), //
+			new Shorthand("wait", this, "waitForOrder", String.class, String.class, boolean.class), //
 			new Shorthand("report", this, "getOrderReport", String.class), //
 			new Shorthand("clean", this, "cleanOrders", boolean.class) //
 	);
@@ -170,9 +170,10 @@ public class OrderCommands extends AbstractCommands {
 	}
 
 	@ShellMethod(key = { "order wait" }, value = "Waits for an order to be finished.")
-	public AttributedString waitForOrder(@ShellOption(defaultValue = "1000") String timeout, @ShellOption(defaultValue = OrderStorage.ID_LATEST) String id) throws Exception {
+	public AttributedString waitForOrder(@ShellOption(defaultValue = "1") String timeout, @ShellOption(defaultValue = OrderStorage.ID_LATEST) String id, boolean retry) throws Exception {
 		return executeWithCurrentAppId((aid) -> {
 			OrderResponse orderResponse = storage.readResponse(aid, id);
+			long lTimeout = Long.parseLong(timeout);
 
 			if (orderResponse == null) {
 				return new ResponseBuilder().error("Please create and submit an order before waiting!").build();
@@ -180,7 +181,7 @@ public class OrderCommands extends AbstractCommands {
 
 			ResponseEntity<OrderReport> response;
 			try {
-				response = restTemplate.getForEntity(orderResponse.getWaitLink() + "?timeout=" + timeout, OrderReport.class);
+				response = restTemplate.getForEntity(orderResponse.getWaitLink() + "?timeout=" + (lTimeout * 1000), OrderReport.class);
 			} catch (HttpStatusCodeException e) {
 				return new ResponseBuilder().error(e.getResponseBodyAsString()).build();
 			}
@@ -189,6 +190,10 @@ public class OrderCommands extends AbstractCommands {
 				storage.store(aid, response.getBody());
 
 				return new ResponseBuilder().normal(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody())).build();
+			} else if (retry) {
+				System.out.println("The order is not finished, yet. Waiting and retrying...");
+				Thread.sleep(2 * lTimeout * 1000);
+				return waitForOrder(Long.toString(2 * lTimeout), id, true);
 			} else {
 				return new ResponseBuilder().bold("The order is not finished, yet.").build();
 			}
@@ -201,7 +206,7 @@ public class OrderCommands extends AbstractCommands {
 			OrderReport report = storage.readReport(aid, id);
 
 			if (report == null) {
-				return waitForOrder("0", id);
+				return waitForOrder("0", id, false);
 			} else {
 				return new ResponseBuilder().normal(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(report)).build();
 			}

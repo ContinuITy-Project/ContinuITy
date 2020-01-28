@@ -55,7 +55,7 @@ public abstract class AbstractCommands {
 	}
 
 	protected AttributedString errorMissingAppId() {
-		return new ResponseBuilder().error("Missing an app-id! Please specify one using ").boldError("app-id <your_id>").normal("!").build();
+		return new ResponseBuilder().error("Missing an app-id! Please specify one using ").boldError("app-id <your_id>").error("!").build();
 	}
 
 	public static interface Executor {

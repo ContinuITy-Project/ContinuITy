@@ -12,6 +12,7 @@ import org.continuity.api.rest.RestApi;
 import org.continuity.cli.config.PropertiesProvider;
 import org.continuity.idpa.AppId;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class OrderStorage {
@@ -25,6 +26,8 @@ public class OrderStorage {
 	private static final String FILENAME_REPORT = "report.yml";
 
 	private static final String FILENAME_NEW = "order-new.yml";
+
+	private static final String FOLDER_ARTIFACTS = "artifacts";
 
 	private final OrderDirectoryManager directory;
 
@@ -153,6 +156,19 @@ public class OrderStorage {
 		} else {
 			return null;
 		}
+	}
+
+	public void storeArtifact(AppId aid, String link, JsonNode content) throws IOException {
+		Path dir = directory.getLatest(aid);
+
+		if (dir == null) {
+			throw new IllegalArgumentException("There is no latest order for app-id " + aid);
+		}
+
+		Path artifactsDir = dir.resolve(FOLDER_ARTIFACTS);
+		artifactsDir.toFile().mkdirs();
+
+		mapper.writeValue(artifactsDir.resolve(link.replace("/", "_") + ".yml").toFile(), content);
 	}
 
 	public int clean(AppId aid, boolean includeCurrent) {
