@@ -84,4 +84,9 @@ public class ConditionalTimespec implements TimeSpecification {
 		return conditions.entrySet().stream().map(e -> Pair.of(e.getValue().toElasticQuery(e.getKey()), !e.getValue().negateQuery())).filter(p -> p.getLeft() != null).collect(Collectors.toList());
 	}
 
+	@Override
+	public Set<String> getReferredContextVariables() {
+		return conditions.keySet();
+	}
+
 }

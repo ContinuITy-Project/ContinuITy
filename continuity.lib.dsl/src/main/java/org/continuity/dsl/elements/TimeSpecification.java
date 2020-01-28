@@ -3,6 +3,7 @@ package org.continuity.dsl.elements;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -179,6 +180,11 @@ public interface TimeSpecification {
 	@JsonIgnore
 	default Optional<Duration> getMaxBeginningAddition() {
 		return Optional.empty();
+	}
+
+	@JsonIgnore
+	default Set<String> getReferredContextVariables() {
+		return Collections.emptySet();
 	}
 
 }

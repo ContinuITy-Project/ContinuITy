@@ -108,7 +108,7 @@ public class ContextValue {
 	}
 
 	public boolean isNull() {
-		return !isNumeric() && !isString();
+		return !isNumeric() && !isString() && !isBoolean();
 	}
 
 	public static class Serializer extends StdSerializer<ContextValue> {

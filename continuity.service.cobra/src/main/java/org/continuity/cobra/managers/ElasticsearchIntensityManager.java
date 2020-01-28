@@ -30,6 +30,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.metrics.ParsedMax;
 import org.elasticsearch.search.aggregations.metrics.ParsedMin;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -138,7 +139,19 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 * @throws IOException
 	 */
 	public void fillIntensities(AppId aid, List<String> tailoring, LocalDateTime from, LocalDateTime to, Duration resolution, ZoneId timeZone) throws IOException {
+		LocalDateTime latest = DateUtils.fromEpochMillis(getLatestDate(aid, tailoring).getTime(), timeZone);
+
+		if (latest.isAfter(to)) {
+			LOGGER.info("All required intensity records are already present.");
+			return;
+		}
+
+		if (latest.isAfter(from)) {
+			from = latest;
+		}
+
 		long numIntensities = ((DateUtils.toEpochMillis(to, timeZone) - DateUtils.toEpochMillis(from, timeZone)) / resolution.toMillis()) + 1;
+		LOGGER.info("Inserting {} empty intensity records...", numIntensities);
 
 		List<IntensityRecord> intensities = Stream.iterate(from, d -> d.plus(resolution)).limit(numIntensities).map(d -> DateUtils.toEpochMillis(d, timeZone)).map(IntensityRecord::new)
 				.collect(Collectors.toList());
@@ -258,9 +271,47 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 		}
 
 		ParsedMin min = response.getAggregations().get("min_timestamp");
-		double micros = min.getValue();
+		double millis = min.getValue();
 
-		return new Date(Math.round(micros / 1000));
+		return new Date(Math.round(millis));
+	}
+
+	/**
+	 * Gets the latest date occurring in the stored intensities.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param tailoring
+	 *            The list of services to which the intensities belong. Use a singleton list with
+	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
+	 * @return The found date. In case no sessions could be found, 1970-01-01 01:00:00 will be
+	 *         returned.
+	 * @throws IOException
+	 */
+	public Date getLatestDate(AppId aid, List<String> tailoring) throws IOException {
+		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+
+		if (!indexExists(index)) {
+			return new Date(Long.MAX_VALUE);
+		}
+
+		SearchSourceBuilder source = new SearchSourceBuilder();
+		source.aggregation(AggregationBuilders.max("max_timestamp").field("timestamp").missing(0));
+
+		SearchRequest search = new SearchRequest(index).source(source);
+
+		SearchResponse response;
+		try {
+			response = client.search(search, RequestOptions.DEFAULT);
+		} catch (ElasticsearchStatusException e) {
+			LOGGER.info("Could not get any elements from {} {}: {}", aid, index, e.getMessage());
+			return new Date(Long.MAX_VALUE);
+		}
+
+		ParsedMax max = response.getAggregations().get("max_timestamp");
+		double millis = max.getValue();
+
+		return new Date(Math.round(millis));
 	}
 
 	@Override

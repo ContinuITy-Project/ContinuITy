@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({ "timeframe", "context", "aggregation", "adjustments" })
 public class WorkloadDescription {
 
-	private static final Duration DEFAULT_DURATION = Duration.of(265, ChronoUnit.DAYS);
+	private static final Duration DEFAULT_DURATION = Duration.of(365, ChronoUnit.DAYS);
 
 	@JsonIgnore
 	private LocalDateTime now;
@@ -198,6 +198,10 @@ public class WorkloadDescription {
 				spec.adjustContext(intensities, timeZone, entry.getKey());
 			}
 		}
+	}
+
+	public void setNow(LocalDateTime now) {
+		this.now = now;
 	}
 
 }
