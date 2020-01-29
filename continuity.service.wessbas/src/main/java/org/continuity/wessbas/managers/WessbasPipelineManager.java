@@ -221,7 +221,7 @@ public class WessbasPipelineManager {
 	 * @throws GeneratorException
 	 */
 	public WessbasBundle transformBehaviorModelToWorkloadModelIncludingTailoring(BehaviorModelPack behaviorModelPack, TaskDescription task) throws IOException, SecurityException, GeneratorException {
-		boolean applyModularization = (task.getOptions() != null) && (task.getOptions().getTailoringApproach() == TailoringApproach.MODEL_BASED)
+		boolean applyModularization = (task.getOptions() != null) && (task.getOptions().getServiceTailoring() == TailoringApproach.MODEL_BASED)
 				&& TailoringUtils.doTailoring(task.getEffectiveServices());
 
 		if (applyModularization) {

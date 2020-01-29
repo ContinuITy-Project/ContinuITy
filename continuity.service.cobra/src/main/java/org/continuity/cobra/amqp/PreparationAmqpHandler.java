@@ -300,13 +300,14 @@ public class PreparationAmqpHandler {
 		CobraConfiguration config = configProvider.getConfiguration(task.getAppId());
 		WorkloadDescription description = task.getWorkloadDescription();
 
-		ForecasticInput input = new ForecasticInput().setAppId(task.getAppId()).setTailoring(extractServices(task)).setApproach(task.getOptions().getForecastApproachOrDefault());
+		ForecasticInput input = new ForecasticInput().setAppId(task.getAppId()).setTailoring(extractServices(task))
+				.setApproach(task.getOptionsOrDefault().getForecastOrDefault().getApproachOrDefault());
 
 		if (task.getPerspective() != null) {
 			input.setPerspective(task.getPerspective().atZone(config.getTimeZone()).toInstant().toEpochMilli());
 		}
 
-		input.setForecastTotal(task.getForecastTotal().orElse(false));
+		input.setForecastTotal(task.getOptionsOrDefault().getForecastOrDefault().getTotal().orElse(false));
 
 		input.setRanges(ranges).setResolution(config.getIntensity().getResolution().toMillis());
 
@@ -387,7 +388,7 @@ public class PreparationAmqpHandler {
 	private List<String> extractServices(TaskDescription task) {
 		List<ServiceSpecification> services = task.getEffectiveServices();
 
-		if ((task.getOptions() != null) && (task.getOptions().getTailoringApproachOrDefault() == TailoringApproach.LOG_BASED) && TailoringUtils.doTailoring(services)) {
+		if ((task.getOptions() != null) && (task.getOptions().getServiceTailoringOrDefault() == TailoringApproach.LOG_BASED) && TailoringUtils.doTailoring(services)) {
 			return services.stream().map(ServiceSpecification::getService).collect(Collectors.toList());
 		} else {
 			return Collections.singletonList(AppId.SERVICE_ALL);

@@ -3,7 +3,6 @@ package org.continuity.orchestrator.entities;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Optional;
 import java.util.Set;
 
 import org.continuity.api.entities.config.TaskDescription;
@@ -33,8 +32,6 @@ public class Recipe {
 
 	private LocalDateTime perspective;
 
-	private Optional<Boolean> forecastTotal = Optional.empty();
-
 	private ArtifactExchangeModel source;
 
 	private final OrderOptions options;
@@ -45,7 +42,7 @@ public class Recipe {
 
 	private final Set<String> testingContext;
 
-	public Recipe(String orderId, String recipeId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, LocalDateTime perspective, Optional<Boolean> forecastTotal,
+	public Recipe(String orderId, String recipeId, AppId aid, List<ServiceSpecification> services, VersionOrTimestamp version, LocalDateTime perspective,
 			List<RecipeStep> steps, ArtifactExchangeModel source, boolean longTermUse, Set<String> testingContext, OrderOptions options, WorkloadDescription workloadDescription) {
 		this.orderId = orderId;
 		this.recipeId = recipeId;
@@ -54,7 +51,6 @@ public class Recipe {
 		this.services = services;
 		this.version = version;
 		this.perspective = perspective;
-		this.forecastTotal = forecastTotal;
 		this.source = source == null ? new ArtifactExchangeModel() : source;
 		this.longTermUse = longTermUse;
 		this.testingContext = testingContext;
@@ -97,7 +93,6 @@ public class Recipe {
 		task.setServices(services);
 		task.setVersion(version);
 		task.setPerspective(perspective);
-		task.setForecastTotal(forecastTotal);
 		task.setSource(source);
 		task.setOptions(options);
 		task.setWorkloadDescription(workloadDescription);
