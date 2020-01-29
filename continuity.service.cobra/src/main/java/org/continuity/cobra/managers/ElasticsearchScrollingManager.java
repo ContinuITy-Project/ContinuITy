@@ -74,7 +74,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchScrollingManager.class);
 
-	private static final long SCROLL_MINUTES = 1;
+	private static final long SCROLL_MINUTES = 5;
 
 	protected final RestHighLevelClient client;
 
@@ -82,7 +82,9 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 	private final long bulkTimeoutSeconds;
 
-	protected ElasticsearchScrollingManager(String host, String mappingName, int bulkTimeoutSeconds) throws IOException {
+	private final RequestOptions requestOptions;
+
+	protected ElasticsearchScrollingManager(String host, String mappingName, int bulkTimeoutSeconds, RequestOptions requestOptions) throws IOException {
 		this.client = new RestHighLevelClient(
 				RestClient.builder(new HttpHost(host, 9200, "http"), new HttpHost(host, 9300, "http")).setRequestConfigCallback(cb -> cb.setSocketTimeout(bulkTimeoutSeconds * 1000)));
 
@@ -91,6 +93,11 @@ public abstract class ElasticsearchScrollingManager<T> {
 		}
 
 		this.bulkTimeoutSeconds = bulkTimeoutSeconds;
+		this.requestOptions = requestOptions;
+	}
+
+	protected ElasticsearchScrollingManager(String host, String mappingName, int bulkTimeoutSeconds) throws IOException {
+		this(host, mappingName, bulkTimeoutSeconds, RequestOptions.DEFAULT);
 	}
 
 	public void destroy() throws IOException {
@@ -313,7 +320,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 		request.timeout(TimeValue.timeValueSeconds(bulkTimeoutSeconds));
 
-		BulkResponse response = client.bulk(request, RequestOptions.DEFAULT);
+		BulkResponse response = client.bulk(request, requestOptions);
 
 		LOGGER.info("The bulk request to {} took {} and resulted in status {}.", index, response.getTook(), response.status());
 
@@ -494,7 +501,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 		SearchResponse response;
 		try {
-			response = client.search(search, RequestOptions.DEFAULT);
+			response = client.search(search, requestOptions);
 		} catch (ElasticsearchStatusException e) {
 			LOGGER.info("Could not get any elements from {} {}: {}", index, message, e.getMessage());
 			return;
@@ -530,13 +537,13 @@ public abstract class ElasticsearchScrollingManager<T> {
 	private void scrollForMoreElements(String scrollId, AppId aid, String message, int scrollNumber, int remaining, Consumer<List<T>> callback) throws IOException, TimeoutException {
 		SearchScrollRequest scroll = new SearchScrollRequest(scrollId);
 		scroll.scroll(TimeValue.timeValueMinutes(SCROLL_MINUTES));
-		processSearchResponse(client.scroll(scroll, RequestOptions.DEFAULT), aid, message, scrollNumber + 1, remaining, callback);
+		processSearchResponse(client.scroll(scroll, requestOptions), aid, message, scrollNumber + 1, remaining, callback);
 	}
 
 	private void clearScroll(String scrollId) throws IOException {
 		ClearScrollRequest request = new ClearScrollRequest();
 		request.addScrollId(scrollId);
-		ClearScrollResponse response = client.clearScroll(request, RequestOptions.DEFAULT);
+		ClearScrollResponse response = client.clearScroll(request, requestOptions);
 
 		if (response.isSucceeded()) {
 			LOGGER.info("Cleared the scroll with ID {}. Freed {} contexts.", scrollId, response.getNumFreed());
@@ -580,7 +587,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 		CountResponse response;
 		try {
-			response = client.count(count, RequestOptions.DEFAULT);
+			response = client.count(count, requestOptions);
 		} catch (ElasticsearchStatusException e) {
 			LOGGER.info("Could not find any elements in {} {}: {}", index, message, e.getMessage());
 			return 0;
@@ -599,7 +606,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 	 */
 	protected boolean indexExists(String index) throws IOException {
 		GetIndexRequest request = new GetIndexRequest(index);
-		return client.indices().exists(request, RequestOptions.DEFAULT);
+		return client.indices().exists(request, requestOptions);
 	}
 
 	protected void initIndex(String index) throws IOException {
@@ -609,7 +616,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 		CreateIndexRequest request = new CreateIndexRequest(index);
 		request.mapping(mapping, XContentType.JSON);
-		CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
+		CreateIndexResponse response = client.indices().create(request, requestOptions);
 
 		if (response.isAcknowledged()) {
 			LOGGER.info("Index {} has been created.", index);
@@ -639,7 +646,7 @@ public abstract class ElasticsearchScrollingManager<T> {
 
 		PutStoredScriptRequest request = new PutStoredScriptRequest().id(scriptId).content(BytesReference.bytes(script), XContentType.JSON);
 
-		AcknowledgedResponse response = client.putScript(request, RequestOptions.DEFAULT);
+		AcknowledgedResponse response = client.putScript(request, requestOptions);
 
 		if (response.isAcknowledged()) {
 			LOGGER.info("Initialized update script.");
