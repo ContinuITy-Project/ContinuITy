@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "target", "app-id", "services", "version", "perspective", "testing-context", "workload-description", "options", "source" })
+@JsonPropertyOrder({ "target", "app-id", "services", "version", "perspective", "testing-context", "workload", "options", "source" })
 public class Order {
 
 	@JsonProperty("app-id")
@@ -36,9 +36,8 @@ public class Order {
 	@JsonInclude(Include.NON_EMPTY)
 	private Set<String> testingContext;
 
-	@JsonProperty("workload-description")
 	@JsonInclude(Include.NON_NULL)
-	private WorkloadDescription workloadDescription;
+	private WorkloadDescription workload;
 
 	@JsonInclude(Include.NON_NULL)
 	private ArtifactExchangeModel source;
@@ -94,12 +93,12 @@ public class Order {
 		this.testingContext = testingContext;
 	}
 
-	public WorkloadDescription getWorkloadDescription() {
-		return workloadDescription;
+	public WorkloadDescription getWorkload() {
+		return workload;
 	}
 
-	public void setWorkloadDescription(WorkloadDescription workloadDescription) {
-		this.workloadDescription = workloadDescription;
+	public void setWorkload(WorkloadDescription workloadDescription) {
+		this.workload = workloadDescription;
 	}
 
 	public ArtifactExchangeModel getSource() {

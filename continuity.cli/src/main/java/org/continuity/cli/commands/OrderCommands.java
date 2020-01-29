@@ -258,7 +258,7 @@ public class OrderCommands extends AbstractCommands {
 
 		order.setOptions(options);
 
-		order.setWorkloadDescription(createWorkloadDescription());
+		order.setWorkload(createWorkloadDescription());
 
 		return order;
 	}
