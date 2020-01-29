@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.continuity.api.entities.exchange.ArtifactType;
+import org.continuity.api.entities.order.ForecastOptions;
 import org.continuity.api.entities.order.Order;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
@@ -246,8 +247,8 @@ public class OrderCommands extends AbstractCommands {
 		}
 
 		OrderOptions options = new OrderOptions();
-		options.setTailoringApproach(TailoringApproach.LOG_BASED);
-		options.setForecastApproach("Telescope");
+		options.setServiceTailoring(TailoringApproach.LOG_BASED);
+		options.setForecast(new ForecastOptions("Telescope"));
 
 		Map<ArtifactType, String> producers = new HashMap<>();
 		producers.put(ArtifactType.WORKLOAD_MODEL, "wessbas");

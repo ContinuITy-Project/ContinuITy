@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "num-users", "duration", "rampup", "tailoring-approach", "forecast-approach", "producers" })
+@JsonPropertyOrder({ "num-users", "duration", "rampup", "service-tailoring", "forecast", "producers" })
 public class OrderOptions {
 
 	@JsonProperty("num-users")
@@ -25,13 +25,12 @@ public class OrderOptions {
 	@JsonInclude(Include.NON_NULL)
 	private Integer rampup;
 
-	@JsonProperty("tailoring-approach")
+	@JsonProperty("service-tailoring")
 	@JsonInclude(Include.NON_NULL)
-	private TailoringApproach tailoringApproach;
+	private TailoringApproach serviceTailoring;
 
-	@JsonProperty("forecast-approach")
 	@JsonInclude(Include.NON_NULL)
-	private String forecastApproach;
+	private ForecastOptions forecast;
 
 	@JsonInclude(Include.NON_NULL)
 	private Map<ArtifactType, String> producers;
@@ -60,30 +59,30 @@ public class OrderOptions {
 		this.rampup = rampup;
 	}
 
-	public TailoringApproach getTailoringApproach() {
-		return tailoringApproach;
+	public TailoringApproach getServiceTailoring() {
+		return serviceTailoring;
 	}
 
 	@JsonIgnore
-	public TailoringApproach getTailoringApproachOrDefault() {
-		return tailoringApproach == null ? TailoringApproach.LOG_BASED : tailoringApproach;
+	public TailoringApproach getServiceTailoringOrDefault() {
+		return serviceTailoring == null ? TailoringApproach.LOG_BASED : serviceTailoring;
 	}
 
-	public void setTailoringApproach(TailoringApproach tailoringApproach) {
-		this.tailoringApproach = tailoringApproach;
+	public void setServiceTailoring(TailoringApproach tailoringApproach) {
+		this.serviceTailoring = tailoringApproach;
 	}
 
-	public String getForecastApproach() {
-		return forecastApproach;
+	public ForecastOptions getForecast() {
+		return forecast;
 	}
 
 	@JsonIgnore
-	public String getForecastApproachOrDefault() {
-		return forecastApproach == null ? "Telescope" : forecastApproach;
+	public ForecastOptions getForecastOrDefault() {
+		return forecast == null ? new ForecastOptions() : forecast;
 	}
 
-	public void setForecastApproach(String forecastApproach) {
-		this.forecastApproach = forecastApproach;
+	public void setForecast(ForecastOptions forecast) {
+		this.forecast = forecast;
 	}
 
 	public Map<ArtifactType, String> getProducers() {
