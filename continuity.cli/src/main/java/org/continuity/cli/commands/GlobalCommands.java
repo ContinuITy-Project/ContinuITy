@@ -93,7 +93,9 @@ public class GlobalCommands extends AbstractCommands implements Quit.Command {
 	@ShellMethod(key = { "get" }, value = "Gets an artifact.")
 	public AttributedString get(@ShellOption(help = "Link as contained in an order report or field of the latest report.") String link,
 			@ShellOption(help = "Indicates to store the retrieved artifact to the latest order's folder.") boolean store,
-			@ShellOption(help = "Indicates not to print the retrieved artifact to console.") boolean silent) throws Exception {
+			@ShellOption(help = "Indicates not to print the retrieved artifact to console.") boolean silent,
+			@ShellOption(help = "The format in which the artifacts should be stored. Can be yaml or json. Only has an effect if --store is set.", defaultValue = "yaml") String format)
+			throws Exception {
 		return execute(() -> {
 			String linkToArtifact = link;
 
@@ -137,7 +139,7 @@ public class GlobalCommands extends AbstractCommands implements Quit.Command {
 					return new ResponseBuilder().error("Missing an app-id! Please specify one using ").boldError("app-id <your_id>").error("!").build();
 				}
 
-				orderStorage.storeArtifact(aid, linkToArtifact, response.getBody());
+				orderStorage.storeArtifact(aid, linkToArtifact, response.getBody(), format);
 			}
 
 			return silent ? null : new ResponseBuilder().normal(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getBody())).build();

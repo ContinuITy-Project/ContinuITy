@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import org.continuity.api.entities.order.Order;
 import org.continuity.api.entities.report.OrderReport;
@@ -33,9 +34,12 @@ public class OrderStorage {
 
 	private final ObjectMapper mapper;
 
-	public OrderStorage(PropertiesProvider properties, ObjectMapper mapper) {
+	private final ObjectMapper jsonMapper;
+
+	public OrderStorage(PropertiesProvider properties, ObjectMapper mapper, ObjectMapper jsonMapper) {
 		this.directory = new OrderDirectoryManager("order", properties);
 		this.mapper = mapper;
+		this.jsonMapper = jsonMapper;
 	}
 
 	public Path storeAsNew(AppId aid, Order order) throws IOException {
@@ -158,7 +162,11 @@ public class OrderStorage {
 		}
 	}
 
-	public void storeArtifact(AppId aid, String link, JsonNode content) throws IOException {
+	public void storeArtifact(AppId aid, String link, JsonNode content, String format) throws IOException {
+		if (!Arrays.asList("json", "yaml", "yml").contains(format.toLowerCase())) {
+			throw new IllegalArgumentException("Unknown file format: " + format);
+		}
+
 		Path dir = directory.getLatest(aid);
 
 		if (dir == null) {
@@ -168,7 +176,11 @@ public class OrderStorage {
 		Path artifactsDir = dir.resolve(FOLDER_ARTIFACTS);
 		artifactsDir.toFile().mkdirs();
 
-		mapper.writeValue(artifactsDir.resolve(link.replace("/", "_") + ".yml").toFile(), content);
+		if ("json".equals(format.toLowerCase())) {
+			jsonMapper.writerWithDefaultPrettyPrinter().writeValue(artifactsDir.resolve(link.replace("/", "_") + ".json").toFile(), content);
+		} else {
+			mapper.writeValue(artifactsDir.resolve(link.replace("/", "_") + ".yml").toFile(), content);
+		}
 	}
 
 	public int clean(AppId aid, boolean includeCurrent) {

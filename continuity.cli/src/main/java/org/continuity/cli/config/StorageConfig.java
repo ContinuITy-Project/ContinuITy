@@ -4,6 +4,7 @@ import org.continuity.cli.storage.ConfigStorage;
 import org.continuity.cli.storage.IdpaStorage;
 import org.continuity.cli.storage.JMeterStorage;
 import org.continuity.cli.storage.OrderStorage;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,8 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class StorageConfig {
 
 	@Bean
-	public OrderStorage orderStorage(PropertiesProvider properties, ObjectMapper mapper) {
-		return new OrderStorage(properties, mapper);
+	public OrderStorage orderStorage(PropertiesProvider properties, ObjectMapper mapper, @Qualifier("jsonObjectMapper") ObjectMapper jsonMapper) {
+		return new OrderStorage(properties, mapper, jsonMapper);
 	}
 
 	@Bean
