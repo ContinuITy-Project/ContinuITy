@@ -17,6 +17,7 @@ import org.continuity.idpa.VersionOrTimestamp;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.HttpAsyncResponseConsumerFactory;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
@@ -47,17 +48,25 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchSessionManager.class);
 
+	private static final RequestOptions REQUEST_OPTIONS;
+
 	// sessions can be larger
 	private static final int SCROLL_SIZE = DEFAULT_SCROLL_SIZE / 4;
 
 	private static final String UPDATE_SCRIPT_ID = "update-session";
+
+	static {
+		RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
+		builder.setHttpAsyncResponseConsumerFactory(new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(5 * 1024 * 1024 * 1024));
+		REQUEST_OPTIONS = builder.build();
+	}
 
 	private final ObjectMapper mapper;
 
 	private boolean updateScriptInitialized = false;
 
 	public ElasticsearchSessionManager(String host, ObjectMapper mapper, int bulkTimeoutSeconds) throws IOException {
-		super(host, "session", bulkTimeoutSeconds);
+		super(host, "session", bulkTimeoutSeconds, REQUEST_OPTIONS);
 
 		this.mapper = mapper;
 	}
@@ -90,31 +99,6 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	}
 
 	/**
-	 * Reads all sessions within a given range.
-	 *
-	 * @param aid
-	 *            The app-id.
-	 * @param version
-	 *            The version or timestamp. Can be {@code null}. In this case, it will be ignored.
-	 * @param tailoring
-	 *            The list of services to which the sessions are tailored. Use a singleton list with
-	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
-	 * @param from
-	 *            The start date of the range.
-	 * @param to
-	 *            The end date of the range.
-	 * @return The list of sessions in the range.
-	 * @throws IOException
-	 * @throws TimeoutException
-	 */
-	public List<Session> readSessionsInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException, TimeoutException {
-		QueryBuilder query = createRangeQuery(version, from, to);
-		FieldSortBuilder sort = new FieldSortBuilder("start-micros").order(SortOrder.ASC);
-
-		return readElements(aid, tailoring, query, sort, SCROLL_SIZE, TOTAL_SIZE_ALL, String.format(" with version %s and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
-	}
-
-	/**
 	 * Reads all sessions overlapping a given timestamp.
 	 *
 	 * @param aid
@@ -132,15 +116,16 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	public List<Session> readSessionsOverlapping(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date overlapping) throws IOException, TimeoutException {
-		QueryBuilder query = createOverlappingQuery(version, overlapping);
+	public List<Session> readSessionsOverlapping(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException, TimeoutException {
+		QueryBuilder query = createOverlappingQuery(version, from, to);
 		FieldSortBuilder sort = new FieldSortBuilder("start-micros").order(SortOrder.ASC);
 
-		return readElements(aid, tailoring, query, sort, SCROLL_SIZE, TOTAL_SIZE_ALL, String.format(" with version %s overlapping %s", version, formatOrNull(overlapping)));
+		return readElements(aid, tailoring, query, sort, SCROLL_SIZE, TOTAL_SIZE_ALL,
+				String.format(" with version %s and overlapping time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
 	}
 
 	/**
-	 * Counts all sessions within a given range.
+	 * Counts all sessions that overlap a given range.
 	 *
 	 * @param aid
 	 *            The app-id.
@@ -157,14 +142,14 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
-	public long countSessionsInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException {
-		QueryBuilder query = createRangeQuery(version, from, to);
+	public long countSessionsOverlapping(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException {
+		QueryBuilder query = createRangeStartQuery(version, from, to);
 
 		return countElements(aid, tailoring, query, String.format(" with version %s and time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
 	}
 
 	/**
-	 * Counts all sessions within a given range, grouped by the behavior group.
+	 * Counts all sessions starting within a given range, grouped by the behavior group.
 	 *
 	 * @param aid
 	 *            The app-id.
@@ -182,7 +167,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	 * @return A map of the group id to the number of sessions in the range.
 	 * @throws IOException
 	 */
-	public Map<String, Long> countSessionsPerGroupInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to, int numGroups) throws IOException {
+	public Map<String, Long> countSessionStartsPerGroupInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to, int numGroups) throws IOException {
 		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
 
 		if (!indexExists(index)) {
@@ -191,7 +176,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 		SearchSourceBuilder source = new SearchSourceBuilder();
 
-		source.query(createRangeQuery(version, from, to));
+		source.query(createRangeStartQuery(version, from, to));
 		source.size(0);
 		source.aggregation(AggregationBuilders.terms("num_sessions").field("group-id").size(numGroups));
 
@@ -215,7 +200,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 		return sessionsPerGroup;
 	}
 
-	private QueryBuilder createRangeQuery(VersionOrTimestamp version, Date from, Date to) {
+	private QueryBuilder createRangeStartQuery(VersionOrTimestamp version, Date from, Date to) {
 		boolean empty = true;
 
 		BoolQueryBuilder query = QueryBuilders.boolQuery();
@@ -239,7 +224,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 		}
 	}
 
-	private QueryBuilder createOverlappingQuery(VersionOrTimestamp version, Date overlapping) {
+	private QueryBuilder createOverlappingQuery(VersionOrTimestamp version, Date from, Date to) {
 		boolean empty = true;
 
 		BoolQueryBuilder query = QueryBuilders.boolQuery();
@@ -249,12 +234,18 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 			empty = false;
 		}
 
-		if (overlapping != null) {
-			query.must(QueryBuilders.rangeQuery("start-micros").to(overlapping.getTime() * 1000, true));
-			query.must(QueryBuilders.rangeQuery("end-micros").from(overlapping.getTime() * 1000, true));
+		if (from != null) {
+			query.must(QueryBuilders.rangeQuery("end-micros").from(from.getTime() * 1000, true));
 			empty = false;
-		} else {
-			LOGGER.warn("The provided time stamp is null! Ignoring.", formatOrNull(overlapping));
+		}
+
+		if (to != null) {
+			query.must(QueryBuilders.rangeQuery("start-micros").to(to.getTime() * 1000, true));
+			empty = false;
+		}
+
+		if (empty) {
+			LOGGER.warn("The provided time range is null! Ignoring.");
 		}
 
 		if (empty) {

@@ -213,10 +213,16 @@ public class PreparationAmqpHandler {
 		long count = 0;
 
 		if (ranges.isEmpty()) {
-			count = elasticSessionManager.countSessionsInRange(task.getAppId(), null, services, null, null);
+			count = elasticSessionManager.countSessionsOverlapping(task.getAppId(), null, services, null, null);
 		} else {
 			for (ForecastTimerange range : ranges) {
-				count += elasticSessionManager.countSessionsInRange(task.getAppId(), null, services, new Date(range.getFrom()), new Date(range.getTo()));
+				// This might count sessions twice.
+				// However, it is sufficient for testing whether sessions are present.
+				count += elasticSessionManager.countSessionsOverlapping(task.getAppId(), null, services, new Date(range.getFrom()), new Date(range.getTo()));
+
+				if (count > 0) {
+					break;
+				}
 			}
 		}
 

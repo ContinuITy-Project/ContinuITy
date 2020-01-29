@@ -119,7 +119,7 @@ public class BehaviorModelController {
 		MarkovBehaviorModel behaviorModel = behaviorManager.readLatest(aid, lTailoring, timestamp);
 		int numGroups = behaviorModel.getMarkovChains().size();
 
-		Map<String, Long> numSessions = sessionManager.countSessionsPerGroupInRange(aid, null, lTailoring, new Date(clusteringStart), new Date(clusteringEnd), numGroups);
+		Map<String, Long> numSessions = sessionManager.countSessionStartsPerGroupInRange(aid, null, lTailoring, new Date(clusteringStart), new Date(clusteringEnd), numGroups);
 
 		for (RelativeMarkovChain chain : behaviorModel.getMarkovChains()) {
 			chain.setNumSessions(numSessions.getOrDefault(chain.getId(), 0L));
