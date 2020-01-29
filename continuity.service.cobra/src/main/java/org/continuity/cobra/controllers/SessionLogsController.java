@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.ApiFormats;
 import org.continuity.api.entities.artifact.session.Session;
@@ -214,7 +215,9 @@ public class SessionLogsController {
 	private Pair<BadRequestResponse, Date> checkDate(String name, String date) {
 		Date dDate = null;
 
-		if (date != null) {
+		if (NumberUtils.isNumber(date)) {
+			dDate = new Date(NumberUtils.createNumber(date).longValue());
+		} else if (date != null) {
 			try {
 				dDate = ApiFormats.DATE_FORMAT.parse(date);
 			} catch (ParseException e) {
