@@ -1,0 +1,23 @@
+if (ctx._source.context != null) {
+	
+	if (ctx._source.context.numeric != null) {
+		Map new_numeric = new HashMap();
+		
+		for (numeric_context in ctx._source.context.numeric) {
+			new_numeric.put(numeric_context.name, numeric_context.value)
+		}
+		
+		ctx._source.context.numeric = new_numeric
+	}
+	
+	if (ctx._source.context.string != null) {
+		Map new_string = new HashMap();
+		
+		for (string_context in ctx._source.context.string) {
+			new_string.put(string_context.name, string_context.value)
+		}
+		
+		ctx._source.context.string = new_string
+	}
+	
+}

@@ -3,8 +3,10 @@ package org.continuity.dsl.elements;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -12,7 +14,6 @@ import org.continuity.dsl.ContextValue;
 import org.continuity.dsl.timeseries.ContextRecord;
 import org.continuity.dsl.timeseries.IntensityRecord;
 import org.continuity.dsl.timeseries.NumericVariable;
-import org.continuity.dsl.timeseries.StringVariable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -82,9 +83,9 @@ public class ContextSpecification {
 					if (is.get().isBoolean() && is.get().getAsBoolean()) {
 						initContext(record, "boolean").getBoolean().add(variable);
 					} else if (is.get().isNumeric()) {
-						initContext(record, "numeric").getNumeric().add(new NumericVariable(variable, is.get().getAsNumber()));
+						initContext(record, "numeric").getNumeric().put(variable, is.get().getAsNumber());
 					} else if (is.get().isString()) {
-						initContext(record, "string").getString().add(new StringVariable(variable, is.get().getAsString()));
+						initContext(record, "string").getString().put(variable, is.get().getAsString());
 					}
 				} else {
 					Optional<NumericVariable> var = getNumericIfPresent(record).stream().filter(n -> n.getName().equals(variable)).findFirst();
@@ -96,7 +97,7 @@ public class ContextSpecification {
 					if (added.isPresent() && var.isPresent()) {
 						var.get().setValue(var.get().getValue() + added.get());
 					} else if (added.isPresent() && !var.isPresent()) {
-						initContext(record, "numeric").getNumeric().add(new NumericVariable(variable, added.get()));
+						initContext(record, "numeric").getNumeric().put(variable, added.get());
 					}
 				}
 			}
@@ -125,18 +126,18 @@ public class ContextSpecification {
 			}
 			break;
 		case "numeric":
-			Set<NumericVariable> numeric = context.getNumeric();
+			Map<String, Double> numeric = context.getNumeric();
 
 			if (numeric == null) {
-				numeric = new HashSet<>();
+				numeric = new HashMap<>();
 				context.setNumeric(numeric);
 			}
 			break;
 		case "string":
-			Set<StringVariable> string = context.getString();
+			Map<String, String> string = context.getString();
 
 			if (string == null) {
-				string = new HashSet<>();
+				string = new HashMap<>();
 				context.setString(string);
 			}
 			break;
@@ -149,7 +150,7 @@ public class ContextSpecification {
 		if ((record.getContext() == null) || (record.getContext().getNumeric() == null)) {
 			return Collections.emptySet();
 		} else {
-			return record.getContext().getNumeric();
+			return record.getContext().getNumericVariables();
 		}
 	}
 

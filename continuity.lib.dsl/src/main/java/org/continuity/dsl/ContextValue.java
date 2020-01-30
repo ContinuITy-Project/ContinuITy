@@ -111,6 +111,23 @@ public class ContextValue {
 		return !isNumeric() && !isString() && !isBoolean();
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+
+		if (isString()) {
+			builder.append("string[").append(getAsString()).append("]");
+		} else if (isNumeric()) {
+			builder.append("numeric[").append(getAsNumber()).append("]");
+		} else if (isBoolean()) {
+			builder.append("boolean[").append(getAsBoolean()).append("]");
+		} else {
+			builder.append("NULL");
+		}
+
+		return builder.toString();
+	}
+
 	public static class Serializer extends StdSerializer<ContextValue> {
 
 		private static final long serialVersionUID = 1644078031650138946L;

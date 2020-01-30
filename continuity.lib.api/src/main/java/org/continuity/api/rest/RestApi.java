@@ -662,12 +662,17 @@ public class RestApi {
 			/** {@value #ROOT}/{app-id:.+} */
 			public static final RestEndpoint PUSH = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.PUSH, RequestMethod.POST);
 
+			/** {@value #ROOT}/{app-id:.+} */
+			public static final RestEndpoint CLEAR = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.CLEAR, RequestMethod.DELETE);
+
 			private Context() {
 			}
 
 			public static class Paths {
 
 				public static final String PUSH = "/{app-id:.+}";
+
+				public static final String CLEAR = "/{app-id:.+}";
 
 				private Paths() {
 				}
@@ -717,6 +722,9 @@ public class RestApi {
 			/** {@value #ROOT}/{app-id:.+}/{tailoring:.+}/{group} */
 			public static final RestEndpoint UPLOAD = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPLOAD, RequestMethod.POST);
 
+			/** {@value #ROOT}/{app-id:.+}/{tailoring:.+}/update_legacy */
+			public static final RestEndpoint UPDATE_LEGACY = RestEndpoint.of(SERVICE_NAME, ROOT, Paths.UPDATE_LEGACY, RequestMethod.POST);
+
 			private Intensity() {
 			}
 
@@ -725,6 +733,8 @@ public class RestApi {
 				public static final String GET_FOR_ID = "/{id}";
 
 				public static final String UPLOAD = "/{app-id:.+}/{tailoring:.+}/{group}";
+
+				public static final String UPDATE_LEGACY = "/{app-id:.+}/{tailoring:.+}/update_legacy";
 
 				private Paths() {
 				}

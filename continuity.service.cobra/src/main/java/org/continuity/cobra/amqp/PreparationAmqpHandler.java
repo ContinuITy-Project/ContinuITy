@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.continuity.api.amqp.AmqpApi;
@@ -338,14 +339,12 @@ public class PreparationAmqpHandler {
 
 		List<IntensityRecord> futureRecords = intensities.stream().filter(i -> i.getTimestamp() > effectivePerspective).collect(Collectors.toList());
 
-		IgnoreByDefaultValue ignore = config.getContext().ignoreByDefault();
 		Set<String> timeframeVariables = description.getTimeframe().stream().map(TimeSpecification::getReferredContextVariables).flatMap(Set::stream).collect(Collectors.toSet());
 
 		for (IntensityRecord record : futureRecords) {
 			if (record.getContext() != null) {
 				if (record.getContext().getNumeric() != null) {
-					record.getContext().getNumeric()
-							.removeIf(v -> !timeframeVariables.contains(v.getName()) && ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
+					record.getContext().getNumeric().keySet().removeIf(ignoreVariable(timeframeVariables, config));
 
 					if (record.getContext().getNumeric().isEmpty()) {
 						record.getContext().setNumeric(null);
@@ -353,7 +352,7 @@ public class PreparationAmqpHandler {
 				}
 
 				if (record.getContext().getString() != null) {
-					record.getContext().getString().removeIf(v -> !timeframeVariables.contains(v.getName()) && ignore.ignore(config.getContext().getVariables().get(v.getName()).getIgnoreByDefault()));
+					record.getContext().getString().keySet().removeIf(ignoreVariable(timeframeVariables, config));
 
 					if (record.getContext().getString().isEmpty()) {
 						record.getContext().setString(null);
@@ -361,7 +360,7 @@ public class PreparationAmqpHandler {
 				}
 
 				if (record.getContext().getBoolean() != null) {
-					record.getContext().getBoolean().removeIf(v -> !timeframeVariables.contains(v) && ignore.ignore(config.getContext().getVariables().get(v).getIgnoreByDefault()));
+					record.getContext().getBoolean().removeIf(ignoreVariable(timeframeVariables, config));
 
 					if (record.getContext().getBoolean().isEmpty()) {
 						record.getContext().setBoolean(null);
@@ -373,6 +372,11 @@ public class PreparationAmqpHandler {
 		description.adjustContext(futureRecords, config.getTimeZone());
 
 		return intensities.stream().map(TimedContextRecord::fromIntensity).filter(Objects::nonNull).collect(Collectors.toList());
+	}
+
+	private Predicate<String> ignoreVariable(Set<String> variables, CobraConfiguration config) {
+		IgnoreByDefaultValue ignore = config.getContext().ignoreByDefault();
+		return v -> !variables.contains(v) && ignore.ignore(config.getContext().getVariables().get(v).getIgnoreByDefault());
 	}
 
 	private void sendReport(TaskReport report) {

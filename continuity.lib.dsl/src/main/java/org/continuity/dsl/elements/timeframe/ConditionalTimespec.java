@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.dsl.elements.TimeSpecification;
+import org.continuity.dsl.timeseries.NumericVariable;
+import org.continuity.dsl.timeseries.StringVariable;
 import org.elasticsearch.index.query.QueryBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,12 +51,12 @@ public class ConditionalTimespec implements TimeSpecification {
 	}
 
 	@Override
-	public boolean appliesToNumerical(String variable, double value) {
+	public boolean appliesToNumerical(Set<NumericVariable> variables) {
 		if (conditions == null) {
 			return true;
 		}
 
-		return conditions.entrySet().stream().map(e -> e.getValue().appliesToNumerical(e.getKey(), variable, value)).reduce(Boolean::logicalAnd).orElse(true);
+		return conditions.entrySet().stream().map(e -> e.getValue().appliesToNumerical(e.getKey(), variables)).reduce(Boolean::logicalAnd).orElse(true);
 	}
 
 	@Override
@@ -67,12 +69,12 @@ public class ConditionalTimespec implements TimeSpecification {
 	}
 
 	@Override
-	public boolean appliesToString(String variable, String value) {
+	public boolean appliesToString(Set<StringVariable> variables) {
 		if (conditions == null) {
 			return true;
 		}
 
-		return conditions.entrySet().stream().map(e -> e.getValue().appliesToString(e.getKey(), variable, value)).reduce(Boolean::logicalAnd).orElse(true);
+		return conditions.entrySet().stream().map(e -> e.getValue().appliesToString(e.getKey(), variables)).reduce(Boolean::logicalAnd).orElse(true);
 	}
 
 	@Override

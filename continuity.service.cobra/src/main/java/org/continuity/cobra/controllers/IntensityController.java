@@ -2,6 +2,7 @@ package org.continuity.cobra.controllers;
 
 import static org.continuity.api.rest.RestApi.Cobra.Intensity.ROOT;
 import static org.continuity.api.rest.RestApi.Cobra.Intensity.Paths.GET_FOR_ID;
+import static org.continuity.api.rest.RestApi.Cobra.Intensity.Paths.UPDATE_LEGACY;
 import static org.continuity.api.rest.RestApi.Cobra.Intensity.Paths.UPLOAD;
 
 import java.io.IOException;
@@ -88,6 +89,16 @@ public class IntensityController {
 		elasticManager.storeOrUpdateIntensities(aid, tailoring, records);
 
 		return ResponseEntity.ok("Updated the intensities!");
+	}
+
+	@RequestMapping(value = UPDATE_LEGACY, method = RequestMethod.POST)
+	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path"),
+			@ApiImplicitParam(name = "tailoring", required = true, dataType = "string", paramType = "path") })
+	public ResponseEntity<String> updateFromLegacy(@ApiIgnore @PathVariable("app-id") AppId aid, @ApiIgnore @PathVariable("tailoring") String tailoringStr) throws IOException {
+		List<String> tailoring = Session.convertStringToTailoring(tailoringStr);
+		elasticManager.updateIndexFromLegacy(aid, tailoring);
+
+		return ResponseEntity.ok("Update started.");
 	}
 
 	private List<IntensityRecord> toIntensityRecords(AppId aid, String group, Map<Date, Long> intensities) {

@@ -11,6 +11,8 @@ import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.dsl.elements.TimeSpecification;
 import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.dsl.timeseries.NumericVariable;
+import org.continuity.dsl.timeseries.StringVariable;
 import org.continuity.dsl.utils.DateUtils;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -80,7 +82,7 @@ public class Timerange implements TimeSpecification {
 	}
 
 	@Override
-	public boolean appliesToNumerical(String variable, double value) {
+	public boolean appliesToNumerical(Set<NumericVariable> variables) {
 		return true;
 	}
 
@@ -90,7 +92,7 @@ public class Timerange implements TimeSpecification {
 	}
 
 	@Override
-	public boolean appliesToString(String variable, String value) {
+	public boolean appliesToString(Set<StringVariable> variables) {
 		return true;
 	}
 
