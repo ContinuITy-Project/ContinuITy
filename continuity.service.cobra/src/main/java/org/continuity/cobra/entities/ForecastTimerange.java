@@ -1,17 +1,25 @@
 package org.continuity.cobra.entities;
 
-import java.util.Date;
+import java.time.ZoneId;
+
+import org.continuity.dsl.utils.DateUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class ForecastTimerange {
-
-	public ForecastTimerange(long from, long to) {
-		this.from = from;
-		this.to = to;
-	}
 
 	private long from;
 
 	private long to;
+
+	@JsonIgnore
+	private final ZoneId timezone;
+
+	public ForecastTimerange(long from, long to, ZoneId timezone) {
+		this.from = from;
+		this.to = to;
+		this.timezone = timezone;
+	}
 
 	public long getFrom() {
 		return from;
@@ -31,7 +39,15 @@ public class ForecastTimerange {
 
 	@Override
 	public String toString() {
-		return new StringBuilder().append(new Date(from)).append(" - ").append(new Date(to)).toString();
+		return new StringBuilder().append(formatDate(from)).append(" - ").append(formatDate(to)).toString();
+	}
+
+	private String formatDate(long timestamp) {
+		if (timezone == null) {
+			return Long.toString(timestamp);
+		} else {
+			return DateUtils.fromEpochMillis(timestamp, timezone).toString();
+		}
 	}
 
 }

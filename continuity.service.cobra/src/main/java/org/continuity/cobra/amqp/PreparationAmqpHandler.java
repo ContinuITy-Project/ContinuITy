@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -51,6 +52,7 @@ import org.continuity.dsl.WorkloadDescription;
 import org.continuity.dsl.elements.TimeSpecification;
 import org.continuity.dsl.schema.IgnoreByDefaultValue;
 import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.dsl.utils.DateUtils;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
 import org.slf4j.Logger;
@@ -116,7 +118,8 @@ public class PreparationAmqpHandler {
 
 		LOGGER.info("Task {}: Get {} in ranges {}...", task.getTaskId(), task.getTarget().toPrettyString(), ranges);
 
-		List<ForecastTimerange> restrictedRanges = perspective.map(p -> ranges.stream().filter(r -> r.getFrom() < p).map(r -> new ForecastTimerange(r.getFrom(), Math.min(r.getTo(), p)))
+		List<ForecastTimerange> restrictedRanges = perspective.map(p -> ranges.stream().filter(r -> r.getFrom() < p)
+				.map(r -> new ForecastTimerange(r.getFrom(), Math.min(r.getTo(), p), config.getTimeZone()))
 				.filter(r -> r.getTo() < r.getFrom()).collect(Collectors.toList())).orElse(ranges);
 
 		TaskReport report;
@@ -167,22 +170,27 @@ public class PreparationAmqpHandler {
 	}
 
 	private List<ForecastTimerange> extractRanges(AppId aid, List<IntensityRecord> intensities) {
-		long resolution = configProvider.getConfiguration(aid).getIntensity().getResolution().toMillis();
+		CobraConfiguration config = configProvider.getConfiguration(aid);
+		long resolution = config.getIntensity().getResolution().toMillis();
 
 		List<ForecastTimerange> ranges = new ArrayList<>();
 		IntensityRecord rangeStart = intensities.get(0);
 		IntensityRecord last = null;
 
 		for (IntensityRecord next : intensities) {
-			if ((last != null) && ((next.getTimestamp() - last.getTimestamp()) > resolution)) {
-				ranges.add(new ForecastTimerange(rangeStart.getTimestamp(), last.getTimestamp()));
+			LocalDateTime nextDate = DateUtils.fromEpochMillis(next.getTimestamp(), config.getTimeZone());
+			LocalDateTime lastDate = last == null ? nextDate : DateUtils.fromEpochMillis(last.getTimestamp(), config.getTimeZone());
+			long difference = ChronoUnit.SECONDS.between(lastDate, nextDate) * 1000;
+
+			if ((last != null) && (difference > resolution)) {
+				ranges.add(new ForecastTimerange(rangeStart.getTimestamp(), last.getTimestamp(), config.getTimeZone()));
 				rangeStart = next;
 			}
 
 			last = next;
 		}
 
-		ranges.add(new ForecastTimerange(rangeStart.getTimestamp(), last.getTimestamp()));
+		ranges.add(new ForecastTimerange(rangeStart.getTimestamp(), last.getTimestamp(), config.getTimeZone()));
 
 		return ranges;
 	}
