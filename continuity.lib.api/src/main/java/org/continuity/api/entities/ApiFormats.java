@@ -3,6 +3,8 @@ package org.continuity.api.entities;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,6 +49,17 @@ public class ApiFormats {
 
 		for (Entry<String, T> entry : map.entrySet()) {
 			Date date = ApiFormats.DATE_FORMAT.parse(entry.getKey());
+			dateMap.put(date, entry.getValue());
+		}
+
+		return dateMap;
+	}
+
+	public static <T> Map<LocalDateTime, T> parseKeysAsLocalDateTime(Map<String, T> map) {
+		Map<LocalDateTime, T> dateMap = new HashMap<>();
+
+		for (Entry<String, T> entry : map.entrySet()) {
+			LocalDateTime date = LocalDateTime.parse(entry.getKey(), DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN));
 			dateMap.put(date, entry.getValue());
 		}
 

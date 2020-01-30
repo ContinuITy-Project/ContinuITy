@@ -2,6 +2,7 @@ package org.continuity.dsl.timeseries;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
@@ -17,28 +18,37 @@ public class StringVariable {
 
 	private String value;
 
+	@JsonIgnore
+	private ContextRecord record;
+
 	public StringVariable() {
 	}
 
-	public StringVariable(String name, String value) {
+	public StringVariable(String name, String value, ContextRecord record) {
 		this.name = name;
 		this.value = value;
+		this.record = record;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
 	public String getValue() {
 		return value;
 	}
 
+	/**
+	 * Also modifies the entry in the record.
+	 * 
+	 * @param value
+	 */
 	public void setValue(String value) {
 		this.value = value;
+
+		if (record != null) {
+			record.getString().put(name, value);
+		}
 	}
 
 	@Override

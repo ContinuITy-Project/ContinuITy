@@ -43,6 +43,7 @@ import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -622,6 +623,22 @@ public abstract class ElasticsearchScrollingManager<T> {
 			LOGGER.info("Index {} has been created.", index);
 		} else {
 			LOGGER.warn("Creation of index {} has not been acknowledged!", index);
+		}
+	}
+
+	protected void updateMapping(String index) throws IOException {
+		if (!indexExists(index)) {
+			return;
+		}
+
+		PutMappingRequest putMapping = new PutMappingRequest(index);
+		putMapping.source(mapping, XContentType.JSON);
+		AcknowledgedResponse response = client.indices().putMapping(putMapping, requestOptions);
+
+		if (response.isAcknowledged()) {
+			LOGGER.info("New mapping for index {} has been created.", index);
+		} else {
+			LOGGER.warn("Creation new mapping for index {} has not been acknowledged!", index);
 		}
 	}
 

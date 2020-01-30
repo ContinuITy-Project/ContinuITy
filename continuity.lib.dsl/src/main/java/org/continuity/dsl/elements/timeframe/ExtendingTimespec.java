@@ -13,6 +13,8 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.dsl.elements.TimeSpecification;
 import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.dsl.timeseries.NumericVariable;
+import org.continuity.dsl.timeseries.StringVariable;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -59,7 +61,7 @@ public class ExtendingTimespec implements TimeSpecification {
 	}
 
 	@Override
-	public boolean appliesToNumerical(String variable, double value) {
+	public boolean appliesToNumerical(Set<NumericVariable> variables) {
 		return true;
 	}
 
@@ -69,7 +71,7 @@ public class ExtendingTimespec implements TimeSpecification {
 	}
 
 	@Override
-	public boolean appliesToString(String variable, String value) {
+	public boolean appliesToString(Set<StringVariable> variables) {
 		return true;
 	}
 

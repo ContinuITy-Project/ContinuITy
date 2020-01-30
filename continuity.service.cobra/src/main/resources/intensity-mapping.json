@@ -1,4 +1,18 @@
 {
+    "dynamic_templates": [
+        {
+          "numeric_variable": {
+            "path_match":   "context.numeric.*",
+            "mapping": { "type": "double" }
+          }
+        },
+        {
+          "string_variable": {
+            "path_match":   "context.string.*",
+            "mapping": { "type": "keyword" }
+          }
+        }
+    ],
     "properties": {
         "timestamp": { "type": "long" },
         "intensity": {
@@ -8,18 +22,8 @@
         },
         "context": {
             "properties": {
-                "numeric": {
-                    "properties": {
-                        "name": { "type": "keyword" },
-                        "value": { "type" : "double" }
-                    }
-                },
-                "string": {
-                    "properties": {
-                        "name": { "type": "keyword" },
-                        "value": { "type" : "keyword" }
-                    }
-                },
+                "numeric": { "type": "object" },
+                "string": { "type": "object" },
                 "boolean": {
                     "type": "keyword"
                 }

@@ -252,7 +252,7 @@ public class OrderCommands extends AbstractCommands {
 
 		Map<ArtifactType, String> producers = new HashMap<>();
 		producers.put(ArtifactType.WORKLOAD_MODEL, "wessbas");
-		producers.put(ArtifactType.BEHAVIOR_MODEL, "wessbas");
+		producers.put(ArtifactType.BEHAVIOR_MODEL, "cobra");
 		producers.put(ArtifactType.LOAD_TEST, "jmeter");
 		options.setProducers(producers);
 

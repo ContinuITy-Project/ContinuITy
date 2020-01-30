@@ -13,6 +13,8 @@ import org.continuity.dsl.elements.timeframe.ConditionalTimespec;
 import org.continuity.dsl.elements.timeframe.ExtendingTimespec;
 import org.continuity.dsl.elements.timeframe.Timerange;
 import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.dsl.timeseries.NumericVariable;
+import org.continuity.dsl.timeseries.StringVariable;
 import org.continuity.dsl.utils.DateUtils;
 import org.elasticsearch.index.query.QueryBuilder;
 
@@ -56,11 +58,10 @@ public interface TimeSpecification {
 		boolean appliesToDate = appliesToDate(DateUtils.fromEpochMillis(record.getTimestamp(), timeZone));
 
 		boolean contextIsNull = record.getContext() == null;
-		boolean appliesToBoolean = contextIsNull || (record.getContext().getBoolean() == null) || appliesToBoolean(record.getContext().getBoolean());
-		boolean appliesToNumeric = contextIsNull || (record.getContext().getNumeric() == null)
-				|| record.getContext().getNumeric().stream().map(n -> appliesToNumerical(n.getName(), n.getValue())).reduce(Boolean::logicalAnd).orElse(true);
-		boolean appliesToString = contextIsNull || (record.getContext().getString() == null)
-				|| record.getContext().getString().stream().map(s -> appliesToString(s.getName(), s.getValue())).reduce(Boolean::logicalAnd).orElse(true);
+		boolean appliesToBoolean = appliesToBoolean(contextIsNull ? null : record.getContext().getBoolean());
+
+		boolean appliesToNumeric = appliesToNumerical(contextIsNull ? null : record.getContext().getNumericVariables());
+		boolean appliesToString = appliesToString(contextIsNull ? null : record.getContext().getStringVariables());
 
 		return appliesToDate && appliesToBoolean && appliesToNumeric && appliesToString;
 	}
@@ -75,15 +76,13 @@ public interface TimeSpecification {
 	boolean appliesToDate(LocalDateTime date);
 
 	/**
-	 * Returns whether the time specification applies to a given value of a numerical variable.
+	 * Returns whether the time specification applies to the given numerical variables.
 	 *
-	 * @param variable
-	 *            The variable to check.
-	 * @param value
-	 *            The value of the variable.
+	 * @param variables
+	 *            The variables to check.
 	 * @return {@code true} if the passed value fits to the specification.
 	 */
-	boolean appliesToNumerical(String variable, double value);
+	boolean appliesToNumerical(Set<NumericVariable> variables);
 
 	/**
 	 * Returns whether the time specification applies to a given list of boolean variables that
@@ -96,15 +95,13 @@ public interface TimeSpecification {
 	boolean appliesToBoolean(Set<String> occurring);
 
 	/**
-	 * Returns whether the time specification applies to a given value of a string variable.
+	 * Returns whether the time specification applies to the given string variables.
 	 *
 	 * @param variable
-	 *            The variable to check.
-	 * @param value
-	 *            The value of the variable.
+	 *            The variables to check.
 	 * @return {@code true} if the passed value fits to the specification.
 	 */
-	boolean appliesToString(String variable, String value);
+	boolean appliesToString(Set<StringVariable> variables);
 
 	/**
 	 * Returns whether postprocessing is required to retrieve all intensities.

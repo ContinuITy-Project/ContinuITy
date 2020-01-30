@@ -5,28 +5,30 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.continuity.api.entities.artifact.session.Session;
 import org.continuity.dsl.WorkloadDescription;
 import org.continuity.dsl.timeseries.IntensityRecord;
-import org.continuity.dsl.timeseries.NumericVariable;
-import org.continuity.dsl.timeseries.StringVariable;
 import org.continuity.dsl.utils.DateUtils;
 import org.continuity.idpa.AppId;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -52,9 +54,17 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 
 	private static final String UPDATE_SCRIPT_ID = "update-intensity";
 
+	private static final String UPDATE_LEGACY_SCRIPT_ID = "update-intensity-from-legacy";
+
+	private static final String REMOVE_CONTEXT_SCRIPT_ID = "remove-context";
+
 	private final ObjectMapper mapper;
 
 	private boolean updateScriptInitialized = false;
+
+	private boolean updateLegacyScriptInitialized = false;
+
+	private boolean removeContextScriptInitialized = false;
 
 	public ElasticsearchIntensityManager(String host, ObjectMapper mapper, int bulkTimeoutSeconds) throws IOException {
 		super(host, "intensity", bulkTimeoutSeconds);
@@ -98,11 +108,11 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 
 		if (record.getContext() != null) {
 			if ((record.getContext().getNumeric() != null) && !record.getContext().getNumeric().isEmpty()) {
-				params.put("numeric", formatVariables(record.getContext().getNumeric(), NumericVariable::getName, NumericVariable::getValue));
+				params.put("numeric", record.getContext().getNumeric());
 			}
 
 			if ((record.getContext().getString() != null) && !record.getContext().getString().isEmpty()) {
-				params.put("string", formatVariables(record.getContext().getString(), StringVariable::getName, StringVariable::getValue));
+				params.put("string", record.getContext().getString());
 			}
 
 			if ((record.getContext().getBoolean() != null) && !record.getContext().getBoolean().isEmpty()) {
@@ -111,15 +121,6 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 		}
 
 		return new Script(ScriptType.STORED, null, UPDATE_SCRIPT_ID, params);
-	}
-
-	private <T, V> List<Map<String, Object>> formatVariables(Collection<V> variables, Function<V, String> nameGetter, Function<V, T> valueGetter) {
-		return variables.stream().map(v -> {
-			Map<String, Object> map = new HashMap<>();
-			map.put("name", nameGetter.apply(v));
-			map.put("value", valueGetter.apply(v));
-			return map;
-		}).collect(Collectors.toList());
 	}
 
 	/**
@@ -195,7 +196,8 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 	 */
 	public List<IntensityRecord> readIntensitiesInRange(AppId aid, List<String> tailoring, long from, long to) throws IOException, TimeoutException {
 		QueryBuilder query = QueryBuilders.rangeQuery(IntensityRecord.PATH_TIMESTAMP).from(from, true).to(to, true);
-		return readElements(aid, tailoring, query, String.format("between %s and %s", formatOrNull(new Date(from)), formatOrNull(new Date(to))));
+		FieldSortBuilder sort = new FieldSortBuilder("timestamp").order(SortOrder.ASC);
+		return readElements(aid, tailoring, query, sort, DEFAULT_SCROLL_SIZE, TOTAL_SIZE_ALL, String.format("between %s and %s", formatOrNull(new Date(from)), formatOrNull(new Date(to))));
 	}
 
 	/**
@@ -312,6 +314,90 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 		double millis = max.getValue();
 
 		return new Date(Math.round(millis));
+	}
+
+	/**
+	 * Updates the stored intensity documents from the legacy structure to the new one.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param tailoring
+	 *            The list of services to which the intensities belong. Use a singleton list with
+	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
+	 * @throws IOException
+	 */
+	public void updateIndexFromLegacy(AppId aid, List<String> tailoring) throws IOException {
+		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+
+		if (!indexExists(index)) {
+			LOGGER.warn("Cannot update index {}. It does not exist!", index);
+			return;
+		}
+
+		try {
+			if (!updateLegacyScriptInitialized) {
+				updateLegacyScriptInitialized = initUpdateScript(UPDATE_LEGACY_SCRIPT_ID);
+			}
+		} catch (Exception e) {
+			LOGGER.error("Could not initialize update script! Hoping it is already present...", e);
+		}
+
+		LOGGER.info("Updating mapping of index {} from legacy...", index);
+		updateMapping(index);
+
+		LOGGER.info("Updating index {} from legacy...", index);
+
+		updateByQueryAsync(index, REMOVE_CONTEXT_SCRIPT_ID);
+	}
+
+	/**
+	 * Removes all context fields from the intensity documents.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param tailoring
+	 *            The list of services to which the intensities belong. Use a singleton list with
+	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
+	 * @throws IOException
+	 */
+	public void clearContext(AppId aid, List<String> tailoring) throws IOException {
+		String index = toIndex(aid, Session.convertTailoringToString(tailoring));
+
+		if (!indexExists(index)) {
+			LOGGER.warn("Cannot clear context in index {}. It does not exist!", index);
+			return;
+		}
+
+		try {
+			if (!removeContextScriptInitialized) {
+				removeContextScriptInitialized = initUpdateScript(REMOVE_CONTEXT_SCRIPT_ID);
+			}
+		} catch (Exception e) {
+			LOGGER.error("Could not initialize removal script! Hoping it is already present...", e);
+		}
+
+		LOGGER.info("Removing context from index {}...", index);
+
+		updateByQueryAsync(index, REMOVE_CONTEXT_SCRIPT_ID);
+	}
+
+	private void updateByQueryAsync(String index, String scriptId) {
+		UpdateByQueryRequest update = new UpdateByQueryRequest(index);
+		update.setScript(new Script(ScriptType.STORED, null, scriptId, Collections.emptyMap()));
+		update.setTimeout(TimeValue.timeValueMinutes(5));
+
+		client.updateByQueryAsync(update, RequestOptions.DEFAULT, new ActionListener<BulkByScrollResponse>() {
+
+			@Override
+			public void onResponse(BulkByScrollResponse response) {
+				LOGGER.info("The update by query request to {} took {} and updated {} documents.", index, response.getTook(), response.getUpdated());
+			}
+
+			@Override
+			public void onFailure(Exception e) {
+				LOGGER.warn("The update by query request failed!", e);
+			}
+		});
 	}
 
 	@Override

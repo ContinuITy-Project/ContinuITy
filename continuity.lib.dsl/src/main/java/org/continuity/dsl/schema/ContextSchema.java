@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.continuity.dsl.timeseries.ContextRecord;
-import org.continuity.dsl.timeseries.NumericVariable;
-import org.continuity.dsl.timeseries.StringVariable;
 import org.continuity.dsl.validation.ContextValidityReport;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -74,14 +72,14 @@ public class ContextSchema {
 		ContextValidityReport report = new ContextValidityReport();
 
 		if (record.getNumeric() != null) {
-			for (NumericVariable var : record.getNumeric()) {
-				validate(var.getName(), VariableType.NUMERIC, report);
+			for (String var : record.getNumeric().keySet()) {
+				validate(var, VariableType.NUMERIC, report);
 			}
 		}
 
 		if (record.getString() != null) {
-			for (StringVariable var : record.getString()) {
-				validate(var.getName(), VariableType.STRING, report);
+			for (String var : record.getString().keySet()) {
+				validate(var, VariableType.STRING, report);
 			}
 		}
 

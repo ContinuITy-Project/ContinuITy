@@ -22,19 +22,7 @@ if (params.numeric != null) {
 	if (ctx._source.context.numeric == null) {
 		ctx._source.context.numeric = params.numeric
 	} else {
-		List numeric_names = new ArrayList();
-		
-		for (numeric_context in ctx._source.context.numeric) {
-			numeric_names.add(numeric_context.name)
-		}
-	
-		for (numeric_context in params.numeric) {
-			if (numeric_names.contains(numeric_context.name)) {
-				ctx._source.context.numeric.remove(numeric_names.indexOf(numeric_context.name))
-			}
-			
-			ctx._source.context.numeric.add(numeric_context)
-		}
+		ctx._source.context.numeric.putAll(params.numeric)
 	}
 }
 
@@ -42,18 +30,6 @@ if (params.string != null) {
 	if (ctx._source.context.string == null) {
 		ctx._source.context.string = params.string
 	} else {
-		List string_names = new ArrayList();
-		
-		for (string_context in ctx._source.context.string) {
-			string_names.add(string_context.name)
-		}
-	
-		for (string_context in params.string) {
-			if (string_names.contains(string_context.name)) {
-				ctx._source.context.string.remove(string_names.indexOf(string_context.name))
-			}
-			
-			ctx._source.context.string.add(string_context)
-		}
+		ctx._source.context.string.putAll(params.string)
 	}
 }
