@@ -148,7 +148,7 @@ public class ElasticsearchIntensityManager extends ElasticsearchScrollingManager
 		}
 
 		if (latest.isAfter(from)) {
-			from = latest;
+			from = latest.plus(resolution);
 		}
 
 		long numIntensities = ((DateUtils.toEpochMillis(to, timeZone) - DateUtils.toEpochMillis(from, timeZone)) / resolution.toMillis()) + 1;
