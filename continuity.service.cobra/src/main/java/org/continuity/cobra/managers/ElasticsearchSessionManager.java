@@ -57,7 +57,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 	static {
 		RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
-		builder.setHttpAsyncResponseConsumerFactory(new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(5 * 1024 * 1024 * 1024));
+		builder.setHttpAsyncResponseConsumerFactory(new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(Integer.MAX_VALUE));
 		REQUEST_OPTIONS = builder.build();
 	}
 
