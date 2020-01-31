@@ -381,7 +381,7 @@ public class PreparationAmqpHandler {
 
 		description.adjustContext(futureRecords, config.getTimeZone());
 
-		return intensities.stream().map(TimedContextRecord::fromIntensity).filter(Objects::nonNull).collect(Collectors.toList());
+		return futureRecords.stream().map(TimedContextRecord::fromIntensity).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	private Predicate<String> ignoreVariable(Set<String> variables, CobraConfiguration config) {
