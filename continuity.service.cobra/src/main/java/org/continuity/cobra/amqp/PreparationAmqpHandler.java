@@ -192,6 +192,8 @@ public class PreparationAmqpHandler {
 
 		ranges.add(new ForecastTimerange(rangeStart.getTimestamp(), last.getTimestamp(), config.getTimeZone()));
 
+		LOGGER.info("{}: Extracted ranges {}.", aid, ranges);
+
 		return ranges;
 	}
 

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,10 +61,15 @@ public class OrderDirectoryManager extends DirectoryManager {
 	 * @return The path to the directoy. It is guaranteed that it will exist.
 	 */
 	public Path getFreshDir(AppId aid, String orderId) {
-		Path dir = getDir(aid, false).resolve(orderId);
+		Path root = getDir(aid, false);
+		Path dir = root.resolve(orderId);
 
-		if (dir.toFile().exists()) {
-			archiveExisting(aid);
+		if (root.toFile().exists()) {
+			long numConfilcting = Arrays.stream(root.toFile().list()).filter(s -> !FOLDER_ARCHIVE.equals(s)).filter(s -> orderId.compareTo(s) <= 0).count();
+
+			if (numConfilcting > 0) {
+				archiveExisting(aid);
+			}
 		}
 
 		dir.toFile().mkdirs();
