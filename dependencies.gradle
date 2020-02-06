@@ -31,10 +31,10 @@ subprojects {
 			url "https://repository.jboss.org/nexus/content/groups/public/"
 		}
 		maven {
-		    url 'http://repo.spring.io/snapshot'
+		    url 'https://repo.spring.io/snapshot'
 		}
 		maven {
-		    url 'http://repo.spring.io/milestone'
+		    url 'https://repo.spring.io/milestone'
 		}
 		maven {
 			url 'https://repo.spring.io/release/'
