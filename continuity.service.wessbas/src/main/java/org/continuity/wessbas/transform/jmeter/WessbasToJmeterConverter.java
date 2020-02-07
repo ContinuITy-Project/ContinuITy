@@ -1,6 +1,7 @@
 package org.continuity.wessbas.transform.jmeter;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
@@ -78,8 +79,14 @@ public class WessbasToJmeterConverter {
 			throw new RuntimeException("Error during JMeter Test Plan generation!", e);
 		}
 
-		intensityTransformer.transform(testPlan, workloadModel.getIntensities(), workloadModel.getIntensityResolution());
-		runtimeEstimator.adjust(testPlan, workloadModel.getIntensities(), workloadModel.getIntensityResolution());
+		Map<String, String> intensities = workloadModel.getIntensities();
+
+		if ((intensities != null) && (intensities.size() > 1)) {
+			new ThreadGroupSplitter(testPlan, intensities).doSplitting();
+		}
+
+		intensityTransformer.transform(testPlan, intensities, workloadModel.getIntensityResolution());
+		runtimeEstimator.adjust(testPlan, intensities, workloadModel.getIntensityResolution());
 
 		if (writeToFile) {
 			generator.writeToFile(testPlan, outputPath + "/testplan.jmx");

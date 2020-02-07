@@ -1,6 +1,7 @@
 package org.continuity.wessbas.managers;
 
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.summingDouble;
 import static java.util.stream.Collectors.toList;
 
@@ -13,6 +14,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -63,9 +66,11 @@ import net.sf.markov4jmeter.testplangenerator.util.CSVHandler;
  */
 public class WessbasPipelineManager {
 
-	public static final String KEY_INTENSITY_SERIES = "wl.series.values";
+	public static final String PREFIX_INTENSITY_SERIES = "wl.series.values.";
 
 	public static final String KEY_INTENSITY_RESOLUTION = "wl.series.resolution";
+
+	public static final String PREFIX_BEHAVIOR_MODEL = "gen_behavior_model";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WessbasPipelineManager.class);
 
@@ -235,10 +240,20 @@ public class WessbasPipelineManager {
 		Properties behaviorProperties = new Properties();
 		behaviorProperties.load(Files.newInputStream(workingDir.resolve("behaviormodelextractor").resolve("behaviormix.txt")));
 
-		String intensitiesSeries = intensityProps.getProperty(KEY_INTENSITY_SERIES);
+		Map<String, String> intensities = new HashMap<>();
+		Enumeration<?> propsEnum = intensityProps.propertyNames();
+
+		while (propsEnum.hasMoreElements()) {
+			String prop = propsEnum.nextElement().toString();
+
+			if (prop.startsWith(PREFIX_INTENSITY_SERIES)) {
+				intensities.put(prop.substring(PREFIX_INTENSITY_SERIES.length()), intensityProps.getProperty(prop));
+			}
+		}
+
 		Integer resolution = Optional.ofNullable(intensityProps.getProperty(KEY_INTENSITY_RESOLUTION)).map(Integer::parseInt).orElse(null);
 
-		return new WessbasBundle(task.getVersion(), generateWessbasModel(intensityProps, behaviorProperties), intensitiesSeries, resolution);
+		return new WessbasBundle(task.getVersion(), generateWessbasModel(intensityProps, behaviorProperties), intensities, resolution);
 	}
 
 	private List<ForecastIntensityRecord> loadIntensities(String link) {
@@ -260,18 +275,19 @@ public class WessbasPipelineManager {
 			return createWorkloadIntensity(1);
 		}
 
-		int[] totalIntensities = intensities.stream()
-				.mapToDouble(r -> r.getContent().entrySet().stream().filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey())).mapToDouble(Entry::getValue).sum()).mapToLong(Math::round)
-				.mapToInt(Math::toIntExact).toArray();
+		Map<String, List<Double>> intensitiesPerGroup = intensities.stream().flatMap(r -> r.getContent().entrySet().stream().filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey())))
+				.collect(groupingBy(Entry::getKey, mapping(Entry::getValue, toList())));
 
-		int totalMaxIntensity = Arrays.stream(totalIntensities).max().getAsInt();
+		int totalMaxIntensity = intensities.stream()
+				.mapToDouble(r -> r.getContent().entrySet().stream().filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey())).mapToDouble(Entry::getValue).sum()).mapToLong(Math::round)
+				.mapToInt(Math::toIntExact).max().orElse(1);
 
 		if (intensities.size() == 1) {
 			return createWorkloadIntensity(totalMaxIntensity);
 		} else {
-			int resolution = IntStream.range(0, intensities.size() - 2).mapToLong(i -> intensities.get(i + 1).getTimestamp() - intensities.get(i).getTimestamp()).mapToInt(Math::toIntExact).min()
+			int resolution = IntStream.range(0, intensities.size() - 1).mapToLong(i -> intensities.get(i + 1).getTimestamp() - intensities.get(i).getTimestamp()).mapToInt(Math::toIntExact).min()
 					.getAsInt();
-			return createWorkloadIntensity(totalMaxIntensity, totalIntensities, resolution);
+			return createWorkloadIntensity(totalMaxIntensity, intensitiesPerGroup, resolution);
 		}
 	}
 
@@ -279,13 +295,17 @@ public class WessbasPipelineManager {
 		return createWorkloadIntensity(intensity, null, -1);
 	}
 
-	private Properties createWorkloadIntensity(int maxIntensity, int[] intensities, int resolution) throws IOException {
+	private Properties createWorkloadIntensity(int maxIntensity, Map<String, List<Double>> intensities, int resolution) throws IOException {
 		Properties properties = new Properties();
 		properties.put("workloadIntensity.type", "constant");
 		properties.put("wl.type.value", Integer.toString(maxIntensity));
 
 		if (intensities != null) {
-			properties.put(KEY_INTENSITY_SERIES, Arrays.stream(intensities).mapToObj(Integer::toString).collect(Collectors.joining(",")));
+			for (Entry<String, List<Double>> groupInt : intensities.entrySet()) {
+				properties.put(PREFIX_INTENSITY_SERIES + groupInt.getKey(),
+						groupInt.getValue().stream().mapToLong(Math::round).mapToInt(Math::toIntExact).mapToObj(Integer::toString).collect(Collectors.joining(",")));
+			}
+
 			properties.put(KEY_INTENSITY_RESOLUTION, Integer.toString(resolution));
 		}
 
@@ -316,8 +336,7 @@ public class WessbasPipelineManager {
 		LOGGER.info("Adjusting the behavior mix based on the intensities...");
 
 		Map<String, Double> absFreq = intensities.stream().map(ForecastIntensityRecord::getContent).flatMap(map -> map.entrySet().stream())
-				.filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey()))
-				.collect(groupingBy(Entry::getKey, summingDouble(Entry::getValue)));
+				.filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey())).collect(groupingBy(Entry::getKey, summingDouble(Entry::getValue)));
 		double total = absFreq.values().stream().mapToDouble(x -> x).sum();
 
 		for (RelativeMarkovChain chain : markovModel.getMarkovChains()) {
@@ -327,7 +346,7 @@ public class WessbasPipelineManager {
 
 	private void writeBehaviorMix(MarkovBehaviorModel markovModel, Path dir) throws IOException {
 		List<String> mix = markovModel.getMarkovChains().stream()
-				.map(chain -> new StringBuilder().append("gen_behavior_model" + chain.getId()).append("; ").append(dir.resolve(toCsvFile(chain, "gen_behavior_model"))).append("; ")
+				.map(chain -> new StringBuilder().append(PREFIX_BEHAVIOR_MODEL + chain.getId()).append("; ").append(dir.resolve(toCsvFile(chain, PREFIX_BEHAVIOR_MODEL))).append("; ")
 						.append(chain.getFrequency()).append("; ").append(dir.resolve(toCsvFile(chain, "behaviormodel"))).append(", \\").toString())
 				.collect(toList());
 
