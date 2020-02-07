@@ -3,7 +3,9 @@ package org.continuity.wessbas.transform.jmeter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.jmeter.threads.ThreadGroup;
 import org.apache.jorphan.collections.ListedHashTree;
@@ -21,15 +23,21 @@ public class RuntimePropertyEstimator {
 
 	private JMeterPropertiesCorrector jmeterPropertiesCorrector = new JMeterPropertiesCorrector();
 
-	public void adjust(ListedHashTree testPlan, String intensitySeries, Integer resolution) {
-		List<Integer> intensities = intensitySeries == null ? Collections.singletonList(getNumUsers(testPlan))
-				: Arrays.stream(intensitySeries.split(",")).map(Integer::parseInt).collect(Collectors.toList());
+	public void adjust(ListedHashTree testPlan, Map<String, String> intensitiesPerGroup, Integer resolution) {
+		List<Integer> intensities = (intensitiesPerGroup == null) || intensitiesPerGroup.isEmpty() ? Collections.singletonList(getNumUsers(testPlan)) : totalIntensities(intensitiesPerGroup);
 
 		long duration = estimateDuration(intensities, resolution);
 		int rampup = estimateRampup(intensities, duration);
 
 		jmeterPropertiesCorrector.setDuration(testPlan, duration);
 		jmeterPropertiesCorrector.setRampup(testPlan, rampup);
+	}
+
+	private List<Integer> totalIntensities(Map<String, String> intensitiesPerGroup) {
+		List<List<Integer>> intensitySeries = intensitiesPerGroup.values().stream().map(groupInt -> Arrays.stream(groupInt.split(",")).map(Integer::parseInt).collect(Collectors.toList()))
+				.collect(Collectors.toList());
+
+		return IntStream.range(0, intensitySeries.stream().mapToInt(List::size).min().orElse(0)).mapToObj(i -> intensitySeries.stream().mapToInt(l -> l.get(i)).sum()).collect(Collectors.toList());
 	}
 
 	private long estimateDuration(List<Integer> intensities, Integer resolution) {
@@ -48,17 +56,13 @@ public class RuntimePropertyEstimator {
 		SearchByClass<ThreadGroup> search = new SearchByClass<>(ThreadGroup.class);
 		testPlan.traverse(search);
 
-		int numUsers = 1;
+		int numUsers = 0;
 
 		for (ThreadGroup group : search.getSearchResults()) {
-			int numThreads = group.getNumThreads();
-
-			if (numThreads > numUsers) {
-				numUsers = numThreads;
-			}
+			numUsers += group.getNumThreads();
 		}
 
-		return numUsers;
+		return numUsers == 0 ? 1 : numUsers;
 	}
 
 }

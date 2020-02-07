@@ -1,10 +1,13 @@
 package org.continuity.wessbas.transform.jmeter;
 
+import java.util.Collections;
+
 import org.apache.jmeter.control.Controller;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.threads.ThreadGroup;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
+import org.continuity.api.entities.artifact.ForecastIntensityRecord;
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.wessbas.entities.WessbasBundle;
 import org.continuity.wessbas.entities.WessbasDslInstance;
@@ -32,7 +35,7 @@ public class Wessbas2JmeterTest {
 
 	@Test
 	public void testWithIntensity() {
-		WessbasBundle bundle = new WessbasBundle(null, WessbasDslInstance.DVDSTORE_PARSED.get(), "100,150,110", 60000);
+		WessbasBundle bundle = new WessbasBundle(null, WessbasDslInstance.DVDSTORE_PARSED.get(), Collections.singletonMap(ForecastIntensityRecord.KEY_TOTAL, "100,150,110"), 60000);
 
 		WessbasToJmeterConverter converter = new WessbasToJmeterConverter("configuration");
 		JMeterTestPlanBundle testPlanBundle = converter.convertToLoadTest(bundle);

@@ -2,6 +2,7 @@ package org.continuity.api.entities.artifact;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -46,6 +47,11 @@ public class ForecastIntensityRecord {
 
 	public double getIntensity(String group) {
 		return content.get(group);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toString(content);
 	}
 
 }

@@ -1,5 +1,7 @@
 package org.continuity.wessbas.entities;
 
+import java.util.Map;
+
 import org.continuity.idpa.VersionOrTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -16,12 +18,12 @@ public class WessbasBundle {
 	private WorkloadModel workloadModel;
 
 	@JsonInclude(Include.NON_NULL)
-	private String intensities;
+	private Map<String, String> intensities;
 
 	@JsonInclude(Include.NON_NULL)
 	private Integer intensityResolution;
 
-	public WessbasBundle(VersionOrTimestamp version, WorkloadModel workloadModel, String intensities, Integer intensityResolution) {
+	public WessbasBundle(VersionOrTimestamp version, WorkloadModel workloadModel, Map<String, String> intensities, Integer intensityResolution) {
 		this.version = version;
 		this.workloadModel = workloadModel;
 		this.intensities = intensities;
@@ -51,11 +53,11 @@ public class WessbasBundle {
 		this.workloadModel = workloadModel;
 	}
 
-	public String getIntensities() {
+	public Map<String, String> getIntensities() {
 		return intensities;
 	}
 
-	public void setIntensities(String intensities) {
+	public void setIntensities(Map<String, String> intensities) {
 		this.intensities = intensities;
 	}
 
