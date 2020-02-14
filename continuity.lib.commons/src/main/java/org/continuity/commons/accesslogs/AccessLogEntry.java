@@ -44,7 +44,8 @@ public class AccessLogEntry {
 	private static final String[] FIELDS = { "clientHost", "remoteName", "user", "accessTime", "requestMethod", "path", "protocol", "statusCode", "responseBytes", "referer", "userAgent",
 			"responseTime" };
 
-	private static final String[] DATE_FORMATS = { "dd/MMM/yyyy:HH:mm:ss Z", "dd/MMM/yyyy:HH:mm:ss", "dd/MMM/yyyy HH:mm:ss", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ss.SSS" };
+	private static final String[] DATE_FORMATS = { "dd/MMM/yyyy:HH:mm:ss Z", "dd/MMM/yyyy:HH:mm:ss", "dd/MMM/yyyy HH:mm:ss", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ss.SSS",
+			"yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ss.SSSX", "yyyy-MM-dd'T'HH:mm:ssX" };
 
 	private static final String DEFAULT_PROTOCOL = "HTTP/1.1";
 
