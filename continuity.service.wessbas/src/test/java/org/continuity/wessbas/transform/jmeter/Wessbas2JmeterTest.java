@@ -53,7 +53,7 @@ public class Wessbas2JmeterTest {
 		testPlan.traverse(search);
 
 		for (ThreadGroup group : search.getSearchResults()) {
-			Assert.assertEquals(expected, group.getDuration());
+			Assert.assertEquals(expected, group.getDuration() - group.getRampUp());
 
 			Controller mainController = group.getSamplerController();
 

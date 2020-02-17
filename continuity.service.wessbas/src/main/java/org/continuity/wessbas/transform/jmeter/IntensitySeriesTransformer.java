@@ -23,16 +23,16 @@ public class IntensitySeriesTransformer {
 
 	public static final String PREFIX_INTENSITY = "continuity.intensity.";
 
-	private static final String GROOVY_TEMPLATE = "${__groovy(vars.get(\"continuity.intensity.%s\").tokenize(\"\\,\")[Math.min(%d\\, (System.currentTimeMillis() - Long.parseLong(props.get(\"TEST.START.MS\"))) / %d as Integer)])}";
+	private static final String GROOVY_TEMPLATE = "${__groovy(vars.get(\"continuity.intensity.%s\").tokenize(\"\\,\")[Math.min(%d\\, Math.max(0\\, (System.currentTimeMillis() - Long.parseLong(props.get(\"TEST.START.MS\")) - %d ) / %d as Integer))])}";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(IntensitySeriesTransformer.class);
 
-	public void transform(ListedHashTree testPlan, Map<String, String> intensitiesPerGroup, Integer resolution) {
-		if ((intensitiesPerGroup != null) && (resolution != null)) {
-			LOGGER.info("Setting the following workload intensity series with resolution {} ms: {}", resolution, intensitiesPerGroup);
+	public void transform(ListedHashTree testPlan, Map<String, String> intensitiesPerGroup, Integer resolution, Integer rampup) {
+		if ((intensitiesPerGroup != null) && (resolution != null) && (rampup != null)) {
+			LOGGER.info("Setting the following workload intensity series with resolution {} ms and rampup {} s: {}", resolution, rampup, intensitiesPerGroup);
 
 			setIntensityVariables(testPlan, intensitiesPerGroup);
-			setSessionArrivalFunctions(testPlan, intensitiesPerGroup, resolution);
+			setSessionArrivalFunctions(testPlan, intensitiesPerGroup, rampup, resolution);
 		}
 	}
 
@@ -54,7 +54,7 @@ public class IntensitySeriesTransformer {
 		}
 	}
 
-	private void setSessionArrivalFunctions(ListedHashTree testPlan, Map<String, String> intensitiesPerGroup, int resolution) {
+	private void setSessionArrivalFunctions(ListedHashTree testPlan, Map<String, String> intensitiesPerGroup, int rampup, int resolution) {
 		SearchByClass<MarkovController> search = new SearchByClass<>(MarkovController.class);
 		testPlan.traverse(search);
 
@@ -69,7 +69,7 @@ public class IntensitySeriesTransformer {
 				throw new RuntimeException("There is no intensity series for group " + group + "!");
 			}
 
-			controller.setArrivalCtrlNumSessions(formatGroovyScript(group, intensitySeries, resolution));
+			controller.setArrivalCtrlNumSessions(formatGroovyScript(group, intensitySeries, rampup, resolution));
 		}
 	}
 
@@ -81,9 +81,9 @@ public class IntensitySeriesTransformer {
 		}
 	}
 
-	private String formatGroovyScript(String group, String intensitySeries, int resolution) {
+	private String formatGroovyScript(String group, String intensitySeries, int rampup, int resolution) {
 		int maxIndex = intensitySeries.split(",").length - 1;
-		return String.format(GROOVY_TEMPLATE, group, maxIndex, resolution);
+		return String.format(GROOVY_TEMPLATE, group, maxIndex, rampup * 1000, resolution);
 	}
 
 }

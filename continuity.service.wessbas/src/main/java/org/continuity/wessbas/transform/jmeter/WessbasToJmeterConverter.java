@@ -3,6 +3,7 @@ package org.continuity.wessbas.transform.jmeter;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.continuity.api.entities.artifact.JMeterTestPlanBundle;
 import org.continuity.wessbas.entities.WessbasBundle;
@@ -85,8 +86,8 @@ public class WessbasToJmeterConverter {
 			new ThreadGroupSplitter(testPlan, intensities).doSplitting();
 		}
 
-		intensityTransformer.transform(testPlan, intensities, workloadModel.getIntensityResolution());
-		runtimeEstimator.adjust(testPlan, intensities, workloadModel.getIntensityResolution());
+		Pair<Integer, Long> rampupAndDuration = runtimeEstimator.adjustAndReturn(testPlan, intensities, workloadModel.getIntensityResolution());
+		intensityTransformer.transform(testPlan, intensities, workloadModel.getIntensityResolution(), rampupAndDuration.getLeft());
 
 		if (writeToFile) {
 			generator.writeToFile(testPlan, outputPath + "/testplan.jmx");
