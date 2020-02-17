@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jmeter.threads.ThreadGroup;
 import org.apache.jorphan.collections.ListedHashTree;
 import org.apache.jorphan.collections.SearchByClass;
@@ -23,14 +24,24 @@ public class RuntimePropertyEstimator {
 
 	private JMeterPropertiesCorrector jmeterPropertiesCorrector = new JMeterPropertiesCorrector();
 
-	public void adjust(ListedHashTree testPlan, Map<String, String> intensitiesPerGroup, Integer resolution) {
+	/**
+	 * Adjusts the runtime properties and returns them.
+	 * 
+	 * @param testPlan
+	 * @param intensitiesPerGroup
+	 * @param resolution
+	 * @return A pair of (rampup, duration) in seconds.
+	 */
+	public Pair<Integer, Long> adjustAndReturn(ListedHashTree testPlan, Map<String, String> intensitiesPerGroup, Integer resolution) {
 		List<Integer> intensities = (intensitiesPerGroup == null) || intensitiesPerGroup.isEmpty() ? Collections.singletonList(getNumUsers(testPlan)) : totalIntensities(intensitiesPerGroup);
 
 		long duration = estimateDuration(intensities, resolution);
 		int rampup = estimateRampup(intensities, duration);
 
-		jmeterPropertiesCorrector.setDuration(testPlan, duration);
+		jmeterPropertiesCorrector.setDuration(testPlan, duration + rampup);
 		jmeterPropertiesCorrector.setRampup(testPlan, rampup);
+
+		return Pair.of(rampup, duration);
 	}
 
 	private List<Integer> totalIntensities(Map<String, String> intensitiesPerGroup) {
