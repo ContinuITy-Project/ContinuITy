@@ -75,6 +75,7 @@ public class JMeterAnnotator {
 		vxa.annotateInputs(testPlan);
 		new CounterAnnotator(annotation).addCounters(testPlan);
 		new HeadersAnnotator(application, annotation).annotateSamplers(testPlan);
+		new CookiesAnnotator().configureCookieManagement(testPlan);
 	}
 
 }
