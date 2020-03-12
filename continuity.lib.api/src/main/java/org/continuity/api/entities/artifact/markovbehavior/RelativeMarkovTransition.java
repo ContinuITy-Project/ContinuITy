@@ -22,6 +22,8 @@ public class RelativeMarkovTransition implements MarkovTransition {
 
 	private double probability;
 
+	private double count;
+
 	private NormalDistribution thinkTime;
 
 	/**
@@ -29,16 +31,47 @@ public class RelativeMarkovTransition implements MarkovTransition {
 	 *
 	 * @param probability
 	 *            The transition probability.
+	 * @param count
+	 *            The (average) transition count.
 	 * @param thinkTime
 	 *            A {@link NormalDistribution} as think time.
 	 */
-	public RelativeMarkovTransition(double probability, NormalDistribution thinkTime) {
+	public RelativeMarkovTransition(double probability, double count, NormalDistribution thinkTime) {
 		this.probability = probability;
+		this.count = count;
 		this.thinkTime = thinkTime;
 	}
 
 	/**
 	 * Creates an instance based on the think time mean and variance.
+	 *
+	 * @param probability
+	 *            The transition probability.
+	 * @param count
+	 *            The (average) transition count.
+	 * @param meanThinkTime
+	 *            The mean think time.
+	 * @param varianceThinkTime
+	 *            The variance of the think time.
+	 */
+	public RelativeMarkovTransition(double probability, double count, double meanThinkTime, double varianceThinkTime) {
+		this(probability, count, new NormalDistribution(meanThinkTime, varianceThinkTime));
+	}
+
+	/**
+	 * Creates an instance with an unknown count.
+	 *
+	 * @param probability
+	 *            The transition probability.
+	 * @param thinkTime
+	 *            A {@link NormalDistribution} as think time.
+	 */
+	public RelativeMarkovTransition(double probability, NormalDistribution thinkTime) {
+		this(probability, -1, thinkTime);
+	}
+
+	/**
+	 * Creates an instance with an unknown count.
 	 *
 	 * @param probability
 	 *            The transition probability.
@@ -48,15 +81,14 @@ public class RelativeMarkovTransition implements MarkovTransition {
 	 *            The variance of the think time.
 	 */
 	public RelativeMarkovTransition(double probability, double meanThinkTime, double varianceThinkTime) {
-		this.probability = probability;
-		this.thinkTime = new NormalDistribution(meanThinkTime, varianceThinkTime);
+		this(probability, -1, meanThinkTime, varianceThinkTime);
 	}
 
 	/**
 	 * Creates a zero transition, i.e., with transition probability and think time 0.
 	 */
 	public RelativeMarkovTransition() {
-		this(0.0, new NormalDistribution());
+		this(0.0, 0.0, new NormalDistribution());
 	}
 
 	/**
@@ -83,9 +115,10 @@ public class RelativeMarkovTransition implements MarkovTransition {
 		}
 
 		double probability = first.getProbability() * second.getProbability();
+		double count = first.getCount() * second.getProbability();
 		NormalDistribution thinkTime = NormalDistribution.add(first.getThinkTime(), stateDuration, second.getThinkTime());
 
-		return new RelativeMarkovTransition(probability, thinkTime);
+		return new RelativeMarkovTransition(probability, count, thinkTime);
 	}
 
 	/**
@@ -111,13 +144,15 @@ public class RelativeMarkovTransition implements MarkovTransition {
 		}
 
 		double probability = first.getProbability() + second.getProbability();
+		double count = ((first.getCount() >= 0) && (second.getCount() >= 0)) ? first.getCount() + second.getCount() : -1;
 		NormalDistribution thinkTime = NormalDistribution.combine(first.getProbability() / probability, first.getThinkTime(), second.getProbability() / probability, second.getThinkTime());
 
-		return new RelativeMarkovTransition(probability, thinkTime);
+		return new RelativeMarkovTransition(probability, count, thinkTime);
 	}
 
 	/**
-	 * Returns the transition probability.
+	 * Returns the transition probability. If the count is non-negative, it should be made sure that
+	 * the probability and count are either both zero or non-zero.
 	 *
 	 * @return A {@code double} between 0.0 and 1.0.
 	 */
@@ -126,13 +161,37 @@ public class RelativeMarkovTransition implements MarkovTransition {
 	}
 
 	/**
-	 * Sets the transition probability.
+	 * Sets the transition probability. If the count is non-negative, it should be made sure that
+	 * the probability and count are either both zero or non-zero.
 	 *
 	 * @param probability
 	 *            A {@code double} between 0.0 and 1.0.
 	 */
 	public void setProbability(double probability) {
 		this.probability = probability;
+	}
+
+	/**
+	 * Returns the transition count, i.e., the (average) number of transitions per session. It can
+	 * be negative, indicating it is unknown. If it is non-negative, iIt should be made sure that
+	 * the probability and count are either both zero or non-zero.
+	 *
+	 * @return A {@code double} greater or equal than 0.0.
+	 */
+	public double getCount() {
+		return count;
+	}
+
+	/**
+	 * Sets the transition count, i.e., the (average) number of transitions per session. It can be
+	 * negative, indicating it is unknown. If it is non-negative, iIt should be made sure that the
+	 * probability and count are either both zero or non-zero.
+	 *
+	 * @param count
+	 *            A {@code double} greater or equal than 0.0.
+	 */
+	public void setCount(double count) {
+		this.count = count;
 	}
 
 	/**
