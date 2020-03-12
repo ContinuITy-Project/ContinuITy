@@ -5,12 +5,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
+import org.assertj.core.data.Offset;
 import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovChain;
 import org.continuity.api.entities.artifact.markovbehavior.RelativeMarkovTransition;
 import org.continuity.api.entities.test.MarkovChainTestInstance;
@@ -32,6 +35,10 @@ public class ClustinatorMarkovChainTest {
 
 	private void testMarkovArrayMarkov(MarkovChainTestInstance instance) throws IOException {
 		RelativeMarkovChain orig = RelativeMarkovChain.fromCsv(instance.getCsv());
+
+		// Using the probabilities as counts, as the actual counts are missing
+		orig.getTransitions().values().stream().map(Map::values).flatMap(Collection::stream).forEach(t -> t.setCount(t.getProbability() * 5));
+
 		List<String> states = orig.getRequestStates();
 		states.add(0, RelativeMarkovChain.INITIAL_STATE);
 		states.add(RelativeMarkovChain.FINAL_STATE);
@@ -41,8 +48,8 @@ public class ClustinatorMarkovChainTest {
 		RelativeMarkovChain converted = converter.convertArray(array, zeroThinkTimeArray(array.length), zeroThinkTimeArray(array.length));
 
 		for (String state : states) {
-			assertThat(converted.getTransitions().get(state).values()).extracting(RelativeMarkovTransition::getProbability).as("transition probabilities from state " + state)
-					.containsExactlyElementsOf(orig.getTransitions().get(state).values().stream().map(RelativeMarkovTransition::getProbability).collect(Collectors.toList()));
+			assertThat(converted.getTransitions().get(state).values().stream().mapToDouble(RelativeMarkovTransition::getProbability).toArray()).as("transition probabilities from state " + state)
+					.containsExactly(orig.getTransitions().get(state).values().stream().mapToDouble(RelativeMarkovTransition::getProbability).toArray(), Offset.offset(0.0001));
 		}
 	}
 

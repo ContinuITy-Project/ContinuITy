@@ -99,7 +99,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	}
 
 	/**
-	 * Reads all sessions overlapping a given timestamp.
+	 * Reads all sessions overlapping a given range.
 	 *
 	 * @param aid
 	 *            The app-id.
@@ -112,7 +112,7 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 	 *            The start date of the range.
 	 * @param to
 	 *            The end date of the range.
-	 * @return The list of sessions in the range.
+	 * @return The list of sessions overlapping the range.
 	 * @throws IOException
 	 * @throws TimeoutException
 	 */
@@ -122,6 +122,32 @@ public class ElasticsearchSessionManager extends ElasticsearchScrollingManager<S
 
 		return readElements(aid, tailoring, query, sort, SCROLL_SIZE, TOTAL_SIZE_ALL,
 				String.format(" with version %s and overlapping time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
+	}
+
+	/**
+	 * Reads all sessions starting in a given range.
+	 *
+	 * @param aid
+	 *            The app-id.
+	 * @param version
+	 *            The version or timestamp. Can be {@code null}. In this case, it will be ignored.
+	 * @param tailoring
+	 *            The list of services to which the sessions are tailored. Use a singleton list with
+	 *            {@link AppId#SERVICE_ALL} to get untailored sessions.
+	 * @param from
+	 *            The start date of the range.
+	 * @param to
+	 *            The end date of the range.
+	 * @return The list of sessions starting in the range.
+	 * @throws IOException
+	 * @throws TimeoutException
+	 */
+	public List<Session> readSessionsStartingInRange(AppId aid, VersionOrTimestamp version, List<String> tailoring, Date from, Date to) throws IOException, TimeoutException {
+		QueryBuilder query = createRangeStartQuery(version, from, to);
+		FieldSortBuilder sort = new FieldSortBuilder("start-micros").order(SortOrder.ASC);
+
+		return readElements(aid, tailoring, query, sort, SCROLL_SIZE, TOTAL_SIZE_ALL,
+				String.format(" with version %s and starting in time range %s - %s", version, formatOrNull(from), formatOrNull(to)));
 	}
 
 	/**

@@ -68,7 +68,7 @@ public class AbsoluteMarkovTransition implements MarkovTransition {
 		double probability = (double) numOccurrences / (double) numOccurrencesFromState;
 		NormalDistribution thinkTime = NormalDistribution.fromSample(thinkTimes.stream().mapToDouble(Long::doubleValue).toArray());
 
-		return new RelativeMarkovTransition(probability, thinkTime);
+		return new RelativeMarkovTransition(probability, numOccurrences, thinkTime);
 	}
 
 }

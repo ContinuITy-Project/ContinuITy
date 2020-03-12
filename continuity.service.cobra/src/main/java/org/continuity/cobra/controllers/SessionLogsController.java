@@ -65,6 +65,9 @@ public class SessionLogsController {
 	 *            The start date of the sessions.
 	 * @param to
 	 *            The end date of the sessions.
+	 * @param overlapping
+	 *            If {@code true}, all sessions overlapping the range will be returned; if
+	 *            {@code false}, only those starting within the range will be returned.
 	 * @return The session logs as string.
 	 * @throws TimeoutException
 	 * @throws IOException
@@ -72,8 +75,8 @@ public class SessionLogsController {
 	@RequestMapping(value = GET_SIMPLE, method = RequestMethod.GET, produces = { "text/plain" })
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<String> getSimpleSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
-			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
-		return getSessionLogs(aid, tailoring, from, to, true);
+			@RequestParam(required = false) List<String> to, @RequestParam(name = "overlapping", defaultValue = "true") boolean overlapping) throws IOException, TimeoutException {
+		return getSessionLogs(aid, tailoring, from, to, true, overlapping);
 	}
 
 	/**
@@ -87,6 +90,9 @@ public class SessionLogsController {
 	 *            The start date of the sessions.
 	 * @param to
 	 *            The end date of the sessions.
+	 * @param overlapping
+	 *            If {@code true}, all sessions overlapping the range will be returned; if
+	 *            {@code false}, only those starting within the range will be returned.
 	 * @return The session logs as string.
 	 * @throws TimeoutException
 	 * @throws IOException
@@ -94,12 +100,12 @@ public class SessionLogsController {
 	@RequestMapping(value = GET_EXTENDED, method = RequestMethod.GET, produces = { "text/plain" })
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	public ResponseEntity<String> getExtendedSessionLogs(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
-			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
-		return getSessionLogs(aid, tailoring, from, to, false);
+			@RequestParam(required = false) List<String> to, @RequestParam(name = "overlapping", defaultValue = "true") boolean overlapping) throws IOException, TimeoutException {
+		return getSessionLogs(aid, tailoring, from, to, false, overlapping);
 	}
 
-	private ResponseEntity<String> getSessionLogs(AppId aid, String tailoring, List<String> from, List<String> to, boolean simple) throws IOException, TimeoutException {
-		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to);
+	private ResponseEntity<String> getSessionLogs(AppId aid, String tailoring, List<String> from, List<String> to, boolean simple, boolean overlap) throws IOException, TimeoutException {
+		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to, overlap);
 
 		if (sessions.getLeft() != null) {
 			return sessions.getLeft().toStringResponse();
@@ -123,6 +129,9 @@ public class SessionLogsController {
 	 *            The start date of the sessions.
 	 * @param to
 	 *            The end date of the sessions.
+	 * @param overlapping
+	 *            If {@code true}, all sessions overlapping the range will be returned; if
+	 *            {@code false}, only those starting within the range will be returned.
 	 * @return {@link Session}
 	 * @throws TimeoutException
 	 * @throws IOException
@@ -131,8 +140,8 @@ public class SessionLogsController {
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	@JsonView(SessionView.Simple.class)
 	public ResponseEntity<?> getSessionsAsSimpleJson(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
-			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
-		return getSessionsAsJson(aid, tailoring, from, to, true);
+			@RequestParam(required = false) List<String> to, @RequestParam(name = "overlapping", defaultValue = "true") boolean overlapping) throws IOException, TimeoutException {
+		return getSessionsAsJson(aid, tailoring, from, to, true, overlapping);
 	}
 
 	/**
@@ -146,6 +155,9 @@ public class SessionLogsController {
 	 *            The start date of the sessions.
 	 * @param to
 	 *            The end date of the sessions.
+	 * @param overlapping
+	 *            If {@code true}, all sessions overlapping the range will be returned; if
+	 *            {@code false}, only those starting within the range will be returned.
 	 * @return {@link Session}
 	 * @throws TimeoutException
 	 * @throws IOException
@@ -154,12 +166,12 @@ public class SessionLogsController {
 	@ApiImplicitParams({ @ApiImplicitParam(name = "app-id", required = true, dataType = "string", paramType = "path") })
 	@JsonView(SessionView.Extended.class)
 	public ResponseEntity<?> getSessionsAsExtendedJson(@ApiIgnore @PathVariable("app-id") AppId aid, @PathVariable String tailoring, @RequestParam(required = false) List<String> from,
-			@RequestParam(required = false) List<String> to) throws IOException, TimeoutException {
-		return getSessionsAsJson(aid, tailoring, from, to, false);
+			@RequestParam(required = false) List<String> to, @RequestParam(name = "overlapping", defaultValue = "true") boolean overlapping) throws IOException, TimeoutException {
+		return getSessionsAsJson(aid, tailoring, from, to, false, overlapping);
 	}
 
-	public ResponseEntity<?> getSessionsAsJson(AppId aid, String tailoring, List<String> from, List<String> to, boolean simple) throws IOException, TimeoutException {
-		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to);
+	public ResponseEntity<?> getSessionsAsJson(AppId aid, String tailoring, List<String> from, List<String> to, boolean simple, boolean overlap) throws IOException, TimeoutException {
+		Pair<BadRequestResponse, List<Session>> sessions = readSessions(aid, tailoring, from, to, overlap);
 
 		if (sessions.getLeft() != null) {
 			return sessions.getLeft().toObjectResponse();
@@ -170,7 +182,7 @@ public class SessionLogsController {
 		return ResponseEntity.ok(sessions.getRight());
 	}
 
-	private Pair<BadRequestResponse, List<Session>> readSessions(AppId aid, String tailoring, List<String> from, List<String> to) throws IOException, TimeoutException {
+	private Pair<BadRequestResponse, List<Session>> readSessions(AppId aid, String tailoring, List<String> from, List<String> to, boolean overlap) throws IOException, TimeoutException {
 		if ((from == null) && (to == null)) {
 			return Pair.of(null, elasticManager.readSessionsOverlapping(aid, null, Session.convertStringToTailoring(tailoring), null, null));
 		} else {
@@ -193,7 +205,11 @@ public class SessionLogsController {
 					return Pair.of(checkT.getLeft(), null);
 				}
 
-				sessions.addAll(elasticManager.readSessionsOverlapping(aid, null, Session.convertStringToTailoring(tailoring), checkF.getRight(), checkT.getRight()));
+				if (overlap) {
+					sessions.addAll(elasticManager.readSessionsOverlapping(aid, null, Session.convertStringToTailoring(tailoring), checkF.getRight(), checkT.getRight()));
+				} else {
+					sessions.addAll(elasticManager.readSessionsStartingInRange(aid, null, Session.convertStringToTailoring(tailoring), checkF.getRight(), checkT.getRight()));
+				}
 			}
 
 			return Pair.of(null, new ArrayList<>(sessions));
