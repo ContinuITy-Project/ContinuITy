@@ -79,6 +79,9 @@ public class ClustinatorInput {
 	@JsonProperty("append-strategy")
 	private AppendStrategy appendStrategy;
 
+	@JsonProperty("quantile-range")
+	private Double quantileRange = null;
+
 	public AppId getAppId() {
 		return appId;
 	}
@@ -238,6 +241,15 @@ public class ClustinatorInput {
 
 	public ClustinatorInput setContinuation(ClusteringContinuation continuation) {
 		this.continuation = continuation;
+		return this;
+	}
+
+	public Double getQuantileRange() {
+		return quantileRange;
+	}
+
+	public ClustinatorInput setQuantileRange(Double quantileRange) {
+		this.quantileRange = quantileRange;
 		return this;
 	}
 

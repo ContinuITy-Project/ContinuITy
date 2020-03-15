@@ -48,7 +48,12 @@ public class AppendStrategyConfiguration {
 	@JsonInclude(Include.NON_NULL)
 	private Integer parallelize = null;
 
-	private AppendStrategyConfiguration(AppendStrategy strategy, Double avgTransitionTolerance, Double epsilon, boolean epsilonSet, Long minSampleSize, Long k, Integer parallelize) {
+	@JsonProperty("quantile-range")
+	@JsonInclude(Include.NON_NULL)
+	private Double quantileRange = null;
+
+	private AppendStrategyConfiguration(AppendStrategy strategy, Double avgTransitionTolerance, Double epsilon, boolean epsilonSet, Long minSampleSize, Long k, Integer parallelize,
+			Double quantileRange) {
 		this.strategy = strategy;
 		this.avgTransitionTolerance = avgTransitionTolerance;
 		this.epsilon = epsilon;
@@ -56,21 +61,22 @@ public class AppendStrategyConfiguration {
 		this.minSampleSize = minSampleSize;
 		this.k = k;
 		this.parallelize = parallelize;
+		this.quantileRange = quantileRange;
 	}
 
 	public AppendStrategyConfiguration() {
 	}
 
 	public static AppendStrategyConfiguration defaultDbscan() {
-		return new AppendStrategyConfiguration(AppendStrategy.DBSCAN, null, 1.5, true, 10L, null, null);
+		return new AppendStrategyConfiguration(AppendStrategy.DBSCAN, null, 1.5, true, 10L, null, null, null);
 	}
 
 	public static AppendStrategyConfiguration defaultKmeans() {
-		return new AppendStrategyConfiguration(AppendStrategy.KMEANS, null, null, false, null, 5L, 1);
+		return new AppendStrategyConfiguration(AppendStrategy.KMEANS, null, null, false, null, 5L, 1, 0.9);
 	}
 
 	public static AppendStrategyConfiguration defaultMinimumDistance() {
-		return new AppendStrategyConfiguration(AppendStrategy.MINIMUM_DISTANCE, null, null, false, null, null, null);
+		return new AppendStrategyConfiguration(AppendStrategy.MINIMUM_DISTANCE, null, null, false, null, null, null, null);
 	}
 
 	/**
@@ -197,6 +203,21 @@ public class AppendStrategyConfiguration {
 
 	public void setParallelize(int parallelize) {
 		this.parallelize = parallelize;
+	}
+
+	/**
+	 * The quantile range used for outlier filtering. All sessions with a distance higher than
+	 * {@code q[0.5 + quantileRange] + 1.5 * (q[0.5 + quantileRange] - q[0.5 - quantileRange])} will
+	 * be filtered.
+	 *
+	 * @return
+	 */
+	public Double getQuantileRange() {
+		return quantileRange;
+	}
+
+	public void setQuantileRange(Double quantileRange) {
+		this.quantileRange = quantileRange;
 	}
 
 }
