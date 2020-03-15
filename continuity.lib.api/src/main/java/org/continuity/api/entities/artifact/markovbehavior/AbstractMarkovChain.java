@@ -28,6 +28,8 @@ public abstract class AbstractMarkovChain<T extends MarkovTransition> {
 	@JsonProperty("num-sessions")
 	private long numSessions;
 
+	private double radius;
+
 	@JsonDeserialize(as = TreeMap.class, contentAs = TreeMap.class)
 	@JsonProperty
 	private final Map<String, Map<String, T>> transitions;
@@ -94,12 +96,31 @@ public abstract class AbstractMarkovChain<T extends MarkovTransition> {
 
 	/**
 	 * Sets the number of sessions aggregated in this Markov chain.
-	 * 
+	 *
 	 * @param numSessions
 	 *            The number of sessions as {@code long}.
 	 */
 	public void setNumSessions(long numSessions) {
 		this.numSessions = numSessions;
+	}
+
+	/**
+	 * Gets the radius, i.e., the maximum distance of a session to the mean.
+	 *
+	 * @return The radius as {@code double}. Can be negative, indicating an undefined radius.
+	 */
+	public double getRadius() {
+		return radius;
+	}
+
+	/**
+	 * Sets the radius, i.e., the maximum distance of a session to the mean.
+	 * 
+	 * @param radius
+	 *            The radius as {@code double}. Can be negative, indicating an undefined radius.
+	 */
+	public void setRadius(double radius) {
+		this.radius = radius;
 	}
 
 	/**
