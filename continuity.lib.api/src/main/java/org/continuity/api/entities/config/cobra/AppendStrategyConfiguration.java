@@ -52,31 +52,37 @@ public class AppendStrategyConfiguration {
 	@JsonInclude(Include.NON_NULL)
 	private Double quantileRange = null;
 
-	private AppendStrategyConfiguration(AppendStrategy strategy, Double avgTransitionTolerance, Double epsilon, boolean epsilonSet, Long minSampleSize, Long k, Integer parallelize,
-			Double quantileRange) {
+	@JsonProperty("radius-factor")
+	@JsonInclude(Include.NON_NULL)
+	private Double radiusFactor = null;
+
+	private AppendStrategyConfiguration(AppendStrategy strategy, Double avgTransitionTolerance, Double epsilon, boolean epsilonSet, Long numSeedings, Long minSampleSize, Long k, Integer parallelize,
+			Double quantileRange, Double radiusFactor) {
 		this.strategy = strategy;
 		this.avgTransitionTolerance = avgTransitionTolerance;
 		this.epsilon = epsilon;
 		this.epsilonSet = epsilonSet;
+		this.numSeedings = numSeedings;
 		this.minSampleSize = minSampleSize;
 		this.k = k;
 		this.parallelize = parallelize;
 		this.quantileRange = quantileRange;
+		this.radiusFactor = radiusFactor;
 	}
 
 	public AppendStrategyConfiguration() {
 	}
 
 	public static AppendStrategyConfiguration defaultDbscan() {
-		return new AppendStrategyConfiguration(AppendStrategy.DBSCAN, null, 1.5, true, 10L, null, null, null);
+		return new AppendStrategyConfiguration(AppendStrategy.DBSCAN, null, 1.5, true, 10L, 10L, null, null, null, null);
 	}
 
 	public static AppendStrategyConfiguration defaultKmeans() {
-		return new AppendStrategyConfiguration(AppendStrategy.KMEANS, null, null, false, null, 5L, 1, 0.9);
+		return new AppendStrategyConfiguration(AppendStrategy.KMEANS, null, null, false, null, null, 5L, 1, 0.9, null);
 	}
 
 	public static AppendStrategyConfiguration defaultMinimumDistance() {
-		return new AppendStrategyConfiguration(AppendStrategy.MINIMUM_DISTANCE, null, null, false, null, null, null, null);
+		return new AppendStrategyConfiguration(AppendStrategy.MINIMUM_DISTANCE, null, null, false, 10L, 10L, null, null, null, 1.1);
 	}
 
 	/**
@@ -218,6 +224,20 @@ public class AppendStrategyConfiguration {
 
 	public void setQuantileRange(Double quantileRange) {
 		this.quantileRange = quantileRange;
+	}
+
+	/**
+	 * The factor to be multiplied with each cluster radius to decide whether a new session belongs
+	 * to the cluster. Should be 1.0 or larger (less than 1.0 is allowed but highly discouraged).
+	 *
+	 * @return
+	 */
+	public Double getRadiusFactor() {
+		return radiusFactor;
+	}
+
+	public void setRadiusFactor(Double radiusFactor) {
+		this.radiusFactor = radiusFactor;
 	}
 
 }
