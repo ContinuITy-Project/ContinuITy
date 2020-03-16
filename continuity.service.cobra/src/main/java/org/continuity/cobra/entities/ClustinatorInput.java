@@ -82,6 +82,9 @@ public class ClustinatorInput {
 	@JsonProperty("quantile-range")
 	private Double quantileRange = null;
 
+	@JsonProperty("radius-factor")
+	private Double radiusFactor = null;
+
 	public AppId getAppId() {
 		return appId;
 	}
@@ -250,6 +253,15 @@ public class ClustinatorInput {
 
 	public ClustinatorInput setQuantileRange(Double quantileRange) {
 		this.quantileRange = quantileRange;
+		return this;
+	}
+
+	public Double getRadiusFactor() {
+		return radiusFactor;
+	}
+
+	public ClustinatorInput setRadiusFactor(Double radiusFactor) {
+		this.radiusFactor = radiusFactor;
 		return this;
 	}
 
