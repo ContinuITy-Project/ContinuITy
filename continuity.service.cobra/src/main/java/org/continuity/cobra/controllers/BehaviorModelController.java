@@ -125,7 +125,7 @@ public class BehaviorModelController {
 			chain.setNumSessions(numSessions.getOrDefault(chain.getId(), 0L));
 		}
 
-		behaviorManager.store(aid, lTailoring, behaviorModel);
+		behaviorManager.store(aid, lTailoring, behaviorModel, false);
 	}
 
 	private RelativeMarkovChain getTailoredMarkovChain(SessionTailoringDescription description) throws IOException, TimeoutException {
