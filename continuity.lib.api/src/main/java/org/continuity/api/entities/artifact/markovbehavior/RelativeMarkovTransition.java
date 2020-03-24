@@ -2,7 +2,10 @@ package org.continuity.api.entities.artifact.markovbehavior;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 /**
  * Represents a transition from one Markov state to another. It holds the transition probability and
@@ -24,6 +27,8 @@ public class RelativeMarkovTransition implements MarkovTransition {
 
 	private double count;
 
+	private double radius;
+
 	private NormalDistribution thinkTime;
 
 	/**
@@ -33,12 +38,15 @@ public class RelativeMarkovTransition implements MarkovTransition {
 	 *            The transition probability.
 	 * @param count
 	 *            The (average) transition count.
+	 * @param radius
+	 *            The radius around count.
 	 * @param thinkTime
 	 *            A {@link NormalDistribution} as think time.
 	 */
-	public RelativeMarkovTransition(double probability, double count, NormalDistribution thinkTime) {
+	public RelativeMarkovTransition(double probability, double count, double radius, NormalDistribution thinkTime) {
 		this.probability = probability;
 		this.count = count;
+		this.radius = radius;
 		this.thinkTime = thinkTime;
 	}
 
@@ -49,13 +57,15 @@ public class RelativeMarkovTransition implements MarkovTransition {
 	 *            The transition probability.
 	 * @param count
 	 *            The (average) transition count.
+	 * @param radius
+	 *            The radius around count.
 	 * @param meanThinkTime
 	 *            The mean think time.
 	 * @param varianceThinkTime
 	 *            The variance of the think time.
 	 */
-	public RelativeMarkovTransition(double probability, double count, double meanThinkTime, double varianceThinkTime) {
-		this(probability, count, new NormalDistribution(meanThinkTime, varianceThinkTime));
+	public RelativeMarkovTransition(double probability, double count, double radius, double meanThinkTime, double varianceThinkTime) {
+		this(probability, count, radius, new NormalDistribution(meanThinkTime, varianceThinkTime));
 	}
 
 	/**
@@ -67,7 +77,7 @@ public class RelativeMarkovTransition implements MarkovTransition {
 	 *            A {@link NormalDistribution} as think time.
 	 */
 	public RelativeMarkovTransition(double probability, NormalDistribution thinkTime) {
-		this(probability, -1, thinkTime);
+		this(probability, -1, -1, thinkTime);
 	}
 
 	/**
@@ -81,14 +91,14 @@ public class RelativeMarkovTransition implements MarkovTransition {
 	 *            The variance of the think time.
 	 */
 	public RelativeMarkovTransition(double probability, double meanThinkTime, double varianceThinkTime) {
-		this(probability, -1, meanThinkTime, varianceThinkTime);
+		this(probability, -1, -1, meanThinkTime, varianceThinkTime);
 	}
 
 	/**
 	 * Creates a zero transition, i.e., with transition probability and think time 0.
 	 */
 	public RelativeMarkovTransition() {
-		this(0.0, 0.0, new NormalDistribution());
+		this(0.0, 0.0, 0.0, new NormalDistribution());
 	}
 
 	/**
@@ -116,9 +126,10 @@ public class RelativeMarkovTransition implements MarkovTransition {
 
 		double probability = first.getProbability() * second.getProbability();
 		double count = first.getCount() * second.getProbability();
+		double radius = recalculateRadius(first, second, count);
 		NormalDistribution thinkTime = NormalDistribution.add(first.getThinkTime(), stateDuration, second.getThinkTime());
 
-		return new RelativeMarkovTransition(probability, count, thinkTime);
+		return new RelativeMarkovTransition(probability, count, radius, thinkTime);
 	}
 
 	/**
@@ -145,9 +156,15 @@ public class RelativeMarkovTransition implements MarkovTransition {
 
 		double probability = first.getProbability() + second.getProbability();
 		double count = ((first.getCount() >= 0) && (second.getCount() >= 0)) ? first.getCount() + second.getCount() : -1;
+		double radius = recalculateRadius(first, second, count);
 		NormalDistribution thinkTime = NormalDistribution.combine(first.getProbability() / probability, first.getThinkTime(), second.getProbability() / probability, second.getThinkTime());
 
-		return new RelativeMarkovTransition(probability, count, thinkTime);
+		return new RelativeMarkovTransition(probability, count, radius, thinkTime);
+	}
+
+	private static double recalculateRadius(RelativeMarkovTransition first, RelativeMarkovTransition second, double count) {
+		return Stream.of(first, second).filter(t -> (t.getRadius() >= 0) && (t.getCount() >= 0)).map(t -> Arrays.asList(t.getCount() + t.getRadius(), t.getCount() - t.getRadius()))
+				.flatMap(List::stream).mapToDouble(x -> Math.abs(count - x)).max().orElse(-1);
 	}
 
 	/**
@@ -176,7 +193,7 @@ public class RelativeMarkovTransition implements MarkovTransition {
 	 * be negative, indicating it is unknown. If it is non-negative, iIt should be made sure that
 	 * the probability and count are either both zero or non-zero.
 	 *
-	 * @return A {@code double} greater or equal than 0.0.
+	 * @return A {@code double}.
 	 */
 	public double getCount() {
 		return count;
@@ -188,10 +205,31 @@ public class RelativeMarkovTransition implements MarkovTransition {
 	 * probability and count are either both zero or non-zero.
 	 *
 	 * @param count
-	 *            A {@code double} greater or equal than 0.0.
+	 *            A {@code double}.
 	 */
 	public void setCount(double count) {
 		this.count = count;
+	}
+
+	/**
+	 * Returns the transition radius, i.e., the maximum transition count difference of a session to
+	 * this behavior model. It can be negative, indicating it is unknown or undefined.
+	 *
+	 * @return A {@code double}.
+	 */
+	public double getRadius() {
+		return radius;
+	}
+
+	/**
+	 * Returns the transition radius, i.e., the maximum transition count difference of a session to
+	 * this behavior model. It can be negative, indicating it is unknown or undefined.
+	 *
+	 * @param radius
+	 *            A {@code double}.
+	 */
+	public void setRadius(double radius) {
+		this.radius = radius;
 	}
 
 	/**

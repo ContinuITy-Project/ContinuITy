@@ -14,7 +14,7 @@ services:
 env:
   global:
     - GIT_MAJOR_VERSION=2
-    - GIT_MINOR_VERSION=8
+    - GIT_MINOR_VERSION=9
 after_success:
   - if [ $TRAVIS_PULL_REQUEST == false ] && [ $TRAVIS_BRANCH == "master" ]; then
 
