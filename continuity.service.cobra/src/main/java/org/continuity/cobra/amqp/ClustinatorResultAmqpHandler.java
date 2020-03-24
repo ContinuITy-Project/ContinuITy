@@ -122,13 +122,13 @@ public class ClustinatorResultAmqpHandler {
 
 	private RelativeMarkovChain createMarkovChain(String group, ClustinatorResult result, ClustinatorMarkovChainConverter converter) {
 		double[] markovArray = result.getMeanMarkovChains().get(group);
+		double[] radiuses = result.getRadiuses().get(group);
 		double[] thinkTimeMeans = result.getThinkTimeMeans().get(group);
 		double[] thinkTimeVariances = result.getThinkTimeVariances().get(group);
 
-		RelativeMarkovChain behavior = converter.convertArray(markovArray, thinkTimeMeans, thinkTimeVariances);
+		RelativeMarkovChain behavior = converter.convertArray(markovArray, radiuses, thinkTimeMeans, thinkTimeVariances);
 		behavior.setFrequency(result.getFrequency().get(group));
 		behavior.setNumSessions(result.getNumSessions().get(group));
-		behavior.setRadius(result.getRadiuses().get(group));
 		behavior.setId(group);
 
 		return behavior;

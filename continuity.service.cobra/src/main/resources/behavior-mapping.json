@@ -6,7 +6,6 @@
                 "id": { "type": "keyword" },
                 "frequency": { "type": "double" },
                 "num-sessions": { "type": "long" },
-                "radius": { "type": "double" },
                 "transitions": {
                     "type": "object",
                     "enabled": false

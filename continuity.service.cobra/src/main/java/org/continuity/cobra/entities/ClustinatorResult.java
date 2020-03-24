@@ -59,7 +59,7 @@ public class ClustinatorResult {
 	@JsonProperty("num-sessions")
 	private Map<String, Long> numSessions;
 
-	private Map<String, Double> radiuses;
+	private Map<String, double[]> radiuses;
 
 	private ClusteringContinuation continuation;
 
@@ -175,11 +175,11 @@ public class ClustinatorResult {
 		this.continuation = continuation;
 	}
 
-	public Map<String, Double> getRadiuses() {
+	public Map<String, double[]> getRadiuses() {
 		return radiuses;
 	}
 
-	public void setRadiuses(Map<String, Double> radiuses) {
+	public void setRadiuses(Map<String, double[]> radiuses) {
 		this.radiuses = radiuses;
 	}
 

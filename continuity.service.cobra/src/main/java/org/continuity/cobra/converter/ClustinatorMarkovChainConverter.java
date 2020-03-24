@@ -95,6 +95,9 @@ public class ClustinatorMarkovChainConverter {
 	 * @param transitionCounts
 	 *            The map of transition counts arrays. Each array needs to have exactly
 	 *            {@code n * n} elements ({@code n} = number of endpoints).
+	 * @param radiuses
+	 *            The map of radius arrays. Each array needs to have exactly {@code n * n} elements
+	 *            ({@code n} = number of endpoints).
 	 * @param thinktimeMeans
 	 *            The map of think time mean arrays. The keys need to correspond to the keys of
 	 *            probs. Each array needs to have exactly {@code n * n} elements.
@@ -103,11 +106,11 @@ public class ClustinatorMarkovChainConverter {
 	 *            probs. Each array needs to have exactly {@code n * n} elements.
 	 * @return The behavior model.
 	 */
-	public MarkovBehaviorModel convertArrays(Map<String, double[]> transitionCounts, Map<String, double[]> thinktimeMeans, Map<String, double[]> thinktimeVariances) {
+	public MarkovBehaviorModel convertArrays(Map<String, double[]> transitionCounts, Map<String, double[]> radiuses, Map<String, double[]> thinktimeMeans, Map<String, double[]> thinktimeVariances) {
 		MarkovBehaviorModel model = new MarkovBehaviorModel();
 
 		for (String behaviorId : transitionCounts.keySet()) {
-			RelativeMarkovChain chain = convertArray(transitionCounts.get(behaviorId), thinktimeMeans.get(behaviorId), thinktimeVariances.get(behaviorId));
+			RelativeMarkovChain chain = convertArray(transitionCounts.get(behaviorId), radiuses.get(behaviorId), thinktimeMeans.get(behaviorId), thinktimeVariances.get(behaviorId));
 			chain.setId(behaviorId);
 			model.addMarkovChain(chain);
 		}
@@ -121,13 +124,16 @@ public class ClustinatorMarkovChainConverter {
 	 * @param transitionCounts
 	 *            The transition counts array, which needs to have exactly {@code n * n} elements
 	 *            ({@code n} = number of endpoints).
+	 * @param radiuses
+	 *            The radius array, which needs to have exactly {@code n * n} elements ({@code n} =
+	 *            number of endpoints).
 	 * @param thinktimeMeans
 	 *            The think time mean array, which needs to have exactly {@code n * n} elements.
 	 * @param thinktimeVariances
 	 *            The think time variance array, which needs to have exactly {@code n * n} elements.
 	 * @return The parsed Markov chain.
 	 */
-	public RelativeMarkovChain convertArray(double[] transitionCounts, double[] thinktimeMeans, double[] thinktimeVariances) {
+	public RelativeMarkovChain convertArray(double[] transitionCounts, double[] radiuses, double[] thinktimeMeans, double[] thinktimeVariances) {
 		if (transitionCounts.length != (n * n)) {
 			throw new IllegalArgumentException("Cannot convert transition counts array of length " + transitionCounts.length + " to a Markov chain with " + n + " states!");
 		}
@@ -152,7 +158,7 @@ public class ClustinatorMarkovChainConverter {
 				double count = transitionCounts[index];
 				double prob = sumOutgoingTransitions == 0 ? 0 : count / sumOutgoingTransitions;
 
-				markovChain.setTransition(from, to, new RelativeMarkovTransition(prob, count, thinktimeMeans[index], thinktimeVariances[index]));
+				markovChain.setTransition(from, to, new RelativeMarkovTransition(prob, count, radiuses[index], thinktimeMeans[index], thinktimeVariances[index]));
 
 				j++;
 			}
