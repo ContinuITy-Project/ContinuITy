@@ -116,7 +116,7 @@ public class ClustinatorResultAmqpHandler {
 			updateIntensities(result, group, startMicros);
 		}
 
-		behaviorManager.store(result.getAppId(), result.getTailoring(), behaviorModel);
+		behaviorManager.store(result.getAppId(), result.getTailoring(), behaviorModel, true);
 		LOGGER.info("{}@{} {}: Stored behavior model.", result.getAppId(), result.getVersion(), result.getTailoring());
 	}
 

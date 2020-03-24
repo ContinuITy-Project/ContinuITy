@@ -41,10 +41,12 @@ public class ElasticsearchBehaviorManager extends ElasticsearchScrollingManager<
 	 * @param tailoring
 	 * @param model
 	 *            The behavior model.
+	 * @param waitFor
+	 *            Whether to wait until the model storing is completed.
 	 * @throws IOException
 	 */
-	public void store(AppId aid, List<String> tailoring, MarkovBehaviorModel model) throws IOException {
-		storeElements(aid, tailoring, Collections.singleton(model));
+	public void store(AppId aid, List<String> tailoring, MarkovBehaviorModel model, boolean waitFor) throws IOException {
+		storeElements(aid, tailoring, Collections.singleton(model), waitFor);
 	}
 
 	/**
