@@ -61,6 +61,9 @@ public class ClustinatorResult {
 
 	private Map<String, double[]> radiuses;
 
+	@JsonProperty("total-radiuses")
+	private Map<String, Double> totalRadiuses;
+
 	private ClusteringContinuation continuation;
 
 	public AppId getAppId() {
@@ -181,6 +184,14 @@ public class ClustinatorResult {
 
 	public void setRadiuses(Map<String, double[]> radiuses) {
 		this.radiuses = radiuses;
+	}
+
+	public Map<String, Double> getTotalRadiuses() {
+		return totalRadiuses;
+	}
+
+	public void setTotalRadiuses(Map<String, Double> totalRadiuses) {
+		this.totalRadiuses = totalRadiuses;
 	}
 
 }

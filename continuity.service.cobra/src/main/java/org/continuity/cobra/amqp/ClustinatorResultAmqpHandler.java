@@ -129,6 +129,7 @@ public class ClustinatorResultAmqpHandler {
 		RelativeMarkovChain behavior = converter.convertArray(markovArray, radiuses, thinkTimeMeans, thinkTimeVariances);
 		behavior.setFrequency(result.getFrequency().get(group));
 		behavior.setNumSessions(result.getNumSessions().get(group));
+		behavior.setRadius(result.getTotalRadiuses().get(group));
 		behavior.setId(group);
 
 		return behavior;
