@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -201,6 +202,7 @@ public class WessbasPipelineManager {
 		markovModel.synchronizeMarkovChains();
 
 		List<ForecastIntensityRecord> intensities = loadIntensities(task.getSource().getIntensity());
+		adjustIntensitiesToGroups(intensities, markovModel);
 
 		createWorkloadIntensity(intensities);
 		writeDummySessionsDat();
@@ -210,6 +212,48 @@ public class WessbasPipelineManager {
 		writeBehaviorModels(markovModel, dir);
 
 		return new BehaviorModelPack(null, workingDir);
+	}
+
+	private void adjustIntensitiesToGroups(List<ForecastIntensityRecord> intensities, MarkovBehaviorModel markovModel) {
+		if ((intensities == null) || intensities.isEmpty() || (markovModel == null) || (markovModel.getMarkovChains() == null)) {
+			return;
+		}
+
+		if (intensities.stream().map(ForecastIntensityRecord::getContent).filter(m -> m.containsKey(ForecastIntensityRecord.KEY_TOTAL)).count() > 0) {
+			return;
+		}
+
+		Set<String> groups = markovModel.getMarkovChains().stream().map(RelativeMarkovChain::getId).collect(Collectors.toSet());
+		Set<String> allRemoved = new HashSet<>();
+
+		for (ForecastIntensityRecord rec : intensities) {
+			Set<String> groupsToRemove = new HashSet<>(rec.getGroups());
+			groupsToRemove.removeAll(groups);
+			allRemoved.addAll(groupsToRemove);
+
+			if (!groupsToRemove.isEmpty()) {
+				double totalIntensity = getTotalIntensity(rec);
+				groupsToRemove.forEach(rec.getContent()::remove);
+				double newTotal = getTotalIntensity(rec);
+
+				for (Entry<String, Double> entry : rec.getContent().entrySet()) {
+					if (!ForecastIntensityRecord.KEY_TIMESTAMP.equals(entry.getKey())) {
+						rec.getContent().put(entry.getKey(), (entry.getValue() * totalIntensity) / newTotal);
+					}
+				}
+			}
+		}
+
+		if (allRemoved.isEmpty()) {
+			LOGGER.info("The intensities fit to the groups contained in the behavior model.");
+		} else {
+			LOGGER.info("The following groups, which are contained in the intensities, are not part of the workload model: {}."
+					+ "Removed them from the intensities and adjusted the remaining to sum to the same total intensity as before.", allRemoved);
+		}
+	}
+
+	private double getTotalIntensity(ForecastIntensityRecord record) {
+		return record.getContent().entrySet().stream().filter(e -> !ForecastIntensityRecord.KEY_TIMESTAMP.equals(e.getKey())).mapToDouble(Entry::getValue).sum();
 	}
 
 	/**
