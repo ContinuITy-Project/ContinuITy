@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -16,7 +17,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.continuity.api.amqp.AmqpApi;
@@ -119,8 +119,7 @@ public class PreparationAmqpHandler {
 		LOGGER.info("Task {}: Get {} in ranges {}...", task.getTaskId(), task.getTarget().toPrettyString(), ranges);
 
 		List<ForecastTimerange> restrictedRanges = perspective.map(p -> ranges.stream().filter(r -> r.getFrom() < p)
-				.map(r -> new ForecastTimerange(r.getFrom(), Math.min(r.getTo(), p), config.getTimeZone()))
-				.filter(r -> r.getTo() < r.getFrom()).collect(Collectors.toList())).orElse(ranges);
+				.map(r -> new ForecastTimerange(r.getFrom(), Math.min(r.getTo(), p), config.getTimeZone())).filter(r -> r.getTo() < r.getFrom()).collect(Collectors.toList())).orElse(ranges);
 
 		TaskReport report;
 
@@ -322,11 +321,18 @@ public class PreparationAmqpHandler {
 
 		input.setRanges(ranges).setResolution(config.getIntensity().getResolution().toMillis());
 
-		IgnoreByDefaultValue ignore = config.getContext().ignoreByDefault();
-		Set<String> contextVariables = config.getContext().getVariables().entrySet().stream().filter(e -> !ignore.ignore(e.getValue().getIgnoreByDefault())).map(Entry::getKey)
-				.collect(Collectors.toSet());
-		description.getTimeframe().stream().map(TimeSpecification::getReferredContextVariables).flatMap(Set::stream).forEach(contextVariables::add);
-		input.setContext(prepareFutureContext(intensities, perspective, config, description));
+		Set<String> contextVariables;
+
+		if (task.getOptions().getForecastOrDefault().useDefaultFacets()) {
+			IgnoreByDefaultValue ignore = config.getContext().ignoreByDefault();
+			contextVariables = config.getContext().getVariables().entrySet().stream().filter(e -> !ignore.ignore(e.getValue().getIgnoreByDefault())).map(Entry::getKey).collect(Collectors.toSet());
+			description.getTimeframe().stream().map(TimeSpecification::getReferredContextVariables).flatMap(Set::stream).forEach(contextVariables::add);
+		} else {
+			contextVariables = new HashSet<>(config.getContext().getVariables().keySet());
+			contextVariables.retainAll(task.getOptions().getForecastOrDefault().getFacets().orElse(Collections.emptyList()));
+		}
+
+		input.setContext(prepareFutureContext(intensities, perspective, description, contextVariables, config.getTimeZone()));
 		input.setContextVariables(contextVariables);
 
 		input.setAggregation(TypeAndProperties.fromTypedProperties(description.getAggregation()));
@@ -343,18 +349,17 @@ public class PreparationAmqpHandler {
 		return RestApi.Cobra.Intensity.GET_FOR_ID.requestUrl(id).withoutProtocol().get();
 	}
 
-	private List<TimedContextRecord> prepareFutureContext(List<IntensityRecord> intensities, Optional<Long> perspective, CobraConfiguration config, WorkloadDescription description) {
+	private List<TimedContextRecord> prepareFutureContext(List<IntensityRecord> intensities, Optional<Long> perspective, WorkloadDescription description, Set<String> contextVariables,
+			ZoneId timeZone) {
 		long maxIntensityTimestamp = intensities.stream().filter(i -> (i.getIntensity() != null) && !i.getIntensity().isEmpty()).mapToLong(IntensityRecord::getTimestamp).max().orElse(0);
 		long effectivePerspective = perspective.map(p -> Math.min(p, maxIntensityTimestamp)).orElse(maxIntensityTimestamp);
 
 		List<IntensityRecord> futureRecords = intensities.stream().filter(i -> i.getTimestamp() > effectivePerspective).collect(Collectors.toList());
 
-		Set<String> timeframeVariables = description.getTimeframe().stream().map(TimeSpecification::getReferredContextVariables).flatMap(Set::stream).collect(Collectors.toSet());
-
 		for (IntensityRecord record : futureRecords) {
 			if (record.getContext() != null) {
 				if (record.getContext().getNumeric() != null) {
-					record.getContext().getNumeric().keySet().removeIf(ignoreVariable(timeframeVariables, config));
+					record.getContext().getNumeric().keySet().retainAll(contextVariables);
 
 					if (record.getContext().getNumeric().isEmpty()) {
 						record.getContext().setNumeric(null);
@@ -362,7 +367,7 @@ public class PreparationAmqpHandler {
 				}
 
 				if (record.getContext().getString() != null) {
-					record.getContext().getString().keySet().removeIf(ignoreVariable(timeframeVariables, config));
+					record.getContext().getString().keySet().retainAll(contextVariables);
 
 					if (record.getContext().getString().isEmpty()) {
 						record.getContext().setString(null);
@@ -370,7 +375,7 @@ public class PreparationAmqpHandler {
 				}
 
 				if (record.getContext().getBoolean() != null) {
-					record.getContext().getBoolean().removeIf(ignoreVariable(timeframeVariables, config));
+					record.getContext().getBoolean().retainAll(contextVariables);
 
 					if (record.getContext().getBoolean().isEmpty()) {
 						record.getContext().setBoolean(null);
@@ -379,14 +384,9 @@ public class PreparationAmqpHandler {
 			}
 		}
 
-		description.adjustContext(futureRecords, config.getTimeZone());
+		description.adjustContext(futureRecords, timeZone);
 
 		return futureRecords.stream().map(TimedContextRecord::fromIntensity).filter(Objects::nonNull).collect(Collectors.toList());
-	}
-
-	private Predicate<String> ignoreVariable(Set<String> variables, CobraConfiguration config) {
-		IgnoreByDefaultValue ignore = config.getContext().ignoreByDefault();
-		return v -> !variables.contains(v) && ignore.ignore(config.getContext().getVariables().get(v).getIgnoreByDefault());
 	}
 
 	private void sendReport(TaskReport report) {

@@ -1,5 +1,6 @@
 package org.continuity.api.entities.order;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -7,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "approach", "total" })
+@JsonPropertyOrder({ "approach", "total", "facets" })
 public class ForecastOptions {
 
 	@JsonInclude(Include.NON_NULL)
@@ -15,6 +16,9 @@ public class ForecastOptions {
 
 	@JsonInclude(Include.NON_ABSENT)
 	private Optional<Boolean> total = Optional.empty();
+
+	@JsonInclude(Include.NON_ABSENT)
+	private Optional<List<String>> facets = Optional.empty();
 
 	public ForecastOptions(String approach, Boolean total) {
 		this.approach = approach;
@@ -52,4 +56,18 @@ public class ForecastOptions {
 	public void setTotal(Optional<Boolean> total) {
 		this.total = total;
 	}
+
+	public Optional<List<String>> getFacets() {
+		return facets;
+	}
+
+	@JsonIgnore
+	public boolean useDefaultFacets() {
+		return !facets.isPresent();
+	}
+
+	public void setFacets(Optional<List<String>> facets) {
+		this.facets = facets;
+	}
+
 }
