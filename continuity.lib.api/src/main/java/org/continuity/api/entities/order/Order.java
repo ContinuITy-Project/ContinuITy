@@ -6,9 +6,9 @@ import java.util.Set;
 
 import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.exchange.ArtifactType;
-import org.continuity.dsl.WorkloadDescription;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
+import org.continuity.lctl.WorkloadDescription;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

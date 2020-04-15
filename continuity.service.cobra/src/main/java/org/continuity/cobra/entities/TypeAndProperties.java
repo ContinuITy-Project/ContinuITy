@@ -2,7 +2,7 @@ package org.continuity.cobra.entities;
 
 import java.util.Map;
 
-import org.continuity.dsl.elements.TypedProperties;
+import org.continuity.lctl.elements.TypedProperties;
 
 /**
  *

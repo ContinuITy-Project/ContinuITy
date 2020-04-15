@@ -2,7 +2,7 @@ rootProject.name = "continuity.root"
 
 include "continuity.lib.api"
 include "continuity.lib.commons"
-include "continuity.lib.dsl"
+include "continuity.lib.lctl"
 include "continuity.lib.idpa"
 
 include "continuity.cli"

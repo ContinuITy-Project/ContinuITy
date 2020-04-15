@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.continuity.api.entities.artifact.session.Session;
-import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.lctl.timeseries.IntensityRecord;
 
 /**
  * Calculates the session intensity over time.

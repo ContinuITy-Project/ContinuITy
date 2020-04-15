@@ -2,7 +2,7 @@ package org.continuity.cobra.entities;
 
 import java.time.ZoneId;
 
-import org.continuity.dsl.utils.DateUtils;
+import org.continuity.lctl.utils.DateUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

@@ -8,7 +8,7 @@ dependencyManagement {
 
 dependencies {
 	compile project(':continuity.lib.idpa')
-	compile project(':continuity.lib.dsl')
+	compile project(':continuity.lib.lctl')
 	
 	compile("org.springframework.boot:spring-boot-starter-amqp")
 	

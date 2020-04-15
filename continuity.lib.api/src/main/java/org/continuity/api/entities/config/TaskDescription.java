@@ -9,9 +9,9 @@ import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.exchange.ArtifactType;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
-import org.continuity.dsl.WorkloadDescription;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
+import org.continuity.lctl.WorkloadDescription;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
