@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.continuity.api.entities.artifact.session.Session;
-import org.continuity.dsl.WorkloadDescription;
-import org.continuity.dsl.timeseries.IntensityRecord;
-import org.continuity.dsl.utils.DateUtils;
 import org.continuity.idpa.AppId;
+import org.continuity.lctl.WorkloadDescription;
+import org.continuity.lctl.timeseries.IntensityRecord;
+import org.continuity.lctl.utils.DateUtils;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequest;

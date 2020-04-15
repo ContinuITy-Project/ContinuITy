@@ -1,7 +1,7 @@
 package org.continuity.cobra.entities;
 
-import org.continuity.dsl.timeseries.ContextRecord;
-import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.lctl.timeseries.ContextRecord;
+import org.continuity.lctl.timeseries.IntensityRecord;
 
 public class TimedContextRecord extends ContextRecord {
 

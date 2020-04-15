@@ -10,9 +10,9 @@ import org.continuity.api.entities.exchange.ArtifactExchangeModel;
 import org.continuity.api.entities.order.OrderOptions;
 import org.continuity.api.entities.order.ServiceSpecification;
 import org.continuity.api.entities.report.TaskReport;
-import org.continuity.dsl.WorkloadDescription;
 import org.continuity.idpa.AppId;
 import org.continuity.idpa.VersionOrTimestamp;
+import org.continuity.lctl.WorkloadDescription;
 
 public class Recipe {
 

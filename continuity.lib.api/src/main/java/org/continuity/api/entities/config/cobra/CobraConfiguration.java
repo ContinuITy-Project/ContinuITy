@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Objects;
 
 import org.continuity.api.entities.config.ServiceConfiguration;
-import org.continuity.dsl.schema.ContextSchema;
 import org.continuity.idpa.AppId;
+import org.continuity.lctl.schema.ContextSchema;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

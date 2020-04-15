@@ -20,7 +20,7 @@ import org.continuity.cobra.extractor.IntensityCalculator;
 import org.continuity.cobra.managers.ElasticsearchBehaviorManager;
 import org.continuity.cobra.managers.ElasticsearchIntensityManager;
 import org.continuity.cobra.managers.ElasticsearchSessionManager;
-import org.continuity.dsl.timeseries.IntensityRecord;
+import org.continuity.lctl.timeseries.IntensityRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
