@@ -1,0 +1,3 @@
+# BenchFlow
+
+This service transforms [WESSBAS models](https://github.com/Wessbas) into workload specifications for the [BenchFlow](https://github.com/benchflow/benchflow) performance testing platform. BenchFlow can automatically control the test execution, including the system deployment. The test execution is not part of this service; for that, please refer to the [BenchFlow repository](https://github.com/benchflow/benchflow).
