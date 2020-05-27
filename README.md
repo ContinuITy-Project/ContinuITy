@@ -13,9 +13,9 @@ The architectural pattern is an orchestrator that receives orders at `POST /orde
 
 Label | Exchange Name | Type | Purpose
 --- | --- | --- | ---
- - | continuity.task.global.create | event | Submit a task to a service
- - | continuity.event.global.finished | event | A task has finished
- - | continuity.event.global.failed | event | A task has failed (bound to the dead letter queues of the services)
+ / | continuity.task.global.create | event | Submit a task to a service
+ / | continuity.event.global.finished | event | A task has finished
+ / | continuity.event.global.failed | event | A task has failed (bound to the dead letter queues of the services)
 X<sub>a</sub> | continuity.event.orchestrator.finished | event | An order has been processed
 X<sub>b</sub> | continuity.task.cobra.process_traces | task | Process new monitoring data (i.e., traces or requests)
 X<sub>c</sub> | continuity.task.clustinator.cluster | task | Cluster newly available sessions
